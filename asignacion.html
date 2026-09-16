@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0f1220"><title>Asignación · Grafo</title>
+  <link rel="icon" href="data:,"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="mejoras.css">
+</head>
+<body class="page-asignacion">
+  <header class="app-header"><div class="app-header__inner"><a class="brand brand-link" href="index.html"><strong>Grafo</strong><small>Algoritmos de optimización</small></a>
+    <nav class="main-nav" aria-label="Navegación principal"><a class="nav-link" href="index.html">Inicio</a><a class="nav-link" href="johnson.html">Johnson</a><a class="nav-link active" aria-current="page" href="asignacion.html">Asignación</a></nav>
+  </div></header>
+  <main class="assignment-shell">
+    <div class="page-header page-header--inline"><h1>Asignación óptima</h1><button class="btn btn-claro" id="btnAyudaAsignacion">Ayuda</button></div>
+    <p class="page-description">Relaciona recursos y tareas. Compara la matriz, el emparejamiento y cada paso del método húngaro.</p>
+    <div class="workspace-tabs" role="group" aria-label="Vista de asignación">
+      <button class="active" data-assignment-view="datos" aria-pressed="true">1. Datos</button>
+      <button data-assignment-view="resultado" aria-pressed="false" disabled>2. Resultado</button>
+      <!-- <button data-assignment-view="pasos" aria-pressed="false" disabled>3. Procedimiento</button> -->
+    </div>
+    <p id="assignmentStatus" class="status-line" role="status">Completa la matriz y pulsa Resolver.</p>
+    <section id="assignmentData" class="assignment-card">
+      <div class="config-grid">
+        <fieldset class="field-group"><legend>Objetivo</legend><div class="radio-row"><label><input type="radio" name="objetivo" value="min" checked> Minimizar costos</label><label><input type="radio" name="objetivo" value="max"> Maximizar beneficios</label></div></fieldset>
+        <div class="field-group"><span class="field-label">Tamaño · 1 a 8</span><div class="dimension-row">
+          <div>Recursos: <button class="btn btn-dimension" data-dimension="rows" data-step="-1" aria-label="Quitar recurso">−</button> <span id="rowsValue">4</span> <button class="btn btn-dimension" data-dimension="rows" data-step="1" aria-label="Añadir recurso">+</button></div>
+          <div>Tareas: <button class="btn btn-dimension" data-dimension="cols" data-step="-1" aria-label="Quitar tarea">−</button> <span id="colsValue">4</span> <button class="btn btn-dimension" data-dimension="cols" data-step="1" aria-label="Añadir tarea">+</button></div>
+        </div></div>
+      </div>
+      <h2 id="matrix-title">Matriz de costos</h2>
+      <p class="muted">Edita los nombres y los valores. Usa enteros entre −999999 y 999999. Un campo vacío es un dato pendiente; cero es un valor válido.</p>
+      <div id="asignacionMatrix" class="matrix-scroll"></div>
+      <div class="action-row"><button class="btn btn-secondary" id="btnAsignacionEjemplo">Cargar ejemplo</button><button class="btn btn-claro" id="btnAssignmentUndo" disabled>Deshacer</button><button class="btn btn-neutral" id="btnAsignacionLimpiar">Vaciar matriz</button><button class="btn btn-primary" id="btnResolverAsignacion">Resolver asignación</button></div>
+    </section>
+    <section id="asignacionResultado" hidden>
+      <div id="assignmentResultContent">
+        <div class="assignment-result-grid">
+          <section class="assignment-card"><h2>Emparejamiento óptimo</h2><label class="check-line"><input type="checkbox" id="showAllAssignmentEdges"> Mostrar todas las conexiones</label>
+            <div class="bipartite-scroll"><svg id="grafoAsignacion" xmlns="http://www.w3.org/2000/svg" role="group" aria-label="Gráfico interactivo de asignaciones"></svg></div>
+            <p id="assignmentPairHint" class="status-line" aria-live="polite"></p>
+          </section>
+          <section class="assignment-card"><h2>Resultado</h2><div id="resultadoAsignacionTexto"></div><p class="muted">Se muestra una solución óptima. Puede haber otras combinaciones con el mismo total.</p></section>
+        </div>
+        <section class="assignment-card"><h2>Matriz original</h2><p class="muted">✓ indica una asignación elegida. Selecciona cualquier casilla para verla en el gráfico.</p><div class="matrix-scroll" id="resultMatrix"></div></section>
+      </div>
+      <section class="assignment-card" id="assignmentProcedureContent" hidden>
+        <div class="step-toolbar"><button class="btn btn-claro" id="btnStepPrev">Anterior</button><button class="btn btn-primary" id="btnStepPlay">Reproducir</button><button class="btn btn-claro" id="btnStepNext">Siguiente</button><label>Intervalo <select id="stepSpeed"><option value="2500">2,5 s</option><option value="5000">5 s</option><option value="1000">1 s</option></select></label><span id="stepCounter" aria-live="polite"></span></div>
+        <input id="stepRange" type="range" min="0" max="0" value="0" aria-label="Paso del método húngaro">
+        <p class="muted">★ asignación provisional · ′ cero candidato · líneas horizontales/verticales: cobertura · borde discontinuo: elemento ficticio.</p>
+        <div id="procedimientoAsignacion" aria-live="polite"></div>
+      </section>
+    </section>
+    <div class="action-row"><button class="btn btn-claro" id="btnExportAssignment">Exportar JSON</button><button class="btn btn-claro" id="btnPrintAssignment">Imprimir / PDF</button><span class="muted" id="assignmentSaved" role="status"></span></div>
+  </main>
+  <dialog id="assignmentHelp" class="help-dialog"><h2>Cómo resolver una asignación</h2><p>Elige minimizar o maximizar, ajusta recursos y tareas, y completa todos los valores. Cada recurso puede tener como máximo una tarea y cada tarea un recurso.</p><p>El método asigna tantas parejas reales como permita el grupo más pequeño. En matrices rectangulares, los elementos restantes quedan sin asignar; el valor de las parejas ficticias es cero.</p><p>El resultado usa los valores originales. Los pasos muestran reducciones, estrellas, candidatos y ajustes del método húngaro. No se admiten casillas prohibidas ni capacidades múltiples.</p><button class="btn btn-primary" id="btnCerrarAyudaAsignacion">Entendido</button></dialog>
+  <div id="toastStack" class="toast-stack" role="status"></div>
+  <script src="js/config.js"></script><script src="js/hungaro.js"></script><script src="js/asignacion.js"></script>
+</body></html>

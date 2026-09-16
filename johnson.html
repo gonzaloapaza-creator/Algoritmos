@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Editor visual de grafos y cálculo del algoritmo de Johnson." />
+  <meta name="theme-color" content="#0f1220" />
+  <title>Johnson | Algoritmos de Optimización</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='9' cy='23' r='5' fill='%235b8cff'/><circle cx='23' cy='9' r='5' fill='%2300d3a7'/><line x1='12' y1='20' x2='20' y2='12' stroke='white' stroke-width='2'/></svg>" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="mejoras.css" />
+</head>
+<body class="page-johnson">
+  <header class="app-header app-header--page">
+    <div class="app-header__inner">
+      <div class="brand" aria-label="Logo del proyecto">
+        <svg class="brand__icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+          <circle cx="9" cy="23" r="5"></circle>
+          <circle cx="23" cy="9" r="5"></circle>
+          <line x1="12" y1="20" x2="20" y2="12"></line>
+        </svg>
+        <div>
+          <strong>Grafo</strong>
+          <small>Algoritmos</small>
+        </div>
+      </div>
+      <nav class="main-nav" aria-label="Navegación principal">
+        <a href="index.html" class="nav-link">Inicio</a>
+        <a href="johnson.html" class="nav-link active">Johnson</a>
+        <a href="asignacion.html" class="nav-link">Asignación</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-workspace">
+    <section class="page-header page-header--inline">
+      <a href="index.html" class="back-link" aria-label="Volver al inicio">←<span class="texto-ancho"> Volver</span></a>
+      <h1>Algoritmo de Johnson</h1>
+    </section>
+
+    <p class="page-description">
+      Calcula las rutas mínimas entre todos los pares de nodos de un grafo dirigido y ponderado.
+    </p>
+
+    <nav class="barra-herramientas" aria-label="Herramientas de Johnson">
+      <div class="grupo-herramientas grupo-segmentado" role="group" aria-label="Modo de trabajo">
+        <button type="button" class="btn btn-herramienta activo" data-herramienta="seleccionar" aria-pressed="true">
+          Seleccionar
+        </button>
+        <button type="button" class="btn btn-herramienta" data-herramienta="nodo" aria-pressed="false">
+          Nodo
+        </button>
+        <button type="button" class="btn btn-herramienta" data-herramienta="conectar" aria-pressed="false">
+          Conectar
+        </button>
+      </div>
+      <div class="grupo-herramientas" role="group" aria-label="Acciones del grafo">
+        <button type="button" class="btn btn-claro" id="btnDeshacer" disabled aria-label="Deshacer última edición">↶ Deshacer</button>
+        <button type="button" class="btn btn-claro" id="btnRehacer" disabled aria-label="Rehacer última edición">↷ Rehacer</button>
+        <button type="button" class="btn btn-secondary" id="btnMatriz">Matriz</button>
+        <button type="button" class="btn btn-primary" id="btnJohnson">
+          <svg class="icono" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+            <path d="M4 15 L9 6 L16 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="4" cy="15" r="2.6" fill="currentColor" />
+            <circle cx="9" cy="6" r="2.6" fill="currentColor" />
+            <circle cx="16" cy="10" r="2.6" fill="currentColor" />
+          </svg>
+          <span class="texto-ancho">Calcular </span>Johnson
+        </button>
+        <div class="menu-acciones">
+          <button type="button" class="btn btn-claro btn-mas" id="btnMasOpciones"
+                  aria-expanded="false" aria-controls="menuExtra" aria-haspopup="true">
+            Acciones <span class="menu-flecha" id="menuFlecha" aria-hidden="true">▼</span>
+          </button>
+          <div class="menu-extra" id="menuExtra" role="group" aria-label="Más acciones del grafo">
+            <button type="button" class="btn btn-claro" id="btnGuardar">Guardar grafo</button>
+            <button type="button" class="btn btn-claro" id="btnBiblioteca">Biblioteca</button>
+            <!-- <button type="button" class="btn btn-claro" id="btnDijkstra">Dijkstra</button> -->
+            <button type="button" class="btn btn-claro" id="btnEjemploGrafo">Cargar ejemplo</button>
+            <button type="button" class="btn btn-claro" id="btnOrdenarGrafo">Ordenar en círculo</button>
+            <button type="button" class="btn btn-claro" id="btnExportarJSON">Exportar JSON</button>
+            <button type="button" class="btn btn-claro" id="btnExportarImagen">Exportar PNG</button>
+            <button type="button" class="btn btn-claro" id="btnImportarJSON">Importar JSON</button>
+            <button type="button" class="btn btn-peligro" id="btnLimpiar">Limpiar</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <p class="ayuda" id="ayuda" aria-live="polite">
+      Selecciona <strong>Nodo</strong> y toca el área para comenzar.
+    </p>
+
+    <div class="johnson-layout">
+      <section class="grafo-workspace" id="lienzo" aria-label="Editor del grafo">
+        <svg id="svg" xmlns="http://www.w3.org/2000/svg" role="group" tabindex="0" aria-label="Área de trabajo del grafo. Flechas para seleccionar nodos; Enter para editar.">
+          <defs>
+            <marker id="flecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#9cb0d4" />
+            </marker>
+            <marker id="flechaSel" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#ffcf5c" />
+            </marker>
+            <marker id="flechaRuta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#22d3ee" />
+            </marker>
+            <marker id="flechaCiclo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff5f6d" />
+            </marker>
+          </defs>
+          <g id="capaConexiones"></g>
+          <g id="capaNodos"></g>
+        </svg>
+
+        <div class="vacio" id="vacio">
+          <div class="vacio-caja">
+            <h2>El grafo está vacío</h2>
+            <p class="vacio-breve">Crea un nodo para comenzar</p>
+            <ol>
+              <li>Pulsa la herramienta <strong>Nodo</strong>.</li>
+              <li>Toca o haz clic en esta área para crear un nodo.</li>
+              <li>Con <strong>Conectar</strong>, une dos nodos e indica el peso.</li>
+            </ol>
+            <button type="button" class="btn btn-primary" id="btnEmpezar">Crear primer nodo</button>
+          </div>
+        </div>
+
+        <aside class="panel" id="panel" hidden>
+          <div class="panel-info">
+            <span class="panel-etiqueta" id="panelTitulo">Nodo</span>
+            <span class="panel-detalle" id="panelDetalle">a</span>
+          </div>
+          <div class="panel-acciones">
+            <button type="button" class="btn btn-claro" id="btnEditar">Editar nombre</button>
+            <button type="button" class="btn btn-peligro" id="btnEliminar">Eliminar</button>
+            <button type="button" class="btn btn-fantasma" id="btnCerrarPanel" aria-label="Cerrar panel">✕</button>
+          </div>
+        </aside>
+
+        <button type="button" class="btn btn-ayuda" id="btnAyuda">Ayuda</button>
+        
+        <!-- Controles de zoom -->
+        <div class="zoom-controls" aria-label="Controles de zoom">
+          <button type="button" class="btn btn-zoom" id="btnAjustarVista" title="Encuadrar todos los nodos">Ajustar</button>
+          <button type="button" class="btn btn-zoom" id="btnPantallaCompleta" aria-label="Ampliar editor">⛶</button>
+          <button type="button" class="btn btn-zoom" id="btnZoomOut" aria-label="Reducir zoom" title="Reducir zoom (Ctrl+-)">−</button>
+          <button type="button" class="btn btn-zoom" id="btnZoomReset" aria-label="Resetear zoom" title="Resetear zoom (Ctrl+0)">100%</button>
+          <button type="button" class="btn btn-zoom" id="btnZoomIn" aria-label="Aumentar zoom" title="Aumentar zoom (Ctrl++)">+</button>
+        </div>
+        
+        <div class="avisos" id="avisos" aria-live="polite"></div>
+      </section>
+      <aside class="route-sidebar" aria-label="Consultar rutas">
+        <div class="route-heading"><h2>Explorar rutas</h2><button class="btn btn-claro" id="btnToggleRoutes" aria-expanded="true" aria-controls="routeControls">Ocultar</button></div>
+        <div id="routeControls">
+          <p class="muted">Elige dos nodos para ver su camino mínimo.</p>
+          <div class="route-selectors"><label>Origen<select id="routeOrigin"></select></label><button class="btn btn-claro" id="btnSwapRoute" aria-label="Intercambiar origen y destino">⇄</button><label>Destino<select id="routeDestination"></select></label></div>
+          <button class="btn btn-primary route-main-action" id="btnVerRuta">Ver ruta mínima</button>
+          <p id="routeStatus" class="status-line" role="status">Crea un grafo o carga el ejemplo.</p>
+          <p id="routeSummary" class="route-summary" aria-live="polite"></p>
+          <div class="route-player"><button class="btn btn-claro" id="btnRoutePrev" disabled aria-label="Tramo anterior">←</button><button class="btn btn-claro" id="btnRoutePlay" disabled>Reproducir ruta</button><button class="btn btn-claro" id="btnRouteNext" disabled aria-label="Tramo siguiente">→</button><button class="btn btn-fantasma" id="btnClearRoute">Quitar resaltado</button></div>
+          <p id="routeProgress" class="muted" role="status"></p>
+          <div class="route-legend"><span class="legend-origin">● Origen</span><span class="legend-destination">● Destino</span><span class="legend-path">━ Ruta</span><span class="legend-cycle">━ Ciclo negativo</span></div>
+          <p class="muted">La reproducción muestra el recorrido final. Consulta el procedimiento de Johnson en su tabla de resultados.</p>
+        </div>
+        <p id="graphSaved" class="save-status" role="status">Guardado local</p>
+      </aside>
+    </div>
+  </main>
+
+  <div class="hoja-fondo" id="matrizFondo" hidden>
+    <section class="hoja" role="dialog" aria-modal="true" aria-labelledby="matrizTitulo">
+      <header class="hoja-cabecera">
+        <h3 id="matrizTitulo">Matriz de adyacencia</h3>
+        <button type="button" class="btn btn-fantasma" id="btnCerrarMatriz" aria-label="Cerrar matriz">✕</button>
+      </header>
+      <div class="tabla-datos" id="matrizTabla"></div>
+      <p class="hoja-nota">
+        Cada fila es el nodo de <strong>origen</strong> y cada columna el de <strong>destino</strong>.
+        Una raya (<strong>—</strong>) indica que no existe conexión en ese sentido; un <strong>0</strong> es una conexión real cuyo peso es cero.
+      </p>
+    </section>
+  </div>
+
+  <div class="hoja-fondo" id="johnsonFondo" hidden>
+    <section class="hoja" role="dialog" aria-modal="true" aria-labelledby="johnsonTitulo">
+      <header class="hoja-cabecera">
+        <h3 id="johnsonTitulo">Resultado de Johnson</h3>
+        <button type="button" class="btn btn-claro" id="btnCerrarJohnson">Cerrar</button>
+      </header>
+      <p class="hoja-descripcion">Selecciona una celda para visualizar la ruta correspondiente.</p>
+      <p class="johnson-estado" id="johnsonEstado" aria-live="polite"></p>
+      <div class="tabla-datos" id="johnsonTabla"></div>
+      <details class="procedure-box" id="johnsonProcedimiento" hidden>
+        <summary>Ver procedimiento</summary>
+        <div id="johnsonPasos" class="procedure-content"></div>
+      </details>
+      <p class="hoja-nota">
+        Cada fila es el nodo de <strong>origen</strong> y cada columna el de <strong>destino</strong>.
+        El símbolo <strong>∞</strong> indica que no hay ningún camino en ese sentido.
+      </p>
+    </section>
+  </div>
+
+  <div class="hoja-fondo" id="bibliotecaFondo" hidden>
+    <section class="hoja hoja-estrecha" role="dialog" aria-modal="true" aria-labelledby="bibliotecaTitulo">
+      <header class="hoja-cabecera">
+        <h3 id="bibliotecaTitulo">Grafos guardados</h3>
+        <button type="button" class="btn btn-fantasma" id="btnCerrarBiblioteca" aria-label="Cerrar">✕</button>
+      </header>
+      <button type="button" class="btn btn-primary biblio-guardar" id="btnGuardarActual">Guardar el grafo actual</button>
+      <ul class="biblio-lista" id="bibliotecaLista"></ul>
+      <p class="hoja-nota">
+        Los grafos se guardan en <strong>este navegador</strong>.
+        Al cargar uno se reemplaza el grafo que tengas en pantalla.
+      </p>
+    </section>
+  </div>
+
+  <div class="modal-fondo" id="modalFondo" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitulo">
+      <h3 id="modalTitulo">Título</h3>
+      <p id="modalMensaje">Mensaje</p>
+      <div id="modalCampo" hidden>
+        <input type="text" id="modalInput" autocomplete="off" />
+        <p class="modal-error" id="modalError" hidden></p>
+      </div>
+      <div class="modal-botones">
+        <button type="button" class="btn btn-fantasma" id="modalCancelar">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="modalAceptar">Aceptar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/estado.js"></script>
+  <script src="js/almacenamiento.js"></script>
+  <script src="js/interfaz.js"></script>
+  <script src="js/dibujo.js"></script>
+  <script src="js/modal.js"></script>
+  <script src="js/acciones.js"></script>
+  <script src="js/matriz.js"></script>
+  <script src="js/biblioteca.js"></script>
+  <script src="js/johnson.js"></script>
+  <script src="js/dijkstra.js"></script>
+  <script src="js/interaccion.js"></script>
+  <script src="js/zoom.js"></script>
+  <script src="js/deshacer.js"></script>
+  <script src="js/mejoras.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
