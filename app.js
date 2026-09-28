@@ -86,7 +86,7 @@ el.btnEmpezar.addEventListener('click', () => {
   // por eso el área se mide después: así el nodo queda realmente centrado.
   elegirHerramienta('nodo');
   const a = medirArea();
-  crearNodo((a.ancho / 2 - estado.zoom.offsetX) / estado.zoom.escala, (a.alto / 2 - estado.zoom.offsetY) / estado.zoom.escala);
+  crearNodo(a.ancho / 2, a.alto / 2);
 });
 
 /*   MENÚ "Más opciones" (solo visible en celular)
@@ -146,7 +146,10 @@ function adaptarAlArea() {
   // si se recolocaran los nodos ahora, quedarían amontonados al cerrarlo.
   if (modalAbierto()) return;
 
-  medirArea();
+  const a = medirArea();
+  // Con el lienzo oculto (por ejemplo, mientras se muestra el video de presentación)
+  // el área mide 0 y los nodos se amontonarían en la esquina.
+  if (a.ancho < 50 || a.alto < 50) return;
   if (ajustarNodosAlArea()) guardar();
   dibujarPronto();
 }
@@ -161,8 +164,8 @@ if (typeof ResizeObserver === 'function') {
 window.addEventListener('orientationchange', adaptarAlArea);
 
 cargar();
-medirArea();
-if (ajustarNodosAlArea()) guardar();   // el grafo pudo guardarse en una pantalla más grande
+const areaInicial = medirArea();
+if (areaInicial.ancho >= 50 && areaInicial.alto >= 50 && ajustarNodosAlArea()) guardar();   // el grafo pudo guardarse en una pantalla más grande
 elegirHerramienta('seleccionar');
 if (estado.nodos.length === 0) {
   // Mensaje corto: la explicación completa está en el botón Ayuda.
@@ -177,8 +180,6 @@ document.addEventListener('keydown', evento => {
   
   // Ignorar si hay un modal abierto
   if (modalAbierto()) return;
-  if (matrizVisible() || johnsonVisible() || bibliotecaVisible()) return;
-  if (evento.target.matches('select, button, a, [contenteditable="true"]') && !(evento.ctrlKey || evento.metaKey)) return;
 
   const ctrlOrCmd = evento.ctrlKey || evento.metaKey;
 
@@ -221,7 +222,7 @@ document.addEventListener('keydown', evento => {
   if (ctrlOrCmd && evento.key === 'n') {
     evento.preventDefault();
     const a = area();
-    crearNodo((a.ancho / 2 - estado.zoom.offsetX) / estado.zoom.escala, (a.alto / 2 - estado.zoom.offsetY) / estado.zoom.escala);
+    crearNodo(a.ancho / 2, a.alto / 2);
     return;
   }
 

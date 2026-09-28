@@ -3,80 +3,52 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="description" content="Herramienta de algoritmos para grafos y asignación." />
-  <meta name="theme-color" content="#0f1220" />
+  <meta name="description" content="Herramienta educativa de algoritmos de investigación de operaciones: Johnson, asignación y transporte." />
+  <meta name="theme-color" content="#0b1020" />
   <title>Algoritmos de Optimización</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='9' cy='23' r='5' fill='%235b8cff'/><circle cx='23' cy='9' r='5' fill='%2300d3a7'/><line x1='12' y1='20' x2='20' y2='12' stroke='white' stroke-width='2'/></svg>" />
   <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="mejoras.css" />
+  <link rel="stylesheet" href="css/shell.css" />
 </head>
-<body class="page-home">
-  <header class="app-header">
-    <div class="app-header__inner">
-      <div class="brand" aria-label="Logo del proyecto">
-        <svg class="brand__icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-          <circle cx="9" cy="23" r="5"></circle>
-          <circle cx="23" cy="9" r="5"></circle>
-          <line x1="12" y1="20" x2="20" y2="12"></line>
-        </svg>
-        <div>
-          <strong>Grafo</strong>
-          <small>Algoritmos</small>
-        </div>
-      </div>
-      <nav class="main-nav" aria-label="Navegación principal">
-        <a href="index.html" class="nav-link active">Inicio</a>
-        <a href="johnson.html" class="nav-link">Johnson</a>
-        <a href="asignacion.html" class="nav-link">Asignación</a>
-      </nav>
-    </div>
+<body class="page-home" data-modulo="inicio">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <header class="topbar">
+    <button type="button" class="btn btn-fantasma btn-icono topbar__menu" id="btnMenuLateral" aria-label="Abrir menú" aria-expanded="false" aria-controls="barraLateral">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <a class="topbar__marca" href="index.html" aria-label="Grafo · Inicio">
+      <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="9" cy="23" r="5"></circle><circle cx="23" cy="9" r="5"></circle><line x1="12" y1="20" x2="20" y2="12"></line></svg>
+      <span>Grafo</span>
+    </a>
+    <span class="topbar__separador" aria-hidden="true"></span>
+    <span class="topbar__modulo" id="topbarModulo">Inicio</span>
   </header>
+  <aside class="sidebar" id="barraLateral" aria-label="Navegación principal"></aside>
+  <div class="sidebar-fondo" id="barraLateralFondo" hidden></div>
 
-  <main class="home-shell">
-    <section class="hero" aria-labelledby="titulo-principal">
-      <p class="eyebrow">Herramienta de optimización</p>
-      <h1 id="titulo-principal">Algoritmos de Optimización</h1>
-      <p class="hero-copy">Selecciona el algoritmo que deseas utilizar</p>
+  <main class="contenido" id="contenido">
+    <section class="inicio-portada" aria-labelledby="titulo-principal">
+      <div>
+        <p class="eyebrow">Investigación de operaciones</p>
+        <h1 id="titulo-principal">Algoritmos de Optimización</h1>
+        <p>Resuelve paso a paso problemas de rutas, asignación y transporte. Cada módulo incluye un video introductorio.</p>
+      </div>
+      <p class="inicio-resumen" id="resumenCatalogo"></p>
     </section>
 
-    <section class="selector-grid" aria-label="Selección de algoritmo">
-      <article class="algorithm-card">
-        <div class="card-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24">
-            <circle cx="5" cy="17" r="2.8"></circle>
-            <circle cx="12" cy="6" r="2.8"></circle>
-            <circle cx="19" cy="15" r="2.8"></circle>
-            <path d="M7.2 15.3 L10.5 8.5 L16.1 13.2"></path>
-          </svg>
-        </div>
-        <div class="card-body">
-          <h2>Algoritmo de Johnson</h2>
-          <p>Encuentra las rutas mínimas entre todos los pares de nodos de un grafo dirigido y ponderado.</p>
-          <a class="btn btn-primary" href="johnson.html">Abrir Johnson</a>
-        </div>
-      </article>
+    <div id="catalogo" aria-label="Catálogo de algoritmos"></div>
 
-      <article class="algorithm-card">
-        <div class="card-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24">
-            <rect x="4" y="4" width="16" height="16" rx="3"></rect>
-            <path d="M4 10 H20 M10 4 V20 M4 16 H20"></path>
-          </svg>
-        </div>
-        <div class="card-body">
-          <h2>Algoritmo de Asignación</h2>
-          <p>Encuentra una asignación óptima entre recursos y tareas a partir de una matriz de costos.</p>
-          <a class="btn btn-primary" href="asignacion.html">Abrir Asignación</a>
-        </div>
-      </article>
-    </section>
   </main>
 
   <footer class="app-footer">
     <div class="app-footer__inner">
-      <p>Herramienta educativa para practicar algoritmos de grafos y optimización.</p>
-      <p>Todo se guarda localmente en tu navegador: nada se envía a ningún servidor.</p>
+      <p>Herramienta educativa de investigación de operaciones. Todo se guarda en tu navegador.</p>
     </div>
   </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/comun/catalogo.js"></script>
+  <script src="js/comun/navegacion.js"></script>
+  <script src="js/comun/inicio.js"></script>
 </body>
 </html>

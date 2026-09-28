@@ -1,129 +1,175 @@
-/*   Hoja de estilos - Tema oscuro, botones grandes y diseño adaptable. */
+/* ============================================================================
+   Hoja base compartida: tokens, reinicio, tipografía, botones, formularios,
+   tablas, mensajes, modales, notificaciones e indicador de pasos.
+   Lo específico de cada módulo vive en css/*.css y se carga después.
+   ============================================================================ */
 
 :root {
-  --fondo: #0f1220;
-  --fondo-2: #171b2e;
-  --fondo-3: #1f2440;
-  --fondo-4: #262c50;              /* superficie de un botón al pasar por encima */
-  --borde: #2c3358;
-  --borde-suave: #232a4a;          /* separaciones internas, menos marcadas */
-  --texto: #eef1fb;
-  --texto-suave: #b6c1dd;          /* aclarado para mejorar el contraste sobre el fondo */
+  /* ---- Superficies ---- */
+  --bg: #0b1020;
+  --bg-2: #121a2d;          /* tarjetas y paneles */
+  --bg-3: #1a2340;          /* controles, celdas de cabecera */
+  --bg-4: #232d4f;          /* control al pasar por encima */
+  --bg-input: #0f1729;
+  --borde: #2a3457;
+  --borde-suave: #202946;
+
+  /* ---- Texto ---- */
+  --texto: #edf2ff;
+  --texto-suave: #a9b6d6;
+  --texto-apagado: #7e8ab3;
+
+  /* ---- Color de acento (por módulo, ver body[data-modulo]) ---- */
+  --acento: #5b8cff;
+  --acento-fuerte: #7ea0ff;
+  --acento-texto: #08111d;   /* texto sobre el acento lleno */
+  --acento-tinte: rgba(91, 140, 255, .14);
+  --acento-borde: rgba(91, 140, 255, .45);
+
+  /* ---- Semánticos ---- */
+  --exito: #2dd4bf;
+  --aviso: #fbbf24;
+  --peligro: #f87171;
+  --info: #7dd3fc;
+  --ficticio: #c084fc;       /* filas/columnas ficticias */
+
+  /* ---- Forma ---- */
+  --radio-sm: 8px;
+  --radio: 12px;
+  --radio-lg: 18px;
+  --sombra: 0 14px 40px rgba(3, 7, 18, .42);
+  --sombra-suave: 0 2px 10px rgba(0, 0, 0, .22);
+  --transicion: .15s ease;
+
+  /* ---- Espaciado ---- */
+  --esp-1: 4px;
+  --esp-2: 8px;
+  --esp-3: 12px;
+  --esp-4: 16px;
+  --esp-5: 24px;
+  --esp-6: 32px;
+
+  /* ---- Tipografía ---- */
+  --fuente: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --t-xs: .75rem;
+  --t-sm: .875rem;
+  --t-md: 1rem;
+  --t-lg: 1.15rem;
+  --t-xl: 1.4rem;
+  --t-2xl: clamp(1.6rem, 2.4vw, 2.1rem);
+
+  /* ---- Estructura ---- */
+  --topbar: 56px;
+  --lateral: 248px;
+  --lateral-colapsada: 68px;
+  --contenido-max: 1440px;
+  --tactil: 44px;
+
+  /* ---- Alias históricos del editor de Johnson (css/johnson.css) ---- */
+  --fondo: var(--bg);
+  --fondo-2: var(--bg-2);
+  --fondo-3: var(--bg-3);
+  --fondo-4: var(--bg-4);
   --azul: #5b8cff;
   --verde: #00d3a7;
   --amarillo: #ffcf5c;
   --rojo: #ff5f6d;
-  /* Resaltado de Johnson: celeste para la ruta y naranja para el destino. */
   --ruta: #22d3ee;
   --naranja: #ff9f43;
-  --radio: 14px;
-  --radio-chico: 10px;
-  --sombra: 0 10px 30px rgba(0, 0, 0, .35);
-  --sombra-suave: 0 2px 10px rgba(0, 0, 0, .22);
-  --espacio: 12px;
-  /* Transiciones cortas: solo confirman la acción, no la decoran. */
-  --transicion: .15s ease;
+  --radio-chico: var(--radio-sm);
+  --espacio: var(--esp-3);
+  --line: var(--borde);
+  --text: var(--texto);
+  --muted: var(--texto-suave);
+  --primary: var(--acento);
+  --primary-strong: var(--acento-fuerte);
+  --success: var(--exito);
+  --warning: var(--aviso);
+  --danger: var(--peligro);
+  --shadow: var(--sombra);
 }
 
-* { box-sizing: border-box; }
+/* Acento moderado por módulo. */
+body[data-modulo="johnson"] { --acento: #5b8cff; --acento-fuerte: #7ea0ff; --acento-tinte: rgba(91, 140, 255, .14); --acento-borde: rgba(91, 140, 255, .45); }
+body[data-modulo="asignacion"] { --acento: #2dd4bf; --acento-fuerte: #5eead4; --acento-tinte: rgba(45, 212, 191, .14); --acento-borde: rgba(45, 212, 191, .45); }
+body[data-modulo="northwest"] { --acento: #f5b041; --acento-fuerte: #f8c66d; --acento-tinte: rgba(245, 176, 65, .14); --acento-borde: rgba(245, 176, 65, .45); }
 
-html, body {
-  height: 100%;
-  /* dvh sigue a las barras del navegador móvil; con 100% el panel inferior
-     y el botón de ayuda quedaban escondidos detrás de ellas. */
-  height: 100dvh;
-  margin: 0;
-}
+/* ---------------- Reinicio ---------------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
 
 body {
-  display: flex;
-  flex-direction: column;
-  background: radial-gradient(1200px 700px at 20% -10%, #1b2245 0%, var(--fondo) 60%);
+  margin: 0;
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at top left, rgba(91, 140, 255, .10), transparent 26%),
+    linear-gradient(180deg, #0b1020 0%, #0f172a 100%);
   color: var(--texto);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  overflow: hidden;                 /* el área de trabajo controla su propio espacio */
+  font-family: var(--fuente);
+  font-size: var(--t-md);
+  line-height: 1.5;
   -webkit-tap-highlight-color: transparent;
-  /* Sin selección de texto: al arrastrar un nodo o mantener pulsado
-     no debe aparecer el menú de copiar ni resaltarse el nombre. */
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
+  /* La página nunca se desplaza en horizontal: cada tabla lo hace dentro de su caja. */
+  overflow-x: hidden;
 }
 
-/* En el campo de la ventana sí hace falta escribir, seleccionar y pegar. */
-.modal input {
-  user-select: text;
-  -webkit-user-select: text;
-  -webkit-touch-callout: default;
+h1, h2, h3, h4 { margin: 0; line-height: 1.2; letter-spacing: -.01em; }
+h1 { font-size: var(--t-2xl); }
+h2 { font-size: var(--t-xl); }
+h3 { font-size: var(--t-lg); }
+h4 { font-size: var(--t-md); }
+p { margin: 0; }
+a { color: var(--acento-fuerte); }
+small { font-size: var(--t-sm); }
+strong { font-weight: 700; }
+code, .mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+/* Solo para lectores de pantalla. */
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-/* ---------------- Barra de herramientas ---------------- */
-.barra-herramientas {
-  /* La página ya tiene su propia cabecera fija: si la barra también fuese sticky
-     las dos se solaparían al desplazar. */
-  position: relative;
-  /* Por debajo de las hojas (15) y del modal (20): la barra nunca los tapa. */
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--espacio);
-  flex-wrap: wrap;
-  padding: 10px 16px;
-  padding-left: max(16px, env(safe-area-inset-left));
-  padding-right: max(16px, env(safe-area-inset-right));
-  background: rgba(15, 18, 32, .72);
-  border: 1px solid var(--borde);
-  border-radius: 18px 18px 0 0;
-  box-shadow: var(--sombra-suave);
+[hidden] { display: none !important; }
+
+/* Foco visible y consistente en todos los controles. */
+:focus-visible {
+  outline: 2px solid var(--texto);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--acento-tinte);
 }
 
-.grupo-herramientas { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-
-/* Desplegable de acciones: un único botón en la barra y un panel flotante debajo.
-   Antes había siete botones sueltos y la barra se volvía ilegible. */
-.menu-acciones { position: relative; display: flex; }
-.btn-mas { display: inline-flex; }
-.menu-extra { display: none; }
-.menu-extra.abierto {
-  display: grid;
-  gap: 8px;
+/* Enlace para saltar al contenido. */
+.saltar {
   position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 16;
-  min-width: 230px;
-  padding: 10px;
-  background: var(--fondo-2);
-  border: 1px solid var(--borde);
+  left: 8px; top: -60px;
+  z-index: 100;
+  padding: 10px 14px;
+  background: var(--acento);
+  color: var(--acento-texto);
   border-radius: var(--radio);
-  box-shadow: var(--sombra);
-  animation: menuAbrir .17s ease-out;
+  font-weight: 700;
+  text-decoration: none;
 }
-.menu-extra.abierto .btn { justify-content: flex-start; width: 100%; }
-.menu-flecha { font-size: .8em; line-height: 1; }
+.saltar:focus { top: 8px; }
 
-/* El texto breve de la tarjeta vacía es solo para celular. */
-.vacio-breve { display: none; }
-
-/* Las tres herramientas comparten una caja: se leen como un control único
-   y quedan separadas de las acciones del grafo. */
-.grupo-segmentado {
-  gap: 4px;
-  padding: 4px;
-  background: rgba(10, 13, 25, .55);
-  border: 1px solid var(--borde-suave);
-  border-radius: calc(var(--radio) + 4px);
-}
-
+/* ---------------- Botones ---------------- */
 .btn {
-  min-height: 46px;
-  padding: 10px 18px;
+  min-height: var(--tactil);
+  padding: 10px 16px;
   border-radius: var(--radio);
   border: 1px solid var(--borde);
-  background: var(--fondo-3);
+  background: var(--bg-3);
   color: var(--texto);
-  font-size: 1rem;
+  font-size: var(--t-md);
   font-weight: 600;
   line-height: 1.2;
   cursor: pointer;
@@ -131,1858 +177,442 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: transform .08s ease, background var(--transicion),
-              border-color var(--transicion), color var(--transicion);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform .08s ease, background var(--transicion), border-color var(--transicion), color var(--transicion);
   touch-action: manipulation;
-  /* Red de seguridad: si el rótulo no cabe se recorta dentro del botón en lugar
-     de desbordarse sobre el botón vecino. */
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.btn:hover { background: var(--fondo-4); border-color: #39416e; }
+.btn:hover { background: var(--bg-4); border-color: #39416e; }
 .btn:active { transform: scale(.97); }
-/* Anillo doble: se ve tanto sobre el fondo oscuro como sobre un botón de color. */
-.btn:focus-visible {
-  outline: 2px solid var(--texto);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 5px rgba(91, 140, 255, .38);
-}
-.btn:disabled,
-.btn[aria-disabled="true"] {
-  opacity: .45;
-  cursor: not-allowed;
-  transform: none;
-}
-.btn:disabled:hover { background: var(--fondo-3); border-color: var(--borde); }
-
-/* El icono acompaña al texto; hereda el color del botón con currentColor. */
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; transform: none; }
+.btn:disabled:hover { background: var(--bg-3); border-color: var(--borde); }
+.btn svg { width: 18px; height: 18px; flex: 0 0 auto; }
 .icono { width: 18px; height: 18px; flex: 0 0 auto; }
 
-/* Herramienta activa: relleno azul, texto oscuro y un realce interior
-   para que se note cuál de las tres está en uso. */
-.btn-herramienta { background: transparent; border-color: transparent; color: var(--texto-suave); }
-.btn-herramienta:hover { background: rgba(91, 140, 255, .12); border-color: transparent; color: var(--texto); }
-.btn-herramienta.activo {
-  background: var(--azul);
-  border-color: var(--azul);
-  color: #07101f;
-  font-weight: 700;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), var(--sombra-suave);
-}
-.btn-herramienta.activo:hover { background: #7ba2ff; border-color: #7ba2ff; }
-
-/* Acción principal del panel: verde lleno. */
-.btn-primario { background: var(--verde); border-color: var(--verde); color: #04231d; }
-.btn-primario:hover { background: #22e6bd; border-color: #22e6bd; }
-
-/* Acción destacada de la barra (Johnson): azul lleno, distinta de las secundarias. */
-.btn-destacado {
-  background: rgba(91, 140, 255, .9);
-  border-color: var(--azul);
-  color: #07101f;
+/* Acción principal de la vista: una por pantalla. */
+.btn-primary, .btn-primario, .btn-destacado {
+  background: var(--acento);
+  border-color: var(--acento);
+  color: var(--acento-texto);
   font-weight: 700;
 }
-.btn-destacado:hover { background: var(--azul); border-color: #7ba2ff; }
+.btn-primary:hover, .btn-primario:hover, .btn-destacado:hover { background: var(--acento-fuerte); border-color: var(--acento-fuerte); }
+.btn-primary:disabled:hover { background: var(--acento); border-color: var(--acento); }
 
-/* Acciones secundarias: solo un tinte del color, sin relleno completo. */
-.btn-claro { background: rgba(91, 140, 255, .16); border-color: rgba(91, 140, 255, .5); color: #d7e2ff; }
-.btn-claro:hover { background: rgba(91, 140, 255, .28); border-color: rgba(91, 140, 255, .75); }
-.btn-peligro { background: rgba(255, 95, 109, .14); border-color: rgba(255, 95, 109, .5); color: #ffbfc4; }
-.btn-peligro:hover { background: rgba(255, 95, 109, .26); border-color: rgba(255, 95, 109, .75); }
-.btn-fantasma { background: transparent; }
-.btn-fantasma:hover { background: rgba(255, 255, 255, .08); }
+/* Secundaria: tinte del acento. */
+.btn-secondary { background: var(--acento-tinte); border-color: var(--acento-borde); color: var(--texto); }
+.btn-secondary:hover { background: var(--acento-tinte); border-color: var(--acento-fuerte); filter: brightness(1.12); }
 
-/* ---------------- Botón de ayuda ---------------- */
-.btn-ayuda {
-  position: absolute;
-  left: 12px;
-  bottom: calc(12px + env(safe-area-inset-bottom));
-  min-height: 34px;
-  padding: 6px 12px;
-  font-size: .82rem;
-  color: var(--texto-suave);
-  background: rgba(23, 27, 46, .85);
-  border: 1px solid var(--borde);
-}
-.btn-ayuda:hover { color: var(--texto); }
+/* Neutra. */
+.btn-neutral, .btn-claro { background: rgba(148, 163, 184, .08); border-color: rgba(148, 163, 184, .22); color: var(--texto); }
+.btn-neutral:hover, .btn-claro:hover { background: rgba(148, 163, 184, .16); border-color: rgba(148, 163, 184, .38); }
 
-/* ---------------- Controles de zoom ---------------- */
-/* Arriba a la derecha: el panel de selección ocupa la parte inferior y antes
-   obligaba a esconder estos botones justo cuando más se usan. */
-.zoom-controls {
-  position: absolute;
-  right: 12px;
-  top: 12px;
+/* Destructiva: separada visualmente. */
+.btn-peligro { background: rgba(248, 113, 113, .12); border-color: rgba(248, 113, 113, .42); color: #ffd7d7; }
+.btn-peligro:hover { background: rgba(248, 113, 113, .24); border-color: rgba(248, 113, 113, .7); }
+
+.btn-fantasma { background: transparent; border-color: transparent; color: var(--texto-suave); }
+.btn-fantasma:hover { background: rgba(255, 255, 255, .08); border-color: transparent; color: var(--texto); }
+
+/* Solo icono, cuadrado y táctil. */
+.btn-icono { width: var(--tactil); min-width: var(--tactil); padding: 0; }
+.btn-sm { min-height: 36px; padding: 6px 12px; font-size: var(--t-sm); border-radius: var(--radio-sm); }
+.btn-sm.btn-icono { width: 36px; min-width: 36px; }
+.btn-bloque { width: 100%; }
+
+/* Interruptor con estado (aria-pressed). */
+.btn[aria-pressed="true"] { background: var(--acento-tinte); border-color: var(--acento-borde); color: var(--texto); }
+
+/* Grupo de acciones: principal a la derecha, secundarias agrupadas, destructivas separadas. */
+.acciones {
   display: flex;
-  gap: 8px;
-  align-items: center;
-  background: rgba(23, 27, 46, .85);
-  border: 1px solid var(--borde);
-  border-radius: 12px;
-  padding: 6px;
-  box-shadow: var(--sombra-suave);
-}
-
-.btn-zoom {
-  min-height: 32px;
-  min-width: 32px;
-  padding: 6px 10px;
-  font-size: 1rem;
-  font-weight: 700;
-  background: var(--fondo-3);
-  border: 1px solid var(--borde);
-  color: var(--texto);
-  border-radius: 8px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-zoom:hover {
-  background: var(--fondo-4);
-  border-color: #39416e;
-}
-
-.btn-zoom:active {
-  transform: scale(.95);
-}
-
-.btn-zoom:focus-visible {
-  outline: 2px solid var(--azul);
-  outline-offset: 2px;
-}
-
-/* ---------------- Mensajes breves ---------------- */
-.ayuda {
-  margin: 0 0 12px;
-  padding: 10px 16px;
-  font-size: .92rem;
-  color: var(--texto-suave);
-  background: rgba(91, 140, 255, .1);
-  border: 1px solid var(--borde);
-  border-top: 0;
-  border-radius: 0 0 18px 18px;
-  text-align: center;
-}
-.ayuda strong { color: var(--texto); font-weight: 700; }
-
-/* ---------------- Área de trabajo ---------------- */
-.lienzo {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  touch-action: none;          /* evita el desplazamiento al arrastrar nodos */
-  overscroll-behavior: none;   /* evita el rebote de la página en móviles */
-}
-
-#svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-  user-select: none;
-  -webkit-user-select: none;
-  background-image:
-    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, .07) 1px, transparent 0);
-  background-size: 26px 26px;
-  cursor: default;
-}
-.lienzo.modo-nodo #svg,
-.grafo-workspace.modo-nodo #svg { cursor: crosshair; }
-.lienzo.modo-conectar #svg,
-.grafo-workspace.modo-conectar #svg { cursor: pointer; }
-
-/* Nodos */
-.nodo { cursor: grab; }
-.nodo.arrastrando { cursor: grabbing; }
-.nodo circle {
-  fill: #24305c;
-  stroke: var(--azul);
-  stroke-width: 3;
-  transition: fill var(--transicion), stroke var(--transicion), stroke-width var(--transicion);
-}
-.nodo:hover circle { fill: #2d3c74; }
-/* Seleccionado: borde amarillo más grueso y un halo del mismo color,
-   para que se distinga incluso entre nodos muy juntos. */
-.nodo.seleccionado circle {
-  stroke: var(--amarillo);
-  stroke-width: 4.5;
-  fill: #3d3721;
-  filter: drop-shadow(0 0 6px rgba(255, 207, 92, .55));
-}
-.nodo.origen circle {
-  stroke: var(--verde);
-  stroke-width: 4.5;
-  fill: #123c36;
-  filter: drop-shadow(0 0 6px rgba(0, 211, 167, .5));
-}
-.nodo text {
-  fill: var(--texto);
-  font-size: 16px;
-  font-weight: 700;
-  text-anchor: middle;
-  dominant-baseline: central;
-  pointer-events: none;
-  user-select: none;
-}
-
-/* Conexiones */
-.conexion-linea {
-  fill: none;
-  stroke: #9cb0d4;
-  stroke-width: 2.5;
-  marker-end: url(#flecha);
-  transition: stroke var(--transicion), stroke-width var(--transicion);
-}
-.conexion:hover .conexion-linea { stroke: #c3d2ee; }
-.conexion.seleccionada .conexion-linea {
-  stroke: var(--amarillo);
-  stroke-width: 4;
-  marker-end: url(#flechaSel);
-  filter: drop-shadow(0 0 5px rgba(255, 207, 92, .45));
-}
-.conexion-zona {          /* zona invisible y ancha para poder tocar la conexión */
-  fill: none;
-  stroke: transparent;
-  stroke-width: 22;
-  cursor: pointer;
-}
-.conexion-valor {
-  fill: var(--texto);
-  font-size: 14px;
-  font-weight: 700;
-  text-anchor: middle;
-  dominant-baseline: central;
-  pointer-events: none;
-  user-select: none;
-  /* Halo oscuro alrededor del número: se lee aunque quede sobre una línea,
-     sobre otro valor o sobre el punteado del fondo. */
-  paint-order: stroke;
-  stroke: #0f1220;
-  stroke-width: 6px;
-  stroke-linejoin: round;
-}
-.conexion.seleccionada .conexion-valor { fill: var(--amarillo); }
-
-/* ---------------- Resaltado de Johnson sobre el grafo ----------------
-   Va después de la selección para que, mientras se muestra una ruta, el
-   resaltado mande sobre el amarillo de un elemento que siguiera seleccionado. */
-
-/* Conexiones que SÍ forman parte de la ruta: trazo más grueso, color celeste
-   y su propia punta de flecha, porque el marcador no hereda el color del trazo. */
-.conexion-johnson .conexion-linea {
-  stroke: var(--ruta);
-  stroke-width: 4.5;
-  marker-end: url(#flechaRuta);
-  filter: drop-shadow(0 0 6px rgba(34, 211, 238, .5));
-}
-.conexion-johnson .conexion-valor { fill: #a5f3fc; }
-
-/* El ciclo negativo se pinta en rojo. */
-.conexion-johnson.ciclo-negativo-johnson .conexion-linea {
-  stroke: var(--rojo);
-  marker-end: url(#flechaCiclo);
-  filter: drop-shadow(0 0 6px rgba(255, 95, 109, .5));
-}
-.conexion-johnson.ciclo-negativo-johnson .conexion-valor { fill: #ffc4c8; }
-
-/* Las conexiones que no pertenecen a la ruta se atenúan, pero siguen visibles
-   y siguen pudiéndose tocar: la zona invisible no cambia de opacidad. */
-.conexion-johnson-inactiva .conexion-linea { opacity: .28; }
-.conexion-johnson-inactiva .conexion-valor { opacity: .4; }
-
-/* Nodos de la ruta: halo suave y borde celeste. */
-.nodo-johnson circle {
-  stroke: var(--ruta);
-  stroke-width: 4;
-  fill: #123a44;
-  filter: drop-shadow(0 0 7px rgba(34, 211, 238, .5));
-}
-.nodo-johnson-origen circle {
-  stroke: var(--verde);
-  fill: #0d3b33;
-  filter: drop-shadow(0 0 8px rgba(0, 211, 167, .6));
-}
-.nodo-johnson-destino circle {
-  stroke: var(--naranja);
-  fill: #45301a;
-  filter: drop-shadow(0 0 8px rgba(255, 159, 67, .6));
-}
-.nodo-johnson.ciclo-negativo-johnson circle {
-  stroke: var(--rojo);
-  fill: #451c22;
-  filter: drop-shadow(0 0 8px rgba(255, 95, 109, .6));
-}
-/* El nombre del nodo se mantiene blanco: es lo que hay que poder leer. */
-.nodo-johnson text { fill: var(--texto); }
-
-/* ---------------- Estado vacío ---------------- */
-.vacio {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  pointer-events: none;
-  padding: 16px;
-}
-.vacio[hidden] { display: none; }
-.vacio-caja {
-  pointer-events: auto;
-  max-width: 420px;
-  text-align: center;
-  background: rgba(23, 27, 46, .92);
-  border: 1px dashed var(--borde);
-  border-radius: 18px;
-  padding: 22px;
-  box-shadow: var(--sombra);
-}
-.vacio-caja h2 { margin: 0 0 6px; font-size: 1.15rem; }
-.vacio-caja ol { text-align: left; color: var(--texto-suave); margin: 0 0 16px; padding-left: 20px; line-height: 1.7; }
-
-/* ---------------- Panel del elemento seleccionado ---------------- */
-.panel {
-  position: absolute;
-  left: 50%;
-  bottom: 16px;
-  transform: translateX(-50%);
-  width: min(620px, calc(100% - 24px));
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
   flex-wrap: wrap;
-  background: rgba(23, 27, 46, .96);
-  border: 1px solid var(--borde);
-  border-radius: 18px;
-  padding: 12px 14px;
-  box-shadow: var(--sombra);
-}
-.panel[hidden] { display: none; }
-/* min-width: 0 es imprescindible: sin él un nombre largo no se encoge
-   y el texto se sale de la caja del panel. */
-.panel-info { display: flex; flex-direction: column; min-width: 0; flex: 1 1 150px; }
-.panel-etiqueta { font-size: .72rem; color: var(--texto-suave); text-transform: uppercase; letter-spacing: 1.1px; font-weight: 700; }
-.panel-detalle { font-size: 1.05rem; font-weight: 700; overflow-wrap: anywhere; }
-.panel-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
-
-/* ---------------- Avisos ---------------- */
-.avisos {
-  position: absolute;
-  /* Por debajo de los controles de zoom, que ocupan la esquina superior derecha. */
-  top: 58px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  gap: var(--esp-2);
   align-items: center;
-  pointer-events: none;
-  width: max-content;
-  max-width: calc(100% - 24px);
 }
-.aviso {
-  background: var(--fondo-2);
-  border: 1px solid var(--borde);
-  border-left: 5px solid var(--azul);
-  border-radius: var(--radio-chico);
-  padding: 10px 16px;
-  font-size: .92rem;
-  font-weight: 500;
-  color: var(--texto);
-  box-shadow: var(--sombra);
-  animation: entrar .18s ease-out;
-}
-.aviso.ok { border-left-color: var(--verde); }
-.aviso.error { border-left-color: var(--rojo); }
-@keyframes entrar {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: none; }
-}
+.acciones--fin { justify-content: flex-end; }
+.acciones--entre { justify-content: space-between; }
+.acciones__separador { flex: 1 1 auto; }
+.acciones .btn-peligro { margin-left: auto; }
+.acciones--fin .btn-peligro, .acciones--entre .btn-peligro { margin-left: 0; }
 
-/* ---------------- Hojas flotantes (matriz, grafos guardados) ---------------- */
-.hoja-fondo {
-  position: fixed;
-  inset: 0;
-  background: rgba(5, 7, 15, .7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  z-index: 15;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-.hoja-fondo[hidden] { display: none; }
-
-/* margin:auto en lugar de align-items:center: si el contenido no cabe,
-   así se puede desplazar hasta la parte de arriba. */
-.hoja {
-  width: min(760px, 100%);
-  max-height: calc(100% - 8px);
-  margin: auto;
-  display: flex;
-  flex-direction: column;
-  background: var(--fondo-2);
-  border: 1px solid var(--borde);
-  border-radius: 18px;
-  padding: 18px;
-  box-shadow: var(--sombra);
-}
-.hoja-estrecha { width: min(560px, 100%); }
-
-/* El título se separa del contenido con una línea, para que se lea como cabecera. */
-.hoja-cabecera {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding-bottom: var(--espacio);
-  border-bottom: 1px solid var(--borde-suave);
-}
-.hoja-cabecera h3 {
-  margin: 0;
-  font-size: 1.2rem;
+/* ---------------- Formularios ---------------- */
+.campo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.campo__etiqueta, .etiqueta {
+  color: var(--texto-suave);
+  font-size: var(--t-xs);
   font-weight: 700;
-  letter-spacing: .2px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
 }
-.hoja-cabecera .btn { min-height: 38px; padding: 6px 14px; flex: 0 0 auto; }
+.entrada, .modal input, .tabla input {
+  width: 100%;
+  min-height: var(--tactil);
+  padding: 8px 12px;
+  font-size: 16px;                      /* < 16px hace zoom en iOS */
+  color: var(--texto);
+  background: var(--bg-input);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-sm);
+  transition: border-color var(--transicion), box-shadow var(--transicion);
+  user-select: text;
+  -webkit-user-select: text;
+}
+.entrada:focus, .modal input:focus, .tabla input:focus {
+  outline: none;
+  border-color: var(--acento);
+  box-shadow: 0 0 0 3px var(--acento-tinte);
+}
+.entrada[aria-invalid="true"], .tabla input[aria-invalid="true"] {
+  border-color: var(--peligro);
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, .2);
+}
+.entrada--pendiente, .tabla input.pendiente { border-style: dashed; }
+.entrada::placeholder, .tabla input::placeholder { color: var(--texto-apagado); }
 
-.hoja-descripcion {
-  margin: var(--espacio) 0 0;
-  font-size: .92rem;
-  color: var(--texto-suave);
+/* Grupo segmentado: opciones excluyentes (Minimizar / Maximizar). */
+.segmentado {
+  display: inline-flex;
+  padding: 3px;
+  gap: 3px;
+  background: rgba(10, 13, 25, .55);
+  border: 1px solid var(--borde-suave);
+  border-radius: calc(var(--radio) + 3px);
 }
-.hoja-nota {
-  margin: var(--espacio) 0 0;
-  padding-top: var(--espacio);
-  border-top: 1px solid var(--borde-suave);
-  font-size: .82rem;
+.segmentado .btn { min-height: 38px; padding: 6px 14px; background: transparent; border-color: transparent; color: var(--texto-suave); }
+.segmentado .btn:hover { background: rgba(255, 255, 255, .06); color: var(--texto); }
+.segmentado .btn[aria-pressed="true"] { background: var(--acento); border-color: var(--acento); color: var(--acento-texto); font-weight: 700; }
+
+.contador { display: inline-flex; align-items: center; gap: 6px; }
+.contador__valor { min-width: 2ch; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ---------------- Tarjetas y paneles ---------------- */
+.tarjeta {
+  background: rgba(18, 26, 45, .86);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+  padding: var(--esp-4);
+}
+.tarjeta--plana { box-shadow: none; background: rgba(148, 163, 184, .04); }
+.tarjeta__cabecera { display: flex; align-items: center; justify-content: space-between; gap: var(--esp-3); flex-wrap: wrap; margin-bottom: var(--esp-3); }
+.tarjeta__cabecera h2, .tarjeta__cabecera h3 { margin: 0; }
+.tarjeta__pista { color: var(--texto-suave); font-size: var(--t-sm); line-height: 1.55; margin-top: 4px; }
+
+/* ---------------- Mensajes y estados ---------------- */
+.mensaje {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 14px;
+  border-radius: var(--radio);
+  border: 1px solid var(--borde);
+  background: rgba(148, 163, 184, .06);
   color: var(--texto-suave);
+  font-size: var(--t-sm);
   line-height: 1.5;
 }
-.hoja-nota strong { color: var(--texto); }
+.mensaje strong { color: var(--texto); }
+.mensaje--info { border-color: rgba(125, 211, 252, .4); background: rgba(125, 211, 252, .08); }
+.mensaje--ok { border-color: rgba(45, 212, 191, .45); background: rgba(45, 212, 191, .1); color: #bff5ec; }
+.mensaje--aviso { border-color: rgba(251, 191, 36, .45); background: rgba(251, 191, 36, .1); color: #fde9b5; }
+.mensaje--error { border-color: rgba(248, 113, 113, .5); background: rgba(248, 113, 113, .1); color: #ffd7d7; }
+.mensaje ul { margin: 4px 0 0; padding-left: 18px; }
+.mensaje--permanente { font-weight: 600; }
 
-/* ---------------- Tabla de datos (matriz de adyacencia y Johnson) ---------------- */
-/* La tabla puede ser grande: se desplaza dentro de su caja. */
-.tabla-datos {
-  flex: 1;
-  min-height: 0;
-  margin-top: 14px;
+.estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--borde);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: .03em;
+  white-space: nowrap;
+}
+.estado--ok { border-color: rgba(45, 212, 191, .5); background: rgba(45, 212, 191, .14); color: #9ff0e2; }
+.estado--aviso { border-color: rgba(251, 191, 36, .5); background: rgba(251, 191, 36, .14); color: #fde9b5; }
+.estado--error { border-color: rgba(248, 113, 113, .5); background: rgba(248, 113, 113, .14); color: #ffd7d7; }
+.estado--neutro { background: rgba(148, 163, 184, .1); color: var(--texto-suave); }
+.estado--ficticio { border-color: rgba(192, 132, 252, .5); background: rgba(192, 132, 252, .14); color: #e9d5ff; }
+
+.resumen-datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  color: var(--texto-suave);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+}
+.resumen-datos strong { color: var(--texto); }
+
+/* ---------------- Tablas ---------------- */
+/* La tabla siempre se desplaza dentro de su caja, nunca la página. */
+.tabla-caja {
   overflow: auto;
+  max-width: 100%;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   border: 1px solid var(--borde);
-  border-radius: 12px;
-  background: var(--fondo-2);
+  border-radius: var(--radio);
+  background: rgba(10, 13, 22, .7);
 }
-.tabla-datos table {
-  /* separate en lugar de collapse: con collapse las celdas fijas pierden sus bordes. */
+.tabla {
   border-collapse: separate;
   border-spacing: 0;
-  /* Con pocos nodos la tabla ocupa todo el ancho; con muchos, se desborda y se desplaza. */
   width: 100%;
-  /* Aquí sí conviene poder seleccionar y copiar los números. */
-  user-select: text;
-  -webkit-user-select: text;
   font-variant-numeric: tabular-nums;
 }
-.tabla-datos th,
-.tabla-datos td {
+.tabla th, .tabla td {
+  padding: 8px 10px;
+  text-align: center;
   border-right: 1px solid var(--borde-suave);
   border-bottom: 1px solid var(--borde-suave);
-  padding: 9px 12px;
-  text-align: center;
-  font-size: .92rem;
   white-space: nowrap;
-  min-width: 44px;
+  min-width: 64px;
+  vertical-align: middle;
 }
-.tabla-datos tr > *:last-child { border-right: 0; }
-.tabla-datos tbody tr:last-child th,
-.tabla-datos tbody tr:last-child td { border-bottom: 0; }
-/* El tfoot ahora tiene dos filas ("Σ Pesos" y "Cantidad ≠ 0"): la primera se separa
-   del cuerpo con un borde y conserva el borde inferior que la distingue de la segunda;
-   solo la última fila del todo se queda sin borde inferior. */
-.tabla-datos tfoot tr:first-child th,
-.tabla-datos tfoot tr:first-child td { border-top: 1px solid var(--borde); }
-.tabla-datos tfoot tr:last-child th,
-.tabla-datos tfoot tr:last-child td { border-bottom: 0; }
+.tabla tr > *:last-child { border-right: 0; }
+.tabla tbody tr:last-child > *, .tabla tfoot tr:last-child > * { border-bottom: 0; }
+.tabla tfoot tr:first-child > * { border-top: 1px solid var(--borde); }
+.tabla th { background: var(--bg-3); color: #cfe0ff; font-weight: 700; font-size: var(--t-sm); }
+.tabla thead th { position: sticky; top: 0; z-index: 2; }
+.tabla th.fija, .tabla tbody th:first-child, .tabla tfoot th:first-child { position: sticky; left: 0; z-index: 1; background: var(--bg-3); }
+.tabla thead th:first-child { left: 0; z-index: 3; }
+.tabla td { color: var(--texto); }
+.tabla td.apagado { color: var(--texto-apagado); }
+.tabla input { min-height: 40px; padding: 6px 8px; text-align: center; min-width: 64px; }
+.tabla th input { font-weight: 700; background: transparent; border-color: transparent; text-align: center; min-width: 88px; }
+.tabla th input:hover { border-color: var(--borde); }
+.tabla th input:focus { background: var(--bg-input); }
+.tabla .ficticio, .tabla th.ficticio, .tabla td.ficticio { background: rgba(192, 132, 252, .08); color: #e9d5ff; }
+.tabla th.ficticio { border-style: dashed; }
+.tabla td.seleccionada, .tabla td.elegida { background: var(--acento-tinte); box-shadow: inset 0 0 0 2px var(--acento); color: var(--texto); font-weight: 700; }
+.tabla td.cubierta { background: rgba(251, 191, 36, .12); }
+.tabla td.cubierta-doble { background: rgba(251, 191, 36, .26); }
+.tabla td.cero { color: #9ff0e2; }
+.tabla td.actual { outline: 2px solid var(--acento); outline-offset: -2px; }
+.tabla td.pulsable { cursor: pointer; }
+.tabla td.pulsable:hover { background: rgba(255, 255, 255, .05); }
+.tabla-compacta th, .tabla-compacta td { padding: 6px 8px; min-width: 48px; font-size: var(--t-sm); }
+.tabla__marca { display: block; font-size: var(--t-xs); font-weight: 600; color: var(--texto-apagado); }
+.tabla__nota { display: block; font-size: var(--t-xs); color: var(--texto-suave); }
 
-.tabla-datos th {
-  background: var(--fondo-3);
-  color: #a8c2ff;
-  font-weight: 700;
-}
-/* La cabecera se mantiene visible al desplazar en vertical... */
-.tabla-datos thead th { position: sticky; top: 0; z-index: 2; }
-/* ...y la primera columna al desplazar en horizontal. */
-.tabla-datos th.fila { position: sticky; left: 0; z-index: 1; }
-.tabla-datos thead th.esquina { left: 0; z-index: 3; }
-
-.tabla-datos td.valor { color: var(--texto); font-weight: 600; }
-/* Un peso negativo se marca en color: es el caso que hace falta revisar. */
-.tabla-datos td.negativo { color: #ffb3b9; }
-/* Sin conexión (—) y sin camino (∞) se ven apagados, pero legibles. */
-.tabla-datos td.sin-conexion,
-.tabla-datos td.sin-camino { color: #7e8ab3; font-weight: 400; }
-.tabla-datos td.diagonal { background: rgba(91, 140, 255, .09); }
-/* "Σ Pesos" (verde azulado) y "Cantidad ≠ 0" (celeste): mismo patrón de color para
-   que se lean como resumen, pero con un matiz propio para no confundirlas.
-   El ancho mínimo evita que "Cantidad ≠ 0" se corte en dos líneas. */
-.tabla-datos .col-suma { background: #1c3b39; color: #3ee6c4; font-weight: 700; min-width: 92px; }
-.tabla-datos .col-cantidad { background: #17324a; color: #7dd3fc; font-weight: 700; min-width: 128px; }
-.tabla-datos .col-suma.granTotal { background: #205047; }
-.tabla-datos .col-cantidad.granTotal { background: #1b3d59; }
-/* Intersecciones que no corresponden (fila "Σ Pesos" con columna "Cantidad ≠ 0" y viceversa). */
-.tabla-datos .celda-vacia { background: var(--fondo-2); }
-.matriz-vacia { margin: 0; padding: 22px; text-align: center; color: var(--texto-suave); }
-
-/* Celdas pulsables del resultado de Johnson: llevan role="button" y tabIndex, así que
-   deben verse y responder como tal, tanto con el dedo como con el teclado. */
-.tabla-datos td.celda-ruta { cursor: pointer; }
-.tabla-datos td.celda-ruta:hover { background: rgba(34, 211, 238, .16); color: #a5f3fc; }
-/* El toque no tiene "hover": este es el único aviso de que la celda se activó. */
-.tabla-datos td.celda-ruta:active { background: rgba(34, 211, 238, .28); }
-/* outline-offset negativo: el anillo queda dentro de la celda y no lo recorta la caja desplazable. */
-.tabla-datos td.celda-ruta:focus-visible {
-  outline: 2px solid var(--ruta);
-  outline-offset: -3px;
-  background: rgba(34, 211, 238, .16);
-}
-/* Sin camino no hay ruta que mostrar: no debe parecer pulsable. */
-.tabla-datos td.celda-sin-ruta { cursor: default; }
-
-/* ---------------- Resultado de Johnson ---------------- */
-.johnson-estado {
-  margin: 10px 0 0;
-  padding: 8px 12px;
-  border-radius: var(--radio-chico);
-  border: 1px solid var(--borde-suave);
-  background: rgba(91, 140, 255, .1);
-  font-size: .88rem;
-  font-weight: 600;
-  color: var(--texto-suave);
-}
-.johnson-estado.es-ok {
-  border-color: rgba(0, 211, 167, .45);
-  background: rgba(0, 211, 167, .12);
-  color: #6ef0d5;
-}
-.johnson-estado.es-error {
-  border-color: rgba(255, 95, 109, .5);
-  background: rgba(255, 95, 109, .12);
-  color: #ffbfc4;
-}
-
-.johnson-aviso { padding: 18px; display: flex; flex-direction: column; gap: 10px; }
-.johnson-aviso-texto { margin: 0; color: var(--texto-suave); line-height: 1.55; }
-.johnson-ciclo {
-  margin: 0;
-  padding: 10px 12px;
-  border-radius: var(--radio-chico);
-  border: 1px solid rgba(255, 95, 109, .4);
-  background: rgba(255, 95, 109, .1);
-  color: #ffd2d6;
-  font-weight: 700;
-  /* Un ciclo largo debe poder partirse en varias líneas. */
-  overflow-wrap: anywhere;
-  user-select: text;
-  -webkit-user-select: text;
-}
-
-/* Procedimiento dentro de la hoja de Johnson: no compite por el alto con la
-   tabla principal y se desplaza por su cuenta si crece. */
-.hoja .procedure-box {
-  flex: 0 0 auto;
-  margin-top: 12px;
-  max-height: 45dvh;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-.tabla-datos--paso {
-  flex: 0 0 auto;
-  margin-top: 0;
-  max-height: 260px;
-}
-
-/* ---------------- Grafos guardados ---------------- */
-.biblio-guardar { margin: 14px 0; justify-content: center; }
-
-.biblio-lista {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+/* ---------------- Indicador de pasos ---------------- */
+.pasos {
+  display: flex;
+  gap: 6px;
+  padding: 6px;
   list-style: none;
   margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  background: rgba(10, 13, 25, .55);
+  border: 1px solid var(--borde-suave);
+  border-radius: calc(var(--radio) + 4px);
+  overflow-x: auto;
+  scrollbar-width: none;
 }
-.biblio-item {
+.pasos::-webkit-scrollbar { display: none; }
+.pasos li { flex: 1 1 0; min-width: 0; }
+.paso {
+  width: 100%;
+  min-height: var(--tactil);
+  padding: 6px 12px;
+  border-radius: var(--radio);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--texto-suave);
+  cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-  background: var(--fondo-3);
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background var(--transicion), color var(--transicion);
+}
+.paso:hover:not(:disabled) { background: rgba(255, 255, 255, .06); color: var(--texto); }
+.paso:disabled { opacity: .5; cursor: not-allowed; }
+.paso__numero {
+  display: inline-grid;
+  place-items: center;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, .16);
+  font-size: var(--t-xs);
+  font-weight: 800;
+}
+.paso[aria-current="step"] { background: var(--acento); border-color: var(--acento); color: var(--acento-texto); }
+.paso[aria-current="step"] .paso__numero { background: rgba(0, 0, 0, .18); color: inherit; }
+.paso.completo .paso__numero { background: var(--acento-tinte); color: var(--acento-fuerte); }
+.pasos__contador { display: none; color: var(--texto-suave); font-size: var(--t-sm); font-weight: 600; }
+
+/* ---------------- Procedimiento desplegable ---------------- */
+.procedure-box {
+  margin-top: var(--esp-4);
   border: 1px solid var(--borde);
-  border-radius: 14px;
-  padding: 10px 12px;
+  border-radius: var(--radio);
+  overflow: hidden;
+  background: rgba(148, 163, 184, .04);
 }
-/* min-width: 0 para que un nombre largo se ajuste en vez de desbordar. */
-.biblio-datos { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 150px; }
-.biblio-nombre { font-weight: 700; overflow-wrap: anywhere; }
-.biblio-meta { font-size: .78rem; color: var(--texto-suave); }
-.biblio-botones { display: flex; gap: 8px; flex: 0 0 auto; }
-.biblio-botones .btn { min-height: 40px; padding: 8px 14px; font-size: .92rem; }
-.biblio-vacia {
-  padding: 20px;
-  text-align: center;
-  color: var(--texto-suave);
-  border: 1px dashed var(--borde);
-  border-radius: 14px;
-}
+.procedure-box summary { padding: 14px 16px; cursor: pointer; font-weight: 700; list-style: none; }
+.procedure-box summary::-webkit-details-marker { display: none; }
+.procedure-box summary::before { content: '▸ '; color: var(--acento-fuerte); }
+.procedure-box[open] summary::before { content: '▾ '; }
+.procedure-content { padding: 0 16px 16px; color: var(--texto-suave); line-height: 1.7; }
+.procedure-step + .procedure-step { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--borde); }
+.procedure-step h3 { margin: 0 0 6px; font-size: var(--t-md); color: var(--texto); }
+.procedure-step h4 { margin: 0 0 6px; font-size: var(--t-md); color: var(--texto); }
+.procedure-step p { margin: 0 0 12px; }
 
 /* ---------------- Modal ---------------- */
 .modal-fondo {
   position: fixed;
   inset: 0;
-  background: rgba(5, 7, 15, .7);
+  background: rgba(5, 7, 15, .72);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
-  z-index: 20;
-  /* Con el teclado del móvil abierto queda poco espacio: la ventana se puede desplazar. */
+  z-index: 60;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
-.modal-fondo[hidden] { display: none; }
 .modal {
-  width: min(430px, 100%);
+  width: min(460px, 100%);
+  max-height: calc(100dvh - 32px);
   margin: auto;
-  background: var(--fondo-2);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-2);
   border: 1px solid var(--borde);
-  border-radius: 18px;
+  border-radius: var(--radio-lg);
   padding: 20px;
   box-shadow: var(--sombra);
 }
-.modal h3 { margin: 0 0 10px; font-size: 1.2rem; font-weight: 700; letter-spacing: .2px; }
-/* Ventana ancha con texto desplazable, para explicaciones largas como la ayuda. */
-.modal-ancho { width: min(680px, 100%); }
-.modal-ancho #modalMensaje {
-  max-height: 62vh;
-  /* dvh tiene en cuenta las barras del navegador móvil, que vh ignora. */
-  max-height: 62dvh;
+.modal h3 { margin: 0 0 10px; font-size: var(--t-lg); }
+.modal-ancho { width: min(720px, 100%); }
+.modal p { margin: 0 0 14px; color: var(--texto-suave); line-height: 1.55; white-space: pre-line; }
+.modal-scroll, .modal-ancho #modalMensaje {
+  max-height: 60dvh;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 6px;
   user-select: text;
   -webkit-user-select: text;
 }
-/* pre-line conserva los saltos de línea del texto de ayuda. */
-.modal p { margin: 0 0 14px; color: var(--texto-suave); line-height: 1.5; white-space: pre-line; }
-.modal input {
-  width: 100%;
-  transition: border-color var(--transicion), box-shadow var(--transicion);
-  min-height: 48px;
-  padding: 10px 14px;
-  font-size: 16px;   /* menos de 16px hace que iOS haga zoom al escribir */
-  color: var(--texto);
-  background: var(--fondo-3);
-  border: 1px solid var(--borde);
-  border-radius: 12px;
-}
-.modal input:focus { outline: 2px solid var(--azul); }
-.modal-error { color: #ffb3b9 !important; font-size: .88rem; margin: 8px 0 0; }
-.modal-error[hidden] { display: none; }
+.modal-error { color: #ffb3b9 !important; font-size: var(--t-sm); margin: 8px 0 0 !important; }
 .modal-botones { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
 
-/* ---------------- Pantallas pequeñas ---------------- */
-@media (max-width: 640px) {
-  .barra-herramientas {
-    padding: 8px 10px;
-    padding-left: max(10px, env(safe-area-inset-left));
-    padding-right: max(10px, env(safe-area-inset-right));
-    gap: 8px;
-  }
-  /* Área táctil suficiente para el dedo, sin botones desproporcionados. */
-  .btn { min-height: 48px; padding: 10px 12px; font-size: .95rem; flex: 1 1 auto; justify-content: center; }
-  .grupo-herramientas { flex: 1 1 100%; }
-  /* Sin salto de línea: un texto partido en dos haría el botón (y la barra) más alto. */
-  .barra-herramientas .btn { white-space: nowrap; }
-
-  /* Segunda fila compacta: Matriz + Johnson (función principal) + el desplegable.
-     Los tres comparten el mismo flex-basis 0: si a Matriz se le dejara "auto" (el valor
-     que trae de .btn) crecería más que sus vecinos y le quitaría ancho al desplegable,
-     dejando su rótulo "Acciones" recortado por el centrado del texto. */
-  /* min-width > 0: igual que en .menu-acciones, con basis 0 y min-width 0 el ajuste de
-     línea lo trataba como "cabe siempre" y terminaba compartiendo la fila de Deshacer/
-     Rehacer, aplastado a unos pocos px con su rótulo "Matriz" recortado. */
-  #btnMatriz { flex: 1 1 0; min-width: 76px; }
-  /* min-width > 0: .menu-acciones es un div sin relleno propio (el relleno vive en el
-     botón que contiene), así que con basis 0 partía con menos "piso" que sus vecinos
-     -con padding- y terminaba más angosto que el texto "Acciones ▼", recortándolo. */
-  .menu-acciones { flex: 1 1 0; min-width: 92px; }
-  .btn-mas { flex: 1 1 0; min-width: 0; }
-
-  /* El panel se despliega a lo ancho de la barra, con dos columnas de botones. */
-  .menu-extra.abierto {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    left: auto;
-    right: 0;
-    width: max-content;
-    max-width: calc(100vw - 24px);
-  }
-  .menu-extra.abierto .btn { justify-content: center; font-size: .9rem; }
-  /* nowrap + flex-basis 0: los tres botones se reparten el ancho por igual y nunca
-     dejan al activo solo en su propia fila (pasaba con flex-basis "auto" en pantallas angostas). */
-  .grupo-segmentado { justify-content: stretch; flex-wrap: nowrap; padding: 3px; }
-  /* 46 px + los 3 px de la caja: la fila queda en 52 px sin perder área táctil. */
-  .grupo-segmentado .btn { flex: 1 1 0; min-width: 0; min-height: 46px; padding: 10px 4px; font-size: .9rem; }
-  #btnJohnson { flex: 1 1 0; min-width: 0; }
-  /* Como máximo dos líneas: la explicación completa está en el botón Ayuda. */
-  .ayuda {
-    font-size: .9rem;
-    padding: 6px 12px;
-    line-height: 1.35;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    overflow: hidden;
-  }
-
-  /* Tarjeta del grafo vacío: solo título, una frase y el botón. */
-  .vacio-caja { max-width: 90%; padding: 20px; }
-  .vacio-caja h2 { margin-bottom: 8px; }
-  .vacio-caja ol { display: none; }
-  .vacio-breve { display: block; margin: 0 0 16px; color: var(--texto-suave); line-height: 1.45; }
-  .vacio-caja .btn { min-height: 48px; width: 100%; }
-  /* La regla .btn de arriba tiene la misma especificidad y va después:
-     hay que repetir el tamaño pequeño del botón flotante de ayuda. */
-  .btn-ayuda { min-height: 34px; padding: 6px 12px; font-size: .82rem; flex: 0 0 auto; }
-  .panel { flex-direction: column; align-items: stretch; }
-  .panel-acciones .btn { flex: 1 1 auto; }
-  /* El botón de cerrar solo necesita el ancho de su símbolo:
-     así Editar y Eliminar caben en la misma fila. Si aun así no entran los tres y
-     el cerrar pasa a su propia línea, margin-left:auto lo manda a la derecha:
-     a la izquierda solapa con el botón flotante de Ayuda, que vive en esa esquina. */
-  #btnCerrarPanel { flex: 0 0 46px; padding: 10px 0; margin-left: auto; }
-  .modal-fondo { padding: 12px; }
-  .modal { padding: 16px; }
-  .modal-botones .btn { flex: 1 1 45%; }
-  /* La hoja ocupa casi toda la pantalla: es donde se leen las matrices. */
-  .hoja-fondo { padding: 8px; }
-  .hoja { width: 100%; padding: 12px; max-height: 100%; }
-  .hoja-cabecera .btn { min-height: 40px; }
-  .hoja-cabecera h3 { font-size: 1.05rem; }
-  .tabla-datos { margin-top: 10px; }
-  /* En una celda de tabla, height funciona como altura mínima: da área táctil
-     suficiente a las celdas de Johnson sin ensanchar la tabla. */
-  .tabla-datos th, .tabla-datos td { padding: 7px 6px; font-size: .82rem; min-width: 36px; height: 38px; }
-  /* Textos de apoyo más discretos: el alto que dejan libre se lo queda la tabla. */
-  .hoja-descripcion { margin-top: 10px; font-size: .85rem; }
-  .johnson-estado { margin-top: 8px; padding: 7px 10px; font-size: .84rem; }
-  .hoja-nota { margin-top: 10px; padding-top: 10px; font-size: .78rem; }
-  /* Los rótulos de resumen se parten en dos líneas en vez de reservar 108 px
-     de ancho: en un teléfono se comían media tabla. */
-  .tabla-datos .col-suma,
-  .tabla-datos .col-cantidad { min-width: 0; }
-  .tabla-datos th.col-suma,
-  .tabla-datos th.col-cantidad { white-space: normal; line-height: 1.15; font-size: .72rem; }
-  .tabla-datos th.fila.col-suma,
-  .tabla-datos th.fila.col-cantidad { min-width: 62px; }
-  .johnson-aviso { padding: 14px; }
-  .biblio-guardar { margin: 12px 0; }
-  /* Los botones de cada grafo pasan a ocupar toda la fila del elemento. */
-  .biblio-botones { flex: 1 1 100%; }
-  .biblio-botones .btn { flex: 1 1 45%; }
+/* ---------------- Notificaciones ---------------- */
+.toast-stack {
+  position: fixed;
+  right: 16px;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 70;
+  pointer-events: none;
+  max-width: min(380px, calc(100vw - 32px));
 }
-
-/* ---------------- Pantallas muy estrechas (desde 320 px) ----------------
-   Con el texto a .9rem, "Seleccionar" y "Más opciones" llegan justo al borde
-   de su botón; aquí se reduce un punto más para que nada se corte ni desborde. */
-@media (max-width: 360px) {
-  .barra-herramientas { padding: 8px 8px; }
-  .grupo-segmentado .btn { font-size: .85rem; padding: 10px 2px; }
-  /* Fila "Matriz / Johnson / Acciones": a este ancho las tres etiquetas completas
-     no caben con el relleno normal; se recorta parejo en las tres en vez de
-     dejarle todo el hueco a una y recortar solo la vecina. */
-  .grupo-herramientas { gap: 6px; }
-  #btnMatriz { font-size: .9rem; padding: 10px 8px; }
-  #btnJohnson { font-size: .9rem; padding: 10px 8px; }
-  .btn-mas { font-size: .9rem; padding: 10px 8px; gap: 4px; }
-  .menu-acciones { min-width: 78px; }
-  .menu-extra.abierto { grid-template-columns: 1fr; }
-  .menu-extra.abierto .btn { padding: 10px 6px; font-size: .9rem; }
-  .vacio-caja { padding: 18px 16px; }
-
-  /* La hoja aprovecha casi todo el ancho y las columnas de resumen se estrechan:
-     con 320 px, "Σ Pesos" y "Cantidad ≠ 0" ocupaban más de la mitad de la tabla. */
-  .hoja-fondo { padding: 6px; }
-  .hoja { padding: 10px; }
-  .tabla-datos th, .tabla-datos td { padding: 6px 4px; font-size: .78rem; min-width: 32px; }
-  .tabla-datos th.fila.col-suma,
-  .tabla-datos th.fila.col-cantidad { min-width: 54px; font-size: .68rem; }
+.toast {
+  padding: 12px 14px;
+  border-radius: var(--radio);
+  border: 1px solid rgba(148, 163, 184, .2);
+  border-left-width: 4px;
+  border-left-color: var(--info);
+  background: rgba(15, 23, 42, .97);
+  color: var(--texto);
+  box-shadow: var(--sombra);
+  font-size: var(--t-sm);
+  line-height: 1.45;
+  opacity: 1;
+  transition: opacity .2s ease;
+  animation: toastEntrar .18s ease-out;
 }
+.toast--ok { border-left-color: var(--exito); }
+.toast--error { border-left-color: var(--peligro); }
+.toast--aviso { border-left-color: var(--aviso); }
+.toast.is-hiding { opacity: 0; }
+@keyframes toastEntrar { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-/* ---------------- Pantallas bajas (teléfono en horizontal) ----------------
-   El área de trabajo no se desplaza, así que todo lo que no quepa a lo alto
-   queda recortado. Aquí se compacta lo fijo para dejarle sitio. */
-@media (max-height: 500px) {
-  .barra-herramientas { padding: 6px 12px; gap: 8px; }
-  .btn { min-height: 40px; padding: 8px 14px; }
-  .ayuda { padding: 4px 12px; font-size: .8rem; }
+/* ---------------- Leyenda ---------------- */
+.leyenda { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: var(--t-sm); color: var(--texto-suave); }
+.leyenda__item { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.leyenda__muestra { width: 28px; height: 0; border-top: 3px solid currentColor; border-radius: 2px; flex: 0 0 auto; }
+.leyenda__muestra--elegida { color: var(--acento); }
+.leyenda__muestra--normal { color: #9cb0d4; }
+.leyenda__muestra--atenuada { color: #9cb0d4; opacity: .35; }
+.leyenda__muestra--pendiente { border-top-style: dashed; color: var(--aviso); }
+.leyenda__muestra--seleccion { color: var(--amarillo); }
+.leyenda__muestra--caja { width: 16px; height: 16px; border: 1px solid var(--borde); border-radius: 4px; }
+.leyenda__muestra--ficticio { border-color: var(--ficticio); background: rgba(192, 132, 252, .18); border-style: dashed; }
+.leyenda__muestra--cubierta { background: rgba(251, 191, 36, .22); border-color: var(--aviso); }
+.leyenda__muestra--cero { background: rgba(45, 212, 191, .18); border-color: var(--exito); }
 
-  .vacio { padding: 10px; }
-  .vacio-caja { padding: 14px 18px; max-width: 460px; }
-  .vacio-caja h2 { font-size: 1rem; }
-  .vacio-caja ol { line-height: 1.35; font-size: .85rem; margin-bottom: 10px; }
-  .vacio-caja .btn { min-height: 38px; }
-
-  .panel { bottom: 8px; padding: 8px 12px; gap: 8px; }
-  .panel-detalle { font-size: .95rem; }
-  .avisos { top: 52px; }
-
-  .hoja { padding: 12px; }
-  .hoja-cabecera { padding-bottom: 8px; }
-  .hoja-descripcion { margin-top: 8px; font-size: .85rem; }
-  .hoja-nota { margin-top: 8px; padding-top: 8px; font-size: .76rem; }
-  .johnson-estado { margin-top: 8px; padding: 6px 10px; }
-  .tabla-datos { margin-top: 10px; }
-  .biblio-guardar { margin: 10px 0; }
-  .modal-ancho #modalMensaje { max-height: 50dvh; }
+/* ---------------- Lista de resultados ---------------- */
+.lista-resultado { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.lista-resultado li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radio-sm);
+  border: 1px solid var(--borde-suave);
+  background: rgba(148, 163, 184, .04);
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
 }
-
-/* En horizontal y estrecho la barra sigue partida en dos filas: se aprieta más. */
-@media (max-width: 640px) and (max-height: 500px) {
-  .btn { font-size: .88rem; padding: 8px 10px; }
-  .grupo-segmentado .btn { min-height: 40px; font-size: .85rem; }
-  .vacio-caja ol { margin-bottom: 8px; }
-  .vacio-breve { margin-bottom: 10px; }
+.lista-resultado li:hover { background: rgba(255, 255, 255, .05); }
+.lista-resultado li.seleccionada { border-color: var(--acento); background: var(--acento-tinte); }
+.lista-resultado .valor { margin-left: auto; font-weight: 700; }
+.total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radio);
+  border: 1px solid var(--acento-borde);
+  background: var(--acento-tinte);
+  font-weight: 700;
 }
+.total__valor { font-size: var(--t-xl); font-variant-numeric: tabular-nums; color: var(--acento-fuerte); }
 
-/* Teléfono en horizontal con algo de ancho: los dos grupos vuelven a una sola fila,
-   porque a lo alto es donde falta sitio. Si no cupieran, el flex-wrap los reparte igual. */
-@media (min-width: 480px) and (max-width: 640px) and (max-height: 500px) {
-  .grupo-herramientas { flex: 0 1 auto; }
-  .btn-mas, #btnJohnson { flex: 0 1 auto; }
-}
-
-/* Teléfono en horizontal: apenas hay alto. Se deja solo lo imprescindible
-   para que el lienzo no quede reducido a una franja. */
-@media (max-width: 900px) and (max-height: 520px) {
-  body.page-johnson .page-header,
-  body.page-johnson .page-description { display: none; }
-  body.page-johnson main { padding-bottom: 6px; }
-  .app-header__inner { padding: 6px 12px; }
-  .main-nav { gap: 6px; }
-  .nav-link { min-height: 32px; padding: 5px 8px; font-size: .82rem; }
-  .grafo-workspace { min-height: 150px; }
-  .zoom-controls { padding: 4px; gap: 4px; }
-  .btn-zoom { min-height: 28px; min-width: 28px; padding: 4px 6px; font-size: .85rem; }
-}
-
-/* Apertura del desplegable: opacidad y un pequeño desplazamiento, nada más. */
-@keyframes menuAbrir {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: none; }
-}
-
+/* ---------------- Movimiento reducido ---------------- */
 @media (prefers-reduced-motion: reduce) {
-  .menu-extra.abierto { animation: none; }
-  .aviso { animation: none; }
-  .btn { transition: none; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
   .btn:active { transform: none; }
 }
 
-/* ---------------- Nueva estructura por páginas ---------------- */
-:root {
-  --bg-app: #0b1020;
-  --bg-panel: rgba(19, 24, 39, 0.9);
-  --bg-card: #121a2d;
-  --bg-card-elevated: #182237;
-  --bg-soft: #1b243a;
-  --line: rgba(148, 163, 184, 0.18);
-  --text: #edf2ff;
-  --muted: #a7b7d6;
-  --primary: #5b8cff;
-  --primary-strong: #7ea0ff;
-  --success: #2dd4bf;
-  --warning: #fbbf24;
-  --danger: #f87171;
-  --shadow: 0 18px 50px rgba(3, 7, 18, 0.42);
-}
-
-body.page-home,
-body.page-johnson,
-body.page-asignacion {
-  display: block;
-  min-height: 100dvh;
-  height: auto;
-  overflow-x: hidden;
-  overflow-y: auto;
-  background:
-    radial-gradient(circle at top left, rgba(91, 140, 255, 0.12), transparent 24%),
-    linear-gradient(180deg, #0b1020 0%, #0f172a 100%);
-  color: var(--text);
-  user-select: auto;
-  -webkit-user-select: auto;
-}
-
-body.page-home main,
-body.page-johnson main,
-body.page-asignacion main {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 20px 40px;
-}
-
-.app-header {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  border-bottom: 1px solid var(--line);
-  background: rgba(11, 16, 32, 0.9);
-  backdrop-filter: blur(14px);
-}
-
-.app-header__inner {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 16px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-
-.brand__icon {
-  width: 36px;
-  height: 36px;
-  flex: 0 0 auto;
-  filter: drop-shadow(0 2px 8px rgba(91, 140, 255, 0.35));
-}
-.brand__icon circle:first-child { fill: var(--primary); }
-.brand__icon circle:last-of-type { fill: var(--success); }
-.brand__icon line { stroke: var(--text); stroke-width: 2; }
-
-.brand strong,
-.brand small {
-  display: block;
-}
-
-.brand strong {
-  font-size: 1.05rem;
-  line-height: 1.1;
-}
-
-.brand small {
-  color: var(--muted);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-/* Texto que solo aparece cuando hay ancho de sobra: en móvil se recorta el
-   rótulo («Calcular Johnson» → «Johnson») en lugar de desbordar el botón. */
-.texto-ancho { display: inline; }
-
-.main-nav {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.nav-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 40px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  color: var(--muted);
-  text-decoration: none;
-  font-weight: 600;
-  transition: all 0.18s ease;
-}
-
-.nav-link:hover,
-.nav-link:focus-visible {
-  color: var(--text);
-  border-color: var(--line);
-  background: rgba(148, 163, 184, 0.05);
-  outline: none;
-}
-
-.nav-link.active {
-  background: rgba(91, 140, 255, 0.14);
-  border-color: rgba(91, 140, 255, 0.45);
-  color: var(--text);
-}
-
-.home-shell {
-  padding-top: 56px;
-  padding-bottom: 40px;
-}
-
-.hero {
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.eyebrow {
-  margin: 0 0 10px;
-  color: var(--primary-strong);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.73rem;
-  font-weight: 700;
-}
-
-.hero h1,
-.page-header h1 {
-  margin: 0;
-  line-height: 1.1;
-  font-size: clamp(2rem, 4vw, 3.5rem);
-  letter-spacing: -0.04em;
-}
-
-.hero-copy,
-.page-description {
-  margin: 14px auto 0;
-  max-width: 680px;
-  color: var(--muted);
-  font-size: 1.08rem;
-}
-
-.selector-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
-}
-
-.algorithm-card {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  min-height: 250px;
-  padding: 28px;
-  border-radius: 22px;
-  background: rgba(18, 26, 45, 0.86);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow);
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.algorithm-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(91, 140, 255, 0.45);
-  box-shadow: 0 22px 60px rgba(3, 7, 18, 0.5), 0 0 0 1px rgba(91, 140, 255, 0.18);
-}
-
-/* ---------------- Franja de características (página de inicio) ---------------- */
-.feature-strip {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  margin: 44px 0 8px;
-}
-
-.feature-item {
-  display: flex;
-  gap: 12px;
-  padding: 18px;
-  border-radius: 16px;
-  background: rgba(18, 26, 45, 0.6);
-  border: 1px solid var(--line);
-}
-
-.feature-item__icon {
-  width: 40px;
-  height: 40px;
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  background: rgba(91, 140, 255, 0.12);
-  color: #d9e6ff;
-  border: 1px solid rgba(91, 140, 255, 0.32);
-}
-
-.feature-item__icon svg {
-  width: 20px;
-  height: 20px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.feature-item strong {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 0.95rem;
-}
-
-.feature-item p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.85rem;
-  line-height: 1.5;
-}
-
-/* ---------------- Pie de página ---------------- */
-.app-footer {
-  border-top: 1px solid var(--line);
-  margin-top: 48px;
-  padding: 22px 20px max(22px, env(safe-area-inset-bottom));
-  text-align: center;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-.app-footer__inner {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.app-footer p { margin: 0 0 6px; }
-.app-footer p:last-child { margin-bottom: 0; }
-
-/* Botón de ayuda dentro de la cabecera de página (a diferencia del editor de
-   Johnson, aquí la página se desplaza y no conviene anclarlo al lienzo). */
-.page-header__ayuda {
-  margin-left: auto;
-  flex: 0 0 auto;
-}
-
-.modal-scroll {
-  max-height: 62vh;
-  max-height: 62dvh;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding-right: 6px;
-  user-select: text;
-  -webkit-user-select: text;
-}
-
-/* ---------------- Entrada suave de las secciones principales ---------------- */
-@keyframes apareceSuave {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: none; }
-}
-body.page-home .hero,
-body.page-home .selector-grid,
-body.page-home .feature-strip,
-body.page-johnson .page-header,
-body.page-asignacion .page-header,
-body.page-asignacion .assignment-card {
-  animation: apareceSuave 0.5s ease both;
-}
-body.page-home .selector-grid .algorithm-card:nth-child(2),
-body.page-asignacion .assignment-card:nth-child(2) { animation-delay: .06s; }
-body.page-asignacion .assignment-card:nth-child(3) { animation-delay: .12s; }
-
-.card-icon {
-  width: 64px;
-  height: 64px;
-  display: grid;
-  place-items: center;
-  border-radius: 18px;
-  background: rgba(91, 140, 255, 0.12);
-  color: #d9e6ff;
-  border: 1px solid rgba(91, 140, 255, 0.36);
-}
-
-.card-icon svg {
-  width: 32px;
-  height: 32px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.card-icon circle,
-.card-icon rect,
-.card-icon path {
-  fill: none;
-  stroke: currentColor;
-}
-
-.card-icon circle {
-  fill: rgba(255,255,255,0.01);
-}
-
-.card-body {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-}
-
-.card-body h2 {
-  margin: 0 0 12px;
-  font-size: clamp(1.35rem, 2vw, 1.7rem);
-}
-
-.card-body p {
-  margin: 0 0 22px;
-  color: var(--muted);
-  line-height: 1.6;
-  flex: 1;
-}
-
-.btn-primary,
-.btn-secondary,
-.btn-neutral,
-.btn-claro,
-.btn-peligro,
-.btn-dimension,
-.btn-fantasma,
-.btn-herramienta,
-.btn-primario,
-.btn-destacado {
-  min-height: 46px;
-  border-radius: 12px;
-  border: 1px solid var(--line);
-  font-weight: 700;
-  transition: transform 0.12s ease, filter 0.12s ease, border-color 0.12s ease, background 0.12s ease;
-}
-
-.btn-primary,
-.btn-primario,
-.btn-destacado {
-  background: linear-gradient(180deg, #6ca2ff, #5b8cff);
-  border-color: rgba(107, 149, 255, 0.7);
-  color: #08111d;
-}
-
-.btn-primary:hover,
-.btn-primario:hover,
-.btn-destacado:hover,
-.btn-secondary:hover,
-.btn-neutral:hover,
-.btn-claro:hover,
-.btn-peligro:hover,
-.btn-herramienta:hover,
-.btn-fantasma:hover,
-.btn-dimension:hover {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-}
-
-.btn-secondary {
-  background: rgba(91, 140, 255, 0.12);
-  border-color: rgba(91, 140, 255, 0.4);
-  color: var(--text);
-}
-
-.btn-neutral {
-  background: rgba(148, 163, 184, 0.09);
-  border-color: rgba(148, 163, 184, 0.24);
-  color: var(--text);
-}
-
-.btn-claro {
-  background: rgba(148, 163, 184, 0.08);
-  border-color: rgba(148, 163, 184, 0.2);
-  color: var(--text);
-}
-
-.btn-peligro {
-  background: rgba(248, 113, 113, 0.12);
-  border-color: rgba(248, 113, 113, 0.4);
-  color: #ffd7d7;
-}
-
-.btn-dimension {
-  min-width: 36px;
-  min-height: 36px;
-  padding: 0 10px;
-  background: rgba(148, 163, 184, 0.08);
-  color: var(--text);
-}
-
-.page-workspace {
-  padding-top: 22px;
-}
-
-.page-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.page-header--inline {
-  margin-bottom: 8px;
-}
-
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 40px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--line);
-  background: rgba(148, 163, 184, 0.04);
-  color: var(--text);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.page-header h1 {
-  font-size: clamp(1.8rem, 3vw, 2.7rem);
-}
-
-.page-description {
-  margin: 0 0 24px;
-  max-width: none;
-}
-
-.johnson-layout {
-  display: block;
-}
-
-.grafo-workspace {
-  position: relative;
-  /* svh y no dvh: dvh cambia cada vez que el navegador móvil oculta o muestra
-     su barra de direcciones, y el lienzo se pasaba el rato creciendo y
-     encogiendo (con los nodos reacomodándose en cada cambio). */
-  height: clamp(360px, calc(100svh - 300px), 720px);
-  border-radius: 22px;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  background: rgba(18, 26, 45, 0.8);
-  box-shadow: var(--shadow);
-  /* Imprescindible en móvil: sin esto, arrastrar un nodo desplaza la página
-     y el nombre del nodo se selecciona como texto. */
-  touch-action: none;
-  overscroll-behavior: none;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-}
-
-.assignment-shell {
-  padding-top: 28px;
-}
-
-.assignment-card {
-  margin-bottom: 22px;
-  padding: 24px;
-  border-radius: 22px;
-  border: 1px solid var(--line);
-  background: rgba(18, 26, 45, 0.86);
-  box-shadow: var(--shadow);
-}
-
-.section-heading {
-  margin-bottom: 18px;
-}
-
-.section-heading h2 {
-  margin: 0;
-  font-size: clamp(1.25rem, 2vw, 1.7rem);
-}
-
-.section-hint {
-  margin: 8px 0 0;
-  color: var(--muted);
-  font-size: 0.92rem;
-  line-height: 1.55;
-}
-
-.procedure-box summary::before {
-  content: '▸ ';
-  color: var(--primary-strong);
-}
-.procedure-box[open] summary::before { content: '▾ '; }
-
-.config-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.field-group {
-  padding: 16px 18px;
-  border-radius: 16px;
-  background: rgba(148, 163, 184, 0.04);
-  border: 1px solid var(--line);
-}
-
-.field-label {
-  display: block;
-  margin-bottom: 10px;
-  color: var(--muted);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  font-size: 0.72rem;
-}
-
-.radio-row,
-.dimension-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-}
-
-.radio-row label,
-.dimension-row label {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--text);
-  font-weight: 600;
-}
-
-.radio-row input {
-  accent-color: var(--primary);
-}
-
-.matrix-scroll {
-  overflow-x: auto;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: rgba(10, 13, 22, 0.7);
-}
-
-.matrix-scroll table {
-  width: 100%;
-  min-width: 360px;
-  border-collapse: collapse;
-  font-variant-numeric: tabular-nums;
-}
-
-.matrix-scroll th,
-.matrix-scroll td {
-  min-width: 80px;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  text-align: center;
-  background: rgba(148, 163, 184, 0.02);
-}
-
-.matrix-scroll th {
-  background: rgba(91, 140, 255, 0.12);
-  color: #dfeaff;
-  font-weight: 700;
-}
-
-.matrix-scroll input {
-  width: 100%;
-  min-height: 42px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 10px;
-  background: rgba(15, 23, 42, 0.9);
-  color: var(--text);
-  padding: 8px 10px;
-  text-align: center;
-}
-
-.action-row {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 18px;
-}
-
-.result-card[hidden] {
-  display: none !important;
-}
-
-.result-list {
-  margin: 0 0 16px;
-  padding-left: 18px;
-  color: var(--text);
-  line-height: 1.8;
-}
-
-.total-value {
-  margin: 0 0 18px;
-  color: var(--success);
-  font-weight: 800;
-}
-
-.selected-cell {
-  background: rgba(45, 212, 191, 0.2) !important;
-  border-color: rgba(45, 212, 191, 0.5) !important;
-  box-shadow: inset 0 0 0 2px rgba(45, 212, 191, 0.8);
-}
-
-.procedure-box {
-  margin-top: 16px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  overflow: hidden;
-  background: rgba(148, 163, 184, 0.04);
-}
-
-.procedure-box summary {
-  padding: 14px 16px;
-  cursor: pointer;
-  font-weight: 700;
-  list-style: none;
-}
-
-.procedure-box summary::-webkit-details-marker {
-  display: none;
-}
-
-.procedure-content {
-  padding: 0 16px 16px;
-  color: var(--muted);
-  line-height: 1.7;
-}
-
-.procedure-step + .procedure-step {
-  margin-top: 18px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line);
-}
-
-.procedure-step h3 {
-  margin: 0 0 6px;
-  font-size: 1rem;
-  color: var(--text);
-}
-
-.procedure-step p { margin: 0 0 12px; }
-
-.matrix-scroll--step table { min-width: 0; }
-.matrix-scroll--step th,
-.matrix-scroll--step td {
-  min-width: 48px;
-  padding: 7px 9px;
-  font-size: .9rem;
-  color: var(--text);
-}
-
-/* Campos para renombrar filas y columnas dentro de la cabecera de la tabla. */
-.matrix-scroll th .label-input {
-  width: 100%;
-  min-width: 92px;
-  min-height: 34px;
-  padding: 6px 8px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-weight: 700;
-  text-align: center;
-}
-.matrix-scroll th .label-input:hover { border-color: var(--line); }
-.matrix-scroll th .label-input:focus {
-  outline: none;
-  border-color: rgba(91, 140, 255, 0.6);
-  background: rgba(15, 23, 42, 0.9);
-}
-
-.result-note {
-  margin: 0 0 12px;
-  color: var(--muted);
-  font-size: 0.92rem;
-}
-
-.toast-stack {
-  position: fixed;
-  right: 18px;
-  bottom: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 40;
-}
-
-.toast {
-  min-width: 220px;
-  max-width: min(360px, calc(100vw - 32px));
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  background: rgba(15, 23, 42, 0.96);
-  color: var(--text);
-  box-shadow: var(--shadow);
-  opacity: 1;
-  transition: opacity 0.2s ease;
-}
-
-.toast--ok {
-  border-left: 4px solid var(--success);
-}
-
-.toast--error {
-  border-left: 4px solid var(--danger);
-}
-
-.toast.is-hiding {
-  opacity: 0;
-}
-
-@media (max-width: 1024px) {
-  .selector-grid,
-  .config-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .app-header__inner {
-    gap: 12px;
-  }
-
-  .nav-link {
-    flex: 1 1 auto;
-  }
-}
-
+/* ---------------- Móvil ---------------- */
 @media (max-width: 640px) {
-  body.page-home main,
-  body.page-johnson main,
-  body.page-asignacion main {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-
-  /* La cabecera se queda solo con la navegación: el nombre del proyecto
-     repetía lo que ya dice el título de la página y costaba una fila entera. */
-  .brand { display: none; }
-  .texto-ancho { display: none; }
-
-  .app-header__inner {
-    padding: 8px 12px;
-  }
-
-  .main-nav {
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
-  }
-
-  .nav-link {
-    min-width: 0;
-    width: 100%;
-    min-height: 38px;
-    padding: 8px 4px;
-    font-size: 0.88rem;
-  }
-
-  /* Cabecera de página en una sola línea baja: «← » + título. */
-  .page-header--inline {
-    gap: 8px;
-    flex-wrap: nowrap;
-    margin-bottom: 6px;
-  }
-
-  .back-link {
-    flex: 0 0 auto;
-    min-height: 34px;
-    padding: 6px 10px;
-  }
-
-  .page-header h1 {
-    font-size: 1.15rem;
-    letter-spacing: -0.01em;
-    overflow-wrap: anywhere;
-  }
-
-  .page-workspace,
-  .assignment-shell {
-    padding-top: 10px;
-  }
-
-  .page-description {
-    margin-bottom: 12px;
-    font-size: 0.9rem;
-  }
-
-  /* En Johnson el espacio vertical es para el lienzo, no para el texto. */
-  body.page-johnson .page-description { display: none; }
-
-  .selector-grid {
-    gap: 16px;
-  }
-
-  .algorithm-card,
-  .assignment-card {
-    padding: 16px 14px;
-    border-radius: 18px;
-    margin-bottom: 16px;
-  }
-
-  .card-icon {
-    width: 54px;
-    height: 54px;
-  }
-
-  .section-heading { margin-bottom: 14px; }
-  .section-hint { font-size: 0.85rem; }
-
-  .action-row {
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-
-  .action-row .btn {
-    width: 100%;
-  }
-
-  /* Filas y columnas siguen lado a lado; solo saltan de línea si no caben. */
-  .dimension-row { gap: 10px 16px; }
-  .dimension-row label { gap: 6px; font-size: 0.92rem; }
-
-  .btn-primary,
-  .btn-secondary,
-  .btn-neutral,
-  .btn-claro,
-  .btn-peligro,
-  .btn-fantasma,
-  .btn-herramienta,
-  .btn-primario,
-  .btn-destacado {
-    min-height: 46px;
-  }
-  .btn-dimension { min-height: 40px; min-width: 40px; }
-
-  /* ---- Johnson como aplicación: la pantalla no se desplaza y el lienzo ocupa
-     todo el hueco libre. Antes el lienzo tenía alto propio, quedaba parte por
-     debajo del borde y no se podía llegar hasta ella: el gesto de desplazar
-     está desactivado sobre el área de trabajo (hace falta para mover nodos). */
-  body.page-johnson {
-    height: 100svh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  body.page-johnson main {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    padding-bottom: 10px;
-  }
-
-  /* Lo fijo no se encoge: el hueco que sobra es siempre para el lienzo. */
-  body.page-johnson .page-header,
-  body.page-johnson .barra-herramientas,
-  body.page-johnson .ayuda { flex: 0 0 auto; }
-
-  .johnson-layout {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-  }
-
-  .grafo-workspace {
-    flex: 1;
-    min-height: 240px;
-    height: auto;
-    border-radius: 0 0 18px 18px;
-  }
-
-  /* ---- Matriz de la página de asignación ---- */
-  .matrix-scroll table { min-width: 0; }
-
-  .matrix-scroll th,
-  .matrix-scroll td {
-    min-width: 58px;
-    padding: 6px;
-    font-size: 0.85rem;
-  }
-
-  /* La columna de nombres se queda fija al desplazar en horizontal:
-     con 8 columnas, si no, se pierde de vista a qué fila pertenece cada dato. */
-  .matrix-scroll tbody th {
-    position: sticky;
-    left: 0;
-    z-index: 1;
-    background: #16203a;
-  }
-
-  .matrix-scroll th .label-input {
-    min-width: 86px;
-    min-height: 30px;
-    padding: 4px;
-    font-size: 0.8rem;
-  }
-
-  .matrix-scroll input {
-    min-height: 38px;
-    padding: 6px 4px;
-    font-size: 0.9rem;
-  }
+  .btn { padding: 10px 12px; font-size: var(--t-sm); }
+  .acciones .btn { flex: 1 1 auto; }
+  .acciones .btn-icono { flex: 0 0 auto; }
+  .acciones .btn-peligro { margin-left: 0; }
+  .tabla th, .tabla td { padding: 6px 6px; min-width: 56px; font-size: var(--t-sm); }
+  .tabla input { min-width: 56px; min-height: 40px; padding: 6px 4px; }
+  .tabla th input { min-width: 80px; font-size: var(--t-sm); }
+  .modal { padding: 16px; }
+  .modal-botones .btn { flex: 1 1 45%; }
+  .toast-stack { right: 12px; left: 12px; max-width: none; align-items: stretch; }
+  /* En móvil el indicador se compacta: solo el paso actual y un contador «Paso X de Y». */
+  .pasos { gap: 4px; padding: 4px; }
+  .paso { padding: 6px 8px; font-size: var(--t-sm); }
+  .paso:not([aria-current="step"]) .paso__texto { display: none; }
+  .paso:not([aria-current="step"]) { flex: 0 0 auto; }
+  .paso[aria-current="step"] { min-width: max-content; }
+  .pasos li:not(:has([aria-current="step"])) { flex: 0 0 auto; }
+  .pasos li:has([aria-current="step"]) { flex: 1 1 auto; }
+  .pasos__contador { display: inline; white-space: nowrap; }
 }
-
 @media (max-width: 360px) {
-  .main-nav { gap: 4px; }
-  .nav-link { font-size: 0.82rem; padding: 8px 2px; }
-
-  .hero h1 { font-size: 1.8rem; }
-  .page-header h1 { font-size: 1.05rem; }
-
-  .matrix-scroll th,
-  .matrix-scroll td { min-width: 48px; padding: 5px 3px; font-size: 0.8rem; }
-  /* 74px: con 62px el valor por defecto "Persona 1" (9 caracteres) no cabía
-     y se veía con el número cortado. */
-  .matrix-scroll th .label-input { min-width: 74px; font-size: 0.75rem; }
-  .matrix-scroll input { min-height: 34px; font-size: 0.85rem; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .btn-primary,
-  .btn-secondary,
-  .btn-neutral,
-  .btn-claro,
-  .btn-peligro,
-  .btn-dimension,
-  .btn-fantasma,
-  .btn-herramienta,
-  .btn-primario,
-  .btn-destacado,
-  .nav-link,
-  .back-link,
-  .toast,
-  .algorithm-card {
-    transition: none;
-  }
-  .algorithm-card:hover { transform: none; }
-  body.page-home .hero,
-  body.page-home .selector-grid,
-  body.page-home .feature-strip,
-  body.page-johnson .page-header,
-  body.page-asignacion .page-header,
-  body.page-asignacion .assignment-card {
-    animation: none;
-  }
-}
-
-@media (max-width: 1024px) {
-  .feature-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-@media (max-width: 640px) {
-  .feature-strip { grid-template-columns: 1fr; margin: 28px 0 4px; gap: 12px; }
-  .app-footer { margin-top: 32px; padding: 18px 14px max(18px, env(safe-area-inset-bottom)); font-size: .8rem; }
-  .page-header__ayuda { min-height: 34px; padding: 6px 10px; font-size: .82rem; }
+  .tabla th, .tabla td { min-width: 48px; padding: 5px 4px; font-size: var(--t-xs); }
+  .tabla input { min-width: 48px; }
+  .tabla th input { min-width: 72px; }
 }

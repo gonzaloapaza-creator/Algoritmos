@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Método de la esquina noroeste: solución inicial factible del problema de transporte, paso a paso." />
+  <meta name="theme-color" content="#0b1020" />
+  <title>Esquina noroeste | Algoritmos de Optimización</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='9' cy='23' r='5' fill='%235b8cff'/><circle cx='23' cy='9' r='5' fill='%2300d3a7'/><line x1='12' y1='20' x2='20' y2='12' stroke='white' stroke-width='2'/></svg>" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="css/shell.css" />
+  <link rel="stylesheet" href="css/northwest.css" />
+</head>
+<body class="page-northwest" data-modulo="northwest">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <header class="topbar">
+    <button type="button" class="btn btn-fantasma btn-icono topbar__menu" id="btnMenuLateral" aria-label="Abrir menú" aria-expanded="false" aria-controls="barraLateral">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <a class="topbar__marca" href="index.html" aria-label="Grafo · Inicio">
+      <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="9" cy="23" r="5"></circle><circle cx="23" cy="9" r="5"></circle><line x1="12" y1="20" x2="20" y2="12"></line></svg>
+      <span>Grafo</span>
+    </a>
+    <span class="topbar__separador" aria-hidden="true"></span>
+    <span class="topbar__modulo" id="topbarModulo">Esquina noroeste</span>
+    <div class="topbar__acciones">
+      <button type="button" class="btn btn-fantasma btn-sm" id="btnVideoModulo" aria-pressed="false" title="Ver la presentación en video">Video</button>
+      <button type="button" class="btn btn-fantasma btn-sm" id="btnAyudaNw">Ayuda</button>
+    </div>
+  </header>
+  <aside class="sidebar" id="barraLateral" aria-label="Navegación principal"></aside>
+  <div class="sidebar-fondo" id="barraLateralFondo" hidden></div>
+
+  <main class="contenido" id="contenido">
+    <section id="introModulo" hidden></section>
+    <div id="moduloContenido">
+    <section class="modulo-cabecera">
+      <div class="modulo-cabecera__texto">
+        <h1>Esquina noroeste</h1>
+        <p>Problema de transporte: datos → balanceo → resolución paso a paso → resultado.</p>
+      </div>
+    </section>
+
+    <div class="mensaje mensaje--aviso mensaje--permanente nw-aclaracion" role="note">
+      El método de la esquina noroeste obtiene una solución inicial factible. No garantiza el costo mínimo.
+    </div>
+
+    <nav class="nw-pasos" aria-label="Pasos del módulo">
+      <ol class="pasos" id="pasosNorthwest">
+        <li><button type="button" class="paso" data-vista="datos"><span class="paso__numero">1</span><span class="paso__texto">Datos</span></button></li>
+        <li><button type="button" class="paso" data-vista="balanceo"><span class="paso__numero">2</span><span class="paso__texto">Balanceo</span></button></li>
+        <li><button type="button" class="paso" data-vista="resolucion"><span class="paso__numero">3</span><span class="paso__texto">Resolución paso a paso</span></button></li>
+        <li><button type="button" class="paso" data-vista="resultado"><span class="paso__numero">4</span><span class="paso__texto">Resultado</span></button></li>
+      </ol>
+      <span class="pasos__contador" id="pasosContadorNw" aria-live="polite">Paso 1 de 4</span>
+      <span class="estado estado--neutro" id="estadoResultadoNw">Sin resolver</span>
+    </nav>
+
+    <!-- Paso 1: datos -->
+    <section class="vista" id="vistaDatos" data-vista="datos" aria-labelledby="tituloDatos">
+      <div class="nw-layout">
+        <div class="nw-principal tarjeta">
+          <div class="tarjeta__cabecera">
+            <div>
+              <h2 id="tituloDatos">Matriz de transporte</h2>
+              <p class="tarjeta__pista">Costos en el centro, oferta a la derecha y demanda abajo. Vacío = pendiente.</p>
+            </div>
+            <span class="estado estado--neutro" id="estadoBalanceNw">—</span>
+          </div>
+          <div class="tabla-caja" id="tablaDatosNorthwest"></div>
+          <div class="acciones nw-acciones-tabla">
+            <button type="button" class="btn btn-secondary btn-sm" id="btnAgregarOrigen">+ Origen (fila)</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnAgregarDestino">+ Destino (columna)</button>
+            <span class="acciones__separador"></span>
+            <button type="button" class="btn btn-neutral btn-sm" id="btnDeshacerNw" title="Deshacer (Ctrl+Z)">Deshacer</button>
+            <button type="button" class="btn btn-neutral btn-sm" id="btnRehacerNw" title="Rehacer (Ctrl+Y)">Rehacer</button>
+          </div>
+        </div>
+        <aside class="nw-lateral">
+          <div class="tarjeta" id="resumenDatosNorthwest" aria-live="polite"></div>
+          <div class="tarjeta">
+            <p class="etiqueta">Ejemplos</p>
+            <div class="nw-ejemplo">
+              <label class="sr-only" for="selectorEjemploNw">Ejemplo</label>
+              <select class="entrada" id="selectorEjemploNw"></select>
+              <button type="button" class="btn btn-neutral" id="btnEjemploNw">Cargar</button>
+            </div>
+            <p class="tarjeta__pista">Límites de esta versión: 1–10 orígenes y destinos; costos 0–999999 con 2 decimales; oferta y demanda enteras 0–999999. Detalles en «Ayuda».</p>
+            <div class="acciones nw-lateral__archivo">
+              <button type="button" class="btn btn-neutral btn-sm" id="btnExportarNw">Exportar JSON</button>
+              <button type="button" class="btn btn-neutral btn-sm" id="btnImportarNw">Importar JSON</button>
+            </div>
+            <div class="acciones nw-lateral__peligro">
+              <button type="button" class="btn btn-peligro btn-sm" id="btnLimpiarNw">Limpiar datos</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+      <div class="acciones acciones--fin nw-pie">
+        <button type="button" class="btn btn-primary" data-ir="balanceo">Continuar: balanceo →</button>
+      </div>
+    </section>
+
+    <!-- Paso 2: balanceo -->
+    <section class="vista" id="vistaBalanceo" data-vista="balanceo" hidden aria-labelledby="tituloBalanceo">
+      <div class="tarjeta nw-sin" id="balanceoSinDatos">
+        <h2>Balanceo</h2>
+        <p></p>
+        <div class="acciones"><button type="button" class="btn btn-primary" data-ir="datos">Completar los datos</button></div>
+      </div>
+      <div id="balanceoConDatos" hidden>
+        <div class="tarjeta">
+          <div class="tarjeta__cabecera">
+            <h2 id="tituloBalanceo">Vista previa del problema balanceado</h2>
+          </div>
+          <div class="nw-balanceo-texto" id="balanceoTexto"></div>
+          <div class="tabla-caja" id="tablaBalanceo"></div>
+          <div class="leyenda nw-leyenda">
+            <span class="leyenda__item"><span class="leyenda__muestra leyenda__muestra--caja leyenda__muestra--ficticio"></span>Fila o columna ficticia (borde discontinuo, costo 0)</span>
+          </div>
+        </div>
+      </div>
+      <div class="acciones acciones--entre nw-pie">
+        <button type="button" class="btn btn-neutral" data-ir="datos">← Volver a los datos</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmarBalanceo">Confirmar balanceo y resolver</button>
+      </div>
+    </section>
+
+    <!-- Paso 3: resolución -->
+    <section class="vista" id="vistaResolucion" data-vista="resolucion" hidden aria-labelledby="tituloResolucion">
+      <div class="tarjeta nw-sin" id="resolucionSin">
+        <h2 id="tituloResolucion">Resolución paso a paso</h2>
+        <p></p>
+        <div class="acciones"><button type="button" class="btn btn-primary" data-ir="balanceo">Ir al balanceo</button></div>
+      </div>
+      <div id="resolucionCon" hidden>
+        <div class="nw-layout nw-layout--resolucion">
+          <div class="nw-principal tarjeta">
+            <div class="nw-paso-cabecera">
+              <span class="estado estado--neutro" id="nwPasoIndicador">Paso 1 de 1</span>
+              <div class="acciones">
+                <button type="button" class="btn btn-neutral btn-sm" id="btnNwReiniciar">Reiniciar</button>
+                <button type="button" class="btn btn-neutral btn-sm" id="btnNwAnterior">← Anterior</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btnNwSiguiente">Siguiente →</button>
+                <button type="button" class="btn btn-fantasma btn-sm" id="btnNwAuto" aria-pressed="false" title="Reproducción automática (opcional)">Reproducir</button>
+              </div>
+            </div>
+            <div class="tabla-caja" id="nwPasoTabla"></div>
+            <div class="leyenda nw-leyenda">
+              <span class="leyenda__item"><span class="leyenda__muestra leyenda__muestra--caja leyenda__muestra--actual"></span>Celda actual</span>
+              <span class="leyenda__item"><span class="leyenda__muestra leyenda__muestra--caja leyenda__muestra--basica"></span>Celda básica (ya asignada)</span>
+              <span class="leyenda__item"><span class="leyenda__muestra leyenda__muestra--caja leyenda__muestra--ficticio"></span>Ficticio</span>
+              <span class="leyenda__item"><em>c =</em>&nbsp;costo unitario</span>
+              <span class="leyenda__item"><strong>Número grande</strong>&nbsp;= cantidad enviada</span>
+              <span class="leyenda__item"><em>→</em>&nbsp;saldo restante</span>
+              <span class="leyenda__item"><s>Tachado</s>&nbsp;= fila o columna satisfecha</span>
+            </div>
+          </div>
+          <aside class="nw-lateral">
+            <div class="tarjeta" id="nwPasoDetalle" aria-live="polite"></div>
+          </aside>
+        </div>
+      </div>
+      <div class="acciones acciones--entre nw-pie">
+        <button type="button" class="btn btn-neutral" data-ir="balanceo">← Balanceo</button>
+        <button type="button" class="btn btn-primary" data-ir="resultado">Ver resultado →</button>
+      </div>
+    </section>
+
+    <!-- Paso 4: resultado -->
+    <section class="vista" id="vistaResultadoNw" data-vista="resultado" hidden aria-labelledby="tituloResultadoNw">
+      <div class="tarjeta nw-sin" id="resultadoNwSin">
+        <h2 id="tituloResultadoNw">Resultado</h2>
+        <p></p>
+        <div class="acciones"><button type="button" class="btn btn-primary" data-ir="balanceo">Ir al balanceo</button></div>
+      </div>
+      <div id="resultadoNwCon" hidden>
+        <div class="nw-layout">
+          <div class="nw-principal">
+            <div class="tarjeta">
+              <div class="tarjeta__cabecera"><h2>Matriz final de cantidades</h2><p class="tarjeta__pista">c = costo unitario · número grande = cantidad. «0 básico»: variable básica con cantidad cero.</p></div>
+              <div class="tabla-caja" id="nwTablaFinal"></div>
+            </div>
+            <div class="nw-notas" id="nwNotas"></div>
+          </div>
+          <aside class="nw-lateral">
+            <div class="total" id="nwCostoTotal"></div>
+            <div class="tarjeta">
+              <p class="etiqueta">Envíos con cantidad &gt; 0</p>
+              <ul class="lista-resultado lista-resultado--estatica" id="nwEnvios"></ul>
+            </div>
+            <div class="tarjeta tarjeta--plana">
+              <p class="etiqueta">Verificación automática</p>
+              <ul class="nw-verificacion" id="nwVerificacion"></ul>
+            </div>
+          </aside>
+        </div>
+      </div>
+      <div class="acciones acciones--entre nw-pie">
+        <button type="button" class="btn btn-neutral" data-ir="resolucion">← Resolución</button>
+        <button type="button" class="btn btn-neutral" data-ir="datos">Volver a los datos</button>
+      </div>
+    </section>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <div class="app-footer__inner">
+      <p>Todo se guarda en tu navegador. Nada se envía a ningún servidor.</p>
+    </div>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/comun/utilidades.js"></script>
+  <script src="js/comun/catalogo.js"></script>
+  <script src="js/comun/navegacion.js"></script>
+  <script src="js/comun/intro.js"></script>
+  <script src="js/comun/notificaciones.js"></script>
+  <script src="js/comun/dialogo.js"></script>
+  <script src="js/northwest/validacion.js"></script>
+  <script src="js/northwest/modelo.js"></script>
+  <script src="js/northwest/balanceo.js"></script>
+  <script src="js/northwest/noroeste.js"></script>
+  <script src="js/northwest/estado.js"></script>
+  <script src="js/northwest/tabla.js"></script>
+  <script src="js/northwest/app.js"></script>
+</body>
+</html>

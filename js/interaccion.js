@@ -3,7 +3,6 @@
 'use strict';
 
 let arrastre = null;   // { id, dx, dy, movido }
-let nodoPendiente = null;
 
 function elegirHerramienta(nombre) {
   estado.herramienta = nombre;
@@ -125,8 +124,7 @@ el.svg.addEventListener('pointerdown', evento => {
 
   // Segundo dedo: empieza el pellizco y se cancela lo que hubiera en curso.
   if (punteros.size === 2) {
-    nodoPendiente = null;
-    if (arrastre) terminarArrastre();
+    if (arrastre) { arrastre = null; dibujar(); }
     pan = null;
     pinza = medidaPinza();
     return;
@@ -172,9 +170,7 @@ el.svg.addEventListener('pointerdown', evento => {
   }
 
   if (estado.herramienta === 'nodo') {
-    // Crear al soltar evita un nodo accidental cuando el gesto acaba siendo una pinza.
-    nodoPendiente = { pointerId: evento.pointerId, x: punto.x, y: punto.y,
-      pantalla: pantallaEnSVG(evento) };
+    crearNodo(punto.x, punto.y);
     return;
   }
 
@@ -191,10 +187,6 @@ el.svg.addEventListener('pointerdown', evento => {
 el.svg.addEventListener('pointermove', evento => {
   if (!punteros.has(evento.pointerId)) return;
   punteros.set(evento.pointerId, pantallaEnSVG(evento));
-  if (nodoPendiente && nodoPendiente.pointerId === evento.pointerId) {
-    const p = pantallaEnSVG(evento);
-    if (Math.hypot(p.x-nodoPendiente.pantalla.x,p.y-nodoPendiente.pantalla.y)>8) nodoPendiente=null;
-  }
 
   if (pinza && punteros.size === 2) {
     const actual = medidaPinza();
@@ -220,8 +212,8 @@ el.svg.addEventListener('pointermove', evento => {
   const maxX = Math.max(RADIO_NODO, a.ancho - RADIO_NODO);
   const maxY = Math.max(RADIO_NODO, a.alto - RADIO_NODO);
 
-  nodo.x = punto.x - arrastre.dx;
-  nodo.y = punto.y - arrastre.dy;
+  nodo.x = limitar(punto.x - arrastre.dx, RADIO_NODO, maxX);
+  nodo.y = limitar(punto.y - arrastre.dy, RADIO_NODO, maxY);
   arrastre.movido = true;
 
   // Al redibujar, las conexiones y sus valores siguen al nodo.
@@ -229,10 +221,6 @@ el.svg.addEventListener('pointermove', evento => {
 });
 
 function soltarPuntero(evento) {
-  if (nodoPendiente && nodoPendiente.pointerId === evento.pointerId) {
-    if (evento.type === 'pointerup' && punteros.size === 1 && !pinza) crearNodo(nodoPendiente.x,nodoPendiente.y);
-    nodoPendiente = null;
-  }
   punteros.delete(evento.pointerId);
   if (punteros.size < 2) pinza = null;
   if (punteros.size > 0) return;
@@ -263,15 +251,6 @@ document.addEventListener('keydown', evento => {
   if (estado.herramienta !== 'seleccionar') return;
   if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
   if (modalAbierto()) return;
-  if (!el.lienzo.contains(evento.target) || matrizVisible() || johnsonVisible() || bibliotecaVisible()) return;
-  if (evento.target.closest('button, input, select, a')) return;
-  const enfocado = evento.target.closest('.nodo, .conexion');
-  if (enfocado && (evento.key === 'Enter' || evento.key === ' ')) {
-    evento.preventDefault();
-    estado.seleccion = { tipo: enfocado.classList.contains('nodo') ? 'nodo' : 'conexion', id: enfocado.dataset.id };
-    editarSeleccion();
-    return;
-  }
 
   // Navegación con flechas para mover entre nodos
   if (!evento.ctrlKey && !evento.metaKey && !evento.altKey) {

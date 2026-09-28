@@ -1,0 +1,247 @@
+/* ============================================================================
+   Módulo de asignación: vistas por pasos, grafo bipartito, matriz y procedimiento.
+   ============================================================================ */
+
+.asig-pasos { display: flex; align-items: center; gap: var(--esp-3); margin-bottom: var(--esp-3); }
+.asig-pasos .pasos { flex: 1 1 auto; }
+
+.asig-barra {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--esp-4);
+}
+.asig-barra .resumen-datos { flex: 1 1 auto; }
+
+/* Panel principal + panel auxiliar: el grafo nunca se comprime por el lateral. */
+.asig-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--esp-4);
+  align-items: start;
+}
+.asig-layout--matriz { grid-template-columns: minmax(0, 1fr) 320px; }
+.asig-layout--proc { grid-template-columns: minmax(0, 1fr) 280px; }
+.asig-principal { min-width: 0; }
+.asig-lateral { display: flex; flex-direction: column; gap: var(--esp-3); min-width: 0; }
+.asig-lateral__acciones { margin-top: 8px; }
+.asig-lateral__acciones .btn { flex: 1 1 100%; }
+.asig-lateral__acciones #btnDeshacerAsig, .asig-lateral__acciones #btnRehacerAsig,
+.asig-lateral__acciones #btnExportarAsignacion, .asig-lateral__acciones #btnImportarAsignacion { flex: 1 1 calc(50% - 4px); }
+.asig-lateral__peligro { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--borde-suave); }
+.asig-lateral__peligro .btn { margin-left: 0; }
+.asig-pie { margin-top: var(--esp-4); }
+.asig-sin { display: flex; flex-direction: column; gap: 12px; }
+.asig-sin p { color: var(--texto-suave); }
+.asig-notas { display: flex; flex-direction: column; gap: 8px; margin: var(--esp-4) 0; }
+.asig-panel__nombre { font-size: var(--t-lg); font-weight: 700; overflow-wrap: anywhere; margin: 2px 0 4px; }
+.asig-panel__acciones { margin-top: 10px; }
+.asig-panel__acciones .btn-peligro { margin-left: 0; }
+.leyenda--vertical { flex-direction: column; gap: 6px; }
+.leyenda--vertical .leyenda__item { white-space: normal; align-items: flex-start; }
+.leyenda--vertical .leyenda__muestra { margin-top: 8px; }
+.asig-layout > *, .asig-lateral > * { min-width: 0; }
+
+/* ---------------- Bloque del grafo ---------------- */
+.grafo-b {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-lg);
+  background: rgba(18, 26, 45, .86);
+  box-shadow: var(--sombra-suave);
+  padding: 10px;
+}
+.grafo-b__barra { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.grafo-b__vista { margin-left: auto; }
+.grafo-b .solo-resultado { display: none; }
+.grafo-b.modo-resultado .solo-edicion { display: none; }
+.grafo-b.modo-resultado .solo-resultado { display: flex; }
+
+.grafo-b__lienzo {
+  position: relative;
+  height: clamp(340px, calc(100svh - var(--topbar) - 340px), 640px);
+  border-radius: var(--radio);
+  overflow: hidden;
+  border: 1px solid var(--borde-suave);
+  background:
+    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, .07) 1px, transparent 0) 0 0 / 26px 26px,
+    rgba(10, 13, 22, .7);
+  /* Solo la superficie del grafo bloquea los gestos del navegador. */
+  touch-action: none;
+  overscroll-behavior: contain;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+#svgAsignacion { width: 100%; height: 100%; display: block; cursor: default; overflow: hidden; }
+.grafo-b.modo-conectar #svgAsignacion { cursor: pointer; }
+.grafo-b__ayuda { color: var(--texto-suave); font-size: var(--t-sm); text-align: center; min-height: 1.4em; }
+
+.grafo-b__vacio { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; pointer-events: none; }
+.grafo-b__vacio-caja {
+  pointer-events: auto;
+  max-width: 420px;
+  text-align: center;
+  background: rgba(23, 27, 46, .94);
+  border: 1px dashed var(--borde);
+  border-radius: var(--radio-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.grafo-b__vacio-caja p { color: var(--texto-suave); }
+.grafo-b__vacio-caja .acciones { justify-content: center; }
+
+/* Grafo ampliado: ocupa la pantalla, por encima de la barra lateral y debajo del modal. */
+.grafo-b.ampliado {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  border-radius: 0;
+  padding: 10px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+.grafo-b.ampliado .grafo-b__lienzo { flex: 1 1 auto; height: auto; }
+body.grafo-ampliado { overflow: hidden; }
+
+/* ---------------- SVG: títulos, nodos y aristas ---------------- */
+.grafo-b__titulo {
+  fill: var(--texto-apagado);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  text-anchor: middle;
+}
+.nodo-b { cursor: grab; }
+.nodo-b.arrastrando { cursor: grabbing; }
+.nodo-b rect {
+  fill: #1c2a4f;
+  stroke: #5b8cff;
+  stroke-width: 2;
+  transition: fill var(--transicion), stroke var(--transicion);
+}
+.nodo-b.tarea rect { fill: #1b3a3a; stroke: #2dd4bf; }
+.nodo-b:hover rect { filter: brightness(1.18); }
+.nodo-b.seleccionado rect { stroke: var(--amarillo); stroke-width: 3.5; filter: drop-shadow(0 0 6px rgba(255, 207, 92, .5)); }
+.nodo-b.origen rect { stroke: var(--verde); stroke-width: 3.5; stroke-dasharray: 6 4; }
+.nodo-b.sin-asignar rect { stroke-dasharray: 5 4; opacity: .8; }
+.nodo-b text {
+  fill: var(--texto);
+  font-size: 15px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+.nodo-b__marca { font-size: 11px !important; font-weight: 600 !important; fill: var(--aviso) !important; dominant-baseline: hanging !important; }
+.nodo-b:focus-visible { outline: none; }
+.nodo-b:focus-visible rect { stroke: var(--texto); stroke-width: 3; }
+
+.arista__linea {
+  fill: none;
+  stroke: #9cb0d4;
+  stroke-width: 2;
+  transition: stroke var(--transicion), opacity var(--transicion);
+}
+.arista__zona { fill: none; stroke: transparent; stroke-width: 18; cursor: pointer; }
+.arista:hover .arista__linea { stroke: #d5e2ff; stroke-width: 2.5; }
+.arista.pendiente .arista__linea { stroke: var(--aviso); stroke-dasharray: 5 6; stroke-width: 1.5; opacity: .75; }
+.arista.fuera-foco .arista__linea, .arista.fuera-foco .arista__valor { opacity: .18; }
+.arista.relacionada .arista__linea { stroke: #d5e2ff; stroke-width: 2.5; }
+.arista.seleccionada .arista__linea { stroke: var(--amarillo); stroke-width: 3.5; opacity: 1; filter: drop-shadow(0 0 4px rgba(255, 207, 92, .45)); }
+.arista.elegida .arista__linea { stroke: var(--acento); stroke-width: 5; opacity: 1; filter: drop-shadow(0 0 6px rgba(45, 212, 191, .45)); }
+.arista.elegida.seleccionada .arista__linea { stroke: var(--amarillo); }
+.arista.atenuada:not(.seleccionada):not(.relacionada) .arista__linea { opacity: .22; }
+.arista.atenuada.relacionada .arista__linea { opacity: .6; }
+.arista__valor {
+  fill: var(--texto);
+  font-size: 13px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: #0b1020;
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+.arista.pendiente .arista__valor { fill: var(--aviso); }
+.arista.seleccionada .arista__valor { fill: var(--amarillo); }
+.arista.elegida .arista__valor { fill: var(--acento-fuerte); font-size: 14px; }
+.arista:focus-visible { outline: none; }
+.arista:focus-visible .arista__linea { stroke: var(--texto); stroke-width: 3.5; opacity: 1; }
+
+/* ---------------- Matriz ---------------- */
+.tabla-asignacion td.relacionada { background: rgba(255, 255, 255, .04); }
+.tabla-asignacion thead th:first-child { min-width: 120px; }
+
+/* ---------------- Procedimiento ---------------- */
+.proc-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.proc-texto { color: var(--texto-suave); line-height: 1.6; margin: 6px 0 12px; }
+.proc-tabla { display: flex; flex-direction: column; gap: 12px; }
+.proc-tabla .procedure-step { padding-top: 14px; border-top: 1px solid var(--borde-suave); }
+.proc-tabla .procedure-step:first-child { border-top: 0; padding-top: 0; }
+.procedimiento__lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 60vh; overflow-y: auto; }
+.procedimiento__salto {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  text-align: left;
+  border-radius: var(--radio-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--texto-suave);
+  cursor: pointer;
+  font-size: var(--t-sm);
+  line-height: 1.3;
+}
+.procedimiento__salto:hover { background: rgba(255, 255, 255, .06); color: var(--texto); }
+.procedimiento__salto.activo { background: var(--acento-tinte); border-color: var(--acento-borde); color: var(--texto); font-weight: 700; }
+.tabla-paso td.cero-independiente { font-weight: 800; color: var(--texto); }
+.tabla-paso td.minimo-delta { box-shadow: inset 0 0 0 2px var(--exito); }
+.tabla-paso th.cubierta { box-shadow: inset 0 0 0 2px var(--aviso); }
+
+/* ---------------- Tablet ---------------- */
+@media (max-width: 1180px) {
+  .asig-layout, .asig-layout--matriz, .asig-layout--proc { grid-template-columns: 1fr; }
+  .asig-lateral { flex-direction: row; flex-wrap: wrap; }
+  .asig-lateral > * { flex: 1 1 260px; }
+  .grafo-b__lienzo { height: clamp(320px, 55svh, 560px); }
+}
+
+/* ---------------- Móvil ---------------- */
+@media (max-width: 640px) {
+  .asig-barra { gap: 8px; }
+  .asig-barra .segmentado { width: 100%; }
+  .asig-barra .segmentado .btn { flex: 1 1 0; }
+  .asig-lateral { flex-direction: column; }
+  .grafo-b { padding: 8px; }
+  .grafo-b__barra { gap: 6px; }
+  .grafo-b__barra .segmentado { width: 100%; }
+  .grafo-b__barra .segmentado .btn { flex: 1 1 0; }
+  .grafo-b__barra .acciones { width: 100%; }
+  .grafo-b__vista { margin-left: 0; }
+  .grafo-b__vista .btn { flex: 1 1 auto; }
+  /* En el móvil el zoom se hace con el pellizco: quedan Valores, Reordenar, Ajustar y Ampliar en una fila. */
+  #btnZoomMasAsig, #btnZoomMenosAsig { display: none; }
+  .grafo-b__ayuda { font-size: var(--t-xs); }
+  /* Controles táctiles: 44 px también en los botones pequeños del grafo. */
+  .grafo-b__barra .btn-sm { min-height: var(--tactil); }
+  .grafo-b__barra .btn-sm.btn-icono { width: var(--tactil); min-width: var(--tactil); }
+  .grafo-b__lienzo { height: clamp(300px, 48svh, 480px); }
+  .grafo-b.ampliado { padding: 6px; }
+  .asig-pie .btn { width: 100%; }
+  .proc-cabecera .acciones { width: 100%; }
+  .procedimiento__lista { max-height: 200px; }
+}
+
+/* Teléfono en horizontal: el lienzo aprovecha el alto disponible al ampliarlo. */
+@media (max-height: 520px) and (max-width: 1023.98px) {
+  .grafo-b__lienzo { height: clamp(220px, calc(100svh - 200px), 400px); }
+}

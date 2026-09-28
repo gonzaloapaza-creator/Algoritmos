@@ -10,7 +10,6 @@
  *          Objeto con resultados del algoritmo
  */
 function calcularDijkstra(origenId) {
-  if (estado.conexiones.some(c => c.valor < 0)) return null;
   const posicion = new Map();
   estado.nodos.forEach((nodo, i) => posicion.set(nodo.id, i));
 
@@ -149,7 +148,6 @@ function calcularDistanciaRuta(nodos) {
  * @param {string} origenId - ID del nodo de origen
  */
 function ejecutarDijkstra(origenId) {
-  if (typeof cambiarConsulta === 'function') cambiarConsulta();
   // Dijkstra no es válido con pesos negativos: daría un resultado silenciosamente
   // equivocado. Para ese caso está Johnson, que sí los admite.
   if (estado.conexiones.some(conexion => conexion.valor < 0)) {

@@ -1,0 +1,606 @@
+/* ============================================================================
+   Editor de grafos y algoritmo de Johnson.
+   Conserva los componentes históricos del editor (barra de herramientas, lienzo,
+   panel, hojas flotantes, tablas) sobre los tokens de styles.css.
+   ============================================================================ */
+
+/* ---------------- Barra de herramientas ---------------- */
+.barra-herramientas {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio);
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  background: rgba(15, 18, 32, .72);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-lg) var(--radio-lg) 0 0;
+  box-shadow: var(--sombra-suave);
+}
+
+.grupo-herramientas { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* Desplegable de acciones: un único botón en la barra y un panel flotante debajo. */
+.menu-acciones { position: relative; display: flex; }
+.btn-mas { display: inline-flex; }
+.menu-extra { display: none; }
+.menu-extra.abierto {
+  display: grid;
+  gap: 8px;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  min-width: 230px;
+  padding: 10px;
+  background: var(--fondo-2);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  animation: menuAbrir .17s ease-out;
+}
+.menu-extra.abierto .btn { justify-content: flex-start; width: 100%; }
+.menu-flecha { font-size: .8em; line-height: 1; }
+
+.vacio-breve { display: none; }
+
+/* Las tres herramientas comparten una caja segmentada. */
+.grupo-segmentado {
+  gap: 4px;
+  padding: 4px;
+  background: rgba(10, 13, 25, .55);
+  border: 1px solid var(--borde-suave);
+  border-radius: calc(var(--radio) + 4px);
+}
+.btn-herramienta { background: transparent; border-color: transparent; color: var(--texto-suave); }
+.btn-herramienta:hover { background: rgba(91, 140, 255, .12); border-color: transparent; color: var(--texto); }
+.btn-herramienta.activo {
+  background: var(--azul);
+  border-color: var(--azul);
+  color: #07101f;
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), var(--sombra-suave);
+}
+.btn-herramienta.activo:hover { background: #7ba2ff; border-color: #7ba2ff; }
+
+/* Texto que solo aparece con ancho de sobra («Calcular Johnson» → «Johnson»). */
+.texto-ancho { display: inline; }
+
+/* ---------------- Botón de ayuda flotante ---------------- */
+.btn-ayuda {
+  position: absolute;
+  left: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  min-height: 34px;
+  padding: 6px 12px;
+  font-size: .82rem;
+  color: var(--texto-suave);
+  background: rgba(23, 27, 46, .85);
+  border: 1px solid var(--borde);
+}
+.btn-ayuda:hover { color: var(--texto); }
+
+/* ---------------- Controles de zoom ---------------- */
+.zoom-controls {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: rgba(23, 27, 46, .85);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: var(--sombra-suave);
+}
+.btn-zoom {
+  min-height: 32px;
+  min-width: 32px;
+  padding: 6px 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  background: var(--fondo-3);
+  border: 1px solid var(--borde);
+  color: var(--texto);
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-zoom:hover { background: var(--fondo-4); border-color: #39416e; }
+.btn-zoom:active { transform: scale(.95); }
+
+/* ---------------- Mensaje de ayuda ---------------- */
+.ayuda {
+  margin: 0 0 12px;
+  padding: 10px 16px;
+  font-size: .92rem;
+  color: var(--texto-suave);
+  background: rgba(91, 140, 255, .1);
+  border: 1px solid var(--borde);
+  border-top: 0;
+  border-radius: 0 0 var(--radio-lg) var(--radio-lg);
+  text-align: center;
+}
+.ayuda strong { color: var(--texto); font-weight: 700; }
+
+/* ---------------- Área de trabajo ---------------- */
+.johnson-layout { display: block; }
+
+.grafo-workspace {
+  position: relative;
+  /* svh y no dvh: dvh cambia cada vez que el navegador móvil oculta su barra. */
+  height: clamp(360px, calc(100svh - var(--topbar) - 230px), 760px);
+  border-radius: var(--radio-lg);
+  overflow: hidden;
+  border: 1px solid var(--borde);
+  background: rgba(18, 26, 45, .8);
+  box-shadow: var(--sombra);
+  /* Solo aquí: arrastrar un nodo no debe desplazar la página ni seleccionar texto. */
+  touch-action: none;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+#svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+  background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, .07) 1px, transparent 0);
+  background-size: 26px 26px;
+  cursor: default;
+}
+.grafo-workspace.modo-nodo #svg { cursor: crosshair; }
+.grafo-workspace.modo-conectar #svg { cursor: pointer; }
+
+/* Nodos */
+.nodo { cursor: grab; }
+.nodo.arrastrando { cursor: grabbing; }
+.nodo circle {
+  fill: #24305c;
+  stroke: var(--azul);
+  stroke-width: 3;
+  transition: fill var(--transicion), stroke var(--transicion), stroke-width var(--transicion);
+}
+.nodo:hover circle { fill: #2d3c74; }
+.nodo.seleccionado circle {
+  stroke: var(--amarillo);
+  stroke-width: 4.5;
+  fill: #3d3721;
+  filter: drop-shadow(0 0 6px rgba(255, 207, 92, .55));
+}
+.nodo.origen circle {
+  stroke: var(--verde);
+  stroke-width: 4.5;
+  fill: #123c36;
+  filter: drop-shadow(0 0 6px rgba(0, 211, 167, .5));
+}
+.nodo text {
+  fill: var(--texto);
+  font-size: 16px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Conexiones */
+.conexion-linea {
+  fill: none;
+  stroke: #9cb0d4;
+  stroke-width: 2.5;
+  marker-end: url(#flecha);
+  transition: stroke var(--transicion), stroke-width var(--transicion);
+}
+.conexion:hover .conexion-linea { stroke: #c3d2ee; }
+.conexion.seleccionada .conexion-linea {
+  stroke: var(--amarillo);
+  stroke-width: 4;
+  marker-end: url(#flechaSel);
+  filter: drop-shadow(0 0 5px rgba(255, 207, 92, .45));
+}
+.conexion-zona { fill: none; stroke: transparent; stroke-width: 22; cursor: pointer; }
+.conexion-valor {
+  fill: var(--texto);
+  font-size: 14px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+  user-select: none;
+  paint-order: stroke;
+  stroke: #0f1220;
+  stroke-width: 6px;
+  stroke-linejoin: round;
+}
+.conexion.seleccionada .conexion-valor { fill: var(--amarillo); }
+
+/* Resaltado de Johnson */
+.conexion-johnson .conexion-linea {
+  stroke: var(--ruta);
+  stroke-width: 4.5;
+  marker-end: url(#flechaRuta);
+  filter: drop-shadow(0 0 6px rgba(34, 211, 238, .5));
+}
+.conexion-johnson .conexion-valor { fill: #a5f3fc; }
+.conexion-johnson.ciclo-negativo-johnson .conexion-linea {
+  stroke: var(--rojo);
+  marker-end: url(#flechaCiclo);
+  filter: drop-shadow(0 0 6px rgba(255, 95, 109, .5));
+}
+.conexion-johnson.ciclo-negativo-johnson .conexion-valor { fill: #ffc4c8; }
+.conexion-johnson-inactiva .conexion-linea { opacity: .28; }
+.conexion-johnson-inactiva .conexion-valor { opacity: .4; }
+.nodo-johnson circle { stroke: var(--ruta); stroke-width: 4; fill: #123a44; filter: drop-shadow(0 0 7px rgba(34, 211, 238, .5)); }
+.nodo-johnson-origen circle { stroke: var(--verde); fill: #0d3b33; filter: drop-shadow(0 0 8px rgba(0, 211, 167, .6)); }
+.nodo-johnson-destino circle { stroke: var(--naranja); fill: #45301a; filter: drop-shadow(0 0 8px rgba(255, 159, 67, .6)); }
+.nodo-johnson.ciclo-negativo-johnson circle { stroke: var(--rojo); fill: #451c22; filter: drop-shadow(0 0 8px rgba(255, 95, 109, .6)); }
+.nodo-johnson text { fill: var(--texto); }
+
+/* ---------------- Estado vacío ---------------- */
+.vacio { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; padding: 16px; }
+.vacio-caja {
+  pointer-events: auto;
+  max-width: 420px;
+  text-align: center;
+  background: rgba(23, 27, 46, .92);
+  border: 1px dashed var(--borde);
+  border-radius: var(--radio-lg);
+  padding: 22px;
+  box-shadow: var(--sombra);
+}
+.vacio-caja h2 { margin: 0 0 6px; font-size: 1.15rem; }
+.vacio-caja ol { text-align: left; color: var(--texto-suave); margin: 0 0 16px; padding-left: 20px; line-height: 1.7; }
+
+/* ---------------- Panel del elemento seleccionado ---------------- */
+.panel {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  width: min(620px, calc(100% - 24px));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: rgba(23, 27, 46, .96);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-lg);
+  padding: 12px 14px;
+  box-shadow: var(--sombra);
+}
+.panel-info { display: flex; flex-direction: column; min-width: 0; flex: 1 1 150px; }
+.panel-etiqueta { font-size: .72rem; color: var(--texto-suave); text-transform: uppercase; letter-spacing: 1.1px; font-weight: 700; }
+.panel-detalle { font-size: 1.05rem; font-weight: 700; overflow-wrap: anywhere; }
+.panel-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ---------------- Avisos del lienzo ---------------- */
+.avisos {
+  position: absolute;
+  top: 58px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  pointer-events: none;
+  width: max-content;
+  max-width: calc(100% - 24px);
+}
+.aviso {
+  background: var(--fondo-2);
+  border: 1px solid var(--borde);
+  border-left: 5px solid var(--azul);
+  border-radius: var(--radio-chico);
+  padding: 10px 16px;
+  font-size: .92rem;
+  font-weight: 500;
+  color: var(--texto);
+  box-shadow: var(--sombra);
+  animation: entrar .18s ease-out;
+}
+.aviso.ok { border-left-color: var(--verde); }
+.aviso.error { border-left-color: var(--rojo); }
+@keyframes entrar { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+@keyframes menuAbrir { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+/* ---------------- Hojas flotantes (matriz, Johnson, biblioteca) ---------------- */
+.hoja-fondo {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 7, 15, .7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.hoja {
+  width: min(760px, 100%);
+  max-height: calc(100% - 8px);
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--fondo-2);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-lg);
+  padding: 18px;
+  box-shadow: var(--sombra);
+}
+.hoja-estrecha { width: min(560px, 100%); }
+.hoja-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: var(--espacio);
+  border-bottom: 1px solid var(--borde-suave);
+}
+.hoja-cabecera h3 { margin: 0; font-size: 1.2rem; font-weight: 700; }
+.hoja-cabecera .btn { min-height: 38px; padding: 6px 14px; flex: 0 0 auto; }
+.hoja-descripcion { margin: var(--espacio) 0 0; font-size: .92rem; color: var(--texto-suave); }
+.hoja-nota {
+  margin: var(--espacio) 0 0;
+  padding-top: var(--espacio);
+  border-top: 1px solid var(--borde-suave);
+  font-size: .82rem;
+  color: var(--texto-suave);
+  line-height: 1.5;
+}
+.hoja-nota strong { color: var(--texto); }
+
+/* ---------------- Tabla de datos (matriz de adyacencia y Johnson) ---------------- */
+.tabla-datos {
+  flex: 1;
+  min-height: 0;
+  margin-top: 14px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--fondo-2);
+}
+.tabla-datos table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  user-select: text;
+  -webkit-user-select: text;
+  font-variant-numeric: tabular-nums;
+}
+.tabla-datos th, .tabla-datos td {
+  border-right: 1px solid var(--borde-suave);
+  border-bottom: 1px solid var(--borde-suave);
+  padding: 9px 12px;
+  text-align: center;
+  font-size: .92rem;
+  white-space: nowrap;
+  min-width: 44px;
+}
+.tabla-datos tr > *:last-child { border-right: 0; }
+.tabla-datos tbody tr:last-child th, .tabla-datos tbody tr:last-child td { border-bottom: 0; }
+.tabla-datos tfoot tr:first-child th, .tabla-datos tfoot tr:first-child td { border-top: 1px solid var(--borde); }
+.tabla-datos tfoot tr:last-child th, .tabla-datos tfoot tr:last-child td { border-bottom: 0; }
+.tabla-datos th { background: var(--fondo-3); color: #a8c2ff; font-weight: 700; }
+.tabla-datos thead th { position: sticky; top: 0; z-index: 2; }
+.tabla-datos th.fila { position: sticky; left: 0; z-index: 1; }
+.tabla-datos thead th.esquina { left: 0; z-index: 3; }
+.tabla-datos td.valor { color: var(--texto); font-weight: 600; }
+.tabla-datos td.negativo { color: #ffb3b9; }
+.tabla-datos td.sin-conexion, .tabla-datos td.sin-camino { color: #7e8ab3; font-weight: 400; }
+.tabla-datos td.diagonal { background: rgba(91, 140, 255, .09); }
+.tabla-datos .col-suma { background: #1c3b39; color: #3ee6c4; font-weight: 700; min-width: 92px; }
+.tabla-datos .col-cantidad { background: #17324a; color: #7dd3fc; font-weight: 700; min-width: 128px; }
+.tabla-datos .col-suma.granTotal { background: #205047; }
+.tabla-datos .col-cantidad.granTotal { background: #1b3d59; }
+.tabla-datos .celda-vacia { background: var(--fondo-2); }
+.matriz-vacia { margin: 0; padding: 22px; text-align: center; color: var(--texto-suave); }
+.tabla-datos td.celda-ruta { cursor: pointer; }
+.tabla-datos td.celda-ruta:hover { background: rgba(34, 211, 238, .16); color: #a5f3fc; }
+.tabla-datos td.celda-ruta:active { background: rgba(34, 211, 238, .28); }
+.tabla-datos td.celda-ruta:focus-visible { outline: 2px solid var(--ruta); outline-offset: -3px; background: rgba(34, 211, 238, .16); }
+.tabla-datos td.celda-sin-ruta { cursor: default; }
+
+/* ---------------- Resultado de Johnson ---------------- */
+.johnson-estado {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border-radius: var(--radio-chico);
+  border: 1px solid var(--borde-suave);
+  background: rgba(91, 140, 255, .1);
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+.johnson-estado.es-ok { border-color: rgba(0, 211, 167, .45); background: rgba(0, 211, 167, .12); color: #6ef0d5; }
+.johnson-estado.es-error { border-color: rgba(255, 95, 109, .5); background: rgba(255, 95, 109, .12); color: #ffbfc4; }
+.johnson-aviso { padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+.johnson-aviso-texto { margin: 0; color: var(--texto-suave); line-height: 1.55; }
+.johnson-ciclo {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radio-chico);
+  border: 1px solid rgba(255, 95, 109, .4);
+  background: rgba(255, 95, 109, .1);
+  color: #ffd2d6;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.hoja .procedure-box { flex: 0 0 auto; margin-top: 12px; max-height: 45dvh; overflow-y: auto; overscroll-behavior: contain; }
+.tabla-datos--paso { flex: 0 0 auto; margin-top: 0; max-height: 260px; }
+
+/* ---------------- Grafos guardados ---------------- */
+.biblio-guardar { margin: 14px 0; justify-content: center; }
+.biblio-lista {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.biblio-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: var(--fondo-3);
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+.biblio-datos { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 150px; }
+.biblio-nombre { font-weight: 700; overflow-wrap: anywhere; }
+.biblio-meta { font-size: .78rem; color: var(--texto-suave); }
+.biblio-botones { display: flex; gap: 8px; flex: 0 0 auto; }
+.biblio-botones .btn { min-height: 40px; padding: 8px 14px; font-size: .92rem; }
+.biblio-vacia { padding: 20px; text-align: center; color: var(--texto-suave); border: 1px dashed var(--borde); border-radius: 14px; }
+
+/* ---------------- Pantallas pequeñas ---------------- */
+@media (max-width: 640px) {
+  .barra-herramientas { padding: 8px 10px; gap: 8px; }
+  .barra-herramientas .btn { white-space: nowrap; flex: 1 1 auto; justify-content: center; min-height: 46px; padding: 10px 12px; font-size: .95rem; }
+  .grupo-herramientas { flex: 1 1 100%; }
+  #btnMatriz { flex: 1 1 0; min-width: 0; }
+  .menu-acciones { flex: 1 1 0; min-width: 92px; }
+  .btn-mas { flex: 1 1 0; min-width: 0; }
+  .menu-extra.abierto {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    left: auto;
+    right: 0;
+    width: max-content;
+    max-width: calc(100vw - 24px);
+  }
+  .menu-extra.abierto .btn { justify-content: center; font-size: .9rem; }
+  .grupo-segmentado { justify-content: stretch; flex-wrap: nowrap; padding: 3px; }
+  .grupo-segmentado .btn { flex: 1 1 0; min-width: 0; min-height: 46px; padding: 10px 4px; font-size: .9rem; }
+  #btnJohnson { flex: 1 1 0; min-width: 0; }
+  .texto-ancho { display: none; }
+  .ayuda {
+    font-size: .9rem;
+    padding: 6px 12px;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+  .vacio-caja { max-width: 90%; padding: 20px; }
+  .vacio-caja h2 { margin-bottom: 8px; }
+  .vacio-caja ol { display: none; }
+  .vacio-breve { display: block; margin: 0 0 16px; color: var(--texto-suave); line-height: 1.45; }
+  .vacio-caja .btn { min-height: 48px; width: 100%; }
+  .btn-ayuda { min-height: 34px; padding: 6px 12px; font-size: .82rem; flex: 0 0 auto; }
+  .panel { flex-direction: column; align-items: stretch; }
+  .panel-acciones .btn { flex: 1 1 auto; }
+  #btnCerrarPanel { flex: 0 0 46px; padding: 10px 0; margin-left: auto; }
+  .hoja-fondo { padding: 8px; }
+  .hoja { width: 100%; padding: 12px; max-height: 100%; }
+  .hoja-cabecera .btn { min-height: 40px; }
+  .hoja-cabecera h3 { font-size: 1.05rem; }
+  .tabla-datos { margin-top: 10px; }
+  .tabla-datos th, .tabla-datos td { padding: 7px 6px; font-size: .82rem; min-width: 36px; height: 38px; }
+  .hoja-descripcion { margin-top: 10px; font-size: .85rem; }
+  .johnson-estado { margin-top: 8px; padding: 7px 10px; font-size: .84rem; }
+  .hoja-nota { margin-top: 10px; padding-top: 10px; font-size: .78rem; }
+  .tabla-datos .col-suma, .tabla-datos .col-cantidad { min-width: 0; }
+  .tabla-datos th.col-suma, .tabla-datos th.col-cantidad { white-space: normal; line-height: 1.15; font-size: .72rem; }
+  .tabla-datos th.fila.col-suma, .tabla-datos th.fila.col-cantidad { min-width: 62px; }
+  .johnson-aviso { padding: 14px; }
+  .biblio-guardar { margin: 12px 0; }
+  .biblio-botones { flex: 1 1 100%; }
+  .biblio-botones .btn { flex: 1 1 45%; }
+
+  /* Johnson como aplicación: la pantalla no se desplaza y el lienzo ocupa el hueco libre. */
+  body.page-johnson { height: 100svh; overflow: hidden; display: flex; flex-direction: column; }
+  body.page-johnson .topbar { flex: 0 0 auto; }
+  body.page-johnson .contenido { flex: 1; min-height: 0; display: flex; flex-direction: column; padding-bottom: 8px; }
+  body.page-johnson #moduloContenido { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  body.page-johnson.intro-visible { height: auto; overflow: auto; display: block; }
+  body.page-johnson .modulo-cabecera { display: none; }
+  body.page-johnson .barra-herramientas, body.page-johnson .ayuda { flex: 0 0 auto; }
+  .johnson-layout { flex: 1; min-height: 0; display: flex; }
+  .grafo-workspace { flex: 1; min-height: 240px; height: auto; border-radius: 0 0 var(--radio-lg) var(--radio-lg); }
+}
+
+@media (max-width: 360px) {
+  .barra-herramientas { padding: 8px 8px; }
+  .grupo-segmentado .btn { font-size: .85rem; padding: 10px 2px; }
+  .grupo-herramientas { gap: 6px; }
+  #btnMatriz, #btnJohnson { font-size: .9rem; padding: 10px 8px; }
+  .btn-mas { font-size: .9rem; padding: 10px 8px; gap: 4px; }
+  .menu-acciones { min-width: 78px; }
+  .menu-extra.abierto { grid-template-columns: 1fr; }
+  .menu-extra.abierto .btn { padding: 10px 6px; font-size: .9rem; }
+  .vacio-caja { padding: 18px 16px; }
+  .hoja-fondo { padding: 6px; }
+  .hoja { padding: 10px; }
+  .tabla-datos th, .tabla-datos td { padding: 6px 4px; font-size: .78rem; min-width: 32px; }
+  .tabla-datos th.fila.col-suma, .tabla-datos th.fila.col-cantidad { min-width: 54px; font-size: .68rem; }
+}
+
+/* Pantallas bajas (teléfono en horizontal). */
+@media (max-height: 500px) {
+  .barra-herramientas { padding: 6px 12px; gap: 8px; }
+  .barra-herramientas .btn { min-height: 40px; padding: 8px 14px; }
+  .ayuda { padding: 4px 12px; font-size: .8rem; }
+  .vacio { padding: 10px; }
+  .vacio-caja { padding: 14px 18px; max-width: 460px; }
+  .vacio-caja h2 { font-size: 1rem; }
+  .vacio-caja ol { line-height: 1.35; font-size: .85rem; margin-bottom: 10px; }
+  .vacio-caja .btn { min-height: 38px; }
+  .panel { bottom: 8px; padding: 8px 12px; gap: 8px; }
+  .panel-detalle { font-size: .95rem; }
+  .avisos { top: 52px; }
+  .hoja { padding: 12px; }
+  .hoja-cabecera { padding-bottom: 8px; }
+  .hoja-descripcion { margin-top: 8px; font-size: .85rem; }
+  .hoja-nota { margin-top: 8px; padding-top: 8px; font-size: .76rem; }
+  .johnson-estado { margin-top: 8px; padding: 6px 10px; }
+  .tabla-datos { margin-top: 10px; }
+  .biblio-guardar { margin: 10px 0; }
+  .modal-ancho #modalMensaje { max-height: 50dvh; }
+}
+@media (max-width: 640px) and (max-height: 500px) {
+  .barra-herramientas .btn { font-size: .88rem; padding: 8px 10px; }
+  .grupo-segmentado .btn { min-height: 40px; font-size: .85rem; }
+  .vacio-caja ol { margin-bottom: 8px; }
+  .vacio-breve { margin-bottom: 10px; }
+}
+@media (min-width: 480px) and (max-width: 640px) and (max-height: 500px) {
+  .grupo-herramientas { flex: 0 1 auto; }
+  .btn-mas, #btnJohnson { flex: 0 1 auto; }
+}
+@media (max-width: 1023.98px) and (max-height: 520px) {
+  body.page-johnson .modulo-cabecera { display: none; }
+  body.page-johnson .contenido { padding-top: 8px; padding-bottom: 6px; }
+  .grafo-workspace { min-height: 150px; height: clamp(150px, calc(100svh - var(--topbar) - 130px), 760px); }
+  .zoom-controls { padding: 4px; gap: 4px; }
+  .btn-zoom { min-height: 28px; min-width: 28px; padding: 4px 6px; font-size: .85rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-extra.abierto, .aviso { animation: none; }
+}

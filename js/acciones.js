@@ -8,7 +8,6 @@
  * @param {number} y - Coordenada Y para el nuevo nodo
  */
 function crearNodo(x, y) {
-  if (estado.nodos.length >= 150) { avisar('El límite es de 150 nodos.', 'error'); return; }
   guardarEstadoParaDeshacer();
   
   const a = area();
@@ -20,8 +19,8 @@ function crearNodo(x, y) {
   const nodo = {
     id: nuevoId('n'),
     nombre: nombreAutomatico(),
-    x: x,
-    y: y
+    x: limitar(x, minX, maxX),
+    y: limitar(y, minY, maxY)
   };
   estado.nodos.push(nodo);
   estado.seleccion = null;
@@ -75,7 +74,6 @@ function manejarConectar(nodo) {
       existente.valor = resultado;
       avisar('La conexión ya existía: se actualizó su valor a ' + resultado + '.', 'ok');
     } else {
-      if (estado.conexiones.length >= 3000) { avisar('El límite es de 3000 conexiones.', 'error'); return; }
       estado.conexiones.push({ id: nuevoId('c'), desde: origen.id, hacia: destino.id, valor: resultado });
     }
     guardar();
@@ -177,7 +175,8 @@ function eliminarSeleccion() {
 
 const TEXTO_AYUDA =
   '¿QUÉ ES ESTA APLICACIÓN?\n' +
-  'Un editor visual de grafos dirigidos y ponderados. Un grafo está formado por nodos (los círculos) y por conexiones entre ellos (las flechas). Cada conexión lleva un valor o peso, que puede representar una distancia, un costo, un tiempo, etc.\n\n' +
+  'Un editor visual de grafos dirigidos y ponderados. Un grafo está formado por nodos (los círculos) y por conexiones entre ellos (las flechas). Cada conexión lleva un valor o peso, que puede representar una distancia, un costo, un tiempo, etc.\n' +
+  '· El botón «Video» de la cabecera abre la presentación con el video explicativo del algoritmo. El menú ☰ (o la barra lateral) cambia de algoritmo.\n\n' +
 
   '1) HERRAMIENTAS DE LA BARRA SUPERIOR\n' +
   '· Seleccionar: es el modo normal de trabajo.\n' +
@@ -191,7 +190,7 @@ const TEXTO_AYUDA =
   '   1. Toca el nodo de ORIGEN: queda marcado en verde.\n' +
   '   2. Toca el nodo de DESTINO y escribe el valor de la conexión.\n' +
   '   Para cancelar a medio camino, toca una zona vacía o cambia de herramienta.\n' +
-  '· Calcular Johnson: distancia mínima entre todos los pares de nodos. Necesita al menos un nodo.\n' +
+  '· Calcular Johnson: distancia mínima entre todos los pares de nodos. Necesita al menos dos nodos.\n' +
   '· Matriz: muestra la matriz de adyacencia del grafo con todos sus valores y sus sumas.\n' +
   '· Acciones: despliega el resto de opciones.\n' +
   '   – Guardar grafo: lo guarda con un nombre en este navegador.\n' +
@@ -238,13 +237,13 @@ const TEXTO_AYUDA =
   '· Cargar un grafo guardado reemplaza el que esté en pantalla, por eso se pide confirmación.\n' +
   '· Limpiar solo borra el grafo en pantalla; los grafos guardados no se tocan.\n' +
   '· Todo el guardado es local: no se envía nada a internet y no se comparte entre dispositivos.\n' +
-  '· Si cambias el tamaño de la ventana o giras el teléfono, se ajusta la cámara sin modificar las posiciones de los nodos. Usa Ajustar para encuadrarlos.\n\n' +
+  '· Si cambias el tamaño de la ventana o giras el teléfono, los nodos se reacomodan para no quedar fuera del área visible.\n\n' +
 
   '6) EL ALGORITMO DE JOHNSON\n' +
   '· Calcula la distancia mínima entre TODOS los pares de nodos, admitiendo pesos negativos.\n' +
   '· La fila es el nodo de origen y la columna el de destino; la diagonal siempre vale 0.\n' +
   '· El símbolo ∞ indica que no existe ningún camino en ese sentido.\n' +
-  '· Si el grafo contiene un ciclo negativo, Johnson no puede completar su matriz. Las rutas que pasan por ese ciclo pueden reducir su costo sin límite. Se indica el ciclo en rojo.\n' +
+  '· Si el grafo tiene un ciclo cuyos pesos suman un valor negativo, no hay distancias mínimas: recorrerlo una y otra vez baja el costo sin límite. En ese caso se avisa y se indica el ciclo.\n' +
   '· El cálculo no modifica el grafo: trabaja sobre una copia.\n\n' +
 
   '7) TECLADO\n' +
@@ -284,7 +283,6 @@ function limpiarTodo() {
     estado.origenConexion = null;
     estado.siguienteId = 1;
     borrarGuardado();
-    if (typeof revisarCambiosGrafo === 'function') revisarCambiosGrafo();
     dibujar();
     avisar('Se eliminaron todos los nodos y conexiones.', 'ok');
   });
@@ -428,7 +426,6 @@ function importarGrafoJSON() {
   input.onchange = function(evento) {
     const archivo = evento.target.files[0];
     if (!archivo) return;
-    if (archivo.size > 2000000) { avisar('El archivo supera el límite de 2 MB.', 'error'); return; }
     
     const lector = new FileReader();
     lector.onload = function(e) {

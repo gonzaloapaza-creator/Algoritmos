@@ -134,18 +134,14 @@ function bellmanFordJohnson(datos) {
   // Una pasada extra: si todavía se puede mejorar algo, hay un ciclo negativo.
   // Un bucle de peso negativo también se detecta aquí, porque la arista v → v
   // sigue mejorando su propia distancia.
-  let ultimaMejora = null;
   for (const arista of aristas) {
     if (distancia[arista.desde] === Infinity) continue;
     if (distancia[arista.desde] + arista.peso < distancia[arista.hacia]) {
-      distancia[arista.hacia] = distancia[arista.desde] + arista.peso;
-      anterior[arista.hacia] = arista.desde;
-      ultimaMejora = arista;
+      const ciclo = arista.desde === arista.hacia
+        ? [arista.desde]                                  // bucle negativo
+        : nodosDelCiclo(anterior, arista, total);
+      return { tieneCicloNegativo: true, potenciales: null, ciclo: ciclo };
     }
-  }
-  if (ultimaMejora) {
-    return { tieneCicloNegativo: true, potenciales: null,
-      ciclo: nodosDelCiclo(anterior, ultimaMejora, total) };
   }
 
   // Se descarta el nodo auxiliar: los potenciales son los de los nodos reales.
@@ -415,8 +411,6 @@ function activarCeldaJohnson(resultado, origen, destino) {
     tipo: 'ruta'
   };
 
-  if (typeof mostrarRutaConsultada === 'function') mostrarRutaConsultada(ruta, resultado, origen, destino);
-
   cerrarResultadoJohnson();
   dibujar();
 
@@ -442,7 +436,7 @@ function avisoCicloNegativo(resultado) {
 
   caja.appendChild(crearCelda(
     'p',
-    'Johnson no puede producir una matriz completa de distancias mínimas finitas. Las rutas que pueden pasar por este ciclo pueden reducir su costo sin límite.',
+    'No existen distancias mínimas: cada vuelta al ciclo reduce el costo, así que puede bajar sin límite.',
     'johnson-aviso-texto'
   ));
 
@@ -603,7 +597,6 @@ function dibujarProcedimientoJohnson(resultado) {
 }
 
 function dibujarResultadoJohnson(resultado) {
-  if (typeof registrarResultadoJohnson === 'function') registrarResultadoJohnson(resultado);
   el.johnsonTabla.textContent = '';
   dibujarProcedimientoJohnson(resultado);
 
@@ -632,9 +625,8 @@ function johnsonVisible() {
 }
 
 function abrirResultadoJohnson() {
-  if (typeof cambiarConsulta === 'function') cambiarConsulta();
-  if (estado.nodos.length < 1) {
-    avisar('Crea al menos un nodo para calcular las distancias mínimas.');
+  if (estado.nodos.length < 2) {
+    avisar('Crea al menos dos nodos para calcular las distancias mínimas.');
     return;
   }
 

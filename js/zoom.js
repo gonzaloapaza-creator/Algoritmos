@@ -16,23 +16,19 @@
  * desplazar dentro de él y al alejar queda centrado, sin huecos a los lados.
  */
 function limitarPan() {
-  if (!Number.isFinite(estado.zoom.offsetX)) estado.zoom.offsetX = 0;
-  if (!Number.isFinite(estado.zoom.offsetY)) estado.zoom.offsetY = 0;
-}
-
-/** Encuadra todos los nodos, con espacio para bucles y etiquetas. */
-function ajustarVista() {
   const a = area();
-  if (!estado.nodos.length || !a.ancho || !a.alto) return;
-  const margen = 100;
-  const xs = estado.nodos.map(n => n.x), ys = estado.nodos.map(n => n.y);
-  const minX = Math.min(...xs) - margen, maxX = Math.max(...xs) + margen;
-  const minY = Math.min(...ys) - margen, maxY = Math.max(...ys) + margen;
-  const escala = Math.min(1.5, a.ancho / (maxX-minX), a.alto / (maxY-minY));
-  estado.zoom.escala = Math.max(0.001, escala);
-  estado.zoom.offsetX = a.ancho/2 - (minX+maxX)/2*estado.zoom.escala;
-  estado.zoom.offsetY = a.alto/2 - (minY+maxY)/2*estado.zoom.escala;
-  aplicarZoom();
+  const anchoEscalado = a.ancho * estado.zoom.escala;
+  const altoEscalado = a.alto * estado.zoom.escala;
+
+  const limiteX = anchoEscalado >= a.ancho
+    ? [a.ancho - anchoEscalado, 0]
+    : [0, a.ancho - anchoEscalado];
+  const limiteY = altoEscalado >= a.alto
+    ? [a.alto - altoEscalado, 0]
+    : [0, a.alto - altoEscalado];
+
+  estado.zoom.offsetX = limitar(estado.zoom.offsetX, limiteX[0], limiteX[1]);
+  estado.zoom.offsetY = limitar(estado.zoom.offsetY, limiteY[0], limiteY[1]);
 }
 
 /** Aplica la transformación actual a las dos capas del SVG. */

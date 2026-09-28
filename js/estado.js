@@ -140,7 +140,7 @@ function nombrePorIndice(indice) {
  * @returns {string} Un nombre disponible para un nuevo nodo
  */
 function nombreAutomatico() {
-  const usados = new Set(estado.nodos.map(n => n.nombre.toLowerCase()));
+  const usados = new Set(estado.nodos.map(n => n.nombre));
   let i = 0;
   while (usados.has(nombrePorIndice(i))) i++;
   return nombrePorIndice(i);
@@ -218,7 +218,18 @@ function area() {
 
 /** Coloca los nodos dentro del área visible. Devuelve true si movió alguno. */
 function ajustarNodosAlArea() {
-  // La pantalla es una cámara: cambiar su tamaño nunca modifica el documento.
-  if (typeof ajustarVista === 'function') ajustarVista();
-  return false;
+  const a = area();
+  const maxX = Math.max(RADIO_NODO, a.ancho - RADIO_NODO);
+  const maxY = Math.max(RADIO_NODO, a.alto - RADIO_NODO);
+  const minX = RADIO_NODO;
+  const minY = RADIO_NODO;
+  let cambio = false;
+
+  estado.nodos.forEach(nodo => {
+    const x = limitar(nodo.x, minX, maxX);
+    const y = limitar(nodo.y, minY, maxY);
+    if (x !== nodo.x || y !== nodo.y) { nodo.x = x; nodo.y = y; cambio = true; }
+  });
+
+  return cambio;
 }

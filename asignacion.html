@@ -1,57 +1,278 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#0f1220"><title>Asignación · Grafo</title>
-  <link rel="icon" href="data:,"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="mejoras.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Problema de asignación: grafo bipartito, matriz de costos y método húngaro completo." />
+  <meta name="theme-color" content="#0b1020" />
+  <title>Asignación | Algoritmos de Optimización</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='9' cy='23' r='5' fill='%235b8cff'/><circle cx='23' cy='9' r='5' fill='%2300d3a7'/><line x1='12' y1='20' x2='20' y2='12' stroke='white' stroke-width='2'/></svg>" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="css/shell.css" />
+  <link rel="stylesheet" href="css/asignacion.css" />
 </head>
-<body class="page-asignacion">
-  <header class="app-header"><div class="app-header__inner"><a class="brand brand-link" href="index.html"><strong>Grafo</strong><small>Algoritmos de optimización</small></a>
-    <nav class="main-nav" aria-label="Navegación principal"><a class="nav-link" href="index.html">Inicio</a><a class="nav-link" href="johnson.html">Johnson</a><a class="nav-link active" aria-current="page" href="asignacion.html">Asignación</a></nav>
-  </div></header>
-  <main class="assignment-shell">
-    <div class="page-header page-header--inline"><h1>Asignación óptima</h1><button class="btn btn-claro" id="btnAyudaAsignacion">Ayuda</button></div>
-    <p class="page-description">Relaciona recursos y tareas. Compara la matriz, el emparejamiento y cada paso del método húngaro.</p>
-    <div class="workspace-tabs" role="group" aria-label="Vista de asignación">
-      <button class="active" data-assignment-view="datos" aria-pressed="true">1. Datos</button>
-      <button data-assignment-view="resultado" aria-pressed="false" disabled>2. Resultado</button>
-      <!-- <button data-assignment-view="pasos" aria-pressed="false" disabled>3. Procedimiento</button> -->
+<body class="page-asignacion" data-modulo="asignacion">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <header class="topbar">
+    <button type="button" class="btn btn-fantasma btn-icono topbar__menu" id="btnMenuLateral" aria-label="Abrir menú" aria-expanded="false" aria-controls="barraLateral">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <a class="topbar__marca" href="index.html" aria-label="Grafo · Inicio">
+      <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="9" cy="23" r="5"></circle><circle cx="23" cy="9" r="5"></circle><line x1="12" y1="20" x2="20" y2="12"></line></svg>
+      <span>Grafo</span>
+    </a>
+    <span class="topbar__separador" aria-hidden="true"></span>
+    <span class="topbar__modulo" id="topbarModulo">Asignación</span>
+    <div class="topbar__acciones">
+      <button type="button" class="btn btn-fantasma btn-sm" id="btnVideoModulo" aria-pressed="false" title="Ver la presentación en video">Video</button>
+      <button type="button" class="btn btn-fantasma btn-sm" id="btnAyudaAsignacion">Ayuda</button>
     </div>
-    <p id="assignmentStatus" class="status-line" role="status">Completa la matriz y pulsa Resolver.</p>
-    <section id="assignmentData" class="assignment-card">
-      <div class="config-grid">
-        <fieldset class="field-group"><legend>Objetivo</legend><div class="radio-row"><label><input type="radio" name="objetivo" value="min" checked> Minimizar costos</label><label><input type="radio" name="objetivo" value="max"> Maximizar beneficios</label></div></fieldset>
-        <div class="field-group"><span class="field-label">Tamaño · 1 a 8</span><div class="dimension-row">
-          <div>Recursos: <button class="btn btn-dimension" data-dimension="rows" data-step="-1" aria-label="Quitar recurso">−</button> <span id="rowsValue">4</span> <button class="btn btn-dimension" data-dimension="rows" data-step="1" aria-label="Añadir recurso">+</button></div>
-          <div>Tareas: <button class="btn btn-dimension" data-dimension="cols" data-step="-1" aria-label="Quitar tarea">−</button> <span id="colsValue">4</span> <button class="btn btn-dimension" data-dimension="cols" data-step="1" aria-label="Añadir tarea">+</button></div>
-        </div></div>
+  </header>
+  <aside class="sidebar" id="barraLateral" aria-label="Navegación principal"></aside>
+  <div class="sidebar-fondo" id="barraLateralFondo" hidden></div>
+
+  <main class="contenido" id="contenido">
+    <section id="introModulo" hidden></section>
+    <div id="moduloContenido">
+    <section class="modulo-cabecera">
+      <div class="modulo-cabecera__texto">
+        <h1>Problema de asignación</h1>
+        <p>Grafo bipartito → matriz → método húngaro completo.</p>
       </div>
-      <h2 id="matrix-title">Matriz de costos</h2>
-      <p class="muted">Edita los nombres y los valores. Usa enteros entre −999999 y 999999. Un campo vacío es un dato pendiente; cero es un valor válido.</p>
-      <div id="asignacionMatrix" class="matrix-scroll"></div>
-      <div class="action-row"><button class="btn btn-secondary" id="btnAsignacionEjemplo">Cargar ejemplo</button><button class="btn btn-claro" id="btnAssignmentUndo" disabled>Deshacer</button><button class="btn btn-neutral" id="btnAsignacionLimpiar">Vaciar matriz</button><button class="btn btn-primary" id="btnResolverAsignacion">Resolver asignación</button></div>
     </section>
-    <section id="asignacionResultado" hidden>
-      <div id="assignmentResultContent">
-        <div class="assignment-result-grid">
-          <section class="assignment-card"><h2>Emparejamiento óptimo</h2><label class="check-line"><input type="checkbox" id="showAllAssignmentEdges"> Mostrar todas las conexiones</label>
-            <div class="bipartite-scroll"><svg id="grafoAsignacion" xmlns="http://www.w3.org/2000/svg" role="group" aria-label="Gráfico interactivo de asignaciones"></svg></div>
-            <p id="assignmentPairHint" class="status-line" aria-live="polite"></p>
-          </section>
-          <section class="assignment-card"><h2>Resultado</h2><div id="resultadoAsignacionTexto"></div><p class="muted">Se muestra una solución óptima. Puede haber otras combinaciones con el mismo total.</p></section>
+
+    <nav class="asig-pasos" aria-label="Pasos del módulo">
+      <ol class="pasos" id="pasosAsignacion">
+        <li><button type="button" class="paso" data-vista="grafo"><span class="paso__numero">1</span><span class="paso__texto">Grafo</span></button></li>
+        <li><button type="button" class="paso" data-vista="matriz"><span class="paso__numero">2</span><span class="paso__texto">Matriz y validación</span></button></li>
+        <li><button type="button" class="paso" data-vista="resultado"><span class="paso__numero">3</span><span class="paso__texto">Resultado</span></button></li>
+        <li><button type="button" class="paso" data-vista="procedimiento"><span class="paso__numero">4</span><span class="paso__texto">Procedimiento</span></button></li>
+      </ol>
+      <span class="pasos__contador" id="pasosContadorAsignacion" aria-live="polite">Paso 1 de 4</span>
+    </nav>
+
+    <div class="asig-barra">
+      <div class="segmentado" role="group" aria-label="Objetivo del problema">
+        <button type="button" class="btn" data-objetivo="min" aria-pressed="true">Minimizar costos</button>
+        <button type="button" class="btn" data-objetivo="max" aria-pressed="false">Maximizar beneficios</button>
+      </div>
+      <p class="resumen-datos" id="resumenAsignacion" aria-live="polite"></p>
+      <span class="estado estado--neutro" id="estadoResultado">Sin resolver</span>
+    </div>
+
+    <!-- Bloque del grafo: se mueve entre la vista 1 (edición) y la vista 3 (resultado). -->
+    <div class="grafo-b" id="bloqueGrafo">
+      <div class="grafo-b__barra">
+        <div class="segmentado solo-edicion" role="group" aria-label="Herramienta del grafo">
+          <button type="button" class="btn" data-herramienta-asig="seleccionar" aria-pressed="true">Seleccionar</button>
+          <button type="button" class="btn" data-herramienta-asig="conectar" aria-pressed="false">Conectar</button>
         </div>
-        <section class="assignment-card"><h2>Matriz original</h2><p class="muted">✓ indica una asignación elegida. Selecciona cualquier casilla para verla en el gráfico.</p><div class="matrix-scroll" id="resultMatrix"></div></section>
+        <div class="acciones solo-edicion">
+          <button type="button" class="btn btn-secondary btn-sm" id="btnAgregarRecurso">+ Recurso</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btnAgregarTarea">+ Tarea</button>
+        </div>
+        <div class="acciones solo-resultado">
+          <button type="button" class="btn btn-neutral btn-sm" id="btnMostrarTodas" aria-pressed="false">Mostrar todas las conexiones</button>
+        </div>
+        <div class="acciones grafo-b__vista">
+          <button type="button" class="btn btn-neutral btn-sm" id="btnMostrarValores" aria-pressed="false" title="Mostrar los valores de todas las conexiones">Valores</button>
+          <button type="button" class="btn btn-neutral btn-sm solo-edicion" id="btnReordenar" title="Volver a ordenar en dos columnas">Reordenar</button>
+          <button type="button" class="btn btn-neutral btn-sm btn-icono" id="btnZoomMenosAsig" aria-label="Alejar">−</button>
+          <button type="button" class="btn btn-neutral btn-sm" id="btnAjustarVista" aria-label="Ajustar la vista"><span id="zoomAsignacionEtiqueta">100%</span></button>
+          <button type="button" class="btn btn-neutral btn-sm btn-icono" id="btnZoomMasAsig" aria-label="Acercar">+</button>
+          <button type="button" class="btn btn-neutral btn-sm" id="btnAmpliarGrafo" aria-pressed="false">Ampliar</button>
+        </div>
       </div>
-      <section class="assignment-card" id="assignmentProcedureContent" hidden>
-        <div class="step-toolbar"><button class="btn btn-claro" id="btnStepPrev">Anterior</button><button class="btn btn-primary" id="btnStepPlay">Reproducir</button><button class="btn btn-claro" id="btnStepNext">Siguiente</button><label>Intervalo <select id="stepSpeed"><option value="2500">2,5 s</option><option value="5000">5 s</option><option value="1000">1 s</option></select></label><span id="stepCounter" aria-live="polite"></span></div>
-        <input id="stepRange" type="range" min="0" max="0" value="0" aria-label="Paso del método húngaro">
-        <p class="muted">★ asignación provisional · ′ cero candidato · líneas horizontales/verticales: cobertura · borde discontinuo: elemento ficticio.</p>
-        <div id="procedimientoAsignacion" aria-live="polite"></div>
-      </section>
+      <div class="grafo-b__lienzo" id="lienzoAsignacion">
+        <svg id="svgAsignacion" xmlns="http://www.w3.org/2000/svg" role="application" aria-label="Grafo bipartito de recursos y tareas" viewBox="0 0 880 400" preserveAspectRatio="xMidYMid meet">
+          <g id="capaFondoAsignacion"></g>
+          <g id="capaConexionesAsignacion"></g>
+          <g id="capaNodosAsignacion"></g>
+        </svg>
+        <div class="grafo-b__vacio" id="grafoVacio" hidden>
+          <div class="grafo-b__vacio-caja">
+            <h3>El grafo está vacío</h3>
+            <p>Agrega recursos y tareas o carga el ejemplo.</p>
+            <div class="acciones">
+              <button type="button" class="btn btn-secondary" id="btnVacioRecurso">+ Recurso</button>
+              <button type="button" class="btn btn-secondary" id="btnVacioTarea">+ Tarea</button>
+              <button type="button" class="btn btn-primary" id="btnVacioEjemplo">Cargar ejemplo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="grafo-b__ayuda" id="ayudaGrafo" aria-live="polite"></p>
+    </div>
+
+    <!-- Paso 1: grafo -->
+    <section class="vista" id="vistaGrafo" data-vista="grafo" aria-labelledby="tituloGrafo">
+      <h2 id="tituloGrafo" class="sr-only">Paso 1: grafo bipartito</h2>
+      <div class="asig-layout">
+        <div class="asig-principal" id="slotGrafoEditor"></div>
+        <aside class="asig-lateral">
+          <div class="tarjeta" id="panelSeleccion" aria-live="polite">
+            <p class="etiqueta" id="panelSeleccionTipo">Selección</p>
+            <p class="asig-panel__nombre" id="panelSeleccionNombre">Nada seleccionado</p>
+            <p class="tarjeta__pista" id="panelSeleccionDetalle">Toca un nodo o una conexión.</p>
+            <div class="acciones asig-panel__acciones" id="panelSeleccionAcciones"></div>
+          </div>
+          <div class="tarjeta">
+            <p class="etiqueta">Edición</p>
+            <div class="acciones asig-lateral__acciones">
+              <button type="button" class="btn btn-neutral btn-sm" id="btnDeshacerAsig" title="Deshacer (Ctrl+Z)">Deshacer</button>
+              <button type="button" class="btn btn-neutral btn-sm" id="btnRehacerAsig" title="Rehacer (Ctrl+Y)">Rehacer</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btnCompletarPendientes">Completar pendientes…</button>
+              <button type="button" class="btn btn-neutral btn-sm" id="btnEjemploAsig">Cargar ejemplo</button>
+              <button type="button" class="btn btn-neutral btn-sm" id="btnExportarAsignacion">Exportar JSON</button>
+              <button type="button" class="btn btn-neutral btn-sm" id="btnImportarAsignacion">Importar JSON</button>
+            </div>
+            <div class="acciones asig-lateral__acciones asig-lateral__peligro">
+              <button type="button" class="btn btn-peligro btn-sm" id="btnLimpiarAsig">Limpiar todo</button>
+            </div>
+          </div>
+          <div class="tarjeta tarjeta--plana">
+            <p class="etiqueta">Leyenda</p>
+            <div class="leyenda leyenda--vertical">
+              <span class="leyenda__item"><span class="leyenda__muestra leyenda__muestra--normal"></span>Conexión con valor</span>
+              <span class="leyenda__item"><span class="leyenda__muestra leyenda__muestra--pendiente"></span>Pendiente: sin valor (no es 0)</span>
+              <span class="leyenda__item"><span class="leyenda__muestra leyenda__muestra--seleccion"></span>Seleccionada</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+      <div class="acciones acciones--fin asig-pie">
+        <button type="button" class="btn btn-primary" data-ir="matriz">Continuar: matriz y validación →</button>
+      </div>
     </section>
-    <div class="action-row"><button class="btn btn-claro" id="btnExportAssignment">Exportar JSON</button><button class="btn btn-claro" id="btnPrintAssignment">Imprimir / PDF</button><span class="muted" id="assignmentSaved" role="status"></span></div>
+
+    <!-- Paso 2: matriz -->
+    <section class="vista" id="vistaMatriz" data-vista="matriz" hidden aria-labelledby="tituloMatriz">
+      <div class="asig-layout asig-layout--matriz">
+        <div class="asig-principal tarjeta">
+          <div class="tarjeta__cabecera">
+            <h2 id="tituloMatriz">Matriz de valores</h2>
+            <p class="tarjeta__pista">Filas: recursos · columnas: tareas. Cada cambio se refleja en el grafo.</p>
+          </div>
+          <div class="tabla-caja" id="matrizAsignacion"></div>
+        </div>
+        <aside class="asig-lateral">
+          <div class="tarjeta" id="validacionAsignacion" aria-live="polite"></div>
+        </aside>
+      </div>
+      <div class="acciones acciones--entre asig-pie">
+        <button type="button" class="btn btn-neutral" data-ir="grafo">← Volver al grafo</button>
+        <button type="button" class="btn btn-primary" data-accion="resolver">Resolver asignación</button>
+      </div>
+    </section>
+
+    <!-- Paso 3: resultado -->
+    <section class="vista" id="vistaResultado" data-vista="resultado" hidden aria-labelledby="tituloResultado">
+      <div id="resultadoAsignacion">
+        <div class="tarjeta asig-sin" id="sinResultado">
+          <h2 id="tituloResultado">Resultado</h2>
+          <p></p>
+          <div class="acciones">
+            <button type="button" class="btn btn-neutral" data-ir="matriz">Revisar la matriz</button>
+            <button type="button" class="btn btn-primary" data-accion="resolver">Resolver asignación</button>
+          </div>
+        </div>
+        <div id="conResultado" hidden>
+          <div class="asig-layout">
+            <div class="asig-principal" id="slotGrafoResultado"></div>
+            <aside class="asig-lateral">
+              <div class="total" id="totalAsignacion"></div>
+              <div class="tarjeta">
+                <p class="etiqueta">Parejas seleccionadas</p>
+                <ul class="lista-resultado" id="listaAsignacion"></ul>
+              </div>
+              <div class="tarjeta tarjeta--plana">
+                <p class="etiqueta">Leyenda</p>
+                <div class="leyenda leyenda--vertical">
+                  <span class="leyenda__item"><span class="leyenda__muestra leyenda__muestra--elegida"></span>Conexión elegida (trazo grueso)</span>
+                  <span class="leyenda__item"><span class="leyenda__muestra leyenda__muestra--atenuada"></span>No elegida (atenuada u oculta)</span>
+                  <span class="leyenda__item"><span class="leyenda__muestra leyenda__muestra--seleccion"></span>Seleccionada</span>
+                  <span class="leyenda__item"><em>«sin asignar»</em> bajo el nodo: sin pareja (borde discontinuo)</span>
+                </div>
+              </div>
+            </aside>
+          </div>
+          <div class="asig-notas" id="notasAsignacion"></div>
+          <div class="tarjeta">
+            <div class="tarjeta__cabecera"><h3>Matriz con la asignación</h3><p class="tarjeta__pista">Toca una celda para destacarla en el grafo y en la lista.</p></div>
+            <div class="tabla-caja" id="matrizResultadoAsignacion"></div>
+          </div>
+        </div>
+      </div>
+      <div class="acciones acciones--entre asig-pie">
+        <button type="button" class="btn btn-neutral" data-ir="matriz">← Matriz</button>
+        <button type="button" class="btn btn-primary" data-ir="procedimiento">Ver procedimiento →</button>
+      </div>
+    </section>
+
+    <!-- Paso 4: procedimiento -->
+    <section class="vista" id="vistaProcedimiento" data-vista="procedimiento" hidden aria-labelledby="tituloProcedimiento">
+      <div id="procedimientoAsignacion">
+        <div class="tarjeta asig-sin" id="procedimientoSinResultado">
+          <h2 id="tituloProcedimiento">Procedimiento del método húngaro</h2>
+          <p></p>
+          <div class="acciones"><button type="button" class="btn btn-primary" data-accion="resolver">Resolver asignación</button></div>
+        </div>
+        <div id="procedimientoConResultado" hidden>
+          <div class="asig-layout asig-layout--proc">
+            <div class="asig-principal tarjeta">
+              <div class="proc-cabecera">
+                <span class="estado estado--neutro" id="procedimientoIndicador">Paso 1 de 1</span>
+                <div class="acciones">
+                  <button type="button" class="btn btn-neutral btn-sm" id="btnPasoReiniciar">Reiniciar</button>
+                  <button type="button" class="btn btn-neutral btn-sm" id="btnPasoAnterior">← Anterior</button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btnPasoSiguiente">Siguiente →</button>
+                </div>
+              </div>
+              <h3 id="procedimientoTitulo"></h3>
+              <p class="proc-texto" id="procedimientoTexto"></p>
+              <div class="proc-tabla" id="procedimientoTabla"></div>
+            </div>
+            <aside class="asig-lateral">
+              <div class="tarjeta tarjeta--plana">
+                <div class="tarjeta__cabecera">
+                  <p class="etiqueta">Pasos</p>
+                  <button type="button" class="btn btn-fantasma btn-sm" id="procedimientoTodos" aria-pressed="false">Ver todos</button>
+                </div>
+                <ol class="procedimiento__lista" id="procedimientoLista"></ol>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+      <div class="acciones acciones--entre asig-pie">
+        <button type="button" class="btn btn-neutral" data-ir="resultado">← Resultado</button>
+        <button type="button" class="btn btn-neutral" data-ir="grafo">Volver al grafo</button>
+      </div>
+    </section>
+    </div>
   </main>
-  <dialog id="assignmentHelp" class="help-dialog"><h2>Cómo resolver una asignación</h2><p>Elige minimizar o maximizar, ajusta recursos y tareas, y completa todos los valores. Cada recurso puede tener como máximo una tarea y cada tarea un recurso.</p><p>El método asigna tantas parejas reales como permita el grupo más pequeño. En matrices rectangulares, los elementos restantes quedan sin asignar; el valor de las parejas ficticias es cero.</p><p>El resultado usa los valores originales. Los pasos muestran reducciones, estrellas, candidatos y ajustes del método húngaro. No se admiten casillas prohibidas ni capacidades múltiples.</p><button class="btn btn-primary" id="btnCerrarAyudaAsignacion">Entendido</button></dialog>
-  <div id="toastStack" class="toast-stack" role="status"></div>
-  <script src="js/config.js"></script><script src="js/hungaro.js"></script><script src="js/asignacion.js"></script>
-</body></html>
+
+  <footer class="app-footer">
+    <div class="app-footer__inner">
+      <p>Todo se guarda en tu navegador. Nada se envía a ningún servidor.</p>
+    </div>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/comun/utilidades.js"></script>
+  <script src="js/comun/catalogo.js"></script>
+  <script src="js/comun/navegacion.js"></script>
+  <script src="js/comun/intro.js"></script>
+  <script src="js/comun/notificaciones.js"></script>
+  <script src="js/comun/dialogo.js"></script>
+  <script src="js/asignacion/validacion.js"></script>
+  <script src="js/asignacion/modelo.js"></script>
+  <script src="js/asignacion/hungaro.js"></script>
+  <script src="js/asignacion/estado.js"></script>
+  <script src="js/asignacion/grafo.js"></script>
+  <script src="js/asignacion/matriz.js"></script>
+  <script src="js/asignacion/resultado.js"></script>
+  <script src="js/asignacion/procedimiento.js"></script>
+  <script src="js/asignacion/app.js"></script>
+</body>
+</html>

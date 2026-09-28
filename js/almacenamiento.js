@@ -27,24 +27,6 @@ function instantaneaGrafo() {
  */
 function depurarGrafo(datos) {
   if (!datos || !Array.isArray(datos.nodos) || !Array.isArray(datos.conexiones)) return null;
-  // Rechazar el archivo completo evita reparar silenciosamente un problema distinto.
-  if (datos.nodos.length > 150 || datos.conexiones.length > 3000) return null;
-  const idsUnicos = new Set(), nombresUnicos = new Set(), pares = new Set();
-  for (const nodo of datos.nodos) {
-    if (!nodo || typeof nodo.id !== 'string' || !nodo.id || idsUnicos.has(nodo.id) ||
-        typeof nodo.nombre !== 'string' || !nodo.nombre.trim() || nodo.nombre.length > MAX_LARGO_NOMBRE ||
-        nombresUnicos.has(nodo.nombre.trim().toLowerCase()) || !Number.isFinite(nodo.x) ||
-        !Number.isFinite(nodo.y) || Math.abs(nodo.x)>1000000 || Math.abs(nodo.y)>1000000) return null;
-    idsUnicos.add(nodo.id); nombresUnicos.add(nodo.nombre.trim().toLowerCase());
-  }
-  const idsNodos = new Set(idsUnicos);
-  for (const c of datos.conexiones) {
-    if (!c || typeof c.id !== 'string' || !c.id || idsUnicos.has(c.id) ||
-        !idsNodos.has(c.desde) || !idsNodos.has(c.hacia) || !Number.isInteger(c.valor) || Math.abs(c.valor)>MAX_PESO) return null;
-    const par = JSON.stringify([c.desde,c.hacia]);
-    if (pares.has(par)) return null;
-    pares.add(par); idsUnicos.add(c.id);
-  }
 
   const nodos = datos.nodos
     .filter(n => n && typeof n.id === 'string' && typeof n.nombre === 'string' &&
@@ -72,15 +54,12 @@ function depurarGrafo(datos) {
 }
 
 /** Reemplaza el grafo en pantalla por uno ya depurado. */
-function aplicarGrafo(limpio, registrarHistorial = true) {
-  if (registrarHistorial && typeof guardarEstadoParaDeshacer === 'function') guardarEstadoParaDeshacer();
+function aplicarGrafo(limpio) {
   estado.nodos = limpio.nodos;
   estado.conexiones = limpio.conexiones;
   estado.siguienteId = limpio.siguienteId;
   estado.seleccion = null;
   estado.origenConexion = null;
-  estado.visualizacionJohnson = null;
-  if (typeof invalidarResultados === 'function') invalidarResultados();
 }
 
 /**
@@ -88,12 +67,10 @@ function aplicarGrafo(limpio, registrarHistorial = true) {
  * Si el navegador bloquea el almacenamiento, la aplicación sigue funcionando.
  */
 function guardar() {
-  if (typeof revisarCambiosGrafo === 'function') revisarCambiosGrafo();
   try {
     localStorage.setItem(CLAVE_ALMACEN, JSON.stringify(instantaneaGrafo()));
-    if (typeof informarGuardado === 'function') informarGuardado(true);
   } catch (e) {
-    if (typeof informarGuardado === 'function') informarGuardado(false);
+    // Si el navegador bloquea el almacenamiento, la aplicación sigue funcionando.
   }
 }
 
@@ -106,7 +83,7 @@ function cargar() {
     const crudo = localStorage.getItem(CLAVE_ALMACEN);
     if (!crudo) return;
     const limpio = depurarGrafo(JSON.parse(crudo));
-    if (limpio) aplicarGrafo(limpio, false);
+    if (limpio) aplicarGrafo(limpio);
   } catch (e) {
     estado.nodos = [];
     estado.conexiones = [];

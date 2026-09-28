@@ -17,11 +17,24 @@ const MAX_LARGO_NOMBRE_GRAFO = 40;
 // Constantes de asignación
 const MAX_ASIGNACION_DIMENSION = 8;
 const MIN_ASIGNACION_DIMENSION = 1;
+const MAX_VALOR_ASIGNACION = 999999;
+const MAX_LARGO_ETIQUETA_ASIGNACION = 24;
+
+// Constantes de transporte (esquina noroeste). Son límites de esta aplicación,
+// no del método: el algoritmo funciona con cualquier tamaño y cantidades reales.
+const MAX_NORTHWEST_DIMENSION = 10;
+const MIN_NORTHWEST_DIMENSION = 1;
+const MAX_COSTO_NORTHWEST = 999999;        // costo unitario máximo (antes de escalar)
+const ESCALA_COSTO_NORTHWEST = 100;        // los costos se guardan como enteros × 100 (2 decimales)
+const MAX_CANTIDAD_NORTHWEST = 999999;     // oferta o demanda máxima por elemento
+const MAX_LARGO_ETIQUETA_NORTHWEST = 40;
 
 // Constantes de almacenamiento
 const CLAVE_ALMACEN = 'grafo.v1';
 const CLAVE_BIBLIOTECA = 'grafo.biblioteca.v1';
-const ASIGNACION_STORAGE_KEY = 'asignacion.v1';
+const ASIGNACION_STORAGE_KEY = 'asignacion.v1';          // formato antiguo: solo se lee para migrar
+const ASIGNACION_STORAGE_KEY_V2 = 'asignacion.v2';
+const NORTHWEST_STORAGE_KEY = 'northwest.v1';
 
 // Constantes de UI
 const TIMEOUT_AVISO = 2600;
@@ -88,9 +101,19 @@ if (typeof window !== 'undefined') {
     MAX_LARGO_NOMBRE_GRAFO,
     MAX_ASIGNACION_DIMENSION,
     MIN_ASIGNACION_DIMENSION,
+    MAX_VALOR_ASIGNACION,
+    MAX_LARGO_ETIQUETA_ASIGNACION,
+    MAX_NORTHWEST_DIMENSION,
+    MIN_NORTHWEST_DIMENSION,
+    MAX_COSTO_NORTHWEST,
+    ESCALA_COSTO_NORTHWEST,
+    MAX_CANTIDAD_NORTHWEST,
+    MAX_LARGO_ETIQUETA_NORTHWEST,
     CLAVE_ALMACEN,
     CLAVE_BIBLIOTECA,
     ASIGNACION_STORAGE_KEY,
+    ASIGNACION_STORAGE_KEY_V2,
+    NORTHWEST_STORAGE_KEY,
     TIMEOUT_AVISO,
     TIMEOUT_TOAST,
     FANTASMO_CLICK_TIMEOUT,

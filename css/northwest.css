@@ -1,0 +1,99 @@
+/* ============================================================================
+   Módulo de transporte (esquina noroeste): matriz de entrada, balanceo, pasos.
+   ============================================================================ */
+
+.nw-aclaracion { margin-bottom: var(--esp-3); }
+.nw-pasos { display: flex; align-items: center; gap: var(--esp-3); margin-bottom: var(--esp-4); }
+.nw-pasos .pasos { flex: 1 1 auto; }
+
+.nw-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--esp-4);
+  align-items: start;
+}
+.nw-principal { min-width: 0; display: flex; flex-direction: column; gap: var(--esp-3); }
+.nw-lateral { display: flex; flex-direction: column; gap: var(--esp-3); min-width: 0; }
+.nw-layout > *, .nw-lateral > * { min-width: 0; }
+.nw-pie { margin-top: var(--esp-4); }
+.nw-sin { display: flex; flex-direction: column; gap: 12px; }
+.nw-sin p { color: var(--texto-suave); }
+.nw-notas { display: flex; flex-direction: column; gap: 8px; }
+.nw-acciones-tabla { margin-top: 4px; }
+.nw-lateral__archivo { margin-top: 10px; }
+.nw-lateral__archivo .btn { flex: 1 1 calc(50% - 4px); }
+.nw-lateral__peligro { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--borde-suave); }
+.nw-lateral__peligro .btn { margin-left: 0; }
+.nw-ejemplo { display: flex; gap: 8px; margin: 6px 0 10px; }
+.nw-ejemplo select { flex: 1 1 auto; min-width: 0; }
+.nw-ejemplo .btn { flex: 0 0 auto; }
+.nw-balanceo-texto { display: flex; flex-direction: column; gap: 8px; margin-bottom: var(--esp-3); }
+.nw-leyenda { margin-top: 10px; }
+.nw-paso-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+/* ---------------- Tabla de datos ---------------- */
+.tabla-nw thead th:first-child { min-width: 130px; }
+.tabla-nw .nw-col-total { background: rgba(245, 176, 65, .08); }
+.tabla-nw th.nw-col-total, .tabla-nw th.nw-fila-total { color: #f8c66d; }
+.tabla-nw .nw-fila-total { background: rgba(245, 176, 65, .08); }
+.tabla-nw .nw-totales { text-align: left; line-height: 1.3; font-size: var(--t-sm); }
+.tabla-nw .nw-totales strong { display: block; margin-bottom: 4px; }
+.tabla-nw .nw-col-acciones { min-width: 44px; width: 44px; padding: 4px; background: transparent; }
+.tabla-nw .nw-fila-quitar td, .tabla-nw .nw-fila-quitar th { padding: 4px; background: transparent; border-bottom: 0; }
+.nw-quitar { color: var(--texto-apagado); }
+.nw-quitar:hover { color: #ffd7d7; background: rgba(248, 113, 113, .14); }
+.tabla-nw th input { min-width: 96px; }
+.tabla-nw input[data-tipo="costo"] { min-width: 72px; }
+.tabla-nw input[data-tipo="oferta"], .tabla-nw input[data-tipo="demanda"] { min-width: 72px; font-weight: 700; }
+
+/* ---------------- Tabla balanceada / pasos ---------------- */
+.tabla-nw--balance th.satisfecha { text-decoration: line-through; color: var(--texto-apagado); }
+.nw-celda { min-width: 84px; padding: 6px 8px; }
+.nw-celda__costo { display: block; font-size: var(--t-xs); color: var(--texto-apagado); font-weight: 600; text-align: right; }
+.nw-celda__cantidad { display: block; font-size: 1.15rem; font-weight: 800; color: var(--texto); }
+.nw-celda__cantidad--vacia { color: var(--texto-apagado); font-weight: 400; }
+.nw-celda__cantidad--basica { font-size: var(--t-sm); color: var(--info); font-weight: 700; }
+.tabla td.basica { background: rgba(245, 176, 65, .12); }
+.tabla td.basica .nw-celda__costo { color: var(--texto-suave); }
+.tabla td.actual { background: rgba(245, 176, 65, .28); outline: 3px solid var(--acento); outline-offset: -3px; }
+.nw-resta { color: var(--acento-fuerte); font-weight: 700; white-space: nowrap; }
+.leyenda__muestra--actual { border-color: var(--acento); background: rgba(245, 176, 65, .3); border-width: 2px; }
+.leyenda__muestra--basica { border-color: var(--aviso); background: rgba(245, 176, 65, .12); }
+
+/* Detalle del paso */
+.nw-detalle { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: var(--t-sm); }
+.nw-detalle dt { color: var(--texto-apagado); font-weight: 700; white-space: nowrap; }
+.nw-detalle dd { margin: 0; color: var(--texto); }
+.nw-detalle dd:nth-of-type(4) { font-family: ui-monospace, Consolas, monospace; font-weight: 700; color: var(--acento-fuerte); }
+#nwPasoDetalle .mensaje { margin-top: 10px; }
+
+/* Resultado */
+.lista-resultado--estatica li { cursor: default; }
+.lista-resultado--estatica li:hover { background: rgba(148, 163, 184, .04); }
+.lista-resultado li.ficticio { border-style: dashed; border-color: rgba(192, 132, 252, .5); color: #e9d5ff; }
+.nw-verificacion { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: var(--t-sm); }
+.nw-verificacion li.ok { color: #9ff0e2; }
+.nw-verificacion li.error { color: #ffd7d7; font-weight: 700; }
+
+/* ---------------- Tablet ---------------- */
+@media (max-width: 1180px) {
+  .nw-layout { grid-template-columns: 1fr; }
+  .nw-lateral { flex-direction: row; flex-wrap: wrap; }
+  .nw-lateral > * { flex: 1 1 260px; }
+}
+
+/* ---------------- Móvil ---------------- */
+@media (max-width: 640px) {
+  .nw-lateral { flex-direction: column; }
+  .nw-pie .btn { width: 100%; }
+  .nw-paso-cabecera .acciones { width: 100%; }
+  .nw-paso-cabecera .acciones .btn { flex: 1 1 45%; }
+  .nw-leyenda { gap: 6px 12px; font-size: var(--t-xs); }
+  .nw-detalle { grid-template-columns: 1fr; gap: 2px 0; }
+  .nw-detalle dd { margin-bottom: 6px; }
+  .tabla-nw thead th:first-child { min-width: 100px; }
+  .tabla-nw th input { min-width: 84px; }
+  .nw-celda { min-width: 72px; }
+  .nw-celda__cantidad { font-size: 1rem; }
+  .nw-quitar { min-height: var(--tactil); width: var(--tactil); }
+}

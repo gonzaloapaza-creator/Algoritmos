@@ -64,8 +64,8 @@ function geometriaConexion(conexion) {
   // por eso a->b y b->a se desvían automáticamente a lados opuestos.
   // El punto de control se mantiene dentro del área para que la curva y su valor no se salgan.
   const zona = area();
-  const cx = (a.x + b.x) / 2 + (-uy) * CURVATURA;
-  const cy = (a.y + b.y) / 2 + (ux) * CURVATURA;
+  const cx = limitar((a.x + b.x) / 2 + (-uy) * CURVATURA, 14, Math.max(14, zona.ancho - 14));
+  const cy = limitar((a.y + b.y) / 2 + (ux) * CURVATURA, 14, Math.max(14, zona.alto - 14));
   const inicio = puntoEnBorde(a, cx, cy, RADIO_NODO);
   const fin = puntoEnBorde(b, cx, cy, RADIO_NODO + SEPARACION_ARROW);
 
@@ -111,8 +111,6 @@ function clasesJohnsonNodo(nodo, visual) {
  * Optimizado con DocumentFragment para mejor rendimiento.
  */
 function dibujar() {
-  const foco = document.activeElement;
-  const focoId = el.svg.contains(foco) ? foco.dataset?.id : null;
   el.capaConexiones.textContent = '';
   el.capaNodos.textContent = '';
 
@@ -187,10 +185,6 @@ function dibujar() {
   actualizarInterfaz();
   // Si la matriz está abierta, se mantiene al día con el grafo.
   actualizarMatriz();
-  if (focoId) {
-    const nuevo = Array.from(el.svg.querySelectorAll('[data-id]')).find(e => e.dataset.id === focoId);
-    (nuevo || el.svg).focus({ preventScroll:true });
-  }
 }
 
 let dibujoPendiente = false;

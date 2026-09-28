@@ -50,7 +50,6 @@ function deshacer() {
   estado.conexiones = anterior.conexiones;
   estado.siguienteId = anterior.siguienteId;
   estado.seleccion = anterior.seleccion;
-  estado.origenConexion = null;
   
   guardar();
   dibujar();
@@ -81,7 +80,6 @@ function rehacer() {
   estado.conexiones = siguiente.conexiones;
   estado.siguienteId = siguiente.siguienteId;
   estado.seleccion = siguiente.seleccion;
-  estado.origenConexion = null;
   
   guardar();
   dibujar();
