@@ -1,4 +1,4 @@
-/* Punto de entrada: conecta los botones y arranca la aplicación. 
+/* Punto de entrada de Johnson: conecta los botones y arranca la aplicación.
 Se carga después de los archivos de la carpeta js/. */
 
 'use strict';
@@ -11,74 +11,46 @@ el.btnEliminar.addEventListener('click', eliminarSeleccion);
 el.btnCerrarPanel.addEventListener('click', () => { estado.seleccion = null; dibujar(); });
 el.btnLimpiar.addEventListener('click', () => { cerrarMenuExtra(); limpiarTodo(); });
 el.btnAyuda.addEventListener('click', mostrarAyuda);
-// Las hojas flotantes se excluyen entre sí: dos abiertas a la vez se taparían.
-el.btnMatriz.addEventListener('click', () => { cerrarMenuExtra(); cerrarResultadoJohnson(); alternarMatriz(); });
-el.btnCerrarMatriz.addEventListener('click', cerrarMatriz);
-el.matrizFondo.addEventListener('click', evento => {
-  if (evento.target === el.matrizFondo) cerrarMatriz();
+el.btnJohnson.addEventListener('click', () => { cerrarMenuExtra(); calcularYMostrarJohnson(); });
+
+// Ejemplos: desde la barra y desde el estado vacío.
+el.btnEjemplos.addEventListener('click', () => { cerrarMenuExtra(); mostrarEjemplos(); });
+el.btnVacioEjemplo.addEventListener('click', mostrarEjemplos);
+el.btnCerrarEjemplos.addEventListener('click', cerrarEjemplos);
+el.ejemplosFondo.addEventListener('click', evento => {
+  if (evento.target === el.ejemplosFondo) cerrarEjemplos();
 });
 
-el.btnJohnson.addEventListener('click', alternarJohnson);
-el.btnCerrarJohnson.addEventListener('click', cerrarResultadoJohnson);
-el.johnsonFondo.addEventListener('click', evento => {
-  if (evento.target === el.johnsonFondo) cerrarResultadoJohnson();
-});
+el.btnDeshacer.addEventListener('click', () => { cerrarMenuExtra(); deshacer(); });
+el.btnRehacer.addEventListener('click', () => { cerrarMenuExtra(); rehacer(); });
 
 // «Guardar» guarda directamente; «Biblioteca» abre la lista de grafos guardados.
-el.btnGuardar.addEventListener('click', () => {
-  cerrarMenuExtra();
-  cerrarResultadoJohnson();
-  cerrarMatriz();
-  guardarGrafoActual();
-});
-el.btnBiblioteca.addEventListener('click', () => { cerrarMenuExtra(); cerrarResultadoJohnson(); alternarBiblioteca(); });
+el.btnGuardar.addEventListener('click', () => { cerrarMenuExtra(); guardarGrafoActual(); });
+el.btnBiblioteca.addEventListener('click', () => { cerrarMenuExtra(); alternarBiblioteca(); });
 el.btnGuardarActual.addEventListener('click', guardarGrafoActual);
 el.btnCerrarBiblioteca.addEventListener('click', cerrarBiblioteca);
-
-// Botones de exportar/importar
-const btnExportarJSON = document.getElementById('btnExportarJSON');
-const btnExportarImagen = document.getElementById('btnExportarImagen');
-const btnImportarJSON = document.getElementById('btnImportarJSON');
-
-if (btnExportarJSON) {
-  btnExportarJSON.addEventListener('click', () => { cerrarMenuExtra(); exportarGrafoJSON(); });
-}
-if (btnExportarImagen) {
-  btnExportarImagen.addEventListener('click', () => { cerrarMenuExtra(); exportarGrafoImagen(); });
-}
-if (btnImportarJSON) {
-  btnImportarJSON.addEventListener('click', () => { cerrarMenuExtra(); importarGrafoJSON(); });
-}
-
-// Botones de zoom
-const btnZoomIn = document.getElementById('btnZoomIn');
-const btnZoomOut = document.getElementById('btnZoomOut');
-const btnZoomReset = document.getElementById('btnZoomReset');
-
-if (btnZoomIn) {
-  btnZoomIn.addEventListener('click', zoomIn);
-}
-if (btnZoomOut) {
-  btnZoomOut.addEventListener('click', zoomOut);
-}
-if (btnZoomReset) {
-  btnZoomReset.addEventListener('click', zoomReset);
-}
-
-// Botón de Dijkstra
-const btnDijkstra = document.getElementById('btnDijkstra');
-if (btnDijkstra) {
-  btnDijkstra.addEventListener('click', () => { 
-    cerrarMenuExtra(); 
-    if (estado.seleccion && estado.seleccion.tipo === 'nodo') {
-      ejecutarDijkstra(estado.seleccion.id);
-    } else {
-      avisar('Selecciona un nodo para ejecutar Dijkstra desde ese origen.', 'error');
-    }
-  });
-}
 el.bibliotecaFondo.addEventListener('click', evento => {
   if (evento.target === el.bibliotecaFondo) cerrarBiblioteca();
+});
+
+// Botones de exportar/importar
+document.getElementById('btnExportarJSON').addEventListener('click', () => { cerrarMenuExtra(); exportarGrafoJSON(); });
+document.getElementById('btnExportarImagen').addEventListener('click', () => { cerrarMenuExtra(); exportarGrafoImagen(); });
+document.getElementById('btnImportarJSON').addEventListener('click', () => { cerrarMenuExtra(); importarGrafoJSON(); });
+
+// Botones de zoom
+document.getElementById('btnZoomIn').addEventListener('click', zoomIn);
+document.getElementById('btnZoomOut').addEventListener('click', zoomOut);
+document.getElementById('btnZoomReset').addEventListener('click', zoomReset);
+
+// Botón de Dijkstra
+document.getElementById('btnDijkstra').addEventListener('click', () => {
+  cerrarMenuExtra();
+  if (estado.seleccion && estado.seleccion.tipo === 'nodo') {
+    ejecutarDijkstra(estado.seleccion.id);
+  } else {
+    avisar('Selecciona un nodo para ejecutar Dijkstra desde ese origen.', 'error');
+  }
 });
 
 el.btnEmpezar.addEventListener('click', () => {
@@ -89,8 +61,8 @@ el.btnEmpezar.addEventListener('click', () => {
   crearNodo(a.ancho / 2, a.alto / 2);
 });
 
-/*   MENÚ "Más opciones" (solo visible en celular)
-   Guarda Matriz, Guardar y Limpiar para que la barra ocupe menos alto.
+/*   MENÚ «Más»
+   Guarda las acciones menos frecuentes para que la barra ocupe menos alto.
    No toca el grafo ni la herramienta activa y su estado no se guarda en ningún sitio. */
 const btnMasOpciones = document.getElementById('btnMasOpciones');
 const menuExtra = document.getElementById('menuExtra');
@@ -105,6 +77,11 @@ function fijarMenuExtra(abrir) {
   if (abrir === menuExtraAbierto()) return;
 
   menuExtra.classList.toggle('abierto', abrir);
+  if (abrir) {
+    // Que nunca quede cortado por el borde inferior: si no cabe, se desplaza por dentro.
+    const libre = window.innerHeight - menuExtra.getBoundingClientRect().top - 12;
+    menuExtra.style.maxHeight = Math.max(160, libre) + 'px';
+  }
   btnMasOpciones.setAttribute('aria-expanded', abrir ? 'true' : 'false');
   menuFlecha.textContent = abrir ? '▲' : '▼';
 }
@@ -147,10 +124,11 @@ function adaptarAlArea() {
   if (modalAbierto()) return;
 
   const a = medirArea();
-  // Con el lienzo oculto (por ejemplo, mientras se muestra el video de presentación)
+  // Con el lienzo oculto (la presentación con video u otra vista del módulo)
   // el área mide 0 y los nodos se amontonarían en la esquina.
   if (a.ancho < 50 || a.alto < 50) return;
   if (ajustarNodosAlArea()) guardar();
+  aplicarZoom();
   dibujarPronto();
 }
 
@@ -163,53 +141,37 @@ if (typeof ResizeObserver === 'function') {
 }
 window.addEventListener('orientationchange', adaptarAlArea);
 
+inicializarVistasJohnson();
 cargar();
 const areaInicial = medirArea();
 if (areaInicial.ancho >= 50 && areaInicial.alto >= 50 && ajustarNodosAlArea()) guardar();   // el grafo pudo guardarse en una pantalla más grande
 elegirHerramienta('seleccionar');
 if (estado.nodos.length === 0) {
   // Mensaje corto: la explicación completa está en el botón Ayuda.
-  ayudar('Selecciona <strong>Nodo</strong> y toca el área para comenzar.');
+  ayudar('Selecciona <strong>Nodo</strong> y toca el área para comenzar, o carga un <strong>ejemplo</strong>.');
 }
 dibujar();
 
 // Atajos de teclado adicionales
 document.addEventListener('keydown', evento => {
-  // Ignorar si estamos en un input o textarea
-  if (evento.target.tagName === 'INPUT' || evento.target.tagName === 'TEXTAREA') return;
-  
-  // Ignorar si hay un modal abierto
-  if (modalAbierto()) return;
+  // Ignorar si estamos escribiendo o hay una ventana abierta
+  const etiqueta = evento.target.tagName;
+  if (etiqueta === 'INPUT' || etiqueta === 'TEXTAREA' || etiqueta === 'SELECT') return;
+  if (modalAbierto() || introVisible()) return;
 
   const ctrlOrCmd = evento.ctrlKey || evento.metaKey;
+  const tecla = evento.key.toLowerCase();
 
-  // Ctrl+S / Cmd+S: Guardar grafo actual
-  if (ctrlOrCmd && evento.key === 's') {
-    evento.preventDefault();
-    guardarGrafoActual();
-    return;
-  }
+  // Atajos de módulo: funcionan desde cualquier vista.
+  if (ctrlOrCmd && tecla === 'z' && !evento.shiftKey) { evento.preventDefault(); deshacer(); return; }
+  if (ctrlOrCmd && (tecla === 'y' || (evento.shiftKey && tecla === 'z'))) { evento.preventDefault(); rehacer(); return; }
+  if (ctrlOrCmd && tecla === 's') { evento.preventDefault(); guardarGrafoActual(); return; }
+  if (ctrlOrCmd && tecla === 'b') { evento.preventDefault(); alternarBiblioteca(); return; }
+  if (ctrlOrCmd && tecla === 'm') { evento.preventDefault(); cambiarVistaJohnson('matriz'); return; }
+  if (ctrlOrCmd && tecla === 'j') { evento.preventDefault(); calcularYMostrarJohnson(); return; }
 
-  // Ctrl+M: Mostrar/Ocultar matriz
-  if (ctrlOrCmd && evento.key === 'm') {
-    evento.preventDefault();
-    alternarMatriz();
-    return;
-  }
-
-  // Ctrl+J: Ejecutar Johnson
-  if (ctrlOrCmd && evento.key === 'j') {
-    evento.preventDefault();
-    alternarJohnson();
-    return;
-  }
-
-  // Ctrl+B: Mostrar/Ocultar biblioteca
-  if (ctrlOrCmd && evento.key === 'b') {
-    evento.preventDefault();
-    alternarBiblioteca();
-    return;
-  }
+  // El resto actúa sobre el editor: solo con el grafo a la vista y sin hojas abiertas.
+  if (!tecladoSobreGrafo(evento)) return;
 
   // Delete / Backspace: Eliminar selección
   if ((evento.key === 'Delete' || evento.key === 'Backspace') && estado.seleccion) {
@@ -219,63 +181,21 @@ document.addEventListener('keydown', evento => {
   }
 
   // Ctrl+N: Crear nuevo nodo en el centro
-  if (ctrlOrCmd && evento.key === 'n') {
+  if (ctrlOrCmd && tecla === 'n') {
     evento.preventDefault();
-    const a = area();
+    const a = medirArea();
     crearNodo(a.ancho / 2, a.alto / 2);
     return;
   }
 
   // Número 1, 2, 3: Cambiar herramienta
-  if (!ctrlOrCmd && !evento.metaKey && !evento.altKey) {
-    if (evento.key === '1') {
-      evento.preventDefault();
-      elegirHerramienta('seleccionar');
-      return;
-    }
-    if (evento.key === '2') {
-      evento.preventDefault();
-      elegirHerramienta('nodo');
-      return;
-    }
-    if (evento.key === '3') {
-      evento.preventDefault();
-      elegirHerramienta('conectar');
-      return;
-    }
+  if (!ctrlOrCmd && !evento.altKey) {
+    const herramienta = { 1: 'seleccionar', 2: 'nodo', 3: 'conectar' }[evento.key];
+    if (herramienta) { evento.preventDefault(); elegirHerramienta(herramienta); return; }
   }
 
-  // Ctrl+/-: Zoom in/out
-  if (ctrlOrCmd && (evento.key === '=' || evento.key === '+')) {
-    evento.preventDefault();
-    zoomIn();
-    return;
-  }
-
-  if (ctrlOrCmd && evento.key === '-') {
-    evento.preventDefault();
-    zoomOut();
-    return;
-  }
-
-  // Ctrl+0: Reset zoom
-  if (ctrlOrCmd && evento.key === '0') {
-    evento.preventDefault();
-    zoomReset();
-    return;
-  }
-
-  // Ctrl+Z: Deshacer
-  if (ctrlOrCmd && evento.key === 'z' && !evento.shiftKey) {
-    evento.preventDefault();
-    deshacer();
-    return;
-  }
-
-  // Ctrl+Shift+Z o Ctrl+Y: Rehacer
-  if ((ctrlOrCmd && evento.shiftKey && evento.key === 'z') || (ctrlOrCmd && evento.key === 'y')) {
-    evento.preventDefault();
-    rehacer();
-    return;
-  }
+  // Ctrl +/−/0: zoom
+  if (ctrlOrCmd && (evento.key === '=' || evento.key === '+')) { evento.preventDefault(); zoomIn(); return; }
+  if (ctrlOrCmd && evento.key === '-') { evento.preventDefault(); zoomOut(); return; }
+  if (ctrlOrCmd && evento.key === '0') { evento.preventDefault(); zoomReset(); }
 });

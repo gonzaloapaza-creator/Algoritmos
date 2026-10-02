@@ -118,7 +118,6 @@ document.addEventListener('keydown', evento => {
   if (evento.key !== 'Escape') return;
   // La ventana tiene prioridad: se cierra de una en una.
   if (cerrarModal) cerrarModal(null);
-  else if (matrizVisible()) cerrarMatriz();
-  else if (johnsonVisible()) cerrarResultadoJohnson();
   else if (bibliotecaVisible()) cerrarBiblioteca();
+  else if (ejemplosVisible()) cerrarEjemplos();
 });

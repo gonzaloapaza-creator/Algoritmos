@@ -2,8 +2,8 @@
    Módulo de asignación: vistas por pasos, grafo bipartito, matriz y procedimiento.
    ============================================================================ */
 
-.asig-pasos { display: flex; align-items: center; gap: var(--esp-3); margin-bottom: var(--esp-3); }
-.asig-pasos .pasos { flex: 1 1 auto; }
+.asig-pasos { display: flex; align-items: center; flex-wrap: wrap; gap: 8px var(--esp-3); margin-bottom: var(--esp-3); }
+.asig-pasos .pasos { flex: 1 1 460px; min-width: 0; }
 
 .asig-barra {
   display: flex;
@@ -182,27 +182,6 @@ body.grafo-ampliado { overflow: hidden; }
 .tabla-asignacion thead th:first-child { min-width: 120px; }
 
 /* ---------------- Procedimiento ---------------- */
-.proc-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-.proc-texto { color: var(--texto-suave); line-height: 1.6; margin: 6px 0 12px; }
-.proc-tabla { display: flex; flex-direction: column; gap: 12px; }
-.proc-tabla .procedure-step { padding-top: 14px; border-top: 1px solid var(--borde-suave); }
-.proc-tabla .procedure-step:first-child { border-top: 0; padding-top: 0; }
-.procedimiento__lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 60vh; overflow-y: auto; }
-.procedimiento__salto {
-  width: 100%;
-  min-height: 40px;
-  padding: 8px 10px;
-  text-align: left;
-  border-radius: var(--radio-sm);
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--texto-suave);
-  cursor: pointer;
-  font-size: var(--t-sm);
-  line-height: 1.3;
-}
-.procedimiento__salto:hover { background: rgba(255, 255, 255, .06); color: var(--texto); }
-.procedimiento__salto.activo { background: var(--acento-tinte); border-color: var(--acento-borde); color: var(--texto); font-weight: 700; }
 .tabla-paso td.cero-independiente { font-weight: 800; color: var(--texto); }
 .tabla-paso td.minimo-delta { box-shadow: inset 0 0 0 2px var(--exito); }
 .tabla-paso th.cubierta { box-shadow: inset 0 0 0 2px var(--aviso); }

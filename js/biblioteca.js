@@ -160,11 +160,14 @@ function guardarGrafoActual() {
 }
 
 function aplicarGuardado(grafo) {
+  guardarEstadoParaDeshacer();
+  irAlEditorJohnson();   // el área debe estar a la vista para medirla
   aplicarGrafo({ nodos: grafo.nodos, conexiones: grafo.conexiones, siguienteId: grafo.siguienteId });
   medirArea();
   ajustarNodosAlArea();   // el grafo pudo guardarse en una pantalla más grande
   guardar();
   cerrarBiblioteca();
+  restablecerZoomSilencioso();
   elegirHerramienta('seleccionar');
   avisar('Grafo «' + grafo.nombre + '» cargado.', 'ok');
 }
@@ -212,7 +215,7 @@ function bibliotecaVisible() {
 }
 
 function mostrarBiblioteca() {
-  cerrarMatriz();   // dos paneles a la vez se taparían
+  cerrarEjemplos();   // dos paneles a la vez se taparían
   el.bibliotecaFondo.hidden = false;
   actualizarBiblioteca();
   el.btnGuardarActual.focus();

@@ -120,10 +120,8 @@ function dibujarTablaMatriz(datos) {
   return tabla;
 }
 
-/** Vuelve a generar el contenido. Solo trabaja si la matriz está a la vista. */
+/** Vuelve a generar la matriz de la vista «Matriz». */
 function actualizarMatriz() {
-  if (el.matrizFondo.hidden) return;
-
   const datos = construirMatriz();
 
   el.matrizTabla.textContent = '';
@@ -134,24 +132,4 @@ function actualizarMatriz() {
     return;
   }
   el.matrizTabla.appendChild(dibujarTablaMatriz(datos));
-}
-
-function matrizVisible() {
-  return !el.matrizFondo.hidden;
-}
-
-function mostrarMatriz() {
-  cerrarBiblioteca();   // dos paneles a la vez se taparían
-  el.matrizFondo.hidden = false;
-  actualizarMatriz();
-  el.btnCerrarMatriz.focus();
-}
-
-function cerrarMatriz() {
-  el.matrizFondo.hidden = true;
-}
-
-function alternarMatriz() {
-  if (matrizVisible()) cerrarMatriz();
-  else mostrarMatriz();
 }

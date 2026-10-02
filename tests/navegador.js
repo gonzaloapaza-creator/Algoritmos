@@ -280,24 +280,46 @@ async function sinScrollHorizontal(page) {
     await page.evaluate(() => rehacer());
     check(await page.$$eval('#capaNodos .nodo', n => n.length) === 3, 'Rehacer lo devuelve');
     await page.click('#btnJohnson');
-    await page.waitForFunction(() => document.querySelector('#johnsonTabla table'));
+    await page.waitForSelector('#vistaResolucionJn:not([hidden])');
+    check(await page.$eval('#resolucionConJn', e => !e.hidden), 'Calcular abre la resolución paso a paso');
+    const totalPasos = await page.$$eval('#jnPasosLista li', li => li.length);
+    check(totalPasos >= 8, 'Resolución con ' + totalPasos + ' pasos reales');
+    await page.click('#btnJnSiguiente');
+    check((await page.$eval('#jnPasoIndicador', e => e.textContent)) === 'Paso 2 de ' + totalPasos, 'Siguiente avanza');
+    check(await page.$$eval('#svgPasoJn .nodo-auxiliar', n => n.length) === 1, 'El paso del nodo auxiliar dibuja q');
+    await page.click('#btnJnAnterior');
+    check((await page.$eval('#jnPasoIndicador', e => e.textContent)) === 'Paso 1 de ' + totalPasos, 'Anterior retrocede');
+    await page.click('#vistaResolucionJn [data-ir="resultado"]');
+    await page.waitForSelector('#vistaResultadoJn:not([hidden])');
     const celdaAC = await page.evaluate(() => {
       const tabla = document.querySelector('#johnsonTabla table');
       return tabla.querySelectorAll('tbody tr')[0].querySelectorAll('td')[2].textContent;
     });
     check(celdaAC === '2', 'Johnson: distancia a→c = 2 (por b con peso negativo)');
+    await page.click('#johnsonTabla td[data-origen="0"][data-destino="2"]');
+    check((await page.$eval('#jnRutaDetalle', e => e.textContent)).includes('4 + (-2) = 2'), 'La ruta muestra la suma de pesos');
     await capturar(page, 'johnson-resultado-1440');
-    await page.click('#btnCerrarJohnson');
     await page.evaluate(() => { estado.conexiones.push({ id: nuevoId('c'), desde: estado.nodos[2].id, hacia: estado.nodos[0].id, valor: -10 }); guardar(); dibujar(); });
-    await page.click('#btnJohnson');
-    await page.waitForFunction(() => document.querySelector('#johnsonEstado').textContent.length > 0 && !document.querySelector('#johnsonEstado').textContent.includes('Calculando'));
-    check((await page.$eval('#johnsonFondo', e => e.textContent)).toLowerCase().includes('ciclo de peso negativo'), 'Johnson detecta el ciclo negativo');
-    await page.click('#btnCerrarJohnson');
-    check(await page.$$eval('.ciclo-negativo-johnson', n => n.length) >= 3, 'El ciclo se resalta en rojo al cerrar');
-    await page.click('#btnMatriz');
-    check(await page.$eval('#matrizFondo', e => !e.hidden), 'Matriz de adyacencia abre');
+    check((await page.$eval('#estadoResultadoJn', e => e.textContent)).includes('recalcular'), 'Cambiar el grafo deja el resultado desactualizado');
+    await page.click('#resultadoSinJn [data-accion="calcular"]');
+    await page.waitForSelector('#vistaResolucionJn:not([hidden])');
+    check((await page.$eval('#jnPasoTitulo', e => e.textContent)) === 'Grafo original', 'Recalcular vuelve al paso 1');
+    await page.click('#pasosJohnson [data-vista="resultado"]');
+    check((await page.$eval('#vistaResultadoJn', e => e.textContent)).toLowerCase().includes('ciclo de peso negativo'), 'Johnson detecta el ciclo negativo');
+    check(await page.$$eval('#capaConexiones .ciclo-negativo-johnson', n => n.length) >= 3, 'El ciclo se resalta en rojo en el editor');
+    await page.click('#pasosJohnson [data-vista="matriz"]');
+    check(await page.$eval('#vistaMatrizJn', e => !e.hidden) && await page.$$eval('#matrizTabla tbody tr', f => f.length) === 3, 'Vista de matriz de adyacencia 3×3');
+    await page.click('#pasosJohnson [data-vista="grafo"]');
+    // Ejemplos
+    await page.click('#btnEjemplos');
+    check(await page.$eval('#ejemplosFondo', e => !e.hidden), 'Abre la lista de ejemplos');
     await page.keyboard.press('Escape');
-    check(await page.$eval('#matrizFondo', e => e.hidden), 'Escape cierra la matriz');
+    check(await page.$eval('#ejemplosFondo', e => e.hidden), 'Escape cierra los ejemplos');
+    await page.evaluate(() => { aplicarEjemploJohnson(ejemploJohnsonPorId('negativos')); calcularYMostrarJohnson('resultado'); });
+    check(await page.evaluate(() => JSON.stringify(estadoJohnson.resultado.distancias[0])) === '[0,1,-3,2,-4]', 'Ejemplo clásico: fila a = 0, 1, −3, 2, −4');
+    await page.evaluate(() => deshacer());
+    check(await page.$$eval('#capaNodos .nodo', n => n.length) === 3, 'Deshacer recupera el grafo anterior al ejemplo');
+    await page.evaluate(() => cambiarVistaJohnson('grafo'));
     await page.reload({ waitUntil: 'networkidle0' });
     check(await page.$$eval('#capaNodos .nodo', n => n.length) === 3, 'Autoguardado recupera el grafo');
     // Con la presentación visible el lienzo mide 0: los nodos no deben amontonarse en la esquina.
@@ -327,6 +349,12 @@ async function sinScrollHorizontal(page) {
       const lienzo = await page.$eval('#lienzo', e => e.getBoundingClientRect().height);
       check(lienzo >= 150, 'Lienzo de Johnson con alto útil ' + Math.round(lienzo) + 'px (' + nombre + ')');
       await capturar(page, 'johnson-' + nombre);
+      await page.evaluate(() => { localStorage.clear(); aplicarEjemploJohnson(ejemploJohnsonPorId('negativos')); calcularYMostrarJohnson(); irAPasoJohnson(3); });
+      check(await sinScrollHorizontal(page), 'Johnson paso a paso sin scroll horizontal (' + nombre + ')');
+      await capturar(page, 'johnson-pasos-' + nombre);
+      await page.evaluate(() => { cambiarVistaJohnson('resultado'); seleccionarCeldaJohnson(0, 2); });
+      check(await sinScrollHorizontal(page), 'Johnson resultado sin scroll horizontal (' + nombre + ')');
+      await capturar(page, 'johnson-resultado-' + nombre);
       await page.close();
     }
 

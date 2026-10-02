@@ -3,8 +3,8 @@
    ============================================================================ */
 
 .nw-aclaracion { margin-bottom: var(--esp-3); }
-.nw-pasos { display: flex; align-items: center; gap: var(--esp-3); margin-bottom: var(--esp-4); }
-.nw-pasos .pasos { flex: 1 1 auto; }
+.nw-pasos { display: flex; align-items: center; flex-wrap: wrap; gap: 8px var(--esp-3); margin-bottom: var(--esp-4); }
+.nw-pasos .pasos { flex: 1 1 520px; min-width: 0; }
 
 .nw-layout {
   display: grid;

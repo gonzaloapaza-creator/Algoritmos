@@ -89,11 +89,35 @@ function dibujarInicio() {
     contenedor.appendChild(seccion);
   });
 
+  const disponibles = lista.filter(a => a.disponible).length;
+  const categorias = agruparCatalogo(lista).length;
   const resumen = document.getElementById('resumenCatalogo');
-  if (resumen) {
-    const disponibles = lista.filter(a => a.disponible).length;
-    resumen.textContent = disponibles + ' algoritmos disponibles en ' + agruparCatalogo(lista).length + ' categorías.';
-  }
+  if (resumen) resumen.textContent = disponibles + ' algoritmos disponibles en ' + categorias + ' categorías.';
+  const datoAlgoritmos = document.getElementById('datoAlgoritmos');
+  const datoCategorias = document.getElementById('datoCategorias');
+  if (datoAlgoritmos) datoAlgoritmos.textContent = String(disponibles);
+  if (datoCategorias) datoCategorias.textContent = String(categorias);
+}
+
+/**
+ * Video «¿Qué es un algoritmo?»: hasta que se pulsa solo se muestra la miniatura,
+ * así el inicio no carga el reproductor de YouTube si nadie lo va a ver.
+ */
+function inicializarVideoInicio() {
+  const caja = document.getElementById('videoAlgoritmo');
+  const boton = document.getElementById('btnVideoAlgoritmo');
+  if (!caja || !boton) return;
+  boton.addEventListener('click', () => {
+    const iframe = document.createElement('iframe');
+    iframe.src = 'https://www.youtube-nocookie.com/embed/' + caja.dataset.video + '?rel=0&autoplay=1';
+    iframe.title = 'Video: ' + caja.dataset.titulo;
+    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    iframe.allowFullscreen = true;
+    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+    caja.replaceChildren(iframe);
+    iframe.focus();
+  });
 }
 
 dibujarInicio();
+inicializarVideoInicio();

@@ -194,7 +194,8 @@ function ejecutarDijkstra(origenId) {
     nodos: nodosAlcanzados,
     conexiones: conexionesArbol,
     distancia: null,
-    tipo: 'ruta'
+    tipo: 'ruta',
+    firma: firmaGrafoJohnson()
   };
   dibujar();
 

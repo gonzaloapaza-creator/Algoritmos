@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="description" content="Editor visual de grafos y cálculo del algoritmo de Johnson." />
+  <meta name="description" content="Editor visual de grafos y algoritmo de Johnson resuelto paso a paso." />
   <meta name="theme-color" content="#0f1220" />
   <title>Johnson | Algoritmos de Optimización</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='9' cy='23' r='5' fill='%235b8cff'/><circle cx='23' cy='9' r='5' fill='%2300d3a7'/><line x1='12' y1='20' x2='20' y2='12' stroke='white' stroke-width='2'/></svg>" />
@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="css/shell.css" />
   <link rel="stylesheet" href="css/johnson.css" />
 </head>
-<body class="page-johnson" data-modulo="johnson">
+<body class="page-johnson" data-modulo="johnson" data-vista="grafo">
   <a class="saltar" href="#contenido">Saltar al contenido</a>
   <header class="topbar">
     <button type="button" class="btn btn-fantasma btn-icono topbar__menu" id="btnMenuLateral" aria-label="Abrir menú" aria-expanded="false" aria-controls="barraLateral">
@@ -25,6 +25,7 @@
     <span class="topbar__modulo" id="topbarModulo">Johnson</span>
     <div class="topbar__acciones">
       <button type="button" class="btn btn-fantasma btn-sm" id="btnVideoModulo" aria-pressed="false" title="Ver la presentación en video">Video</button>
+      <button type="button" class="btn btn-fantasma btn-sm" id="btnAyuda">Ayuda</button>
     </div>
   </header>
   <aside class="sidebar" id="barraLateral" aria-label="Navegación principal"></aside>
@@ -36,146 +37,247 @@
     <section class="modulo-cabecera">
       <div class="modulo-cabecera__texto">
         <h1>Algoritmo de Johnson</h1>
-        <p>Rutas mínimas entre todos los pares de nodos, con pesos negativos permitidos.</p>
+        <p>Rutas mínimas entre todos los pares de nodos, con pesos negativos permitidos: grafo → matriz → resolución paso a paso → resultado.</p>
       </div>
     </section>
 
-    <nav class="barra-herramientas" aria-label="Herramientas de Johnson">
-      <div class="grupo-herramientas grupo-segmentado" role="group" aria-label="Modo de trabajo">
-        <button type="button" class="btn btn-herramienta activo" data-herramienta="seleccionar" aria-pressed="true">
-          Seleccionar
-        </button>
-        <button type="button" class="btn btn-herramienta" data-herramienta="nodo" aria-pressed="false">
-          Nodo
-        </button>
-        <button type="button" class="btn btn-herramienta" data-herramienta="conectar" aria-pressed="false">
-          Conectar
-        </button>
-      </div>
-      <div class="grupo-herramientas" role="group" aria-label="Acciones del grafo">
-        <button type="button" class="btn btn-secondary" id="btnMatriz">Matriz</button>
-        <button type="button" class="btn btn-primary" id="btnJohnson">
-          <svg class="icono" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
-            <path d="M4 15 L9 6 L16 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-            <circle cx="4" cy="15" r="2.6" fill="currentColor" />
-            <circle cx="9" cy="6" r="2.6" fill="currentColor" />
-            <circle cx="16" cy="10" r="2.6" fill="currentColor" />
-          </svg>
-          <span class="texto-ancho">Calcular </span>Johnson
-        </button>
-        <div class="menu-acciones">
-          <button type="button" class="btn btn-claro btn-mas" id="btnMasOpciones"
-                  aria-expanded="false" aria-controls="menuExtra" aria-haspopup="true">
-            Acciones <span class="menu-flecha" id="menuFlecha" aria-hidden="true">▼</span>
-          </button>
-          <div class="menu-extra" id="menuExtra" role="group" aria-label="Más acciones del grafo">
-            <button type="button" class="btn btn-claro" id="btnGuardar">Guardar grafo</button>
-            <button type="button" class="btn btn-claro" id="btnBiblioteca">Biblioteca</button>
-            <button type="button" class="btn btn-claro" id="btnDijkstra">Dijkstra</button>
-            <button type="button" class="btn btn-claro" id="btnExportarJSON">Exportar JSON</button>
-            <button type="button" class="btn btn-claro" id="btnExportarImagen">Exportar PNG</button>
-            <button type="button" class="btn btn-claro" id="btnImportarJSON">Importar JSON</button>
-            <button type="button" class="btn btn-peligro" id="btnLimpiar">Limpiar</button>
-          </div>
-        </div>
+    <nav class="jn-pasos" aria-label="Pasos del módulo">
+      <ol class="pasos" id="pasosJohnson">
+        <li><button type="button" class="paso" data-vista="grafo"><span class="paso__numero">1</span><span class="paso__texto">Grafo</span></button></li>
+        <li><button type="button" class="paso" data-vista="matriz"><span class="paso__numero">2</span><span class="paso__texto">Matriz</span></button></li>
+        <li><button type="button" class="paso" data-vista="resolucion"><span class="paso__numero">3</span><span class="paso__texto">Paso a paso</span></button></li>
+        <li><button type="button" class="paso" data-vista="resultado"><span class="paso__numero">4</span><span class="paso__texto">Resultado</span></button></li>
+      </ol>
+      <div class="jn-pasos__estado">
+        <span class="pasos__contador" id="pasosContadorJn" aria-live="polite">Paso 1 de 4</span>
+        <span class="estado estado--neutro" id="estadoResultadoJn">Sin calcular</span>
       </div>
     </nav>
 
-    <p class="ayuda" id="ayuda" aria-live="polite">
-      Selecciona <strong>Nodo</strong> y toca el área para comenzar.
-    </p>
-
-    <div class="johnson-layout">
-      <section class="grafo-workspace" id="lienzo" aria-label="Editor del grafo">
-        <svg id="svg" xmlns="http://www.w3.org/2000/svg" role="application" aria-label="Área de trabajo del grafo">
-          <defs>
-            <marker id="flecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#9cb0d4" />
-            </marker>
-            <marker id="flechaSel" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#ffcf5c" />
-            </marker>
-            <marker id="flechaRuta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#22d3ee" />
-            </marker>
-            <marker id="flechaCiclo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff5f6d" />
-            </marker>
-          </defs>
-          <g id="capaConexiones"></g>
-          <g id="capaNodos"></g>
-        </svg>
-
-        <div class="vacio" id="vacio">
-          <div class="vacio-caja">
-            <h2>El grafo está vacío</h2>
-            <p class="vacio-breve">Crea un nodo para comenzar</p>
-            <ol>
-              <li>Pulsa la herramienta <strong>Nodo</strong>.</li>
-              <li>Toca o haz clic en esta área para crear un nodo.</li>
-              <li>Con <strong>Conectar</strong>, une dos nodos e indica el peso.</li>
-            </ol>
-            <button type="button" class="btn btn-primary" id="btnEmpezar">Crear primer nodo</button>
+    <!-- Paso 1: grafo -->
+    <section class="vista" id="vistaGrafoJn" data-vista="grafo" aria-label="Paso 1: editor del grafo">
+      <nav class="barra-herramientas" aria-label="Herramientas de Johnson">
+        <div class="grupo-herramientas grupo-segmentado" role="group" aria-label="Modo de trabajo">
+          <button type="button" class="btn btn-herramienta activo" data-herramienta="seleccionar" aria-pressed="true">Seleccionar</button>
+          <button type="button" class="btn btn-herramienta" data-herramienta="nodo" aria-pressed="false">Nodo</button>
+          <button type="button" class="btn btn-herramienta" data-herramienta="conectar" aria-pressed="false">Conectar</button>
+        </div>
+        <div class="grupo-herramientas grupo-acciones" role="group" aria-label="Acciones del grafo">
+          <button type="button" class="btn btn-secondary" id="btnEjemplos">Ejemplos</button>
+          <button type="button" class="btn btn-primary" id="btnJohnson">
+            <svg class="icono" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+              <path d="M4 15 L9 6 L16 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              <circle cx="4" cy="15" r="2.6" fill="currentColor" />
+              <circle cx="9" cy="6" r="2.6" fill="currentColor" />
+              <circle cx="16" cy="10" r="2.6" fill="currentColor" />
+            </svg>
+            <span><span class="texto-ancho">Calcular </span>Johnson</span>
+          </button>
+          <div class="menu-acciones">
+            <button type="button" class="btn btn-claro btn-mas" id="btnMasOpciones"
+                    aria-expanded="false" aria-controls="menuExtra" aria-haspopup="true">
+              <span>Más</span> <span class="menu-flecha" id="menuFlecha" aria-hidden="true">▼</span>
+            </button>
+            <div class="menu-extra" id="menuExtra" role="group" aria-label="Más acciones del grafo">
+              <button type="button" class="btn btn-claro" id="btnDeshacer" title="Deshacer (Ctrl+Z)">Deshacer</button>
+              <button type="button" class="btn btn-claro" id="btnRehacer" title="Rehacer (Ctrl+Y)">Rehacer</button>
+              <button type="button" class="btn btn-claro" id="btnGuardar">Guardar grafo</button>
+              <button type="button" class="btn btn-claro" id="btnBiblioteca">Biblioteca</button>
+              <button type="button" class="btn btn-claro" id="btnDijkstra">Dijkstra</button>
+              <button type="button" class="btn btn-claro" id="btnExportarJSON">Exportar JSON</button>
+              <button type="button" class="btn btn-claro" id="btnExportarImagen">Exportar PNG</button>
+              <button type="button" class="btn btn-claro" id="btnImportarJSON">Importar JSON</button>
+              <button type="button" class="btn btn-peligro" id="btnLimpiar">Limpiar</button>
+            </div>
           </div>
         </div>
+      </nav>
 
-        <aside class="panel" id="panel" hidden>
-          <div class="panel-info">
-            <span class="panel-etiqueta" id="panelTitulo">Nodo</span>
-            <span class="panel-detalle" id="panelDetalle">a</span>
+      <p class="ayuda" id="ayuda" aria-live="polite">
+        Selecciona <strong>Nodo</strong> y toca el área para comenzar.
+      </p>
+
+      <div class="johnson-layout">
+        <section class="grafo-workspace" id="lienzo" aria-label="Editor del grafo">
+          <svg id="svg" xmlns="http://www.w3.org/2000/svg" role="application" aria-label="Área de trabajo del grafo">
+            <defs>
+              <marker id="flecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#9cb0d4" />
+              </marker>
+              <marker id="flechaSel" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#ffcf5c" />
+              </marker>
+              <marker id="flechaRuta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#22d3ee" />
+              </marker>
+              <marker id="flechaCiclo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff5f6d" />
+              </marker>
+            </defs>
+            <g id="capaConexiones"></g>
+            <g id="capaNodos"></g>
+          </svg>
+
+          <div class="vacio" id="vacio">
+            <div class="vacio-caja">
+              <h2>El grafo está vacío</h2>
+              <p class="vacio-breve">Crea un nodo o carga un ejemplo para comenzar.</p>
+              <ol>
+                <li>Pulsa la herramienta <strong>Nodo</strong>.</li>
+                <li>Toca o haz clic en esta área para crear un nodo.</li>
+                <li>Con <strong>Conectar</strong>, une dos nodos e indica el peso.</li>
+              </ol>
+              <div class="acciones vacio-acciones">
+                <button type="button" class="btn btn-primary" id="btnEmpezar">Crear primer nodo</button>
+                <button type="button" class="btn btn-secondary" id="btnVacioEjemplo">Cargar un ejemplo</button>
+              </div>
+            </div>
           </div>
-          <div class="panel-acciones">
-            <button type="button" class="btn btn-claro" id="btnEditar">Editar nombre</button>
-            <button type="button" class="btn btn-peligro" id="btnEliminar">Eliminar</button>
-            <button type="button" class="btn btn-fantasma" id="btnCerrarPanel" aria-label="Cerrar panel">✕</button>
+
+          <aside class="panel" id="panel" hidden>
+            <div class="panel-info">
+              <span class="panel-etiqueta" id="panelTitulo">Nodo</span>
+              <span class="panel-detalle" id="panelDetalle">a</span>
+            </div>
+            <div class="panel-acciones">
+              <button type="button" class="btn btn-claro" id="btnEditar">Editar nombre</button>
+              <button type="button" class="btn btn-peligro" id="btnEliminar">Eliminar</button>
+              <button type="button" class="btn btn-fantasma btn-icono" id="btnCerrarPanel" aria-label="Cerrar panel">✕</button>
+            </div>
+          </aside>
+
+          <!-- Controles de zoom -->
+          <div class="zoom-controls" aria-label="Controles de zoom">
+            <button type="button" class="btn btn-zoom" id="btnZoomOut" aria-label="Reducir zoom" title="Reducir zoom (Ctrl+-)">−</button>
+            <button type="button" class="btn btn-zoom" id="btnZoomReset" aria-label="Resetear zoom" title="Resetear zoom (Ctrl+0)">100%</button>
+            <button type="button" class="btn btn-zoom" id="btnZoomIn" aria-label="Aumentar zoom" title="Aumentar zoom (Ctrl++)">+</button>
           </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- Paso 2: matriz de adyacencia -->
+    <section class="vista" id="vistaMatrizJn" data-vista="matriz" hidden aria-labelledby="matrizTitulo">
+      <div class="jn-layout">
+        <div class="tarjeta jn-principal">
+          <div class="tarjeta__cabecera">
+            <div>
+              <h2 id="matrizTitulo">Matriz de adyacencia</h2>
+              <p class="tarjeta__pista">Fila = nodo de <strong>origen</strong> · columna = nodo de <strong>destino</strong>. Una raya (—) indica que no hay conexión; un 0 es una conexión real de peso cero.</p>
+            </div>
+          </div>
+          <div class="tabla-datos" id="matrizTabla"></div>
+        </div>
+        <aside class="jn-lateral">
+          <div class="tarjeta" id="validacionJohnson" aria-live="polite"></div>
         </aside>
+      </div>
+      <div class="acciones acciones--entre jn-pie">
+        <button type="button" class="btn btn-neutral" data-ir="grafo">← Volver al grafo</button>
+        <button type="button" class="btn btn-primary" data-accion="calcular">Calcular Johnson</button>
+      </div>
+    </section>
 
-        <button type="button" class="btn btn-ayuda" id="btnAyuda">Ayuda</button>
-        
-        <!-- Controles de zoom -->
-        <div class="zoom-controls" aria-label="Controles de zoom">
-          <button type="button" class="btn btn-zoom" id="btnZoomOut" aria-label="Reducir zoom" title="Reducir zoom (Ctrl+-)">−</button>
-          <button type="button" class="btn btn-zoom" id="btnZoomReset" aria-label="Resetear zoom" title="Resetear zoom (Ctrl+0)">100%</button>
-          <button type="button" class="btn btn-zoom" id="btnZoomIn" aria-label="Aumentar zoom" title="Aumentar zoom (Ctrl++)">+</button>
+    <!-- Paso 3: resolución paso a paso -->
+    <section class="vista" id="vistaResolucionJn" data-vista="resolucion" hidden aria-labelledby="resolucionTituloJn">
+      <div class="tarjeta jn-sin" id="resolucionSinJn">
+        <h2 id="resolucionTituloJn">Resolución paso a paso</h2>
+        <p></p>
+        <div class="acciones">
+          <button type="button" class="btn btn-neutral" data-ir="matriz">Revisar la matriz</button>
+          <button type="button" class="btn btn-primary" data-accion="calcular">Calcular Johnson</button>
         </div>
-        
-        <div class="avisos" id="avisos" aria-live="polite"></div>
-      </section>
-    </div>
+      </div>
+      <div id="resolucionConJn" hidden>
+        <div class="jn-layout jn-layout--proc">
+          <div class="tarjeta jn-principal">
+            <div class="proc-cabecera">
+              <span class="estado estado--neutro" id="jnPasoIndicador">Paso 1 de 1</span>
+              <div class="acciones">
+                <button type="button" class="btn btn-neutral btn-sm" id="btnJnReiniciar">Reiniciar</button>
+                <button type="button" class="btn btn-neutral btn-sm" id="btnJnAnterior">← Anterior</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btnJnSiguiente">Siguiente →</button>
+              </div>
+            </div>
+            <h3 id="jnPasoTitulo"></h3>
+            <p class="proc-texto" id="jnPasoTexto"></p>
+            <div class="jn-paso-cuerpo">
+              <div class="grafo-mini" id="grafoPasoJn">
+                <svg id="svgPasoJn" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Grafo del paso actual"></svg>
+              </div>
+              <div class="jn-paso-tablas" id="jnPasoTablas"></div>
+            </div>
+            <div class="leyenda jn-leyenda" id="jnPasoLeyenda"></div>
+          </div>
+          <aside class="jn-lateral">
+            <div class="tarjeta tarjeta--plana">
+              <p class="etiqueta">Pasos</p>
+              <ol class="procedimiento__lista" id="jnPasosLista"></ol>
+            </div>
+          </aside>
+        </div>
+      </div>
+      <div class="acciones acciones--entre jn-pie">
+        <button type="button" class="btn btn-neutral" data-ir="matriz">← Matriz</button>
+        <button type="button" class="btn btn-primary" data-ir="resultado">Ver resultado →</button>
+      </div>
+    </section>
+
+    <!-- Paso 4: resultado -->
+    <section class="vista" id="vistaResultadoJn" data-vista="resultado" hidden aria-labelledby="resultadoTituloJn">
+      <div class="tarjeta jn-sin" id="resultadoSinJn">
+        <h2 id="resultadoTituloJn">Resultado</h2>
+        <p></p>
+        <div class="acciones">
+          <button type="button" class="btn btn-neutral" data-ir="matriz">Revisar la matriz</button>
+          <button type="button" class="btn btn-primary" data-accion="calcular">Calcular Johnson</button>
+        </div>
+      </div>
+      <div id="resultadoConJn" hidden>
+        <div class="mensaje" id="johnsonEstado" aria-live="polite"></div>
+        <div class="jn-layout jn-layout--resultado">
+          <div class="tarjeta jn-principal">
+            <div class="tarjeta__cabecera">
+              <div>
+                <h2 id="johnsonTitulo">Distancias mínimas</h2>
+                <p class="tarjeta__pista" id="johnsonPista">Toca una celda para ver su ruta. Fila = origen · columna = destino · ∞ = sin camino.</p>
+              </div>
+            </div>
+            <div class="tabla-datos" id="johnsonTabla"></div>
+          </div>
+          <aside class="jn-lateral">
+            <div class="tarjeta">
+              <p class="etiqueta" id="jnRutaEtiqueta">Ruta seleccionada</p>
+              <div class="grafo-mini grafo-mini--compacto" id="grafoResultadoJn">
+                <svg id="svgResultadoJn" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ruta seleccionada sobre el grafo"></svg>
+              </div>
+              <div class="jn-ruta" id="jnRutaDetalle" aria-live="polite"></div>
+              <div class="acciones jn-ruta__acciones">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnVerEnEditor" disabled>Ver en el editor</button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+      <div class="acciones acciones--entre jn-pie">
+        <button type="button" class="btn btn-neutral" data-ir="resolucion">← Paso a paso</button>
+        <button type="button" class="btn btn-neutral" data-ir="grafo">Volver al grafo</button>
+      </div>
+    </section>
     </div>
   </main>
 
-  <div class="hoja-fondo" id="matrizFondo" hidden>
-    <section class="hoja" role="dialog" aria-modal="true" aria-labelledby="matrizTitulo">
-      <header class="hoja-cabecera">
-        <h3 id="matrizTitulo">Matriz de adyacencia</h3>
-        <button type="button" class="btn btn-fantasma" id="btnCerrarMatriz" aria-label="Cerrar matriz">✕</button>
-      </header>
-      <div class="tabla-datos" id="matrizTabla"></div>
-      <p class="hoja-nota">
-        Cada fila es el nodo de <strong>origen</strong> y cada columna el de <strong>destino</strong>.
-        Una raya (<strong>—</strong>) indica que no existe conexión en ese sentido; un <strong>0</strong> es una conexión real cuyo peso es cero.
-      </p>
-    </section>
-  </div>
+  <div class="avisos" id="avisos" aria-live="polite"></div>
 
-  <div class="hoja-fondo" id="johnsonFondo" hidden>
-    <section class="hoja" role="dialog" aria-modal="true" aria-labelledby="johnsonTitulo">
+  <div class="hoja-fondo" id="ejemplosFondo" hidden>
+    <section class="hoja hoja-estrecha" role="dialog" aria-modal="true" aria-labelledby="ejemplosTitulo">
       <header class="hoja-cabecera">
-        <h3 id="johnsonTitulo">Resultado de Johnson</h3>
-        <button type="button" class="btn btn-claro" id="btnCerrarJohnson">Cerrar</button>
+        <h3 id="ejemplosTitulo">Cargar un ejemplo</h3>
+        <button type="button" class="btn btn-fantasma btn-icono" id="btnCerrarEjemplos" aria-label="Cerrar">✕</button>
       </header>
-      <p class="hoja-descripcion">Selecciona una celda para visualizar la ruta correspondiente.</p>
-      <p class="johnson-estado" id="johnsonEstado" aria-live="polite"></p>
-      <div class="tabla-datos" id="johnsonTabla"></div>
-      <details class="procedure-box" id="johnsonProcedimiento" hidden>
-        <summary>Ver procedimiento</summary>
-        <div id="johnsonPasos" class="procedure-content"></div>
-      </details>
+      <ul class="biblio-lista ejemplos-lista" id="ejemplosLista"></ul>
       <p class="hoja-nota">
-        Cada fila es el nodo de <strong>origen</strong> y cada columna el de <strong>destino</strong>.
-        El símbolo <strong>∞</strong> indica que no hay ningún camino en ese sentido.
+        Al cargar un ejemplo se <strong>reemplaza</strong> el grafo en pantalla. Se puede deshacer con Ctrl+Z o desde «Más → Deshacer».
       </p>
     </section>
   </div>
@@ -184,7 +286,7 @@
     <section class="hoja hoja-estrecha" role="dialog" aria-modal="true" aria-labelledby="bibliotecaTitulo">
       <header class="hoja-cabecera">
         <h3 id="bibliotecaTitulo">Grafos guardados</h3>
-        <button type="button" class="btn btn-fantasma" id="btnCerrarBiblioteca" aria-label="Cerrar">✕</button>
+        <button type="button" class="btn btn-fantasma btn-icono" id="btnCerrarBiblioteca" aria-label="Cerrar">✕</button>
       </header>
       <button type="button" class="btn btn-primary biblio-guardar" id="btnGuardarActual">Guardar el grafo actual</button>
       <ul class="biblio-lista" id="bibliotecaLista"></ul>
@@ -223,10 +325,12 @@
   <script src="js/matriz.js"></script>
   <script src="js/biblioteca.js"></script>
   <script src="js/johnson.js"></script>
+  <script src="js/johnson/ejemplos.js"></script>
   <script src="js/dijkstra.js"></script>
   <script src="js/interaccion.js"></script>
   <script src="js/zoom.js"></script>
   <script src="js/deshacer.js"></script>
+  <script src="js/johnson/vistas.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

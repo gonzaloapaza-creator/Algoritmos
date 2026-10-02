@@ -82,11 +82,16 @@ function zoomOut() {
   avisar(`Zoom: ${Math.round(estado.zoom.escala * 100)}%`);
 }
 
-function zoomReset() {
+/** Vuelve al 100 % sin aviso: se usa al cargar un grafo nuevo. */
+function restablecerZoomSilencioso() {
   estado.zoom.escala = 1;
   estado.zoom.offsetX = 0;
   estado.zoom.offsetY = 0;
   aplicarZoom();
+}
+
+function zoomReset() {
+  restablecerZoomSilencioso();
   avisar('Zoom al 100%');
 }
 
@@ -111,6 +116,10 @@ function zoomRueda(evento) {
 el.svg.addEventListener('wheel', zoomRueda, { passive: false });
 
 // Al cambiar el tamaño del lienzo el desplazamiento puede quedar fuera de rango.
-window.addEventListener('resize', () => { medirArea(); aplicarZoom(); });
+// Con el editor oculto (otra vista) el lienzo mide 0: entonces no se toca nada.
+window.addEventListener('resize', () => {
+  const a = medirArea();
+  if (a.ancho >= 50 && a.alto >= 50) aplicarZoom();
+});
 
 actualizarEtiquetaZoom();

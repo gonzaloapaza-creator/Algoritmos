@@ -176,7 +176,8 @@ function eliminarSeleccion() {
 const TEXTO_AYUDA =
   '¿QUÉ ES ESTA APLICACIÓN?\n' +
   'Un editor visual de grafos dirigidos y ponderados. Un grafo está formado por nodos (los círculos) y por conexiones entre ellos (las flechas). Cada conexión lleva un valor o peso, que puede representar una distancia, un costo, un tiempo, etc.\n' +
-  '· El botón «Video» de la cabecera abre la presentación con el video explicativo del algoritmo. El menú ☰ (o la barra lateral) cambia de algoritmo.\n\n' +
+  '· El botón «Video» de la cabecera abre la presentación con el video explicativo del algoritmo. El menú ☰ (o la barra lateral) cambia de algoritmo.\n' +
+  '· El módulo se recorre en cuatro pasos (barra numerada de arriba): 1 Grafo → 2 Matriz → 3 Paso a paso → 4 Resultado.\n\n' +
 
   '1) HERRAMIENTAS DE LA BARRA SUPERIOR\n' +
   '· Seleccionar: es el modo normal de trabajo.\n' +
@@ -190,9 +191,10 @@ const TEXTO_AYUDA =
   '   1. Toca el nodo de ORIGEN: queda marcado en verde.\n' +
   '   2. Toca el nodo de DESTINO y escribe el valor de la conexión.\n' +
   '   Para cancelar a medio camino, toca una zona vacía o cambia de herramienta.\n' +
-  '· Calcular Johnson: distancia mínima entre todos los pares de nodos. Necesita al menos dos nodos.\n' +
-  '· Matriz: muestra la matriz de adyacencia del grafo con todos sus valores y sus sumas.\n' +
-  '· Acciones: despliega el resto de opciones.\n' +
+  '· Ejemplos: carga uno de los grafos preparados (pesos negativos, solo positivos, nodos sin camino, ceros y bucle, ciclo negativo).\n' +
+  '· Calcular Johnson: ejecuta el algoritmo y abre la resolución paso a paso. Necesita al menos dos nodos.\n' +
+  '· Más: despliega el resto de opciones.\n' +
+  '   – Deshacer / Rehacer: también con Ctrl+Z y Ctrl+Y.\n' +
   '   – Guardar grafo: lo guarda con un nombre en este navegador.\n' +
   '   – Biblioteca: lista de grafos guardados, para cargarlos o eliminarlos.\n' +
   '   – Dijkstra: con un nodo seleccionado, calcula desde él las rutas mínimas hacia el resto y dibuja el árbol de caminos mínimos. No admite pesos negativos.\n' +
@@ -204,6 +206,12 @@ const TEXTO_AYUDA =
   '· Dos dedos: pellizcar para acercar y arrastrar para desplazar la vista.\n' +
   '· Botón central del ratón, o arrastrar una zona vacía con la herramienta Seleccionar: desplaza la vista.\n' +
   '· Los botones −, % y + de la esquina superior derecha hacen lo mismo; el del centro vuelve al 100 %.\n\n' +
+
+  '1.c) LOS CUATRO PASOS\n' +
+  '· 2 Matriz: matriz de adyacencia con sus sumas y una revisión de los datos (nodos, conexiones, pesos negativos, bucles).\n' +
+  '· 3 Paso a paso: cada fase real del algoritmo con su tabla y el grafo resaltado: nodo auxiliar q, cada pasada de Bellman-Ford, potenciales h(v), reponderación y un Dijkstra por cada origen. Anterior / Siguiente (o las flechas ← →) recorren los pasos.\n' +
+  '· 4 Resultado: matriz de distancias mínimas. Toca una celda para ver su ruta y la suma de sus pesos; «Ver en el editor» la resalta sobre el grafo.\n' +
+  '· Si cambias el grafo después de calcular, el resultado se marca como desactualizado hasta que vuelvas a calcular.\n\n' +
 
   '2) EDITAR Y ELIMINAR\n' +
   '· Selecciona el elemento y usa el panel que aparece en la parte inferior.\n' +
@@ -228,7 +236,7 @@ const TEXTO_AYUDA =
   '· La diagonal (a-a, b-b…) solo tiene valor cuando el nodo tiene un bucle.\n' +
   '· “Σ fila” suma los valores que salen de un nodo y “Σ col.” los que entran en él; junto a cada suma se indica también cuántos de esos valores son distintos de cero (un peso de 0 cuenta como conexión, pero no como “valor ≠ 0”).\n' +
   '· La última celda es la suma de todos los valores del grafo, con su propia cantidad de valores ≠ 0.\n' +
-  '· Si el grafo cambia mientras la matriz está abierta, la tabla se actualiza sola.\n\n' +
+  '· La matriz siempre refleja el grafo actual.\n\n' +
 
   '5) GUARDADO\n' +
   '· El grafo en pantalla se guarda solo y se recupera al volver a entrar, sin hacer nada.\n' +
@@ -252,7 +260,8 @@ const TEXTO_AYUDA =
   '· 1 / 2 / 3: cambia a Seleccionar, Nodo o Conectar.\n' +
   '· Flechas: recorre los nodos; Enter los renombra y Suprimir los elimina.\n' +
   '· Ctrl+Z deshace y Ctrl+Y (o Ctrl+Shift+Z) rehace.\n' +
-  '· Ctrl+S guarda el grafo, Ctrl+B abre la biblioteca, Ctrl+M la matriz y Ctrl+J el cálculo de Johnson.\n' +
+  '· Ctrl+S guarda el grafo, Ctrl+B abre la biblioteca, Ctrl+M va a la matriz y Ctrl+J calcula Johnson.\n' +
+  '· En «Paso a paso», ← y → cambian de paso.\n' +
   '· Ctrl+N crea un nodo en el centro. Ctrl y + / − / 0 controlan el zoom.';
 
 function mostrarAyuda() {
@@ -440,29 +449,27 @@ function importarGrafoJSON() {
         if (!limpio) {
           throw new Error('El archivo contiene datos inválidos');
         }
-        
+
+        const importar = () => {
+          guardarEstadoParaDeshacer();
+          irAlEditorJohnson();
+          aplicarGrafo(limpio);
+          medirArea();
+          ajustarNodosAlArea();
+          restablecerZoomSilencioso();
+          guardar();
+          dibujar();
+          avisar('Grafo importado correctamente.', 'ok');
+        };
+
         // Confirmar si hay datos existentes
         if (estado.nodos.length > 0 || estado.conexiones.length > 0) {
           confirmar({
             titulo: 'Importar grafo',
             mensaje: 'Se reemplazará el grafo actual. ¿Deseas continuar?'
-          }).then(aceptado => {
-            if (aceptado) {
-              aplicarGrafo(limpio);
-              medirArea();
-              ajustarNodosAlArea();
-              guardar();
-              dibujar();
-              avisar('Grafo importado correctamente.', 'ok');
-            }
-          });
+          }).then(aceptado => { if (aceptado) importar(); });
         } else {
-          aplicarGrafo(limpio);
-          medirArea();
-          ajustarNodosAlArea();
-          guardar();
-          dibujar();
-          avisar('Grafo importado correctamente.', 'ok');
+          importar();
         }
         
       } catch (error) {

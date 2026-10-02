@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="description" content="Herramienta educativa de algoritmos de investigación de operaciones: Johnson, asignación y transporte." />
+  <meta name="description" content="Proyecto de la materia Análisis de Algoritmos: Johnson, método húngaro y esquina noroeste resueltos paso a paso. Grupo Los Fanáticos del Nabo." />
   <meta name="theme-color" content="#0b1020" />
-  <title>Algoritmos de Optimización</title>
+  <title>Algoritmos de Optimización | Análisis de Algoritmos</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='9' cy='23' r='5' fill='%235b8cff'/><circle cx='23' cy='9' r='5' fill='%2300d3a7'/><line x1='12' y1='20' x2='20' y2='12' stroke='white' stroke-width='2'/></svg>" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="css/shell.css" />
@@ -22,27 +22,198 @@
     </a>
     <span class="topbar__separador" aria-hidden="true"></span>
     <span class="topbar__modulo" id="topbarModulo">Inicio</span>
+    <nav class="topbar__acciones inicio-atajos" aria-label="Secciones del inicio">
+      <a class="btn btn-fantasma btn-sm" href="#que-es">¿Qué es?</a>
+      <a class="btn btn-fantasma btn-sm" href="#algoritmos">Algoritmos</a>
+      <a class="btn btn-fantasma btn-sm" href="#equipo">Equipo</a>
+    </nav>
   </header>
   <aside class="sidebar" id="barraLateral" aria-label="Navegación principal"></aside>
   <div class="sidebar-fondo" id="barraLateralFondo" hidden></div>
 
   <main class="contenido" id="contenido">
-    <section class="inicio-portada" aria-labelledby="titulo-principal">
-      <div>
-        <p class="eyebrow">Investigación de operaciones</p>
-        <h1 id="titulo-principal">Algoritmos de Optimización</h1>
-        <p>Resuelve paso a paso problemas de rutas, asignación y transporte. Cada módulo incluye un video introductorio.</p>
+
+    <!-- Portada -->
+    <section class="hero" aria-labelledby="titulo-principal">
+      <div class="hero__texto">
+        <p class="eyebrow">Proyecto · Análisis de Algoritmos</p>
+        <h1 id="titulo-principal">Algoritmos de Optimización, <span class="hero__resalte">paso a paso</span></h1>
+        <p class="hero__lead">
+          Una herramienta web educativa para <strong>ver cómo piensa un algoritmo</strong>: ingresas los datos
+          (o cargas un ejemplo), el algoritmo se ejecuta y cada decisión que toma queda a la vista, con tablas y
+          grafos resaltados en cada paso.
+        </p>
+        <div class="hero__acciones">
+          <a class="btn btn-primary" href="#algoritmos">Explorar los algoritmos</a>
+          <a class="btn btn-neutral" href="#que-es">¿Qué es un algoritmo?</a>
+        </div>
+        <dl class="hero__datos">
+          <div><dt>Algoritmos</dt><dd id="datoAlgoritmos">3</dd></div>
+          <div><dt>Categorías</dt><dd id="datoCategorias">3</dd></div>
+          <div><dt>Integrantes</dt><dd>5</dd></div>
+        </dl>
       </div>
-      <p class="inicio-resumen" id="resumenCatalogo"></p>
+      <div class="hero__ilustracion" aria-hidden="true">
+        <svg viewBox="0 0 320 260" focusable="false">
+          <defs>
+            <marker id="heroFlecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#9cb0d4"/></marker>
+            <marker id="heroFlechaRuta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#22d3ee"/></marker>
+          </defs>
+          <g class="hero__aristas">
+            <path d="M74 132 L136 62" />
+            <path d="M74 132 L136 202" class="ruta" />
+            <path d="M162 62 L236 112" />
+            <path d="M162 202 L236 150" class="ruta" />
+            <path d="M149 76 L149 188" />
+          </g>
+          <g class="hero__pesos">
+            <text x="92" y="88">4</text>
+            <text x="90" y="186">2</text>
+            <text x="206" y="78">5</text>
+            <text x="208" y="196">1</text>
+            <text x="160" y="136">3</text>
+          </g>
+          <g class="hero__nodos">
+            <circle cx="60" cy="132" r="20" class="origen" /><text x="60" y="132">a</text>
+            <circle cx="149" cy="54" r="20" /><text x="149" y="54">b</text>
+            <circle cx="149" cy="210" r="20" class="paso" /><text x="149" y="210">c</text>
+            <circle cx="252" cy="130" r="20" class="destino" /><text x="252" y="130">d</text>
+          </g>
+          <text x="160" y="250" class="hero__nota">ruta mínima a → c → d = 3</text>
+        </svg>
+      </div>
     </section>
 
-    <div id="catalogo" aria-label="Catálogo de algoritmos"></div>
+    <!-- ¿Qué es un algoritmo? -->
+    <section class="inicio-seccion" id="que-es" aria-labelledby="titulo-que-es">
+      <div class="inicio-seccion__cabecera">
+        <p class="eyebrow">Conceptos básicos</p>
+        <h2 id="titulo-que-es">¿Qué es un algoritmo?</h2>
+      </div>
+      <div class="concepto">
+        <div class="concepto__texto">
+          <p class="concepto__definicion">
+            Un <strong>algoritmo</strong> es una <strong>secuencia finita de instrucciones precisas y ordenadas</strong>
+            que, a partir de unos datos de entrada, resuelve un problema y produce un resultado.
+          </p>
+          <p>
+            Es como una receta de cocina: indica qué hacer, en qué orden y cuándo detenerse. La misma receta,
+            aplicada a los mismos ingredientes, siempre da el mismo plato. Los algoritmos están en todas partes:
+            el GPS que calcula la ruta más corta, el buscador que ordena resultados o la app que reparte pedidos entre repartidores.
+          </p>
+          <ul class="caracteristicas">
+            <li><strong>Finito</strong><span>Termina después de un número limitado de pasos.</span></li>
+            <li><strong>Preciso</strong><span>Cada paso está definido sin ambigüedad.</span></li>
+            <li><strong>Entrada</strong><span>Recibe cero o más datos para trabajar.</span></li>
+            <li><strong>Salida</strong><span>Entrega al menos un resultado.</span></li>
+            <li><strong>Efectivo</strong><span>Cada paso se puede realizar de verdad.</span></li>
+          </ul>
+        </div>
+        <figure class="concepto__video">
+          <div class="video-perezoso" id="videoAlgoritmo" data-video="f10jKIslSUY" data-titulo="¿Qué es un algoritmo?">
+            <button type="button" class="video-perezoso__boton" id="btnVideoAlgoritmo" aria-label="Reproducir el video: ¿Qué es un algoritmo?">
+              <img src="https://i.ytimg.com/vi/f10jKIslSUY/hqdefault.jpg" alt="" loading="lazy" width="480" height="360" />
+              <span class="video-perezoso__play" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>
+              </span>
+            </button>
+          </div>
+          <figcaption>Video: ¿qué es un algoritmo? · <a href="https://youtu.be/f10jKIslSUY" target="_blank" rel="noopener">Ver en YouTube</a></figcaption>
+        </figure>
+      </div>
+
+      <div class="analisis">
+        <div class="analisis__texto">
+          <h3>¿Y qué estudia el Análisis de Algoritmos?</h3>
+          <p>
+            No basta con que un algoritmo funcione: también importa <strong>cuánto tarda</strong> y <strong>cuánta memoria usa</strong>
+            cuando los datos crecen. El análisis de algoritmos mide esa eficiencia con la <strong>notación O grande</strong>,
+            demuestra que el resultado es correcto y compara distintas formas de resolver el mismo problema.
+          </p>
+        </div>
+        <div class="tabla-caja">
+          <table class="tabla tabla-compacta tabla-complejidad">
+            <caption class="sr-only">Complejidad de referencia de los algoritmos del proyecto</caption>
+            <thead>
+              <tr><th scope="col">Algoritmo</th><th scope="col">Idea principal</th><th scope="col">Complejidad de referencia</th></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Johnson</th><td>Bellman-Ford + reponderación + Dijkstra desde cada nodo</td><td><code>O(V·E·log V)</code></td></tr>
+              <tr><th scope="row">Método húngaro</th><td>Reducir filas y columnas y cubrir ceros con líneas</td><td><code>O(n³)</code></td></tr>
+              <tr><th scope="row">Esquina noroeste</th><td>Asignar desde la esquina superior izquierda</td><td><code>O(m + n)</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- El proyecto -->
+    <section class="inicio-seccion" id="proyecto" aria-labelledby="titulo-proyecto">
+      <div class="inicio-seccion__cabecera">
+        <p class="eyebrow">El proyecto</p>
+        <h2 id="titulo-proyecto">Aprender viendo cada paso</h2>
+        <p>Proyecto desarrollado para la materia <strong>Análisis de Algoritmos</strong>. Cada módulo sigue el mismo recorrido:</p>
+      </div>
+      <ol class="recorrido">
+        <li><span class="recorrido__num">1</span><strong>Elige un algoritmo</strong><span>Rutas en grafos, asignación de tareas o transporte.</span></li>
+        <li><span class="recorrido__num">2</span><strong>Mira el video</strong><span>Una presentación corta explica la idea antes de empezar.</span></li>
+        <li><span class="recorrido__num">3</span><strong>Ingresa los datos</strong><span>Dibuja el grafo, llena la matriz o carga un ejemplo listo.</span></li>
+        <li><span class="recorrido__num">4</span><strong>Sigue la resolución</strong><span>Avanza paso a paso y comprueba el resultado final.</span></li>
+      </ol>
+    </section>
+
+    <!-- Catálogo -->
+    <section class="inicio-seccion" id="algoritmos" aria-labelledby="titulo-algoritmos">
+      <div class="inicio-seccion__cabecera inicio-seccion__cabecera--fila">
+        <div>
+          <p class="eyebrow">Algoritmos</p>
+          <h2 id="titulo-algoritmos">Elige por dónde empezar</h2>
+        </div>
+        <p class="inicio-resumen" id="resumenCatalogo"></p>
+      </div>
+      <div id="catalogo" aria-label="Catálogo de algoritmos"></div>
+    </section>
+
+    <!-- Equipo -->
+    <section class="inicio-seccion equipo" id="equipo" aria-labelledby="titulo-equipo">
+      <div class="inicio-seccion__cabecera">
+        <p class="eyebrow">Presentación del grupo</p>
+        <h2 id="titulo-equipo">Los Fanáticos del Nabo</h2>
+        <p>Equipo responsable del proyecto de Análisis de Algoritmos.</p>
+      </div>
+      <ul class="equipo__lista">
+        <li class="integrante integrante--lider">
+          <span class="integrante__avatar" aria-hidden="true">GA</span>
+          <div class="integrante__datos">
+            <strong>Gonzalo Gabriel Apaza Ticona</strong>
+            <span class="estado estado--ok">Líder del grupo</span>
+          </div>
+        </li>
+        <li class="integrante">
+          <span class="integrante__avatar" aria-hidden="true">RA</span>
+          <div class="integrante__datos"><strong>Roy Brian Alarcon Chambi</strong><span>Integrante</span></div>
+        </li>
+        <li class="integrante">
+          <span class="integrante__avatar" aria-hidden="true">AA</span>
+          <div class="integrante__datos"><strong>Alan Ariel Aquino Carvajal</strong><span>Integrante</span></div>
+        </li>
+        <li class="integrante">
+          <span class="integrante__avatar" aria-hidden="true">DC</span>
+          <div class="integrante__datos"><strong>David Alessandro Chuquimia Candia</strong><span>Integrante</span></div>
+        </li>
+        <li class="integrante">
+          <span class="integrante__avatar" aria-hidden="true">SV</span>
+          <div class="integrante__datos"><strong>Samuel Denis Villca Castro</strong><span>Integrante</span></div>
+        </li>
+      </ul>
+    </section>
 
   </main>
 
   <footer class="app-footer">
     <div class="app-footer__inner">
-      <p>Herramienta educativa de investigación de operaciones. Todo se guarda en tu navegador.</p>
+      <p><strong>Los Fanáticos del Nabo</strong> · Proyecto de la materia Análisis de Algoritmos</p>
+      <p>Herramienta educativa. Todo se guarda en tu navegador; nada se envía a ningún servidor.</p>
     </div>
   </footer>
 

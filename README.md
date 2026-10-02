@@ -1,14 +1,24 @@
 # Grafo · Algoritmos de Optimización
 
-Aplicación web educativa de investigación de operaciones. Tres módulos:
+Proyecto de la materia **Análisis de Algoritmos** del grupo **Los Fanáticos del Nabo**: aplicación web educativa de investigación de operaciones. Tres módulos:
 
 | Categoría | Módulo | Entrada | Resultado |
 |---|---|---|---|
-| Grafos y rutas | **Johnson** | Grafo dirigido con pesos enteros (editor visual) | Distancias entre todos los pares y rutas |
+| Grafos y rutas | **Johnson** | Grafo dirigido con pesos enteros (editor visual o ejemplos) | Resolución paso a paso, distancias entre todos los pares y rutas |
 | Asignación | **Asignación (método húngaro)** | Grafo bipartito recursos–tareas o matriz | Asignación óptima, total y procedimiento completo |
 | Transporte | **Esquina noroeste** | Matriz de costos, oferta y demanda | Solución inicial factible paso a paso |
 
 Sin compilación, dependencias, backend ni base de datos: HTML, CSS y JavaScript planos. Cada módulo abre con un **video explicativo** antes de entrar al algoritmo.
+
+### Equipo
+
+| Integrante | Rol |
+|---|---|
+| Gonzalo Gabriel Apaza Ticona | Líder del grupo |
+| Roy Brian Alarcon Chambi | Integrante |
+| Alan Ariel Aquino Carvajal | Integrante |
+| David Alessandro Chuquimia Candia | Integrante |
+| Samuel Denis Villca Castro | Integrante |
 
 ---
 
@@ -33,17 +43,17 @@ Navegadores: cualquiera moderno (Pointer Events, ResizeObserver, `dvh/svh`, `:ha
 
 ```
 grafo/
-├── index.html               Inicio: tarjetas por categoría (desde el catálogo)
-├── johnson.html             Editor de grafos + Johnson
+├── index.html               Inicio: portada, «¿Qué es un algoritmo?» (video), análisis de algoritmos, recorrido, catálogo y equipo
+├── johnson.html             Johnson: grafo → matriz → paso a paso → resultado
 ├── asignacion.html          Asignación: grafo → matriz → resultado → procedimiento
 ├── northwest.html           Esquina noroeste: datos → balanceo → resolución → resultado
 ├── styles.css               Base compartida: tokens, botones, formularios, tablas, mensajes, modal, pasos
 ├── css/
 │   ├── shell.css            Cabecera compacta, barra lateral plegable, inicio, presentación con video, pie
-│   ├── johnson.css          Editor de grafos (barra, lienzo, hojas, tablas de Johnson)
+│   ├── johnson.css          Editor de grafos, vistas por pasos, grafo de solo lectura, hojas
 │   ├── asignacion.css       Vistas, grafo bipartito, matriz y procedimiento de asignación
 │   └── northwest.css        Matriz de transporte, balanceo, pasos y resultado
-├── app.js                   Punto de entrada de Johnson (sin cambios de lógica)
+├── app.js                   Punto de entrada de Johnson (botones, menú «Más», atajos)
 ├── js/
 │   ├── config.js            Constantes y límites de toda la aplicación
 │   ├── comun/
@@ -72,12 +82,17 @@ grafo/
 │   │   ├── estado.js        Estado, autoguardado, deshacer/rehacer
 │   │   ├── tabla.js         Tablas: entrada editable, balanceada, por paso, final
 │   │   └── app.js           Vistas, botones y atajos
-│   └── (Johnson) estado.js, almacenamiento.js, interfaz.js, dibujo.js, modal.js, acciones.js,
-│       matriz.js, biblioteca.js, johnson.js, dijkstra.js, interaccion.js, zoom.js, deshacer.js
+│   ├── johnson/
+│   │   ├── ejemplos.js      Grafos de ejemplo (posiciones relativas al área)
+│   │   └── vistas.js        Vistas por pasos, resolución, resultado, grafo de solo lectura, ejemplos
+│   └── (Johnson) johnson.js (algoritmo puro + registro de pasos), estado.js, almacenamiento.js,
+│       interfaz.js, dibujo.js, modal.js, acciones.js, matriz.js, biblioteca.js, dijkstra.js,
+│       interaccion.js, zoom.js, deshacer.js
 ├── tests/
 │   ├── cargar.js            Carga scripts clásicos en un contexto `vm` de Node
 │   ├── asignacion.test.js   Húngaro, validación, modelo, migración
 │   ├── northwest.test.js    Esquina noroeste, balanceo, validación, modelo
+│   ├── johnson.test.js      Johnson vs Floyd-Warshall, ciclos negativos, ejemplos
 │   └── navegador.js         Pruebas en Edge headless (puppeteer-core) + capturas
 └── docs/capturas/           Capturas de escritorio y móvil generadas por tests/navegador.js
 ```
@@ -88,7 +103,7 @@ grafo/
 - Nombres del dominio en español. Sin `class`.
 - Texto del usuario siempre por `textContent` o `escaparHtml()`.
 - **Los estados no se mezclan**: `estado` (Johnson), `estadoAsignacion` y `estadoNorthwest` son objetos independientes con sus propias claves de almacenamiento.
-- Lógica matemática sin DOM (`hungaro.js`, `noroeste.js`, `balanceo.js`, modelos y validaciones): se prueba en Node.
+- Lógica matemática sin DOM (`hungaro.js`, `noroeste.js`, `balanceo.js`, `johnson.js`, `johnson/ejemplos.js`, modelos y validaciones): se prueba en Node.
 
 ### Añadir un algoritmo
 
@@ -106,7 +121,9 @@ grafo/
 - **Sistema visual** en `styles.css`: un solo bloque de tokens (`--bg-*`, `--texto*`, `--acento*`, semánticos, radios, espaciado, tipografía) con alias para las reglas históricas del editor de Johnson. Acento moderado por módulo (`body[data-modulo]`): azul Johnson, verde azulado Asignación, ámbar Northwest. Botones definidos una sola vez (`.btn` + `-primary`, `-secondary`, `-neutral`, `-peligro`, `-fantasma`, `-icono`, `-sm`). Un botón principal por vista; las acciones destructivas van separadas.
 - **Responsive**: sin desplazamiento horizontal de la página en ningún ancho probado; las tablas se desplazan dentro de su caja con cabecera y primera columna fijas; controles táctiles de 44 px; indicador «Paso X de Y» compacto en móvil; `touch-action: none` solo sobre la superficie del grafo; modales con desplazamiento interno; `prefers-reduced-motion` respetado.
 
-Puntos de corte: 1180 px (paneles laterales debajo), 1024 px (barra lateral → cajón), 900 px (presentación en una columna), 640 px (móvil), 360 px, y `max-height: 520px` (teléfono en horizontal).
+Puntos de corte: 1180 px (paneles laterales debajo), 1024 px (barra lateral → cajón), 900 px (presentación y paso de Johnson en una columna), 640 px (móvil), 400 px (cabecera compacta), 360 px, y `max-height: 520px` (teléfono en horizontal).
+
+Indicador de pasos: cada rótulo ocupa lo que necesita y, si no cabe, se recorta con «…» (nunca se superpone al siguiente); en móvil solo se rotula el paso actual y el contador «Paso X de Y» y el estado pasan a una segunda línea. Las rejillas usan `minmax(min(Npx, 100%), 1fr)` para no desbordar a 320 px.
 
 ---
 
@@ -201,9 +218,20 @@ Preparado para MODI / Vogel / costo mínimo: el resultado expone `basicas`, `asi
 
 ## 6. Johnson
 
-Sin cambios funcionales: editor visual, herramientas Seleccionar/Nodo/Conectar, zoom y desplazamiento, deshacer/rehacer, matriz de adyacencia, cálculo de Johnson con detección de ciclos negativos, Dijkstra, biblioteca, autoguardado (`grafo.v1`, `grafo.biblioteca.v1`) e importación/exportación JSON/PNG. Integrado en el shell común (cabecera, barra lateral, presentación con video). Detalle en los comentarios de `js/johnson.js`, `js/dibujo.js`, `js/interaccion.js`.
+Cuatro vistas, como en los otros módulos: **1 Grafo → 2 Matriz → 3 Paso a paso → 4 Resultado**.
 
-Ajuste: `adaptarAlArea()` ignora medidas de lienzo menores de 50 px (ocurre mientras la presentación con video oculta el editor) para no amontonar los nodos.
+- **Grafo**: editor visual (Seleccionar / Nodo / Conectar, zoom, arrastre). «Ejemplos» abre la lista de grafos preparados (pesos negativos clásico, solo positivos, nodos sin camino, ceros y bucle, ciclo negativo); también está en el estado vacío. «Más» agrupa Deshacer/Rehacer, Guardar, Biblioteca, Dijkstra, Exportar/Importar y Limpiar. En móvil la vista del grafo funciona como aplicación (sin desplazamiento de página).
+- **Matriz**: matriz de adyacencia con sumas y una revisión de datos (nodos, conexiones, negativos, ceros, bucles, aislados) con avisos. «Calcular Johnson» requiere 2 nodos.
+- **Paso a paso**: cada fase real de la ejecución, con su tabla y el grafo resaltado: grafo original, nodo auxiliar q, cada pasada de Bellman-Ford (distancias antes/después y relajaciones), potenciales h(v) o el ciclo negativo detectado, reponderación `w' = w + h(u) − h(v)`, un Dijkstra por origen (orden de fijación, `d'`, `d = d' − h(u) + h(v)`, ruta) y la matriz final. Anterior / Siguiente / Reiniciar, lista de saltos y ← →.
+- **Resultado**: matriz de distancias; tocar una celda muestra la ruta en un grafo de solo lectura con la suma de sus pesos; «Ver en el editor» la resalta sobre el grafo. Con ciclo negativo se muestra el ciclo y su suma.
+
+El resultado guarda la firma del grafo (ids, nombres, conexiones y pesos; no posiciones): si el grafo cambia, el chip pasa a «Grafo modificado: recalcular», las vistas 3 y 4 lo piden y cualquier resaltado del editor se descarta solo.
+
+Algoritmo (`js/johnson.js`, sin DOM): Bellman-Ford desde q con registro por pasada y parada temprana; la detección de ciclo fija el predecesor de la arista que aún mejora antes de retroceder, así el ciclo devuelto siempre es real y negativo. Dijkstra con desempate determinista. Verificado contra Floyd-Warshall en 300 grafos aleatorios.
+
+Los grafos de solo lectura se dibujan en su propio SVG (con marcadores propios) sobre una copia compactada de las posiciones: nunca mueven los nodos del editor. Los avisos son fijos a la ventana para verse desde cualquier vista.
+
+Persistencia sin cambios: `grafo.v1` (autoguardado) y `grafo.biblioteca.v1`. Cargar un ejemplo, un grafo guardado o un JSON se puede deshacer.
 
 ---
 
@@ -212,12 +240,13 @@ Ajuste: `adaptarAlArea()` ignora medidas de lienzo menores de 50 px (ocurre mien
 ```bash
 node tests/asignacion.test.js     # 24 pruebas: húngaro vs fuerza bruta (incl. 300 aleatorias), validación, modelo, migración
 node tests/northwest.test.js      # 20 pruebas: ejemplo 230, exceso oferta/demanda, degeneración, ceros, 1×1, 1×N, M×1, 10×10, 300 aleatorias
+node tests/johnson.test.js        # 10 pruebas: ejemplo clásico, rutas, pasos, ∞, ceros, ciclos negativos, ejemplos, 300 aleatorias vs Floyd-Warshall
 node tests/navegador.js --capturas   # 160 comprobaciones en Edge headless + capturas en docs/capturas
 ```
 
-`tests/navegador.js` necesita un servidor en `localhost:8123` y `puppeteer-core` instalado en `%TEMP%/grafo-e2e` (fuera del proyecto). Cubre: inicio (catálogo real y simulado, menú lateral, Escape), presentación con video en los tres módulos, Asignación (inicio en grafo, sincronización grafo↔matriz, validación de texto inválido, resultado 26 con A→2, B→1, C→3, D→4, selección sincronizada, invalidación, procedimiento, persistencia, migración v1, renombrar/eliminar, deshacer/rehacer, conectar), regresión de Johnson (nodos, conexiones, zoom, deshacer/rehacer, distancias, ciclo negativo, matriz, autoguardado, limpiar, importar), Northwest (aclaración, pasos, costo 230, cambio de costos conserva cantidades, ficticio sin acumular, validación de costos/cantidades, persistencia) y ausencia de desplazamiento horizontal en 320, 375, 390, 768, 1024, 1440 y 844×390 (horizontal). Todo sin errores de consola.
+`tests/navegador.js` necesita un servidor en `localhost:8123` y `puppeteer-core` instalado en `%TEMP%/grafo-e2e` (fuera del proyecto). Cubre: inicio (catálogo real y simulado, menú lateral, Escape), presentación con video en los tres módulos, Asignación (inicio en grafo, sincronización grafo↔matriz, validación de texto inválido, resultado 26 con A→2, B→1, C→3, D→4, selección sincronizada, invalidación, procedimiento, persistencia, migración v1, renombrar/eliminar, deshacer/rehacer, conectar), Johnson (nodos, conexiones, zoom, deshacer/rehacer, resolución paso a paso, distancias y suma de la ruta, invalidación, ciclo negativo, vista de matriz, ejemplos, autoguardado, limpiar, importar), Northwest (aclaración, pasos, costo 230, cambio de costos conserva cantidades, ficticio sin acumular, validación de costos/cantidades, persistencia) y ausencia de desplazamiento horizontal en 320, 375, 390, 768, 1024, 1440 y 844×390 (horizontal). Todo sin errores de consola.
 
-Resultados de la última ejecución: 24 + 20 + 160 correctas, 0 fallidas. Capturas en `docs/capturas/` (`*-1440`, `*-768`, `*-390`, `*-375`, `*-320`, `*-horizontal`, `*-video-*`).
+Las comprobaciones de Johnson de `tests/navegador.js` se ampliaron con las vistas por pasos; vuelve a ejecutarlo para regenerar el recuento y las capturas. Capturas en `docs/capturas/` (`*-1440`, `*-768`, `*-390`, `*-375`, `*-320`, `*-horizontal`, `*-video-*`).
 
 ---
 
@@ -226,7 +255,9 @@ Resultados de la última ejecución: 24 + 20 + 160 correctas, 0 fallidas. Captur
 | Módulo | Atajo | Acción |
 |---|---|---|
 | Todos | Escape | Cierra menú lateral, diálogo, grafo ampliado o selección |
-| Johnson | 1/2/3, Ctrl+Z/Y, Ctrl+N/S/B/M/J, Ctrl +/−/0, Supr | Como antes |
+| Johnson | 1/2/3, Ctrl+N, Ctrl +/−/0, Supr, flechas | Herramientas, nodo nuevo, zoom, eliminar, recorrer nodos (solo en el editor) |
+| Johnson | Ctrl+Z/Y, Ctrl+S/B, Ctrl+M, Ctrl+J | Deshacer/rehacer, guardar/biblioteca, ir a la matriz, calcular |
+| Johnson | ← / → | Cambiar de paso en «Paso a paso» |
 | Asignación | 1 / 2 | Seleccionar / Conectar |
 | Asignación | Ctrl+Z / Ctrl+Y, Supr | Deshacer / rehacer, eliminar selección |
 | Northwest | Ctrl+Z / Ctrl+Y, ← / → | Deshacer / rehacer, cambiar de paso |

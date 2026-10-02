@@ -34,6 +34,10 @@
   right: 0;
   z-index: 30;
   min-width: 230px;
+  /* En pantallas bajas el menú se desplaza por dentro en lugar de salirse. */
+  max-height: calc(100svh - var(--topbar) - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 10px;
   background: var(--fondo-2);
   border: 1px solid var(--borde);
@@ -67,20 +71,6 @@
 
 /* Texto que solo aparece con ancho de sobra («Calcular Johnson» → «Johnson»). */
 .texto-ancho { display: inline; }
-
-/* ---------------- Botón de ayuda flotante ---------------- */
-.btn-ayuda {
-  position: absolute;
-  left: 12px;
-  bottom: calc(12px + env(safe-area-inset-bottom));
-  min-height: 34px;
-  padding: 6px 12px;
-  font-size: .82rem;
-  color: var(--texto-suave);
-  background: rgba(23, 27, 46, .85);
-  border: 1px solid var(--borde);
-}
-.btn-ayuda:hover { color: var(--texto); }
 
 /* ---------------- Controles de zoom ---------------- */
 .zoom-controls {
@@ -134,7 +124,7 @@
 .grafo-workspace {
   position: relative;
   /* svh y no dvh: dvh cambia cada vez que el navegador móvil oculta su barra. */
-  height: clamp(360px, calc(100svh - var(--topbar) - 230px), 760px);
+  height: clamp(360px, calc(100svh - var(--topbar) - 300px), 760px);
   border-radius: var(--radio-lg);
   overflow: hidden;
   border: 1px solid var(--borde);
@@ -285,9 +275,11 @@
 .panel-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
 
 /* ---------------- Avisos del lienzo ---------------- */
+/* Fijos a la ventana: así se ven también desde la matriz, la resolución o el resultado. */
 .avisos {
-  position: absolute;
-  top: 58px;
+  position: fixed;
+  z-index: 65;
+  top: calc(var(--topbar) + 12px);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -296,9 +288,12 @@
   align-items: center;
   pointer-events: none;
   width: max-content;
-  max-width: calc(100% - 24px);
+  max-width: calc(100vw - 24px);
 }
 .aviso {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-align: center;
   background: var(--fondo-2);
   border: 1px solid var(--borde);
   border-left: 5px solid var(--azul);
@@ -477,28 +472,135 @@
 .biblio-botones .btn { min-height: 40px; padding: 8px 14px; font-size: .92rem; }
 .biblio-vacia { padding: 20px; text-align: center; color: var(--texto-suave); border: 1px dashed var(--borde); border-radius: 14px; }
 
+/* ---------------- Vistas por pasos ---------------- */
+.jn-pasos { display: flex; align-items: center; gap: 8px var(--esp-3); flex-wrap: wrap; margin-bottom: var(--esp-3); }
+.jn-pasos .pasos { flex: 1 1 460px; min-width: 0; }
+.jn-pasos__estado { display: flex; align-items: center; gap: 10px; flex: 0 1 auto; min-width: 0; }
+
+.jn-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--esp-4);
+  align-items: start;
+}
+.jn-layout--proc { grid-template-columns: minmax(0, 1fr) 280px; }
+.jn-layout--resultado { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+.jn-layout > *, .jn-lateral > * { min-width: 0; }
+.jn-principal { display: flex; flex-direction: column; gap: var(--esp-3); min-width: 0; }
+.jn-principal > .tarjeta__cabecera { margin-bottom: 0; }
+.jn-lateral { display: flex; flex-direction: column; gap: var(--esp-3); min-width: 0; }
+.jn-pie { margin-top: var(--esp-4); }
+.jn-sin { display: flex; flex-direction: column; gap: 12px; }
+.jn-sin p { color: var(--texto-suave); }
+#resultadoConJn > .mensaje { margin-bottom: var(--esp-3); }
+#validacionJohnson { display: flex; flex-direction: column; gap: 10px; }
+
+/* Tablas dentro de las vistas: sin el margen pensado para las hojas flotantes. */
+.vista .tabla-datos { flex: none; margin-top: 0; max-height: min(70vh, 640px); }
+.vista .tabla-datos--paso { max-height: 360px; }
+.tabla-datos td.celda-elegida { background: rgba(34, 211, 238, .22); box-shadow: inset 0 0 0 2px var(--ruta); color: #cffafe; }
+
+/* Revisión de datos */
+.jn-datos { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; margin: 0; font-size: var(--t-sm); }
+.jn-datos dt { color: var(--texto-suave); }
+.jn-datos dd { margin: 0; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Paso actual: grafo a la izquierda y tablas a la derecha si hay sitio. */
+.jn-paso-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--esp-3); align-items: start; }
+.jn-paso-tablas { display: flex; flex-direction: column; gap: var(--esp-3); min-width: 0; }
+.jn-tabla { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.jn-tabla .tabla-caja { max-height: 340px; }
+.jn-tabla .tabla th, .jn-tabla .tabla td { min-width: 0; }
+.tabla td.cambio { color: #a5f3fc; font-weight: 700; background: rgba(34, 211, 238, .1); }
+.tabla td.negativo, .tabla td.cambio.negativo { color: #ffb3b9; }
+.tabla td.jn-ruta-celda { text-align: left; }
+.tabla tr.jn-fila-total > * { border-top: 1px solid var(--borde); font-weight: 800; }
+.jn-leyenda { font-size: var(--t-xs); }
+
+/* Grafo de solo lectura (resolución y resultado). */
+.grafo-mini {
+  position: relative;
+  height: clamp(220px, 42vh, 420px);
+  border-radius: var(--radio);
+  border: 1px solid var(--borde-suave);
+  background:
+    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, .06) 1px, transparent 0) 0 0 / 22px 22px,
+    rgba(10, 13, 22, .7);
+  overflow: hidden;
+}
+.grafo-mini--compacto { height: clamp(220px, 40vh, 380px); }
+.grafo-mini svg { width: 100%; height: 100%; display: block; }
+.grafo-mini .nodo, .grafo-mini .conexion { cursor: default; }
+.grafo-mini .nodo:hover circle { fill: #24305c; }
+.grafo-mini .nodo-johnson:hover circle { fill: #123a44; }
+.nodo-nota {
+  fill: #fde68a !important;
+  font-size: 13px !important;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: #0b1020;
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+.nodo-auxiliar circle { fill: #1b2036; stroke: #7e8ab3; stroke-dasharray: 5 4; }
+.conexion-auxiliar .conexion-linea { stroke: #7e8ab3; stroke-dasharray: 6 5; stroke-width: 1.8; }
+.conexion-auxiliar .conexion-valor { fill: var(--texto-apagado); font-size: 12px; }
+.conexion-auxiliar.conexion-johnson .conexion-linea { stroke: var(--ruta); stroke-dasharray: none; stroke-width: 3; }
+
+/* Detalle de la ruta del resultado. */
+.jn-ruta { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.jn-ruta__recorrido { font-weight: 800; font-size: var(--t-lg); color: #a5f3fc; overflow-wrap: anywhere; }
+.jn-ruta__recorrido--ciclo { color: #ffc4c8; }
+.jn-ruta__suma { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; color: var(--texto-suave); overflow-wrap: anywhere; }
+.jn-ruta__acciones { margin-top: 10px; }
+.jn-ruta__acciones .btn { flex: 1 1 auto; }
+
+/* Muestras de la leyenda propias de Johnson. */
+.leyenda__muestra--ruta { color: var(--ruta); }
+.leyenda__muestra--ciclo { color: var(--rojo); }
+.leyenda__muestra--origen { width: 14px; height: 14px; border: 3px solid var(--verde); border-radius: 50%; }
+.leyenda__muestra--cambio { background: rgba(34, 211, 238, .18); border-color: var(--ruta); }
+
+/* Ejemplos */
+.ejemplo-descripcion { color: var(--texto-suave); line-height: 1.45; }
+.vacio-acciones { justify-content: center; }
+
+/* ---------------- Tablet ---------------- */
+@media (max-width: 1180px) {
+  .jn-layout, .jn-layout--proc, .jn-layout--resultado { grid-template-columns: 1fr; }
+  .jn-lateral { flex-direction: row; flex-wrap: wrap; }
+  .jn-lateral > * { flex: 1 1 280px; }
+  .procedimiento__lista { max-height: 260px; }
+}
+@media (max-width: 900px) {
+  .jn-paso-cuerpo { grid-template-columns: 1fr; }
+}
+@media (min-width: 1024px) {
+  /* Centrados sobre el contenido, no sobre la ventana con la barra lateral. */
+  .avisos { left: calc(50% + var(--lateral) / 2); }
+  body.nav-colapsada .avisos { left: calc(50% + var(--lateral-colapsada) / 2); }
+}
+
 /* ---------------- Pantallas pequeñas ---------------- */
 @media (max-width: 640px) {
   .barra-herramientas { padding: 8px 10px; gap: 8px; }
   .barra-herramientas .btn { white-space: nowrap; flex: 1 1 auto; justify-content: center; min-height: 46px; padding: 10px 12px; font-size: .95rem; }
-  .grupo-herramientas { flex: 1 1 100%; }
-  #btnMatriz { flex: 1 1 0; min-width: 0; }
-  .menu-acciones { flex: 1 1 0; min-width: 92px; }
-  .btn-mas { flex: 1 1 0; min-width: 0; }
+  .grupo-herramientas { flex: 1 1 100%; flex-wrap: nowrap; min-width: 0; }
+  #btnEjemplos, #btnJohnson { flex: 1 1 0; min-width: 0; }
+  .menu-acciones { flex: 0 0 auto; }
+  .btn-mas { min-width: 0; }
   .menu-extra.abierto {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     left: auto;
     right: 0;
-    width: max-content;
-    max-width: calc(100vw - 24px);
+    width: min(340px, calc(100vw - 24px));
   }
-  .menu-extra.abierto .btn { justify-content: center; font-size: .9rem; }
-  .grupo-segmentado { justify-content: stretch; flex-wrap: nowrap; padding: 3px; }
+  .menu-extra.abierto .btn { justify-content: center; font-size: .9rem; white-space: normal; }
+  .grupo-segmentado { justify-content: stretch; padding: 3px; }
   .grupo-segmentado .btn { flex: 1 1 0; min-width: 0; min-height: 46px; padding: 10px 4px; font-size: .9rem; }
-  #btnJohnson { flex: 1 1 0; min-width: 0; }
   .texto-ancho { display: none; }
   .ayuda {
-    font-size: .9rem;
+    font-size: .88rem;
     padding: 6px 12px;
     line-height: 1.35;
     display: -webkit-box;
@@ -507,23 +609,22 @@
     line-clamp: 2;
     overflow: hidden;
   }
-  .vacio-caja { max-width: 90%; padding: 20px; }
+  .vacio-caja { max-width: 100%; padding: 18px; }
   .vacio-caja h2 { margin-bottom: 8px; }
   .vacio-caja ol { display: none; }
-  .vacio-breve { display: block; margin: 0 0 16px; color: var(--texto-suave); line-height: 1.45; }
-  .vacio-caja .btn { min-height: 48px; width: 100%; }
-  .btn-ayuda { min-height: 34px; padding: 6px 12px; font-size: .82rem; flex: 0 0 auto; }
-  .panel { flex-direction: column; align-items: stretch; }
-  .panel-acciones .btn { flex: 1 1 auto; }
-  #btnCerrarPanel { flex: 0 0 46px; padding: 10px 0; margin-left: auto; }
+  .vacio-breve { display: block; margin: 0 0 14px; color: var(--texto-suave); line-height: 1.45; }
+  .vacio-caja .btn { min-height: 46px; width: 100%; }
+  .panel { flex-direction: column; align-items: stretch; bottom: 10px; }
+  .panel-acciones { flex-wrap: nowrap; }
+  .panel-acciones .btn { flex: 1 1 auto; min-width: 0; }
+  #btnCerrarPanel { flex: 0 0 46px; padding: 10px 0; }
+  .zoom-controls { top: 8px; right: 8px; padding: 4px; gap: 4px; }
+  .btn-zoom { min-height: 36px; min-width: 36px; padding: 4px 6px; }
   .hoja-fondo { padding: 8px; }
   .hoja { width: 100%; padding: 12px; max-height: 100%; }
   .hoja-cabecera .btn { min-height: 40px; }
   .hoja-cabecera h3 { font-size: 1.05rem; }
-  .tabla-datos { margin-top: 10px; }
   .tabla-datos th, .tabla-datos td { padding: 7px 6px; font-size: .82rem; min-width: 36px; height: 38px; }
-  .hoja-descripcion { margin-top: 10px; font-size: .85rem; }
-  .johnson-estado { margin-top: 8px; padding: 7px 10px; font-size: .84rem; }
   .hoja-nota { margin-top: 10px; padding-top: 10px; font-size: .78rem; }
   .tabla-datos .col-suma, .tabla-datos .col-cantidad { min-width: 0; }
   .tabla-datos th.col-suma, .tabla-datos th.col-cantidad { white-space: normal; line-height: 1.15; font-size: .72rem; }
@@ -532,29 +633,35 @@
   .biblio-guardar { margin: 12px 0; }
   .biblio-botones { flex: 1 1 100%; }
   .biblio-botones .btn { flex: 1 1 45%; }
+  .jn-lateral { flex-direction: column; }
+  .jn-pie .btn { flex: 1 1 100%; }
+  .proc-cabecera .acciones { width: 100%; }
+  .proc-cabecera .acciones .btn { flex: 1 1 0; min-width: 0; padding-left: 6px; padding-right: 6px; }
+  .grafo-mini { height: clamp(200px, 38vh, 320px); }
+  .procedimiento__lista { max-height: 220px; }
+  .jn-pasos__estado { flex: 1 1 100%; justify-content: space-between; }
 
-  /* Johnson como aplicación: la pantalla no se desplaza y el lienzo ocupa el hueco libre. */
-  body.page-johnson { height: 100svh; overflow: hidden; display: flex; flex-direction: column; }
-  body.page-johnson .topbar { flex: 0 0 auto; }
-  body.page-johnson .contenido { flex: 1; min-height: 0; display: flex; flex-direction: column; padding-bottom: 8px; }
-  body.page-johnson #moduloContenido { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-  body.page-johnson.intro-visible { height: auto; overflow: auto; display: block; }
+  /* Editor como aplicación: la pantalla no se desplaza y el lienzo ocupa el hueco libre.
+     Solo en la vista del grafo: las demás vistas se desplazan con normalidad. */
+  body.page-johnson[data-vista="grafo"] { height: 100svh; overflow: hidden; }
+  body.page-johnson[data-vista="grafo"] .contenido { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding-bottom: 8px; }
+  body.page-johnson[data-vista="grafo"] #moduloContenido,
+  body.page-johnson[data-vista="grafo"] #vistaGrafoJn { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  body.page-johnson[data-vista="grafo"] .jn-pasos__estado { display: none; }
+  body.page-johnson[data-vista="grafo"].intro-visible { height: auto; overflow: auto; }
   body.page-johnson .modulo-cabecera { display: none; }
-  body.page-johnson .barra-herramientas, body.page-johnson .ayuda { flex: 0 0 auto; }
-  .johnson-layout { flex: 1; min-height: 0; display: flex; }
-  .grafo-workspace { flex: 1; min-height: 240px; height: auto; border-radius: 0 0 var(--radio-lg) var(--radio-lg); }
+  .barra-herramientas, .ayuda, .jn-pasos { flex: 0 0 auto; }
+  .johnson-layout { flex: 1 1 auto; min-height: 0; display: flex; }
+  .grafo-workspace { flex: 1 1 auto; min-height: 240px; height: auto; border-radius: 0 0 var(--radio-lg) var(--radio-lg); }
 }
 
 @media (max-width: 360px) {
-  .barra-herramientas { padding: 8px 8px; }
+  .barra-herramientas { padding: 8px; }
   .grupo-segmentado .btn { font-size: .85rem; padding: 10px 2px; }
   .grupo-herramientas { gap: 6px; }
-  #btnMatriz, #btnJohnson { font-size: .9rem; padding: 10px 8px; }
-  .btn-mas { font-size: .9rem; padding: 10px 8px; gap: 4px; }
-  .menu-acciones { min-width: 78px; }
-  .menu-extra.abierto { grid-template-columns: 1fr; }
-  .menu-extra.abierto .btn { padding: 10px 6px; font-size: .9rem; }
-  .vacio-caja { padding: 18px 16px; }
+  .barra-herramientas .btn { font-size: .88rem; padding: 10px 8px; }
+  .menu-extra.abierto .btn { padding: 10px 6px; }
+  .vacio-caja { padding: 16px 14px; }
   .hoja-fondo { padding: 6px; }
   .hoja { padding: 10px; }
   .tabla-datos th, .tabla-datos td { padding: 6px 4px; font-size: .78rem; min-width: 32px; }
@@ -562,43 +669,39 @@
 }
 
 /* Pantallas bajas (teléfono en horizontal). */
-@media (max-height: 500px) {
+@media (max-height: 520px) {
   .barra-herramientas { padding: 6px 12px; gap: 8px; }
   .barra-herramientas .btn { min-height: 40px; padding: 8px 14px; }
   .ayuda { padding: 4px 12px; font-size: .8rem; }
   .vacio { padding: 10px; }
-  .vacio-caja { padding: 14px 18px; max-width: 460px; }
+  .vacio-caja { padding: 12px 16px; max-width: 460px; }
   .vacio-caja h2 { font-size: 1rem; }
-  .vacio-caja ol { line-height: 1.35; font-size: .85rem; margin-bottom: 10px; }
+  .vacio-caja ol { display: none; }
+  .vacio-breve { display: block; margin: 0 0 10px; color: var(--texto-suave); }
   .vacio-caja .btn { min-height: 38px; }
   .panel { bottom: 8px; padding: 8px 12px; gap: 8px; }
   .panel-detalle { font-size: .95rem; }
-  .avisos { top: 52px; }
   .hoja { padding: 12px; }
   .hoja-cabecera { padding-bottom: 8px; }
-  .hoja-descripcion { margin-top: 8px; font-size: .85rem; }
   .hoja-nota { margin-top: 8px; padding-top: 8px; font-size: .76rem; }
-  .johnson-estado { margin-top: 8px; padding: 6px 10px; }
-  .tabla-datos { margin-top: 10px; }
   .biblio-guardar { margin: 10px 0; }
   .modal-ancho #modalMensaje { max-height: 50dvh; }
-}
-@media (max-width: 640px) and (max-height: 500px) {
-  .barra-herramientas .btn { font-size: .88rem; padding: 8px 10px; }
-  .grupo-segmentado .btn { min-height: 40px; font-size: .85rem; }
-  .vacio-caja ol { margin-bottom: 8px; }
-  .vacio-breve { margin-bottom: 10px; }
-}
-@media (min-width: 480px) and (max-width: 640px) and (max-height: 500px) {
-  .grupo-herramientas { flex: 0 1 auto; }
-  .btn-mas, #btnJohnson { flex: 0 1 auto; }
+  .grafo-mini { height: clamp(180px, 60svh, 300px); }
 }
 @media (max-width: 1023.98px) and (max-height: 520px) {
   body.page-johnson .modulo-cabecera { display: none; }
   body.page-johnson .contenido { padding-top: 8px; padding-bottom: 6px; }
-  .grafo-workspace { min-height: 150px; height: clamp(150px, calc(100svh - var(--topbar) - 130px), 760px); }
+  .jn-pasos { margin-bottom: 6px; }
+  .jn-pasos .pasos { padding: 3px; }
+  .jn-pasos .paso { min-height: 36px; }
+  .grupo-herramientas { flex: 0 1 auto; flex-wrap: nowrap; }
+  .grupo-segmentado .btn, .barra-herramientas .btn { min-height: 38px; padding: 6px 10px; font-size: .85rem; }
+  .grafo-workspace { min-height: 170px; height: clamp(170px, calc(100svh - var(--topbar) - 200px), 760px); }
   .zoom-controls { padding: 4px; gap: 4px; }
   .btn-zoom { min-height: 28px; min-width: 28px; padding: 4px 6px; font-size: .85rem; }
+}
+@media (max-width: 640px) and (max-height: 520px) {
+  .grupo-herramientas { flex: 1 1 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

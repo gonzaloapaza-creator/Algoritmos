@@ -13,8 +13,9 @@ const estado = {
   origenConexion: null,
   /**
    * Resaltado del resultado de Johnson. Vale null cuando no hay nada resaltado y,
-   * cuando lo hay: { origen, destino, nodos, conexiones, distancia, tipo }, donde
-   * nodos y conexiones son ids del grafo y tipo es 'ruta' o 'ciclo'.
+   * cuando lo hay: { origen, destino, nodos, conexiones, distancia, tipo, firma }, donde
+   * nodos y conexiones son ids del grafo, tipo es 'ruta' o 'ciclo' y firma es la del
+   * grafo en el que se calculó: si el grafo cambia, el resaltado se descarta solo.
    * Es SOLO visual: instantaneaGrafo() no lo copia, así que no llega al
    * almacenamiento ni a la biblioteca de grafos.
    */
@@ -54,18 +55,18 @@ const el = {
   btnLimpiar: document.getElementById('btnLimpiar'),
   btnEmpezar: document.getElementById('btnEmpezar'),
   btnAyuda: document.getElementById('btnAyuda'),
+  btnVacioEjemplo: document.getElementById('btnVacioEjemplo'),
   botonesHerramienta: document.querySelectorAll('.btn-herramienta'),
-  btnMatriz: document.getElementById('btnMatriz'),
-  btnCerrarMatriz: document.getElementById('btnCerrarMatriz'),
-  matrizFondo: document.getElementById('matrizFondo'),
   matrizTabla: document.getElementById('matrizTabla'),
   btnJohnson: document.getElementById('btnJohnson'),
-  btnCerrarJohnson: document.getElementById('btnCerrarJohnson'),
-  johnsonFondo: document.getElementById('johnsonFondo'),
   johnsonEstado: document.getElementById('johnsonEstado'),
   johnsonTabla: document.getElementById('johnsonTabla'),
-  johnsonProcedimiento: document.getElementById('johnsonProcedimiento'),
-  johnsonPasos: document.getElementById('johnsonPasos'),
+  btnEjemplos: document.getElementById('btnEjemplos'),
+  ejemplosFondo: document.getElementById('ejemplosFondo'),
+  ejemplosLista: document.getElementById('ejemplosLista'),
+  btnCerrarEjemplos: document.getElementById('btnCerrarEjemplos'),
+  btnDeshacer: document.getElementById('btnDeshacer'),
+  btnRehacer: document.getElementById('btnRehacer'),
   btnGuardar: document.getElementById('btnGuardar'),
   btnBiblioteca: document.getElementById('btnBiblioteca'),
   btnGuardarActual: document.getElementById('btnGuardarActual'),
@@ -208,8 +209,11 @@ let cajaSVG = null;
  */
 function medirArea() {
   const caja = el.svg.getBoundingClientRect();
-  cajaSVG = { ancho: caja.width, alto: caja.height, izquierda: caja.left, arriba: caja.top };
-  return cajaSVG;
+  const medida = { ancho: caja.width, alto: caja.height, izquierda: caja.left, arriba: caja.top };
+  // Con el editor oculto (otra vista o la presentación) mide 0: se conserva la
+  // última medida útil para que la geometría de las conexiones no se deforme.
+  if (!cajaSVG || (medida.ancho >= 50 && medida.alto >= 50)) cajaSVG = medida;
+  return medida;
 }
 
 function area() {

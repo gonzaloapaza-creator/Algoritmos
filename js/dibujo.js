@@ -111,9 +111,22 @@ function clasesJohnsonNodo(nodo, visual) {
  * Optimizado con DocumentFragment para mejor rendimiento.
  */
 function dibujar() {
+  dibujarLienzo();
+  actualizarInterfaz();
+  // La matriz, la resolución y el resultado se mantienen al día con el grafo.
+  if (typeof refrescarVistaJohnson === 'function') refrescarVistaJohnson();
+}
+
+/** Solo el SVG del editor: nodos, conexiones y resaltado. */
+function dibujarLienzo() {
   el.capaConexiones.textContent = '';
   el.capaNodos.textContent = '';
 
+  // Un resaltado calculado sobre otro grafo ya no significa nada: se descarta.
+  if (estado.visualizacionJohnson && typeof firmaGrafoJohnson === 'function' &&
+      estado.visualizacionJohnson.firma !== firmaGrafoJohnson()) {
+    estado.visualizacionJohnson = null;
+  }
   const visual = estado.visualizacionJohnson;
 
   // Usar DocumentFragment para mejor rendimiento al agregar múltiples elementos
@@ -181,10 +194,6 @@ function dibujar() {
   // Agregar todos los elementos de una vez para mejor rendimiento
   el.capaConexiones.appendChild(conexionesFragment);
   el.capaNodos.appendChild(nodosFragment);
-
-  actualizarInterfaz();
-  // Si la matriz está abierta, se mantiene al día con el grafo.
-  actualizarMatriz();
 }
 
 let dibujoPendiente = false;

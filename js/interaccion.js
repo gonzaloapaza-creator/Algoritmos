@@ -243,80 +243,52 @@ el.svg.addEventListener('mousedown', evento => {
   el.lienzo.addEventListener(tipo, evento => evento.preventDefault());
 });
 
-// Navegación por teclado en el área de trabajo
-let nodoSeleccionadoPorTeclado = null;
+/**
+ * true si el teclado debe actuar sobre el grafo: editor a la vista, sin ventanas
+ * ni hojas abiertas y sin el foco en un control que use esas mismas teclas
+ * (botones, campos, listas, enlaces o celdas de una tabla).
+ */
+function tecladoSobreGrafo(evento) {
+  if (modalAbierto() || typeof editorJohnsonVisible !== 'function' || !editorJohnsonVisible()) return false;
+  const destino = evento.target;
+  if (!destino || destino === document.body || destino === document.documentElement) return true;
+  if (destino.closest && destino.closest('#svg')) return true;
+  return !(destino.closest && destino.closest('button, input, textarea, select, a, [role="button"], [contenteditable="true"], summary'));
+}
 
+// Navegación por teclado en el área de trabajo: las flechas recorren los nodos y
+// Enter renombra el seleccionado. Suprimir se atiende en app.js.
 document.addEventListener('keydown', evento => {
-  // Solo en el área de trabajo y con herramienta seleccionar
   if (estado.herramienta !== 'seleccionar') return;
-  if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
-  if (modalAbierto()) return;
+  if (evento.ctrlKey || evento.metaKey || evento.altKey) return;
+  if (!tecladoSobreGrafo(evento)) return;
 
-  // Navegación con flechas para mover entre nodos
-  if (!evento.ctrlKey && !evento.metaKey && !evento.altKey) {
-    if (evento.key === 'ArrowRight' || evento.key === 'ArrowLeft' || 
-        evento.key === 'ArrowUp' || evento.key === 'ArrowDown') {
-      
-      evento.preventDefault();
-      
-      if (estado.nodos.length === 0) return;
-      
-      // Si no hay nodo seleccionado, seleccionar el primero
-      if (!nodoSeleccionadoPorTeclado) {
-        nodoSeleccionadoPorTeclado = estado.nodos[0];
-        estado.seleccion = { tipo: 'nodo', id: nodoSeleccionadoPorTeclado.id };
-        dibujar();
-        return;
-      }
-      
-      // Encontrar nodo actual
-      const indiceActual = estado.nodos.findIndex(n => n.id === nodoSeleccionadoPorTeclado.id);
-      if (indiceActual === -1) {
-        nodoSeleccionadoPorTeclado = estado.nodos[0];
-        estado.seleccion = { tipo: 'nodo', id: nodoSeleccionadoPorTeclado.id };
-        dibujar();
-        return;
-      }
-      
-      // Calcular índice del siguiente nodo según dirección
-      let nuevoIndice = indiceActual;
-      const total = estado.nodos.length;
-      
-      switch (evento.key) {
-        case 'ArrowRight':
-          nuevoIndice = (indiceActual + 1) % total;
-          break;
-        case 'ArrowLeft':
-          nuevoIndice = (indiceActual - 1 + total) % total;
-          break;
-        case 'ArrowDown':
-          nuevoIndice = Math.min(indiceActual + 1, total - 1);
-          break;
-        case 'ArrowUp':
-          nuevoIndice = Math.max(indiceActual - 1, 0);
-          break;
-      }
-      
-      nodoSeleccionadoPorTeclado = estado.nodos[nuevoIndice];
-      estado.seleccion = { tipo: 'nodo', id: nodoSeleccionadoPorTeclado.id };
-      dibujar();
-      
-      // Anunciar cambio para screen readers
-      ayudar('Nodo seleccionado: <strong>' + escaparHtml(nodoSeleccionadoPorTeclado.nombre) + '</strong>');
+  const flechas = ['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'];
+  if (flechas.includes(evento.key)) {
+    if (estado.nodos.length === 0) return;
+    evento.preventDefault();
+
+    const seleccionado = estado.seleccion && estado.seleccion.tipo === 'nodo' ? estado.seleccion.id : null;
+    const indiceActual = estado.nodos.findIndex(n => n.id === seleccionado);
+    const total = estado.nodos.length;
+    let nuevoIndice = 0;
+    if (indiceActual !== -1) {
+      const avanza = evento.key === 'ArrowRight' || evento.key === 'ArrowDown';
+      nuevoIndice = (indiceActual + (avanza ? 1 : -1) + total) % total;
     }
-    
-    // Enter o Space en nodo seleccionado: editar
-    if ((evento.key === 'Enter' || evento.key === ' ') && estado.seleccion && estado.seleccion.tipo === 'nodo') {
-      evento.preventDefault();
-      editarSeleccion();
-    }
-    
-    // Delete en nodo seleccionado: eliminar
-    if (evento.key === 'Delete' && estado.seleccion && estado.seleccion.tipo === 'nodo') {
-      evento.preventDefault();
-      eliminarSeleccion();
-      nodoSeleccionadoPorTeclado = null;
-    }
+
+    const nodo = estado.nodos[nuevoIndice];
+    estado.seleccion = { tipo: 'nodo', id: nodo.id };
+    dibujar();
+    // Anunciar cambio para lectores de pantalla
+    ayudar('Nodo seleccionado: <strong>' + escaparHtml(nodo.nombre) + '</strong>');
+    return;
+  }
+
+  // Enter en nodo seleccionado: editar
+  if (evento.key === 'Enter' && estado.seleccion && estado.seleccion.tipo === 'nodo') {
+    evento.preventDefault();
+    editarSeleccion();
   }
 });
 

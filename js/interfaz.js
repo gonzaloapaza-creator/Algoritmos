@@ -8,6 +8,8 @@ function avisar(mensaje, tipo) {
   const nodo = document.createElement('div');
   nodo.className = 'aviso' + (tipo ? ' ' + tipo : '');
   nodo.textContent = mensaje;
+  // Como mucho tres avisos a la vez: en el móvil no deben tapar la pantalla.
+  while (el.avisos.children.length >= 3) el.avisos.firstChild.remove();
   el.avisos.appendChild(nodo);
   setTimeout(() => nodo.remove(), TIMEOUT_AVISO);
 }
@@ -29,8 +31,6 @@ function ayudar(html) {
 
 function actualizarInterfaz() {
   el.vacio.hidden = estado.nodos.length > 0;
-  // El panel ocupa la parte inferior: el botón de ayuda se aparta mientras está visible.
-  el.btnAyuda.hidden = estado.seleccion !== null;
 
   if (!estado.seleccion) {
     el.panel.hidden = true;
