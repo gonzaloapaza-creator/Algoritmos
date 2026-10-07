@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Ordenamiento | Algoritmos de Optimización</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="css/shell.css" />
+  <link rel="stylesheet" href="css/ordenamiento.css" />
+</head>
+<body class="page-ordenamiento" data-modulo="ordenamiento">
+  
+  <header class="topbar">
+    <button type="button" class="btn btn-fantasma btn-icono topbar__menu" id="btnMenuLateral" aria-label="Abrir menú">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round"/></svg>
+    </button>
+    <a class="topbar__marca" href="index.html">Grafo</a>
+    <span class="topbar__separador"></span>
+    <span class="topbar__modulo">Ordenamiento</span>
+    
+    <!-- Botones de Video y Ayuda -->
+    <div class="topbar__acciones">
+      <button type="button" class="btn btn-fantasma btn-sm" id="btnVideoModulo" aria-pressed="false" title="Ver la presentación en video">Video</button>
+      <button type="button" class="btn btn-fantasma btn-sm" id="btnAyuda">Ayuda</button>
+    </div>
+  </header>
+  
+  <aside class="sidebar" id="barraLateral"></aside>
+  <div class="sidebar-fondo" id="barraLateralFondo" hidden></div>
+
+  <main class="contenido" id="contenido">
+    
+    <!-- Sección donde el script inyectará la pantalla del video -->
+    <section id="introModulo" hidden></section>
+    
+    <!-- Contenedor principal que se oculta mientras el video está activo -->
+    <div id="moduloContenido">
+      
+      <section class="modulo-cabecera">
+        <div class="modulo-cabecera__texto">
+          <h1>Ordenamiento de Pinos de Bowling</h1>
+          <p>Selecciona un algoritmo y observa cómo se ordenan los pinos paso a paso.</p>
+        </div>
+      </section>
+
+      <!-- Panel de Controles -->
+      <section class="tarjeta">
+        <div class="acciones">
+          <div class="segmentado" role="group">
+            <button type="button" class="btn activo" id="btnSelection" aria-pressed="true">Selection Sort</button>
+            <button type="button" class="btn" id="btnInsertion" aria-pressed="false">Insertion Sort</button>
+          </div>
+          <button type="button" class="btn btn-secondary" id="btnGenerar">Generar Pinos Nuevos</button>
+          
+          <!-- Selector de Velocidad -->
+          <div class="campo ml-auto">
+            <select class="entrada btn-sm" id="selectorVelocidad" aria-label="Velocidad de reproducción">
+              <option value="800">Lento</option>
+              <option value="400" selected>Normal</option>
+              <option value="100">Rápido</option>
+            </select>
+          </div>
+          
+          <span class="acciones__separador"></span>
+          
+          <!-- Controles de Reproducción -->
+          <button type="button" class="btn btn-neutral btn-sm" id="btnAnterior">← Anterior</button>
+          <button type="button" class="btn btn-neutral btn-sm" id="btnAuto">Reproducir</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btnSiguiente">Siguiente →</button>
+        </div>
+        
+        <!-- Estadísticas -->
+        <div class="resumen-datos mt-3 border-top pt-3" style="border-color: var(--borde) !important;">
+          <span>Comparaciones: <strong id="statComparaciones">0</strong></span>
+          <span>Intercambios / Movimientos: <strong id="statIntercambios">0</strong></span>
+        </div>
+      </section>
+
+      <!-- Lienzo visual de los pinos -->
+      <section class="tarjeta mt-4">
+        <div id="pistaBowling" class="pista-bowling">
+          <!-- Los pinos se inyectarán aquí -->
+        </div>
+        
+        <div class="leyenda mt-3">
+          <span class="leyenda__item"><span class="leyenda__muestra" style="color: var(--aviso);"></span>Comparando</span>
+          <span class="leyenda__item"><span class="leyenda__muestra" style="color: var(--acento);"></span>Moviendo</span>
+          <span class="leyenda__item"><span class="leyenda__muestra" style="color: var(--exito);"></span>Ordenado</span>
+        </div>
+        <p id="textoEstado" class="mt-2 text-muted" style="color: var(--texto-suave);">Esperando iniciar...</p>
+      </section>
+      
+    </div>
+  </main>
+
+  <!-- Ventana Modal de Ayuda -->
+  <div class="modal-fondo" id="modalAyuda" hidden>
+    <div class="modal modal-ancho" role="dialog" aria-modal="true" aria-labelledby="ayudaTitulo">
+      <h3 id="ayudaTitulo">Cómo usar Ordenamiento</h3>
+      <div class="modal-scroll">
+        <p><strong>VIDEO</strong><br>El botón «Video» de la cabecera abre la presentación explicativa de los métodos de ordenamiento.</p>
+        <br>
+        <p><strong>1) ALGORITMOS</strong><br>Selecciona entre Selection Sort e Insertion Sort usando los botones superiores. Cambiar de algoritmo recalcula automáticamente todos los pasos.</p>
+        <br>
+        <p><strong>2) CONTROLES DE REPRODUCCIÓN</strong><br>Usa «Siguiente» y «Anterior» para avanzar manualmente. El botón «Reproducir» inicia la animación automática, la cual puedes ajustar con el selector de velocidad (Lento, Normal, Rápido).</p>
+      </div>
+      <div class="modal-botones">
+        <button type="button" class="btn btn-primary" id="btnCerrarAyuda">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts base del proyecto -->
+  <script src="js/config.js"></script>
+  <script src="js/comun/catalogo.js"></script>
+  <script src="js/comun/navegacion.js"></script>
+  <script src="js/comun/intro.js"></script>
+  
+  <!-- Scripts específicos de Ordenamiento -->
+  <script src="js/ordenamiento/estado.js"></script>
+  <script src="js/ordenamiento/algoritmos.js"></script>
+  <script src="js/ordenamiento/dibujo.js"></script>
+  <script src="js/ordenamiento/app.js"></script>
+</body>
+</html>

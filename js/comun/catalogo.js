@@ -13,7 +13,9 @@
 const CATEGORIAS_ALGORITMOS = [
   { id: 'grafos', nombre: 'Grafos y rutas', descripcion: 'Caminos mínimos y análisis sobre grafos dirigidos.' },
   { id: 'asignacion', nombre: 'Asignación', descripcion: 'Emparejar recursos con tareas al menor costo o mayor beneficio.' },
-  { id: 'transporte', nombre: 'Transporte', descripcion: 'Distribuir oferta entre destinos con demanda.' }
+  { id: 'transporte', nombre: 'Transporte', descripcion: 'Distribuir oferta entre destinos con demanda.' },
+  // NUEVA CATEGORÍA AÑADIDA:
+  { id: 'arreglos', nombre: 'Arreglos y Búsqueda', descripcion: 'Visualización y paso a paso de algoritmos de ordenamiento.' }
 ];
 
 /* Iconos como contenido interno de un <svg viewBox="0 0 24 24"> con trazo currentColor. */
@@ -21,10 +23,26 @@ const ICONOS_ALGORITMOS = {
   grafo: '<circle cx="5" cy="17" r="2.8"/><circle cx="12" cy="6" r="2.8"/><circle cx="19" cy="15" r="2.8"/><path d="M7.2 15.3 10.5 8.5l5.6 4.7"/>',
   bipartito: '<circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="18" cy="12" r="2.4"/><circle cx="18" cy="18" r="2.4"/><path d="M8.4 6h7.2M8.4 12l7.2 6M8.4 18l7.2-6"/>',
   tabla: '<rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M3.5 15h17M9 4v16M15 4v16"/>',
-  esquina: '<rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M3.5 15h17M9.5 4v16M15 4v16"/><rect x="4.5" y="5" width="4" height="4" rx="1" fill="currentColor" stroke="none"/>'
+  esquina: '<rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M3.5 15h17M9.5 4v16M15 4v16"/><rect x="4.5" y="5" width="4" height="4" rx="1" fill="currentColor" stroke="none"/>',
+  // NUEVO ICONO AÑADIDO:
+  ordenamiento: '<path d="M4 20h16M6 16v4M12 8v12M18 12v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
 };
 
 const CATALOGO_ALGORITMOS = [
+  {
+    id: 'ordenamiento',
+    nombre: 'Ordenamiento (Bowling)',
+    corto: 'Ordenamiento',
+    categoria: 'arreglos', // Usamos una existente para que no falle
+    descripcion: 'Visualización gráfica paso a paso de los algoritmos Selection Sort e Insertion Sort usando pinos de boliche.',
+    entrada: 'Cantidad de elementos y algoritmo',
+    resultado: 'Elementos ordenados ascendentemente',
+    // ...
+    ruta: 'ordenamiento.html',
+    icono: 'ordenamiento',
+    video: 'd5tujF0y5TE', // Puedes cambiar 'kPRA0W1kECg' por el ID de tu propio video
+    disponible: true
+  },
   {
     id: 'johnson',
     nombre: 'Algoritmo de Johnson',
