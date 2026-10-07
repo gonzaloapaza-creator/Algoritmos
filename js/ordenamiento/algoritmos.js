@@ -1,115 +1,117 @@
 // js/ordenamiento/algoritmos.js
 'use strict';
 
-/**
- * Calcula todos los pasos del algoritmo Selection Sort.
- */
-function calcularSelectionSort(arregloInicial) {
-  const historial = [];
-  const arr = [...arregloInicial];
-  const n = arr.length;
-  const ordenados = [];
-  
+function ordenarSelectionSort(arreglo) {
+  let hist = [];
+  let arr = [...arreglo];
   let comparaciones = 0;
   let intercambios = 0;
+  let n = arr.length;
+  let ordenados = [];
 
-  // Función de ayuda para guardar los fotogramas más fácilmente
-  const agregarPaso = (comparando, moviendo, mensaje) => {
-    historial.push({ 
-      arreglo: [...arr], 
-      comparando, 
-      moviendo, 
-      ordenados: [...ordenados], 
-      mensaje, 
-      stats: { comparaciones, intercambios } 
-    });
-  };
-
-  agregarPaso([], [], "Inicio de Selection Sort.");
+  // Guardar estado inicial
+  hist.push({
+    arreglo: [...arr], comparando: [], moviendo: [], ordenados: [...ordenados],
+    comparaciones, intercambios, mensaje: "Inicio de Selection Sort."
+  });
 
   for (let i = 0; i < n - 1; i++) {
     let minIdx = i;
     for (let j = i + 1; j < n; j++) {
       comparaciones++;
-      agregarPaso([minIdx, j], [], `Buscando el menor: comparando ${arr[minIdx]} y ${arr[j]}.`);
-      
+      hist.push({
+        arreglo: [...arr], comparando: [minIdx, j], moviendo: [], ordenados: [...ordenados],
+        comparaciones, intercambios, mensaje: `Buscando el menor: comparando posición ${minIdx} con ${j}.`
+      });
+
       if (arr[j] < arr[minIdx]) {
         minIdx = j;
-        agregarPaso([], [minIdx], `Nuevo menor temporal encontrado: ${arr[minIdx]}.`);
       }
     }
-    
+
     if (minIdx !== i) {
       intercambios++;
-      agregarPaso([], [i, minIdx], `Intercambiando ${arr[i]} con el menor encontrado (${arr[minIdx]}).`);
-      
-      const temp = arr[i];
+      hist.push({
+        arreglo: [...arr], comparando: [], moviendo: [i, minIdx], ordenados: [...ordenados],
+        comparaciones, intercambios, mensaje: `El menor es ${arr[minIdx]}. Intercambiando con ${arr[i]}.`
+      });
+      // Intercambio
+      let temp = arr[i];
       arr[i] = arr[minIdx];
       arr[minIdx] = temp;
+    } else {
+      hist.push({
+        arreglo: [...arr], comparando: [], moviendo: [], ordenados: [...ordenados],
+        comparaciones, intercambios, mensaje: `El elemento ${arr[i]} ya está en su posición correcta.`
+      });
     }
-    
     ordenados.push(i);
-    agregarPaso([], [], `El pino ${arr[i]} ya está en su posición final.`);
   }
   
   ordenados.push(n - 1);
-  agregarPaso([], [], "¡Selection Sort terminado!");
-  
-  return historial;
+  hist.push({
+    arreglo: [...arr], comparando: [], moviendo: [], ordenados: [...ordenados],
+    comparaciones, intercambios, mensaje: "¡Arreglo ordenado exitosamente!"
+  });
+
+  return hist;
 }
 
-/**
- * Calcula todos los pasos del algoritmo Insertion Sort.
- */
-function calcularInsertionSort(arregloInicial) {
-  const historial = [];
-  const arr = [...arregloInicial];
-  const n = arr.length;
-  const ordenados = [0]; 
-  
+function ordenarInsertionSort(arreglo) {
+  let hist = [];
+  let arr = [...arreglo];
   let comparaciones = 0;
-  let intercambios = 0; // Para este algoritmo, representa los desplazamientos
+  let intercambios = 0;
+  let n = arr.length;
+  let ordenados = [0]; // El primer elemento se considera ordenado
 
-  const agregarPaso = (comparando, moviendo, mensaje) => {
-    historial.push({ 
-      arreglo: [...arr], 
-      comparando, 
-      moviendo, 
-      ordenados: [...ordenados], 
-      mensaje, 
-      stats: { comparaciones, intercambios } 
-    });
-  };
-
-  agregarPaso([], [], "Inicio de Insertion Sort. El primer elemento se asume ordenado.");
+  hist.push({
+    arreglo: [...arr], comparando: [], moviendo: [], ordenados: [...ordenados],
+    comparaciones, intercambios, mensaje: "Inicio de Insertion Sort."
+  });
 
   for (let i = 1; i < n; i++) {
     let key = arr[i];
     let j = i - 1;
 
-    agregarPaso([], [i], `Evaluando el pino ${key} para insertarlo.`);
+    hist.push({
+      arreglo: [...arr], comparando: [i], moviendo: [], ordenados: [...ordenados],
+      comparaciones, intercambios, mensaje: `Seleccionando ${key} para insertar en la parte ordenada.`
+    });
 
     while (j >= 0) {
       comparaciones++;
-      agregarPaso([j, j + 1], [], `Comparando ${arr[j]} y ${key}.`);
-      
+      hist.push({
+        arreglo: [...arr], comparando: [j, j + 1], moviendo: [], ordenados: [...ordenados],
+        comparaciones, intercambios, mensaje: `Comparando ${key} con ${arr[j]}.`
+      });
+
       if (arr[j] > key) {
         intercambios++;
         arr[j + 1] = arr[j];
-        agregarPaso([], [j + 1], `Desplazando ${arr[j]} a la derecha.`);
+        hist.push({
+          arreglo: [...arr], comparando: [], moviendo: [j, j + 1], ordenados: [...ordenados],
+          comparaciones, intercambios, mensaje: `${arr[j]} es mayor. Moviendo a la derecha.`
+        });
         j = j - 1;
       } else {
-        break; // Está en la posición correcta respecto a esta parte del arreglo
+        break; // Rompe el while si no es mayor
       }
     }
     
     arr[j + 1] = key;
     if (!ordenados.includes(i)) ordenados.push(i);
-    
-    agregarPaso([], [j + 1], `Pino ${key} insertado en su posición correcta.`);
+
+    hist.push({
+      arreglo: [...arr], comparando: [], moviendo: [j + 1], ordenados: [...ordenados],
+      comparaciones, intercambios, mensaje: `Insertando ${key} en su posición final.`
+    });
   }
-  
-  agregarPaso([], [], "¡Insertion Sort terminado!");
-  
-  return historial;
+
+  hist.push({
+    arreglo: [...arr], comparando: [], moviendo: [], ordenados: [...Array(n).keys()],
+    comparaciones, intercambios, mensaje: "¡Arreglo ordenado exitosamente!"
+  });
+
+  return hist;
 }
