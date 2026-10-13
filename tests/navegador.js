@@ -103,7 +103,7 @@ async function sinScrollHorizontal(page) {
     /* ---------- Árboles: construcción, recorridos, reconstrucción y persistencia ---------- */
     console.log('\nÁrboles');
     page = await nuevaPagina(browser, 1440, 900);
-    await page.goto(BASE + 'arboles.html', { waitUntil: 'networkidle0' });
+    await page.goto(BASE + 'arboles.html?intro=no', { waitUntil: 'networkidle0' });
     await page.evaluate(() => localStorage.clear());
     await page.reload({ waitUntil: 'networkidle0' });
     await page.click('#btnEjemploInsercion');
@@ -173,7 +173,7 @@ async function sinScrollHorizontal(page) {
 
     /* ---------- Presentación con video ---------- */
     console.log('\nPresentación (video)');
-    for (const [pagina, video] of [['johnson.html', 'jkJd1UjUdAo'], ['asignacion.html', '_XvIC2KvWvo'], ['northwest.html', 'HjXWStUh0yE']]) {
+    for (const [pagina, video] of [['johnson.html', 'jkJd1UjUdAo'], ['asignacion.html', '_XvIC2KvWvo'], ['northwest.html', 'HjXWStUh0yE'], ['arboles.html', 'tBaOQeyXYqg']]) {
       page = await nuevaPagina(browser, 1440, 900);
       await page.goto(BASE + pagina, { waitUntil: 'domcontentloaded' });
       await page.evaluate(() => localStorage.clear());

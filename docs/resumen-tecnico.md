@@ -28,7 +28,7 @@ El repositorio es una aplicación estática de varias páginas. No hay servidor 
 - No hay compilación, backend, API propia ni base de datos.
 - No hay un paso de empaquetado: el navegador ejecuta directamente los HTML, CSS y JavaScript del repositorio.
 
-Los videos explicativos de YouTube son contenido externo. La aplicación solo presenta los videos registrados en el catálogo; Árboles dispone de una guía textual y no enlaza a un video inexistente. El funcionamiento de los algoritmos no depende del video ni de conectarse a un servidor propio.
+Los videos explicativos de YouTube son contenido externo. La aplicación solo presenta los videos registrados en el catálogo y permite volver a abrir la presentación desde la cabecera. El funcionamiento de los algoritmos no depende del video ni de conectarse a un servidor propio.
 
 ## 3. Páginas y módulos
 
@@ -51,7 +51,7 @@ El catálogo y la navegación lateral se construyen a partir de [`js/comun/catal
 2. La página carga primero los estilos comunes y luego los estilos específicos de su módulo.
 3. Al final del documento carga `js/config.js`, las utilidades compartidas y los scripts propios de esa página, respetando el orden indicado en el HTML.
 4. Los scripts leen los elementos de la página por sus identificadores, registran eventos de botones, formularios, teclado y puntero, y dibujan la vista inicial.
-5. En las páginas de algoritmos, la navegación común crea la barra lateral desde el catálogo. La presentación con video solo aparece en módulos con un identificador disponible; Árboles inicia con ayuda textual.
+5. En las páginas de algoritmos, la navegación común crea la barra lateral desde el catálogo. La presentación con video aparece para los módulos que tienen un identificador registrado y se puede volver a abrir desde la cabecera.
 6. Los cambios de datos actualizan el modelo correspondiente; la interfaz se vuelve a dibujar y el resultado se calcula o invalida según corresponda.
 
 Los pasos del algoritmo se calculan y almacenan como un historial de estados. Los controles de anterior, siguiente, reinicio, deslizador o reproducción automática cambian el índice del paso mostrado; no vuelven a ejecutar manualmente cada operación de la animación.

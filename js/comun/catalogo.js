@@ -49,11 +49,12 @@ const CATALOGO_ALGORITMOS = [
     nombre: 'Árboles binarios',
     corto: 'Árboles',
     categoria: 'arboles',
-    descripcion: 'Construye árboles binarios de búsqueda, visualiza sus recorridos y reconstruye árboles binarios desde recorridos compatibles.',
-    entrada: 'Inserciones únicas o recorridos preorden, inorden y postorden',
-    resultado: 'Árbol SVG y recorridos paso a paso',
+    descripcion: 'Descubre cómo crecen los árboles binarios: agrega valores, explora sus recorridos y reconstruye el árbol a partir de sus secuencias.',
+    entrada: 'Valores únicos o recorridos preorden, inorden y postorden',
+    resultado: 'Árbol interactivo y recorridos explicados paso a paso',
     ruta: 'arboles.html',
     icono: 'arbol',
+    video: 'tBaOQeyXYqg',
     disponible: true
   },
   {

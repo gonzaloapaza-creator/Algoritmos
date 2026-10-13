@@ -10,7 +10,7 @@ Proyecto de la materia **Análisis de Algoritmos** del grupo **Los Fanáticos de
 | Ordenamiento | **Ordenamiento (Bowling)** | 3–12 enteros entre 1 y 99 | Selection, Insertion, Bubble, Shell y Merge Sort animados con pinos, pseudocódigo e historial |
 | Árboles | **Árboles binarios** | 1–31 enteros únicos entre −999 y 999, o recorridos | Árbol SVG, recorridos animados y reconstrucción validada |
 
-Sin compilación, dependencias, backend ni base de datos: HTML, CSS y JavaScript planos. Los módulos con un video disponible ofrecen una presentación; Árboles proporciona ayuda textual sin inventar un enlace de video.
+Sin compilación, dependencias, backend ni base de datos: HTML, CSS y JavaScript planos. Cada módulo ofrece su presentación en video y conserva también una guía textual de ayuda.
 
 ### Equipo
 
