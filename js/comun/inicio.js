@@ -92,11 +92,12 @@ function dibujarInicio() {
   const disponibles = lista.filter(a => a.disponible).length;
   const categorias = agruparCatalogo(lista).length;
   const resumen = document.getElementById('resumenCatalogo');
-  if (resumen) resumen.textContent = disponibles + ' algoritmos disponibles en ' + categorias + ' categorías.';
+  if (resumen) resumen.textContent = disponibles + ' módulos disponibles en ' + categorias + ' categorías.';
+  const datoModulos = document.getElementById('datoModulos');
   const datoAlgoritmos = document.getElementById('datoAlgoritmos');
-  const datoCategorias = document.getElementById('datoCategorias');
-  if (datoAlgoritmos) datoAlgoritmos.textContent = String(disponibles);
-  if (datoCategorias) datoCategorias.textContent = String(categorias);
+  const ordenamiento = lista.find(alg => alg.id === 'ordenamiento');
+  if (datoModulos) datoModulos.textContent = String(disponibles);
+  if (datoAlgoritmos) datoAlgoritmos.textContent = String(ordenamiento && ordenamiento.metodos ? ordenamiento.metodos.length : 0);
 }
 
 /**

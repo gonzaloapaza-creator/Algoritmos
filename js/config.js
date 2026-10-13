@@ -35,6 +35,11 @@ const CLAVE_BIBLIOTECA = 'grafo.biblioteca.v1';
 const ASIGNACION_STORAGE_KEY = 'asignacion.v1';          // formato antiguo: solo se lee para migrar
 const ASIGNACION_STORAGE_KEY_V2 = 'asignacion.v2';
 const NORTHWEST_STORAGE_KEY = 'northwest.v1';
+const ARBOLES_STORAGE_KEY = 'arboles.v1';
+const MIN_NODOS_ARBOL = 1;
+const MAX_NODOS_ARBOL = 31;
+const MIN_VALOR_ARBOL = -999;
+const MAX_VALOR_ARBOL = 999;
 
 // Constantes de UI
 const TIMEOUT_AVISO = 2600;
@@ -114,6 +119,11 @@ if (typeof window !== 'undefined') {
     ASIGNACION_STORAGE_KEY,
     ASIGNACION_STORAGE_KEY_V2,
     NORTHWEST_STORAGE_KEY,
+    ARBOLES_STORAGE_KEY,
+    MIN_NODOS_ARBOL,
+    MAX_NODOS_ARBOL,
+    MIN_VALOR_ARBOL,
+    MAX_VALOR_ARBOL,
     TIMEOUT_AVISO,
     TIMEOUT_TOAST,
     FANTASMO_CLICK_TIMEOUT,

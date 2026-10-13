@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <link rel="icon" href="data:," />
   <title>Ordenamiento | Algoritmos de Optimización</title>
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="css/shell.css" />
@@ -44,6 +45,8 @@
             <button type="button" class="btn" data-algoritmo="selection" aria-pressed="true">Selection Sort</button>
             <button type="button" class="btn" data-algoritmo="insertion" aria-pressed="false">Insertion Sort</button>
             <button type="button" class="btn" data-algoritmo="bubble" aria-pressed="false">Bubble Sort</button>
+            <button type="button" class="btn" data-algoritmo="shell" aria-pressed="false">Shell Sort</button>
+            <button type="button" class="btn" data-algoritmo="merge" aria-pressed="false">Merge Sort</button>
           </div>
 
           <span class="acciones__separador"></span>
@@ -96,6 +99,26 @@
           <span class="leyenda__item"><span class="leyenda__pino" style="color: var(--exito);"></span>En su lugar</span>
           <span class="leyenda__item"><span class="leyenda__pino" style="color: var(--pino-franja);"></span>Sin revisar</span>
         </div>
+      </section>
+
+      <section class="tarjeta mt-4 panel-auxiliar" id="panelAuxiliar" aria-live="polite">
+        <div id="panelShell" hidden>
+          <h3>Grupo de Shell Sort</h3>
+          <p class="tarjeta__pista">El salto indica cuántas posiciones separan los pinos comparados. Durante las primeras pasadas ningún pino se considera definitivo.</p>
+          <p>Salto actual: <strong id="saltoShell">—</strong></p>
+          <div class="auxiliar-pinos" id="grupoShell" aria-label="Posiciones del grupo actual"></div>
+        </div>
+        <div id="panelMerge" hidden>
+          <h3>Mitades y espacio auxiliar de Merge Sort</h3>
+          <p class="tarjeta__pista">Se divide el segmento activo, se mezcla el menor disponible en el auxiliar y luego se copia de vuelta al arreglo principal.</p>
+          <p>Segmento activo: <strong id="segmentoMerge">—</strong></p>
+          <div class="rejilla-auxiliar">
+            <div><h4>Izquierda</h4><div class="auxiliar-pinos" id="izquierdoMerge"></div></div>
+            <div><h4>Derecha</h4><div class="auxiliar-pinos" id="derechoMerge"></div></div>
+            <div class="auxiliar-completo"><h4>Auxiliar (índices del arreglo)</h4><div class="auxiliar-pinos" id="auxiliarMerge"></div></div>
+          </div>
+        </div>
+        <p id="sinAuxiliar">El algoritmo actual trabaja directamente sobre la pista.</p>
       </section>
 
       <section class="tarjeta mt-4">
@@ -165,15 +188,17 @@
       <div class="modal-scroll">
         <p><strong>VIDEO</strong><br>El botón «Video» de la cabecera abre la presentación explicativa de los métodos de ordenamiento.</p>
         <br>
-        <p><strong>1) ALGORITMOS</strong><br>Elige Selection, Insertion o Bubble Sort. El pseudocódigo de abajo resalta la línea que se está ejecutando en cada paso.</p>
+        <p><strong>1) ALGORITMOS</strong><br>Elige Selection, Insertion, Bubble, Shell o Merge Sort. El pseudocódigo de abajo resalta la línea que se está ejecutando en cada paso. Shell usa saltos decrecientes; Merge divide el arreglo y mezcla mitades de forma estable.</p>
         <br>
         <p><strong>2) PINOS</strong><br>Escribe tus propios valores (3 a 12 enteros entre 1 y 99) y pulsa «Usar valores», o genera pinos al azar, casi ordenados (caso favorable) o invertidos (peor caso). El tamaño del pino representa su valor.</p>
         <br>
         <p><strong>3) CONTROLES</strong><br>«Siguiente» y «Anterior» avanzan de a un paso; «Reproducir» anima automáticamente a la velocidad elegida. El mapa de pasos y el deslizador permiten saltar a cualquier paso.</p>
         <br>
-        <p><strong>4) COLORES</strong><br>Franjas amarillas: se está comparando. Celeste: mínimo actual (Selection). Color del módulo: el pino se mueve o es la clave levantada (Insertion). Verde: ya está en su posición definitiva.</p>
+        <p><strong>4) APOYO VISUAL</strong><br>La pista conserva todos los pinos. Shell muestra el grupo y el salto actual; Merge muestra las mitades y las escrituras del auxiliar. Sus contadores consideran comparaciones de valores y cada intercambio o escritura, respectivamente.</p>
         <br>
-        <p><strong>5) ATAJOS</strong><br>← / → paso anterior y siguiente · Espacio reproducir/pausar · Inicio / Fin saltar al principio o al final · R reiniciar.</p>
+        <p><strong>5) COLORES</strong><br>Franjas amarillas: se está comparando. Celeste: mínimo actual (Selection). Color del módulo: pino movido o clave de inserción. Verde: posición definitiva; Shell solo marca todos los pinos al terminar.</p>
+        <br>
+        <p><strong>6) ATAJOS</strong><br>← / → paso anterior y siguiente · Espacio reproducir/pausar · Inicio / Fin saltar al principio o al final · R reiniciar.</p>
       </div>
       <div class="modal-botones">
         <button type="button" class="btn btn-primary" id="btnCerrarAyuda">Entendido</button>

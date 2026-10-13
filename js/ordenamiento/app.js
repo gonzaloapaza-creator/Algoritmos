@@ -41,6 +41,15 @@ const estadoComplejidad = $('estadoComplejidad');
 const infoComplejidad = $('infoComplejidad');
 const infoEstable = $('infoEstable');
 const infoPeorCaso = $('infoPeorCaso');
+const panelShell = $('panelShell');
+const panelMerge = $('panelMerge');
+const sinAuxiliar = $('sinAuxiliar');
+const saltoShell = $('saltoShell');
+const grupoShell = $('grupoShell');
+const segmentoMerge = $('segmentoMerge');
+const izquierdoMerge = $('izquierdoMerge');
+const derechoMerge = $('derechoMerge');
+const auxiliarMerge = $('auxiliarMerge');
 
 const btnAyuda = $('btnAyuda');
 const modalAyuda = $('modalAyuda');
@@ -102,8 +111,61 @@ function construirPseudocodigo() {
   estadoComplejidad.textContent = info.complejidad.split(' ·')[0];
   infoComplejidad.textContent = info.complejidad;
   infoEstable.textContent = info.estable ? 'Sí: conserva el orden de los iguales' : 'No';
-  infoPeorCaso.textContent = `n(n − 1)/2 = ${n * (n - 1) / 2} con n = ${n}`;
-  statPasadas.textContent = Math.max(0, n - 1);
+  if (E.algoritmo === 'merge') {
+    infoPeorCaso.textContent = `O(n log n); a lo sumo aproximadamente ${n * Math.ceil(Math.log2(Math.max(n, 2)))} comparaciones para n = ${n}`;
+    statPasadas.textContent = '—';
+  } else if (E.algoritmo === 'shell') {
+    infoPeorCaso.textContent = `La secuencia de saltos afecta el costo; esta versión usa ${Array.from({ length: Math.floor(n / 2) }, (_, i) => Math.floor(n / 2 / Math.pow(2, i))).filter(Boolean).join(' → ') || 'sin pasadas'} y puede llegar a O(n²).`;
+    let saltos = 0;
+    for (let salto = Math.floor(n / 2); salto > 0; salto = Math.floor(salto / 2)) saltos++;
+    statPasadas.textContent = String(saltos);
+  } else {
+    infoPeorCaso.textContent = `n(n − 1)/2 = ${n * (n - 1) / 2} con n = ${n}`;
+    statPasadas.textContent = Math.max(0, n - 1);
+  }
+}
+
+function renderPinosAuxiliares(contenedor, pinos, inicio) {
+  contenedor.replaceChildren();
+  (pinos || []).forEach((pino, indice) => {
+    const caja = document.createElement('span');
+    caja.className = 'auxiliar-pino' + (pino ? '' : ' auxiliar-pino--vacio');
+    caja.textContent = pino ? String(pino.valor) : '·';
+    caja.title = pino ? `Pino ${pino.id}: valor ${pino.valor}` : 'Sin copiar todavía';
+    caja.setAttribute('aria-label', pino ? `Pino ${pino.valor}, identificador ${pino.id}` : 'Espacio vacío');
+    const posicion = document.createElement('small');
+    posicion.textContent = String((inicio || 0) + indice);
+    caja.appendChild(posicion);
+    contenedor.appendChild(caja);
+  });
+}
+
+function actualizarAuxiliar(paso) {
+  const shell = E.algoritmo === 'shell';
+  const merge = E.algoritmo === 'merge';
+  panelShell.hidden = !shell;
+  panelMerge.hidden = !merge;
+  sinAuxiliar.hidden = shell || merge;
+  if (shell) {
+    saltoShell.textContent = paso.salto || '—';
+    renderPinosAuxiliares(grupoShell, (paso.grupo || []).map(i => paso.arreglo[i]), paso.grupo && paso.grupo[0]);
+    Array.from(grupoShell.children).forEach((el, i) => {
+      el.classList.toggle('auxiliar-pino--activo', (paso.grupo || [])[i] === (paso.comparando || [])[0] || (paso.grupo || [])[i] === (paso.comparando || [])[1]);
+    });
+  }
+  if (merge) {
+    segmentoMerge.textContent = paso.segmento ? `[${paso.segmento[0]}, ${paso.segmento[1]}]` : 'Dividiendo el arreglo';
+    renderPinosAuxiliares(izquierdoMerge, paso.izquierdo || []);
+    renderPinosAuxiliares(derechoMerge, paso.derecho || []);
+    renderPinosAuxiliares(auxiliarMerge, paso.auxiliar || []);
+    (paso.comparando || []).forEach(indice => {
+      const posicion = paso.segmento ? indice - paso.segmento[0] : -1;
+      if (posicion >= 0) {
+        const el = auxiliarMerge.children[posicion];
+        if (el) el.classList.add('auxiliar-pino--activo');
+      }
+    });
+  }
 }
 
 // ---- Actualización por paso ----
@@ -120,6 +182,7 @@ function actualizarInterfaz(opciones) {
   const n = paso.arreglo.length;
 
   dibujarPinos(paso, opciones);
+  actualizarAuxiliar(paso);
   const pista = $('pistaBowling');
   pista.classList.toggle('celebrar', paso.tipo === 'fin');
   if (paso.tipo === 'fin') pista.querySelectorAll('.pino-caja').forEach((c, i) => c.style.setProperty('--orden', i));
@@ -133,7 +196,7 @@ function actualizarInterfaz(opciones) {
   badgePasos.textContent = `${E.pasoActual} de ${total}`;
   chipTipo.dataset.tipo = paso.tipo;
   chipTipo.textContent = NOMBRES_TIPO[paso.tipo] || paso.tipo;
-  statPasada.textContent = paso.pasada || 0;
+  statPasada.textContent = paso.salto ? `${paso.pasada || 0} · salto ${paso.salto}` : paso.pasada || 0;
 
   // Mapa de pasos y deslizador
   Array.from(mapaPasos.children).forEach((s, i) => {

@@ -94,6 +94,7 @@ body[data-modulo="johnson"] { --acento: #5b8cff; --acento-fuerte: #7ea0ff; --ace
 body[data-modulo="asignacion"] { --acento: #2dd4bf; --acento-fuerte: #5eead4; --acento-tinte: rgba(45, 212, 191, .14); --acento-borde: rgba(45, 212, 191, .45); }
 body[data-modulo="northwest"] { --acento: #f5b041; --acento-fuerte: #f8c66d; --acento-tinte: rgba(245, 176, 65, .14); --acento-borde: rgba(245, 176, 65, .45); }
 body[data-modulo="ordenamiento"] { --acento: #f472b6; --acento-fuerte: #f9a8d4; --acento-tinte: rgba(244, 114, 182, .14); --acento-borde: rgba(244, 114, 182, .45); }
+body[data-modulo="arboles"] { --acento: #a78bfa; --acento-fuerte: #c4b5fd; --acento-tinte: rgba(167, 139, 250, .14); --acento-borde: rgba(167, 139, 250, .45); }
 
 /* ---------------- Reinicio ---------------- */
 *, *::before, *::after { box-sizing: border-box; }

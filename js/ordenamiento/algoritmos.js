@@ -41,13 +41,35 @@ const PSEUDOCODIGO_ORDENAMIENTO = {
     '            intercambiar A[j], A[j + 1]',
     '            huboCambio = verdadero',
     '    si no huboCambio: terminar'
+  ],
+  shell: [
+    'salto = floor(n / 2)',
+    'mientras salto > 0:',
+    '    para i = salto hasta n − 1:',
+    '        j = i',
+    '        mientras j ≥ salto y A[j − salto] > A[j]:',
+    '            intercambiar A[j − salto], A[j]',
+    '            j = j − salto',
+    '    salto = floor(salto / 2)'
+  ],
+  merge: [
+    'ordenar(inicio, fin):',
+    '    si inicio ≥ fin: regresar',
+    '    medio = floor((inicio + fin) / 2)',
+    '    ordenar(inicio, medio)',
+    '    ordenar(medio + 1, fin)',
+    '    comparar las cabezas izquierda y derecha',
+    '    copiar el menor al arreglo auxiliar',
+    '    copiar el segmento auxiliar al arreglo'
   ]
 };
 
 const INFO_ALGORITMOS_ORDENAMIENTO = {
   selection: { nombre: 'Selection Sort', complejidad: 'O(n²)', estable: false, idea: 'Busca el menor del resto y lo coloca al frente.' },
   insertion: { nombre: 'Insertion Sort', complejidad: 'O(n²) · O(n) si ya está ordenado', estable: true, idea: 'Toma un pino y lo inserta en su lugar dentro de la parte ordenada.' },
-  bubble: { nombre: 'Bubble Sort', complejidad: 'O(n²) · O(n) si ya está ordenado', estable: true, idea: 'Compara vecinos y «burbujea» el mayor hacia el final.' }
+  bubble: { nombre: 'Bubble Sort', complejidad: 'O(n²) · O(n) si ya está ordenado', estable: true, idea: 'Compara vecinos y «burbujea» el mayor hacia el final.' },
+  shell: { nombre: 'Shell Sort', complejidad: 'Depende de la secuencia de saltos', estable: false, idea: 'Ordena grupos separados por saltos decrecientes hasta terminar con una pasada de inserción.' },
+  merge: { nombre: 'Merge Sort', complejidad: 'O(n log n)', estable: true, idea: 'Divide el arreglo en mitades y las mezcla en orden; ante iguales, conserva primero el elemento izquierdo.' }
 };
 
 function pinosDesdeValores(valores) {
@@ -63,15 +85,27 @@ function crearRegistro(arr) {
   const hist = [];
   const contadores = { comparaciones: 0, intercambios: 0 };
   function paso(datos) {
-    hist.push(Object.assign({
+    const registro = Object.assign({
       tipo: TIPOS_PASO_ORDENAMIENTO.COMPARAR,
       arreglo: arr.map(p => ({ id: p.id, valor: p.valor })),
       comparando: [], moviendo: [], ordenados: [],
       minimo: null, sostenido: null, pasada: 0, linea: -1,
       comparaciones: contadores.comparaciones,
       intercambios: contadores.intercambios,
+      movimientos: 0,
       mensaje: ''
-    }, datos));
+    }, datos);
+    if (datos.movimientos == null && registro.tipo === TIPOS_PASO_ORDENAMIENTO.MOVER) registro.movimientos = 1;
+    hist.push(registro);
+    const ultimo = registro;
+    ultimo.comparando = ultimo.comparando.slice();
+    ultimo.moviendo = ultimo.moviendo.slice();
+    ultimo.ordenados = ultimo.ordenados.slice();
+    if (ultimo.grupo) ultimo.grupo = ultimo.grupo.slice();
+    if (ultimo.segmento) ultimo.segmento = ultimo.segmento.slice();
+    if (ultimo.izquierdo) ultimo.izquierdo = ultimo.izquierdo.map(p => p && ({ id: p.id, valor: p.valor }));
+    if (ultimo.derecho) ultimo.derecho = ultimo.derecho.map(p => p && ({ id: p.id, valor: p.valor }));
+    if (ultimo.auxiliar) ultimo.auxiliar = ultimo.auxiliar.map(p => p && ({ id: p.id, valor: p.valor }));
   }
   return { hist, contadores, paso };
 }
@@ -208,10 +242,127 @@ function ordenarBubbleSort(valores) {
   return hist;
 }
 
+function ordenarShellSort(valores) {
+  const arr = pinosDesdeValores(valores);
+  const n = arr.length;
+  const { hist, contadores, paso } = crearRegistro(arr);
+  const T = TIPOS_PASO_ORDENAMIENTO;
+  const saltos = [];
+  for (let salto = Math.floor(n / 2); salto > 0; salto = Math.floor(salto / 2)) saltos.push(salto);
+
+  paso({ tipo: T.INICIO, linea: 0, mensaje: `Inicio de Shell Sort con ${n} pinos. Los movimientos se cuentan como intercambios entre posiciones separadas por el salto.` });
+  if (!n) return hist;
+
+  saltos.forEach((salto, pasada) => {
+    paso({ tipo: T.SELECCION, pasada: pasada + 1, salto, linea: 1,
+      mensaje: `Comienza la pasada ${pasada + 1} con salto ${salto}. Los pinos de cada grupo están separados por ${salto} posiciones.` });
+    for (let i = salto; i < n; i++) {
+      const grupo = [];
+      for (let k = i % salto; k < n; k += salto) grupo.push(k);
+      let j = i;
+      while (j >= salto) {
+        contadores.comparaciones++;
+        const cambiar = arr[j - salto].valor > arr[j].valor;
+        paso({ tipo: T.COMPARAR, pasada: pasada + 1, salto, grupo, linea: 4,
+          comparando: [j - salto, j],
+          mensaje: `En el grupo [${grupo.join(', ')}], ¿${arr[j - salto].valor} > ${arr[j].valor}? ${cambiar ? 'Sí: se desplaza el pino hacia la izquierda, a distancia ' + salto + '.' : 'No: este pino ya está en la posición correcta del grupo.'}` });
+        if (!cambiar) break;
+        const valorIzquierdo = arr[j - salto].valor, valorDerecho = arr[j].valor;
+        [arr[j - salto], arr[j]] = [arr[j], arr[j - salto]];
+        contadores.intercambios++;
+        paso({ tipo: T.MOVER, pasada: pasada + 1, salto, grupo, linea: 5,
+          moviendo: [j - salto, j],
+          mensaje: `Intercambio a distancia ${salto}: ${valorDerecho} avanza a la posición ${j - salto} y ${valorIzquierdo} retrocede a ${j}.` });
+        j -= salto;
+      }
+      paso({ tipo: T.FIJAR, pasada: pasada + 1, salto, grupo, linea: 3,
+        mensaje: `La inserción de la posición ${i} termina para este grupo; ninguna posición se marca definitiva todavía.` });
+    }
+  });
+
+  paso({ tipo: T.FIN, pasada: saltos.length, salto: 0, linea: -1, ordenados: [...Array(n).keys()],
+    mensaje: `¡Listo! La última pasada usó salto 1. ${contadores.comparaciones} comparaciones y ${contadores.intercambios} movimientos.` });
+  return hist;
+}
+
+function ordenarMergeSort(valores) {
+  const arr = pinosDesdeValores(valores);
+  const n = arr.length;
+  const { hist, contadores, paso } = crearRegistro(arr);
+  const T = TIPOS_PASO_ORDENAMIENTO;
+  const auxiliar = Array(n).fill(null);
+
+  paso({ tipo: T.INICIO, linea: 0, mensaje: `Inicio de Merge Sort con ${n} pinos. Las escrituras en el auxiliar y las copias de vuelta cuentan como movimientos.` });
+  if (!n) return hist;
+
+  function mezclar(inicio, medio, fin) {
+    const izquierdo = arr.slice(inicio, medio + 1);
+    const derecho = arr.slice(medio + 1, fin + 1);
+    let i = 0, j = 0, k = inicio;
+    const segmento = [inicio, fin];
+    const datosMezcla = () => ({
+      segmento,
+      izquierdo,
+      derecho,
+      auxiliar,
+      comparando: [i < izquierdo.length ? inicio + i : -1, j < derecho.length ? medio + 1 + j : -1].filter(x => x >= 0)
+    });
+
+    while (i < izquierdo.length || j < derecho.length) {
+      let elegido;
+      if (i < izquierdo.length && j < derecho.length) {
+        contadores.comparaciones++;
+        const tomaIzquierdo = izquierdo[i].valor <= derecho[j].valor;
+        paso(Object.assign({ tipo: T.COMPARAR, pasada: 0, linea: 5,
+          mensaje: `Se comparan ${izquierdo[i].valor} (izquierda) y ${derecho[j].valor} (derecha). ${tomaIzquierdo ? 'Se elige primero el izquierdo' : 'Se elige el derecho'}${izquierdo[i].valor === derecho[j].valor ? ' para conservar la estabilidad' : ''}.` }, datosMezcla()));
+        elegido = tomaIzquierdo ? izquierdo[i++] : derecho[j++];
+      } else {
+        const desdeIzquierdo = i < izquierdo.length;
+        elegido = desdeIzquierdo ? izquierdo[i++] : derecho[j++];
+        paso(Object.assign({ tipo: T.SELECCION, pasada: 0, linea: 6,
+          mensaje: `La mitad ${desdeIzquierdo ? 'derecha' : 'izquierda'} se agotó; se selecciona ${elegido.valor} de la mitad restante.` }, datosMezcla()));
+      }
+      auxiliar[k] = { id: elegido.id, valor: elegido.valor };
+      contadores.intercambios++;
+      paso(Object.assign({ tipo: T.MOVER, pasada: 0, linea: 6, moviendo: [k],
+        mensaje: `Se copia ${elegido.valor} al espacio auxiliar en la posición ${k}.` }, datosMezcla()));
+      k++;
+    }
+
+    const cantidadCopiada = fin - inicio + 1;
+    for (let destino = inicio; destino <= fin; destino++) {
+      arr[destino] = { id: auxiliar[destino].id, valor: auxiliar[destino].valor };
+      contadores.intercambios++;
+    }
+    paso(Object.assign({ tipo: T.MOVER, pasada: 0, linea: 7, moviendo: Array.from({ length: cantidadCopiada }, (_, i) => inicio + i),
+      movimientos: cantidadCopiada,
+      mensaje: `Se copia el segmento auxiliar completo [${inicio}, ${fin}] de vuelta al arreglo principal (${cantidadCopiada} pinos).` }, datosMezcla()));
+    paso(Object.assign({ tipo: T.FIJAR, pasada: 0, linea: 7,
+      mensaje: `El segmento [${inicio}, ${fin}] ya quedó mezclado en orden ascendente.` }, datosMezcla()));
+  }
+
+  function dividir(inicio, fin) {
+    if (inicio >= fin) return;
+    const medio = Math.floor((inicio + fin) / 2);
+    paso({ tipo: T.SELECCION, pasada: 0, linea: 2, segmento: [inicio, fin],
+      mensaje: `Se divide el segmento [${inicio}, ${fin}] en [${inicio}, ${medio}] y [${medio + 1}, ${fin}].` });
+    dividir(inicio, medio);
+    dividir(medio + 1, fin);
+    mezclar(inicio, medio, fin);
+  }
+
+  dividir(0, n - 1);
+  paso({ tipo: T.FIN, pasada: 0, linea: -1, ordenados: [...Array(n).keys()],
+    mensaje: `¡Listo! ${contadores.comparaciones} comparaciones y ${contadores.intercambios} movimientos (escrituras en auxiliar y copias de vuelta).` });
+  return hist;
+}
+
 const ALGORITMOS_ORDENAMIENTO = {
   selection: ordenarSelectionSort,
   insertion: ordenarInsertionSort,
-  bubble: ordenarBubbleSort
+  bubble: ordenarBubbleSort,
+  shell: ordenarShellSort,
+  merge: ordenarMergeSort
 };
 
 function ejecutarOrdenamiento(algoritmo, valores) {

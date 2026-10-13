@@ -2,7 +2,7 @@
 
 ## 1. Descripción general
 
-**Grafo · Algoritmos de Optimización** es una aplicación web educativa para explorar algoritmos de optimización y ordenamiento de forma visual. El usuario ingresa datos o carga ejemplos, ejecuta un algoritmo y puede recorrer el historial de decisiones antes de consultar el resultado y sus verificaciones.
+**Grafo · Algoritmos de Optimización** es una aplicación web educativa para explorar algoritmos de optimización, ordenamiento y árboles binarios de forma visual. El usuario ingresa datos o carga ejemplos, ejecuta un algoritmo y puede recorrer el historial de decisiones antes de consultar el resultado y sus verificaciones.
 
 El repositorio es una aplicación estática de varias páginas. No hay servidor de aplicación: las páginas, los estilos y la lógica se entregan directamente al navegador. Los cálculos y el almacenamiento de los datos de cada usuario se realizan localmente.
 
@@ -13,7 +13,7 @@ El repositorio es una aplicación estática de varias páginas. No hay servidor 
 | HTML5 | Estructura de la página de inicio y de las páginas de cada módulo; formularios, navegación, tablas y regiones accesibles. |
 | CSS3 | Diseño visual, temas por módulo, animaciones, disposición adaptable a escritorio y móvil, y estilos de las vistas de cada algoritmo. |
 | JavaScript nativo (Vanilla JS) | Navegación, validación, modelos de datos, algoritmos, historial de pasos, interacción con el DOM y almacenamiento en el navegador. |
-| SVG | Dibujo de grafos, nodos, aristas, rutas, conexiones del problema de asignación e ilustraciones vectoriales. |
+| SVG | Dibujo de grafos, nodos, aristas, rutas, conexiones del problema de asignación, árboles e ilustraciones vectoriales. |
 | Web APIs del navegador | DOM, `localStorage`, `JSON`, eventos de teclado y puntero, temporizadores, `ResizeObserver` y pantalla completa, según la interacción de cada módulo. |
 | Node.js | Ejecución de pruebas unitarias para las capas de lógica que no dependen del DOM. |
 | `node:vm` | Carga de scripts clásicos dentro de un contexto compartido para probar las funciones globales de los algoritmos. |
@@ -28,7 +28,7 @@ El repositorio es una aplicación estática de varias páginas. No hay servidor 
 - No hay compilación, backend, API propia ni base de datos.
 - No hay un paso de empaquetado: el navegador ejecuta directamente los HTML, CSS y JavaScript del repositorio.
 
-Los videos explicativos de YouTube son contenido externo. La aplicación los inserta cuando se abre la presentación correspondiente; el funcionamiento de los algoritmos no depende del video ni de conectarse a un servidor propio.
+Los videos explicativos de YouTube son contenido externo. La aplicación solo presenta los videos registrados en el catálogo; Árboles dispone de una guía textual y no enlaza a un video inexistente. El funcionamiento de los algoritmos no depende del video ni de conectarse a un servidor propio.
 
 ## 3. Páginas y módulos
 
@@ -39,8 +39,9 @@ Los videos explicativos de YouTube son contenido externo. La aplicación los ins
 | [`asignacion.html`](../asignacion.html) | Permite modelar recursos y tareas como grafo bipartito o matriz y resolver una asignación. | Grafo → matriz y validación → resultado → procedimiento. |
 | [`northwest.html`](../northwest.html) | Resuelve un problema de transporte mediante el método de la esquina noroeste. | Datos → balanceo → resolución paso a paso → resultado. |
 | [`ordenamiento.html`](../ordenamiento.html) | Anima el ordenamiento de una secuencia representada como pinos de boliche. | Elegir algoritmo y entrada → recorrer la animación y el pseudocódigo. |
+| [`arboles.html`](../arboles.html) | Construye BST por inserción y reconstruye árboles binarios desde recorridos. | Crear o reconstruir → inspeccionar nodos → recorrer y animar. |
 
-El catálogo y la navegación lateral se construyen a partir de [`js/comun/catalogo.js`](../js/comun/catalogo.js). En esa lista se registran el nombre, categoría, descripción, ruta, icono y video de cada módulo.
+El catálogo y la navegación lateral se construyen a partir de [`js/comun/catalogo.js`](../js/comun/catalogo.js). En esa lista se registran el nombre, categoría, descripción, ruta e icono; el identificador de video es opcional.
 
 ## 4. Cómo funciona la aplicación
 
@@ -50,7 +51,7 @@ El catálogo y la navegación lateral se construyen a partir de [`js/comun/catal
 2. La página carga primero los estilos comunes y luego los estilos específicos de su módulo.
 3. Al final del documento carga `js/config.js`, las utilidades compartidas y los scripts propios de esa página, respetando el orden indicado en el HTML.
 4. Los scripts leen los elementos de la página por sus identificadores, registran eventos de botones, formularios, teclado y puntero, y dibujan la vista inicial.
-5. En las páginas de algoritmos, la navegación común crea la barra lateral desde el catálogo. La presentación con video puede aparecer antes de mostrar la herramienta.
+5. En las páginas de algoritmos, la navegación común crea la barra lateral desde el catálogo. La presentación con video solo aparece en módulos con un identificador disponible; Árboles inicia con ayuda textual.
 6. Los cambios de datos actualizan el modelo correspondiente; la interfaz se vuelve a dibujar y el resultado se calcula o invalida según corresponda.
 
 Los pasos del algoritmo se calculan y almacenan como un historial de estados. Los controles de anterior, siguiente, reinicio, deslizador o reproducción automática cambian el índice del paso mostrado; no vuelven a ejecutar manualmente cada operación de la animación.
@@ -114,17 +115,30 @@ Sobre el problema balanceado, la lógica empieza en la celda superior izquierda,
 
 La aplicación muestra los cálculos intermedios y verifica no negatividad, totales por fila y columna, costo total, número de variables básicas y ausencia de ciclos en la base. **La esquina noroeste entrega una solución inicial factible; no garantiza el costo mínimo.** El cálculo puro está en [`js/northwest/noroeste.js`](../js/northwest/noroeste.js), y el balanceo se separa en `js/northwest/balanceo.js`.
 
-### 5.4 Ordenamiento: Selection, Insertion y Bubble Sort
+### 5.4 Ordenamiento: Selection, Insertion, Bubble, Shell y Merge Sort
 
-La entrada es una lista de 3 a 12 enteros entre 1 y 99. Se puede escribir la lista, generar valores aleatorios, crear una secuencia casi ordenada o usar el caso invertido. Cada elemento conserva un identificador propio para que la animación muestre el mismo pino aunque cambie de posición.
+La entrada es una lista de 3 a 12 enteros entre 1 y 99. Se puede escribir la lista, generar valores aleatorios, crear una secuencia casi ordenada o usar el caso invertido. Cada elemento conserva un identificador propio para que la animación muestre el mismo pino aunque cambie de posición. Los cinco algoritmos están disponibles en el selector.
 
-Los tres métodos ordenan de forma ascendente:
+Los cinco métodos ordenan de forma ascendente:
 
 - **Selection Sort:** busca el menor valor de la parte no ordenada y lo intercambia a su lugar.
 - **Insertion Sort:** toma un elemento y lo inserta en su posición dentro de la parte ya ordenada.
 - **Bubble Sort:** compara elementos vecinos e intercambia los que están en orden incorrecto; puede detenerse temprano si una pasada no produce cambios.
+- **Shell Sort:** aplica inserciones mediante intercambios separados por saltos `floor(n/2)`, reducidos con `floor(salto/2)` hasta 1. No presenta posiciones intermedias como definitivas.
+- **Merge Sort:** divide recursivamente y mezcla subarreglos en un auxiliar; ante valores iguales, elige el elemento izquierdo primero. Las escrituras al auxiliar y las copias de vuelta se cuentan como movimientos.
 
-La lógica produce un historial con estados del arreglo, comparaciones, movimientos, elementos ya fijados, mensaje explicativo y línea de pseudocódigo activa. La interfaz visualiza esos datos, ofrece controles manuales y reproducción automática, y muestra estadísticas del proceso. Los algoritmos se implementan en [`js/ordenamiento/algoritmos.js`](../js/ordenamiento/algoritmos.js).
+La lógica produce un historial determinista con instantáneas independientes del arreglo y metadatos de comparaciones, movimientos, elementos fijados, explicación y línea de pseudocódigo activa. Shell muestra sus grupos y salto; Merge muestra mitades, segmento y auxiliar. La copia final de un segmento es atómica en el historial para conservar pinos únicos. Al cambiar algoritmo o entrada se detiene la reproducción. La lógica está en [`js/ordenamiento/algoritmos.js`](../js/ordenamiento/algoritmos.js).
+
+### 5.5 Árboles binarios
+
+La página [`arboles.html`](../arboles.html) separa la creación de árboles binarios de búsqueda de la reconstrucción de árboles binarios generales. Los límites configurables están en [`js/config.js`](../js/config.js): 1–31 nodos y enteros entre −999 y 999.
+
+- **Inserción BST:** el primer valor es la raíz, los menores van a la izquierda y los mayores a la derecha; no hay duplicados ni balanceo automático. La secuencia, el camino y el nodo nuevo se reflejan en SVG. Hay entrada manual, deshacer, limpiar y generación aleatoria de valores únicos en orden mezclado.
+- **Recorridos:** preorden (raíz–izquierda–derecha), inorden (izquierda–raíz–derecha) y postorden (izquierda–derecha–raíz). La animación distingue visita de incorporación a la salida; en postorden el nodo se emite tras recorrer sus hijos. Inorden está ordenado solo cuando el árbol es BST.
+- **Reconstrucción:** preorden+inorden e inorden+postorden definen un árbol. Con los tres recorridos se construye usando una pareja que contiene inorden y se verifica exactamente el tercero. Preorden+postorden exige también inorden, porque no determina una estructura única en general. Se validan campos, enteros, límites, duplicados, longitudes, conjuntos, particiones y recorridos recalculados. El resultado no se supone BST.
+- **Visualización:** el SVG calcula posiciones según orden inorden y profundidad, con ancho lineal respecto del número de nodos. Incluye desplazamiento local, zoom, centrado, ajuste e inspección de padre e hijos.
+
+El código separa [`modelo.js`](../js/arboles/modelo.js), [`validacion.js`](../js/arboles/validacion.js), [`reconstruccion.js`](../js/arboles/reconstruccion.js), [`estado.js`](../js/arboles/estado.js), [`dibujo.js`](../js/arboles/dibujo.js) y [`app.js`](../js/arboles/app.js). El ejemplo de clase `5, 3, 1, 4, 7, 11, 8, 15` está disponible para inserción y reconstrucción.
 
 ## 6. Datos, validación y persistencia
 
@@ -135,8 +149,9 @@ Cada módulo tiene su propio estado y claves de almacenamiento; los datos de un 
 | Johnson | Autoguardado del grafo en `grafo.v1`, biblioteca de grafos en `grafo.biblioteca.v1`; permite importar y exportar JSON. |
 | Asignación | Modelo y preferencias del módulo en formato `asignacion.v2`; hay lectura y migración del formato anterior `asignacion.v1`. También permite importar y exportar JSON. |
 | Esquina noroeste | Modelo y vista en `northwest.v1`; permite importar y exportar JSON. |
+| Árboles | Estado independiente `arboles.v1`: secuencia de inserción BST o recorridos del árbol reconstruido. Se valida al restaurar, los errores de almacenamiento se notifican sin bloquear la página y no se reanuda la animación. |
 | Presentación y navegación | Preferencias de interfaz almacenadas localmente por clave, como el estado de la introducción por módulo y la navegación lateral. |
-| Ordenamiento | El estado visible se maneja en memoria; no se observa una clave de almacenamiento persistente para sus entradas. |
+| Ordenamiento | Estado visible e historiales de pasos mantenidos en memoria. |
 
 La entrada se valida antes de resolver. En general, un campo vacío no equivale a cero; esto permite distinguir un dato faltante de un valor válido igual a cero. El resultado se considera vigente solo mientras corresponda al modelo usado para calcularlo. Al modificar los datos relevantes, la interfaz advierte que debe recalcularse.
 
@@ -149,6 +164,7 @@ Se ofrece deshacer y rehacer en los módulos de edición que mantienen historial
 - El diseño contempla pantallas pequeñas y grandes; las tablas se desplazan dentro de su contenedor y los controles admiten interacción táctil.
 - Se usan etiquetas, nombres accesibles, indicadores de estado y regiones `aria-live` en distintas vistas.
 - Los grafos se dibujan con SVG y se distinguen mediante formas, trazos y etiquetas además del color.
+- El árbol SVG ofrece nodos seleccionables con teclado y ratón, etiquetas de raíz/hoja y desplazamiento local en móviles.
 - La introducción de YouTube se inserta de forma diferida en la vista de presentación y se retira al entrar al algoritmo, evitando mantener ese iframe cuando no se muestra.
 - Hay controles de ayuda, mensajes, diálogos, estados sin datos y opciones para cargar ejemplos.
 
@@ -161,10 +177,12 @@ Se ofrece deshacer y rehacer en los módulos de edición que mantienen historial
 ├── asignacion.html            Módulo de asignación
 ├── northwest.html             Módulo de transporte
 ├── ordenamiento.html          Módulo de ordenamiento
+├── arboles.html               Módulo de árboles binarios
 ├── app.js                     Punto de entrada del editor Johnson
 ├── styles.css                 Estilos base compartidos
 ├── css/
 │   ├── shell.css              Navegación y estructura común
+│   ├── arboles.css            Diagrama e interacción de árboles
 │   └── *.css                  Estilos específicos por módulo
 ├── js/
 │   ├── config.js              Límites y constantes
@@ -172,6 +190,7 @@ Se ofrece deshacer y rehacer en los módulos de edición que mantienen historial
 │   ├── asignacion/            Modelo, validación, húngaro, vistas y estado
 │   ├── northwest/             Modelo, validación, balanceo, solución y vistas
 │   ├── ordenamiento/          Estado, algoritmos, dibujo e interacción
+│   ├── arboles/               Modelo, validación, reconstrucción, estado, dibujo y app
 │   └── *.js                   Editor, estado, dibujo y lógica de Johnson
 ├── tests/
 │   ├── cargar.js              Contexto y utilidades para pruebas de lógica
@@ -179,6 +198,7 @@ Se ofrece deshacer y rehacer en los módulos de edición que mantienen historial
 │   ├── asignacion.test.js     Pruebas de asignación
 │   ├── northwest.test.js      Pruebas de transporte
 │   ├── ordenamiento.test.js   Pruebas de ordenamiento
+│   ├── arboles.test.js        Pruebas de BST, validación y reconstrucción
 │   └── navegador.js           Pruebas de interfaz en Edge headless
 └── docs/
     ├── capturas/              Capturas de distintas páginas y tamaños
@@ -206,6 +226,7 @@ node tests/johnson.test.js
 node tests/asignacion.test.js
 node tests/northwest.test.js
 node tests/ordenamiento.test.js
+node tests/arboles.test.js
 ```
 
 `tests/cargar.js` implementa un cargador pequeño que ejecuta los scripts sin DOM en un contexto `vm`, y proporciona aserciones básicas. Entre las comprobaciones principales del conjunto están:
@@ -213,7 +234,8 @@ node tests/ordenamiento.test.js
 - Johnson frente al algoritmo de referencia Floyd–Warshall, además de rutas y ciclos negativos.
 - El método húngaro frente a una búsqueda exhaustiva y la validez de las asignaciones.
 - La esquina noroeste en casos balanceados, desbalanceados, degenerados y de dimensiones límite, junto con la verificación de la solución.
-- Los historiales de ordenamiento, el resultado ascendente, los contadores y los casos de entrada.
+- Los historiales de ordenamiento, la salida ascendente, los contadores, estabilidad e instantáneas.
+- Árboles vacíos, unitarios, desbalanceados, generación aleatoria, límites y reconstrucción desde recorridos compatibles e incompatibles.
 
 La prueba de navegador se inicia con:
 

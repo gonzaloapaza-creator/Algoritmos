@@ -1,15 +1,16 @@
 # Grafo · Algoritmos de Optimización
 
-Proyecto de la materia **Análisis de Algoritmos** del grupo **Los Fanáticos del Nabo**: aplicación web educativa de investigación de operaciones. Tres módulos:
+Proyecto de la materia **Análisis de Algoritmos** del grupo **Los Fanáticos del Nabo**: aplicación web educativa de investigación de operaciones y estructuras de datos. Cinco módulos:
 
 | Categoría | Módulo | Entrada | Resultado |
 |---|---|---|---|
 | Grafos y rutas | **Johnson** | Grafo dirigido con pesos enteros (editor visual o ejemplos) | Resolución paso a paso, distancias entre todos los pares y rutas |
 | Asignación | **Asignación (método húngaro)** | Grafo bipartito recursos–tareas o matriz | Asignación óptima, total y procedimiento completo |
 | Transporte | **Esquina noroeste** | Matriz de costos, oferta y demanda | Solución inicial factible paso a paso |
-| Arreglos | **Ordenamiento (Bowling)** | Lista de enteros (propia, al azar, casi ordenada o invertida) | Selection / Insertion / Bubble Sort animados con pinos, pseudocódigo y contador de pasos |
+| Ordenamiento | **Ordenamiento (Bowling)** | 3–12 enteros entre 1 y 99 | Selection, Insertion, Bubble, Shell y Merge Sort animados con pinos, pseudocódigo e historial |
+| Árboles | **Árboles binarios** | 1–31 enteros únicos entre −999 y 999, o recorridos | Árbol SVG, recorridos animados y reconstrucción validada |
 
-Sin compilación, dependencias, backend ni base de datos: HTML, CSS y JavaScript planos. Cada módulo abre con un **video explicativo** antes de entrar al algoritmo.
+Sin compilación, dependencias, backend ni base de datos: HTML, CSS y JavaScript planos. Los módulos con un video disponible ofrecen una presentación; Árboles proporciona ayuda textual sin inventar un enlace de video.
 
 ### Equipo
 
@@ -32,7 +33,7 @@ python -m http.server 8123     # o: npx serve .   /  http-server -p 8123
 
 Abrir `http://localhost:8123`. También funciona abriendo los `.html` directamente, pero un servidor local hace que `localStorage` y los `<iframe>` de video se comporten igual que en producción.
 
-URLs (se conservan las existentes): `index.html`, `johnson.html`, `asignacion.html`, `northwest.html`.
+Páginas: `index.html`, `johnson.html`, `asignacion.html`, `northwest.html`, `ordenamiento.html` y `arboles.html`.
 
 Parámetros útiles: `?intro=no` salta la presentación con video; `index.html?simular=10` muestra un catálogo simulado (entradas marcadas «Próximamente», nunca enlazadas) para revisar el diseño con muchas entradas.
 
@@ -48,13 +49,15 @@ grafo/
 ├── johnson.html             Johnson: grafo → matriz → paso a paso → resultado
 ├── asignacion.html          Asignación: grafo → matriz → resultado → procedimiento
 ├── northwest.html           Esquina noroeste: datos → balanceo → resolución → resultado
+├── arboles.html             Árboles: inserción, recorridos y reconstrucción
 ├── styles.css               Base compartida: tokens, botones, formularios, tablas, mensajes, modal, pasos
 ├── css/
 │   ├── shell.css            Cabecera compacta, barra lateral plegable, inicio, presentación con video, pie
 │   ├── johnson.css          Editor de grafos, vistas por pasos, grafo de solo lectura, hojas
 │   ├── asignacion.css       Vistas, grafo bipartito, matriz y procedimiento de asignación
 │   ├── northwest.css        Matriz de transporte, balanceo, pasos y resultado
-│   └── ordenamiento.css     Pista y pinos (SVG, estados, movimiento), contador de pasos, pseudocódigo
+│   ├── ordenamiento.css     Pista y pinos, contador de pasos, pseudocódigo y paneles auxiliares
+│   └── arboles.css          Árbol SVG, controles, reconstrucción y recorridos
 ├── app.js                   Punto de entrada de Johnson (botones, menú «Más», atajos)
 ├── js/
 │   ├── config.js            Constantes y límites de toda la aplicación
@@ -84,6 +87,13 @@ grafo/
 │   │   ├── estado.js        Estado, autoguardado, deshacer/rehacer
 │   │   ├── tabla.js         Tablas: entrada editable, balanceada, por paso, final
 │   │   └── app.js           Vistas, botones y atajos
+│   ├── arboles/
+│   │   ├── modelo.js        Inserción BST, generador y recorridos puros
+│   │   ├── validacion.js    Validación estricta de nodos, rangos y entradas
+│   │   ├── reconstruccion.js Reconstrucción desde preorden/inorden e inorden/postorden
+│   │   ├── estado.js        Estado y persistencia independiente arboles.v1
+│   │   ├── dibujo.js        Visualización SVG, zoom y centrado
+│   │   └── app.js           Formularios, recorridos animados y eventos
 │   ├── johnson/
 │   │   ├── ejemplos.js      Grafos de ejemplo (posiciones relativas al área)
 │   │   └── vistas.js        Vistas por pasos, resolución, resultado, grafo de solo lectura, ejemplos
@@ -95,6 +105,7 @@ grafo/
 │   ├── asignacion.test.js   Húngaro, validación, modelo, migración
 │   ├── northwest.test.js    Esquina noroeste, balanceo, validación, modelo
 │   ├── ordenamiento.test.js Selection/Insertion/Bubble: historial, conteos, estabilidad, entrada de valores
+│   ├── arboles.test.js      BST, validación, generación y reconstrucción desde recorridos
 │   ├── johnson.test.js      Johnson vs Floyd-Warshall, ciclos negativos, ejemplos
 │   └── navegador.js         Pruebas en Edge headless (puppeteer-core) + capturas
 └── docs/capturas/           Capturas de escritorio y móvil generadas por tests/navegador.js
@@ -108,9 +119,15 @@ grafo/
 - **Los estados no se mezclan**: `estado` (Johnson), `estadoAsignacion` y `estadoNorthwest` son objetos independientes con sus propias claves de almacenamiento.
 - Lógica matemática sin DOM (`hungaro.js`, `noroeste.js`, `balanceo.js`, `johnson.js`, `johnson/ejemplos.js`, modelos y validaciones): se prueba en Node.
 
+### Ordenamiento y árboles
+
+Ordenamiento conserva identificadores estables para pinos repetidos y limita las entradas a 3–12 enteros de 1 a 99. Shell Sort usa saltos `floor(n/2)` y luego `floor(salto/2)` hasta 1; no fija elementos antes de la pasada final. Merge Sort realiza divisiones recursivas y mezcla estable (elige primero la mitad izquierda en caso de empate). El historial guarda copias independientes; las comparaciones cuentan comparaciones entre valores y los movimientos cuentan intercambios, escrituras al auxiliar y copias de segmentos.
+
+Árboles limita sus valores a −999…999 y 1…31 nodos. La sección de creación inserta valores únicos en un árbol binario de búsqueda sin balanceo; la sección de reconstrucción no supone orden BST. Preorden+inorden o inorden+postorden determinan la estructura; preorden+postorden requiere también inorden, y cuando se ingresan los tres recorridos se comprueba exactamente el tercero. Los recorridos aceptan enteros separados por comas, espacios o saltos de línea. Los datos se guardan bajo `arboles.v1`, se validan al restaurar y no reanudan una animación.
+
 ### Añadir un algoritmo
 
-1. Añadir la entrada en `js/comun/catalogo.js` (`id`, `nombre`, `corto`, `categoria`, `descripcion`, `entrada`, `resultado`, `ruta`, `icono`, `video`, `disponible`). El inicio y la barra lateral se actualizan solos. Con `disponible: false` aparece como «Próximamente» sin enlace.
+1. Añadir la entrada en `js/comun/catalogo.js` (`id`, `nombre`, `corto`, `categoria`, `descripcion`, `entrada`, `resultado`, `ruta`, `icono`, `disponible` y `video` solo si existe uno válido). El inicio y la barra lateral se actualizan solos. Con `disponible: false` aparece como «Próximamente» sin enlace.
 2. Crear `nombre.html` copiando la estructura de `northwest.html` (cabecera, `#introModulo`, `#moduloContenido`, scripts comunes) y una carpeta `js/nombre/` separando modelo, lógica, estado y vistas.
 3. Constantes nuevas en `config.js`. Hoja propia en `css/nombre.css`.
 
@@ -243,12 +260,13 @@ Persistencia sin cambios: `grafo.v1` (autoguardado) y `grafo.biblioteca.v1`. Car
 ```bash
 node tests/asignacion.test.js     # 24 pruebas: húngaro vs fuerza bruta (incl. 300 aleatorias), validación, modelo, migración
 node tests/northwest.test.js      # 20 pruebas: ejemplo 230, exceso oferta/demanda, degeneración, ceros, 1×1, 1×N, M×1, 10×10, 300 aleatorias
-node tests/ordenamiento.test.js   # 12 pruebas: conteos exactos, invariantes del historial, estabilidad, casos borde, 300 aleatorias, análisis de entrada
+node tests/ordenamiento.test.js   # Shell/Merge y Selection/Insertion/Bubble: historial, límites, estabilidad y 300 entradas aleatorias
+node tests/arboles.test.js        # BST, validación, generación y reconstrucción compatible/incompatible
 node tests/johnson.test.js        # 10 pruebas: ejemplo clásico, rutas, pasos, ∞, ceros, ciclos negativos, ejemplos, 300 aleatorias vs Floyd-Warshall
-node tests/navegador.js --capturas   # 160 comprobaciones en Edge headless + capturas en docs/capturas
+node tests/navegador.js --capturas   # regresión de navegador, recorridos y tamaños móvil/escritorio
 ```
 
-`tests/navegador.js` necesita un servidor en `localhost:8123` y `puppeteer-core` instalado en `%TEMP%/grafo-e2e` (fuera del proyecto). Cubre: inicio (catálogo real y simulado, menú lateral, Escape), presentación con video en los tres módulos, Asignación (inicio en grafo, sincronización grafo↔matriz, validación de texto inválido, resultado 26 con A→2, B→1, C→3, D→4, selección sincronizada, invalidación, procedimiento, persistencia, migración v1, renombrar/eliminar, deshacer/rehacer, conectar), Johnson (nodos, conexiones, zoom, deshacer/rehacer, resolución paso a paso, distancias y suma de la ruta, invalidación, ciclo negativo, vista de matriz, ejemplos, autoguardado, limpiar, importar), Northwest (aclaración, pasos, costo 230, cambio de costos conserva cantidades, ficticio sin acumular, validación de costos/cantidades, persistencia) y ausencia de desplazamiento horizontal en 320, 375, 390, 768, 1024, 1440 y 844×390 (horizontal). Todo sin errores de consola.
+`tests/navegador.js` necesita un servidor en `localhost:8123` y `puppeteer-core` instalado en `%TEMP%/grafo-e2e` (fuera del proyecto). Cubre el catálogo de cinco módulos, navegación, pantallas de móvil, los controles e historiales de ordenamiento, la construcción/reconstrucción/recorridos y persistencia de Árboles, además de las regresiones existentes de Asignación, Johnson y Northwest. Ejecuta sin `--capturas` para validar o con `--capturas` para actualizar imágenes en `docs/capturas/`.
 
 Las comprobaciones de Johnson de `tests/navegador.js` se ampliaron con las vistas por pasos; vuelve a ejecutarlo para regenerar el recuento y las capturas. Capturas en `docs/capturas/` (`*-1440`, `*-768`, `*-390`, `*-375`, `*-320`, `*-horizontal`, `*-video-*`).
 
@@ -266,6 +284,7 @@ Las comprobaciones de Johnson de `tests/navegador.js` se ampliaron con las vista
 | Asignación | Ctrl+Z / Ctrl+Y, Supr | Deshacer / rehacer, eliminar selección |
 | Northwest | Ctrl+Z / Ctrl+Y, ← / → | Deshacer / rehacer, cambiar de paso |
 | Ordenamiento | ← / →, Espacio, Inicio / Fin, R | Paso anterior / siguiente, reproducir / pausar, primer / último paso, reiniciar |
+| Árboles | Controles de la vista | Anterior / siguiente, reproducir / pausar y reiniciar el recorrido seleccionado |
 
 ---
 

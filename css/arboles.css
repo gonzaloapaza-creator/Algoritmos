@@ -1,0 +1,70 @@
+.page-arboles .arbol-seccion { margin-top: var(--esp-4); min-width: 0; }
+.page-arboles .arbol-seccion > * + * { margin-top: var(--esp-3); }
+.page-arboles .tarjeta__cabecera { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--esp-3); }
+.page-arboles .tarjeta__pista { margin-top: 6px; color: var(--texto-suave); max-width: 100ch; }
+.arbol-formas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--esp-4); margin-top: var(--esp-4); }
+.arbol-forma { min-width: 0; padding: var(--esp-4); background: var(--bg-input); border: 1px solid var(--borde-suave); border-radius: var(--radio); }
+.arbol-forma h3 { margin-bottom: var(--esp-2); }
+.arbol-campos { display: flex; flex-wrap: wrap; align-items: end; gap: var(--esp-2); margin-top: var(--esp-3); }
+.arbol-campos .campo { flex: 1 1 110px; min-width: 0; }
+.arbol-campos button { min-height: 44px; }
+.arbol-forma .arbol-campos button { flex: 1 1 145px; }
+.arbol-mensaje { min-height: 1.5em; margin-top: var(--esp-2); color: var(--peligro); font-weight: 650; }
+.arbol-secuencia { margin-top: var(--esp-3); overflow-wrap: anywhere; }
+.arbol-selector { max-width: 440px; margin-top: var(--esp-3); }
+.arbol-formas--recorridos { margin-top: var(--esp-3); }
+.arbol-recorrido-campo { min-width: 0; }
+.arbol-recorrido-campo textarea { min-height: 76px; resize: vertical; }
+.arbol-recorrido-campo[hidden] { display: none; }
+.arbol-aviso { margin-top: var(--esp-3); padding: var(--esp-3); color: var(--texto); background: rgba(251, 191, 36, .12); border: 1px solid rgba(251, 191, 36, .45); border-radius: var(--radio-sm); }
+.arbol-visual-cabecera { align-items: center; }
+.arbol-zoom { flex: 0 1 auto; }
+.vista-arbol {
+  width: 100%;
+  min-height: 210px;
+  max-height: min(68vh, 680px);
+  margin-top: var(--esp-3);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio);
+  background:
+    radial-gradient(circle at 1px 1px, rgba(167, 139, 250, .08) 1px, transparent 0) 0 0 / 20px 20px,
+    var(--bg-input);
+  touch-action: pan-x pan-y;
+}
+.vista-arbol svg { display: block; min-width: 100%; margin: 0 auto; overflow: visible; transform-origin: top left; }
+.arbol-vacio { padding: 72px 16px; text-align: center; color: var(--texto-suave); }
+.arbol-rama { stroke: #64748b; stroke-width: 3; }
+.arbol-rama--activa { stroke: var(--acento-fuerte); stroke-width: 5; }
+.arbol-nodo { cursor: pointer; outline: none; }
+.arbol-nodo__circulo { fill: #312e81; stroke: var(--acento); stroke-width: 3; transition: fill .15s ease, stroke .15s ease, filter .15s ease; }
+.arbol-nodo__valor { fill: #fff; font: 800 14px var(--fuente); pointer-events: none; }
+.arbol-nodo__etiqueta { fill: var(--texto-suave); font: 700 10px var(--fuente); }
+.arbol-nodo:hover .arbol-nodo__circulo, .arbol-nodo:focus-visible .arbol-nodo__circulo { stroke: #fff; stroke-width: 4; }
+.arbol-nodo--raiz .arbol-nodo__circulo { fill: #5b21b6; }
+.arbol-nodo--hoja .arbol-nodo__circulo { stroke-dasharray: 4 2; }
+.arbol-nodo--visitado .arbol-nodo__circulo { fill: #0f766e; stroke: #5eead4; }
+.arbol-nodo--actual .arbol-nodo__circulo, .arbol-nodo--nuevo .arbol-nodo__circulo, .arbol-nodo--seleccionado .arbol-nodo__circulo { fill: #a16207; stroke: #fde68a; filter: drop-shadow(0 0 7px rgba(253, 230, 138, .6)); }
+.arbol-nodo--camino .arbol-nodo__circulo { stroke: #fbbf24; stroke-width: 4; }
+.arbol-detalle { margin-top: var(--esp-3); padding: var(--esp-3); border-left: 3px solid var(--acento); background: var(--acento-tinte); border-radius: 0 var(--radio-sm) var(--radio-sm) 0; overflow-wrap: anywhere; }
+.arbol-recorrido-controles { margin-top: var(--esp-3); }
+.arbol-recorrido-controles .campo { flex: 1 1 140px; }
+.arbol-recorridos-completos { display: grid; gap: var(--esp-2); margin-top: var(--esp-3); }
+.arbol-recorridos-completos p { overflow-wrap: anywhere; }
+.arbol-recorridos-completos code { color: var(--acento-fuerte); }
+.page-arboles .entrada[aria-invalid="true"] { border-color: var(--peligro); }
+
+@media (max-width: 760px) {
+  .arbol-formas { grid-template-columns: minmax(0, 1fr); }
+  .arbol-visual-cabecera { align-items: flex-start; flex-direction: column; }
+  .arbol-zoom { width: 100%; }
+  .arbol-zoom button { flex: 1 1 65px; }
+}
+
+@media (max-width: 440px) {
+  .page-arboles .arbol-forma { padding: var(--esp-3); }
+  .arbol-campos { align-items: stretch; }
+  .arbol-campos > button { flex: 1 1 100%; }
+  .arbol-recorrido-controles > button { flex: 1 1 42%; }
+}

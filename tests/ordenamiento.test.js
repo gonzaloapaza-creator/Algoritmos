@@ -7,11 +7,11 @@ const ctx = cargar(crearContexto(), [
   'js/ordenamiento/algoritmos.js'
 ]);
 
-const { ordenarSelectionSort, ordenarInsertionSort, ordenarBubbleSort, ejecutarOrdenamiento, analizarValoresOrdenamiento, valoresDePinos, generarValoresOrdenamiento } = ctx;
+const { ordenarSelectionSort, ordenarInsertionSort, ordenarBubbleSort, ordenarShellSort, ordenarMergeSort, ejecutarOrdenamiento, analizarValoresOrdenamiento, valoresDePinos, generarValoresOrdenamiento } = ctx;
 const PSEUDOCODIGO = evaluar(ctx, 'PSEUDOCODIGO_ORDENAMIENTO');
 const LIMITES = evaluar(ctx, 'LIMITES_ORDENAMIENTO');
 
-const ALGORITMOS = { selection: ordenarSelectionSort, insertion: ordenarInsertionSort, bubble: ordenarBubbleSort };
+const ALGORITMOS = { selection: ordenarSelectionSort, insertion: ordenarInsertionSort, bubble: ordenarBubbleSort, shell: ordenarShellSort, merge: ordenarMergeSort };
 const ordenado = v => v.slice().sort((a, b) => a - b);
 const ultimo = h => h[h.length - 1];
 
@@ -36,7 +36,7 @@ function verificarHistorial(nombre, hist, valores) {
     [...p.comparando, ...p.moviendo, ...p.ordenados].forEach(idx => cierto(idx >= 0 && idx < n, `${nombre}: paso ${i} índice fuera de rango`));
     if (p.tipo !== 'fin') cierto(p.mensaje.length > 0, `${nombre}: paso ${i} sin mensaje`);
   });
-  const movimientos = hist.filter(p => p.tipo === 'mover').length;
+  const movimientos = hist.reduce((total, p) => total + p.movimientos, 0);
   igual(movimientos, ultimo(hist).intercambios, nombre + ': un paso «mover» por cada movimiento contado');
   const comparaciones = hist.filter(p => p.tipo === 'comparar').length;
   igual(comparaciones, ultimo(hist).comparaciones, nombre + ': un paso «comparar» por cada comparación contada');
@@ -92,6 +92,46 @@ prueba('Bubble Sort: fija el mayor al final de cada pasada', () => {
   igual(valoresDePinos(fijados[0].arreglo)[3], 5);
 });
 
+prueba('Shell Sort: usa saltos decrecientes hasta 1 sin fijar posiciones antes del final', () => {
+  const h = ordenarShellSort([12, 4, 9, 1, 7, 3]);
+  verificarHistorial('shell', h, [12, 4, 9, 1, 7, 3]);
+  igual(h.filter(p => p.tipo === 'seleccion').map(p => p.salto), [3, 1]);
+  cierto(h.filter(p => p.tipo !== 'fin').every(p => p.ordenados.length === 0), 'no marca posiciones definitivas en las pasadas');
+  cierto(h.some(p => p.tipo === 'comparar' && p.grupo && p.grupo.length > 1), 'muestra el grupo comparado');
+});
+
+prueba('Merge Sort: divisiones y mezclas reales, estable con valores repetidos', () => {
+  const h = ordenarMergeSort([4, 2, 4, 1, 2, 4]);
+  verificarHistorial('merge', h, [4, 2, 4, 1, 2, 4]);
+  cierto(h.some(p => p.tipo === 'seleccion' && p.segmento), 'registra divisiones o segmentos');
+  cierto(h.some(p => p.auxiliar && p.auxiliar.some(Boolean)), 'expone escrituras en el auxiliar');
+  const fin = ultimo(h).arreglo;
+  const iguales = {};
+  fin.forEach(p => { (iguales[p.valor] = iguales[p.valor] || []).push(Number(p.id.slice(1))); });
+  Object.values(iguales).forEach(ids => igual(ids, ids.slice().sort((a, b) => a - b), 'Merge conserva el orden original de iguales'));
+});
+
+prueba('Shell y Merge ordenan tamaños mínimo/máximo, invertidos y repeticiones', () => {
+  [ordenarShellSort, ordenarMergeSort].forEach(fn => {
+    [[7, 6, 5], [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1], [5, 5, 5, 1, 1, 9, 9]].forEach(valores => {
+      verificarHistorial(fn === ordenarShellSort ? 'shell' : 'merge', fn(valores), valores);
+    });
+  });
+});
+
+prueba('Cada paso mantiene instantáneas independientes del arreglo y el auxiliar', () => {
+  const h = ordenarMergeSort([6, 2, 5, 1]);
+  const originalSiguiente = h[2].arreglo[0].valor;
+  h[1].arreglo[0].valor = -100;
+  igual(h[2].arreglo[0].valor, originalSiguiente);
+  const conAuxiliar = h.find(p => p.auxiliar && p.auxiliar.some(Boolean));
+  const siguienteAuxiliar = h[h.indexOf(conAuxiliar) + 1];
+  if (conAuxiliar && siguienteAuxiliar && siguienteAuxiliar.auxiliar) {
+    conAuxiliar.auxiliar[0].valor = -200;
+    cierto(siguienteAuxiliar.auxiliar[0].valor !== -200, 'el auxiliar de pasos distintos no comparte objetos');
+  }
+});
+
 prueba('Casos borde: vacío, un elemento, repetidos', () => {
   Object.entries(ALGORITMOS).forEach(([nombre, fn]) => {
     igual(fn([]).length, 1, nombre + ' vacío');
@@ -100,9 +140,9 @@ prueba('Casos borde: vacío, un elemento, repetidos', () => {
   });
 });
 
-prueba('Estabilidad: Insertion y Bubble conservan el orden de iguales', () => {
+prueba('Estabilidad: Insertion, Bubble y Merge conservan el orden de iguales', () => {
   const valores = [3, 1, 3, 2, 1];
-  ['insertion', 'bubble'].forEach(nombre => {
+  ['insertion', 'bubble', 'merge'].forEach(nombre => {
     const fin = ultimo(ALGORITMOS[nombre](valores)).arreglo;
     const idsPorValor = {};
     fin.forEach(p => { (idsPorValor[p.valor] = idsPorValor[p.valor] || []).push(parseInt(p.id.slice(1), 10)); });

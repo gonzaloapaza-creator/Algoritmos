@@ -46,9 +46,9 @@ async function sinScrollHorizontal(page) {
     console.log('\nInicio');
     let page = await nuevaPagina(browser, 1440, 900);
     await page.goto(BASE + 'index.html', { waitUntil: 'networkidle0' });
-    check(await page.$$eval('.tarjeta-alg', t => t.length) === 3, 'Tres tarjetas reales');
-    check(await page.$$eval('.categoria', c => c.length) === 3, 'Tres categorías');
-    check(await page.$$eval('.sidebar__enlace', e => e.length) === 4, 'Barra lateral: inicio + 3 algoritmos');
+    check(await page.$$eval('.tarjeta-alg', t => t.length) === 5, 'Cinco módulos reales');
+    check(await page.$$eval('.categoria', c => c.length) === 5, 'Cinco categorías');
+    check(await page.$$eval('.sidebar__enlace', e => e.length) === 6, 'Barra lateral: inicio + 5 módulos');
     await capturar(page, 'inicio-1440');
     await page.goto(BASE + 'index.html?simular=10', { waitUntil: 'networkidle0' });
     check(await page.$$eval('.tarjeta-alg', t => t.length) === 10, 'Catálogo simulado con 10 entradas');
@@ -73,6 +73,103 @@ async function sinScrollHorizontal(page) {
       await page.close();
     }
 
+
+    /* ---------- Ordenamiento: Shell, Merge e interacción ---------- */
+    console.log('\nOrdenamiento');
+    page = await nuevaPagina(browser, 1440, 900);
+    await page.goto(BASE + 'ordenamiento.html?intro=no', { waitUntil: 'networkidle0' });
+    await page.evaluate(() => localStorage.clear());
+    await page.reload({ waitUntil: 'networkidle0' });
+    check(await page.$$eval('[data-algoritmo]', b => b.length) === 5, 'Los cinco algoritmos de ordenamiento están visibles');
+    await page.$eval('#entradaValores', e => { e.value = '9, 4, 7, 1, 5'; });
+    await page.click('#btnAplicar');
+    await page.click('[data-algoritmo="shell"]');
+    check((await page.$eval('#tituloAlgoritmo', e => e.textContent)) === 'Shell Sort', 'Shell Sort se selecciona desde el módulo');
+    await page.click('#btnSiguiente');
+    check((await page.$eval('#saltoShell', e => e.textContent)) === '2', 'Shell muestra el primer salto');
+    await page.click('#btnSiguiente');
+    await page.click('#btnAnterior');
+    check((await page.$eval('#badgePasos', e => e.textContent)).startsWith('1 de '), 'Shell puede retroceder a un estado anterior');
+    await page.click('[data-algoritmo="merge"]');
+    check((await page.$eval('#tituloAlgoritmo', e => e.textContent)) === 'Merge Sort', 'Merge Sort se selecciona desde el módulo');
+    await page.click('#btnSiguiente');
+    check((await page.$eval('#segmentoMerge', e => e.textContent)) !== '—', 'Merge muestra el segmento activo');
+    await page.click('#btnAuto');
+    await new Promise(resolve => setTimeout(resolve, 40));
+    await page.click('[data-algoritmo="shell"]');
+    check(await page.evaluate(() => !estadoOrdenamiento.reproduciendo && estadoOrdenamiento.intervalo === null), 'Cambiar de algoritmo detiene el temporizador');
+    await page.close();
+
+    /* ---------- Árboles: construcción, recorridos, reconstrucción y persistencia ---------- */
+    console.log('\nÁrboles');
+    page = await nuevaPagina(browser, 1440, 900);
+    await page.goto(BASE + 'arboles.html', { waitUntil: 'networkidle0' });
+    await page.evaluate(() => localStorage.clear());
+    await page.reload({ waitUntil: 'networkidle0' });
+    await page.click('#btnEjemploInsercion');
+    check(await page.$$eval('#vistaArbol .arbol-nodo', n => n.length) === 8, 'El ejemplo de inserción dibuja ocho nodos');
+    check((await page.$eval('#resultadoInorden', e => e.textContent)) === '1, 3, 4, 5, 7, 8, 11, 15', 'El ejemplo muestra el inorden esperado');
+    await page.click('#vistaArbol [data-valor="8"]');
+    check((await page.$eval('#detalleNodo', e => e.textContent)).includes('padre: 11') && (await page.$eval('#detalleNodo', e => e.textContent)).includes('hoja'), 'Seleccionar nodo muestra padre y condición de hoja');
+    await page.click('#btnLimpiarArbol');
+    await page.$eval('#valorNodo', e => { e.value = '-5'; });
+    await page.focus('#valorNodo');
+    await page.keyboard.press('Enter');
+    check(await page.$$eval('#vistaArbol .arbol-nodo', n => n.length) === 1 && (await page.$eval('#resultadoPreorden', e => e.textContent)) === '-5', 'La entrada manual admite Enter y valores negativos');
+    await page.click('#btnDeshacerInsercion');
+    check(await page.$$eval('#vistaArbol .arbol-nodo', n => n.length) === 0, 'Deshacer elimina la última inserción');
+    await page.click('#btnEjemploInsercion');
+    await page.$eval('#cantidadNodos', e => { e.value = '6'; });
+    await page.$eval('#valorMinimo', e => { e.value = '1'; });
+    await page.$eval('#valorMaximo', e => { e.value = '5'; });
+    await page.click('#formAleatorio button[type="submit"]');
+    check((await page.$eval('#errorAleatorio', e => e.textContent)).includes('Reduce la cantidad a 5'), 'El generador informa capacidad insuficiente');
+    check(await page.$$eval('#vistaArbol .arbol-nodo', n => n.length) === 8, 'Generación inválida conserva el árbol actual');
+    await page.$eval('#cantidadNodos', e => { e.value = '8'; });
+    await page.$eval('#valorMaximo', e => { e.value = '99'; });
+    await page.click('#btnRecorridoSiguiente');
+    await page.click('#btnRecorridoSiguiente');
+    check((await page.$eval('#salidaRecorrido', e => e.textContent)) === '5', 'Preorden agrega el nodo visitado a la salida');
+    await page.click('#btnRecorridoAnterior');
+    check((await page.$eval('#salidaRecorrido', e => e.textContent)) === '—', 'Anterior restaura la salida del paso previo');
+    await page.click('#btnRecorridoPlay');
+    check(await page.evaluate(() => estadoArboles.reproduciendo), 'Reproducir inicia el recorrido');
+    await page.click('#btnRecorridoPlay');
+    check(await page.evaluate(() => !estadoArboles.reproduciendo), 'Pausar detiene el recorrido');
+    await page.select('#selectorRecorrido', 'postorden');
+    for (let i = 0; i < 3; i++) await page.click('#btnRecorridoSiguiente');
+    check((await page.$eval('#salidaRecorrido', e => e.textContent)) === '—', 'Postorden no emite la raíz antes de sus hijos');
+    await page.click('#btnRecorridoSiguiente');
+    check((await page.$eval('#salidaRecorrido', e => e.textContent)) === '1', 'Postorden emite una hoja después de visitarla');
+    await page.click('#btnRecorridoAnterior');
+    check((await page.$eval('#salidaRecorrido', e => e.textContent)) === '—', 'Retroceder también restaura la salida de postorden');
+    for (let i = 0; i < 13; i++) await page.click('#btnRecorridoSiguiente');
+    check((await page.$eval('#salidaRecorrido', e => e.textContent)) === '1, 4, 3, 8, 15, 11, 7, 5', 'Postorden termina con la secuencia esperada');
+    await page.click('#btnEjemploReconstruccion');
+    check(await page.evaluate(() => estadoArboles.modo === 'reconstruido' && recorridosArbol(estadoArboles.raiz).postorden.join(',') === '1,4,3,8,15,11,7,5'), 'Reconstrucción de ejemplo coincide con los tres recorridos');
+    await page.select('#modoReconstruccion', 'pre_post');
+    check(await page.$eval('#entradaInorden', e => e.required && !e.disabled), 'Preorden + postorden exige inorden');
+    await page.evaluate(() => { document.querySelector('#entradaPostorden').value = '1,2'; });
+    const nodosAntes = await page.$$eval('#vistaArbol .arbol-nodo', n => n.length);
+    await page.click('#btnReconstruir');
+    check((await page.$eval('#errorReconstruccion', e => e.textContent)).includes('No se reconstruyó'), 'Entradas inválidas muestran un error sin resultado');
+    check(await page.$$eval('#vistaArbol .arbol-nodo', n => n.length) === nodosAntes, 'Una reconstrucción inválida no reemplaza el árbol existente');
+    await page.reload({ waitUntil: 'networkidle0' });
+    check(await page.evaluate(() => estadoArboles.modo === 'reconstruido' && recorridosArbol(estadoArboles.raiz).inorden.length === 8), 'El árbol reconstruido se restaura al recargar');
+    check(await page.evaluate(() => !estadoArboles.reproduciendo), 'La animación no se reanuda al recargar');
+    await page.evaluate(() => localStorage.setItem('arboles.v1', JSON.stringify({ version: 1, modo: 'busqueda', secuencia: [3, 3] })));
+    await page.reload({ waitUntil: 'networkidle0' });
+    check(await page.evaluate(() => estadoArboles.raiz === null && !estadoArboles.reproduciendo), 'Un estado local inválido se ignora sin bloquear la página');
+    await page.close();
+
+    for (const [ancho, alto, etiqueta] of [[320, 700, 'móvil 320'], [390, 844, 'móvil 390'], [768, 1024, 'tablet']]) {
+      page = await nuevaPagina(browser, ancho, alto);
+      await page.goto(BASE + 'arboles.html?intro=no', { waitUntil: 'networkidle0' });
+      await page.click('#btnEjemploInsercion');
+      check(await sinScrollHorizontal(page), 'Árboles sin scroll horizontal de página (' + etiqueta + ')');
+      check(await page.$$eval('#vistaArbol .arbol-nodo', n => n.length) === 8, 'Árbol visible en (' + etiqueta + ')');
+      await page.close();
+    }
 
     /* ---------- Presentación con video ---------- */
     console.log('\nPresentación (video)');

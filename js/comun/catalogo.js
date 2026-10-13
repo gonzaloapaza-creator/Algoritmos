@@ -14,8 +14,8 @@ const CATEGORIAS_ALGORITMOS = [
   { id: 'grafos', nombre: 'Grafos y rutas', descripcion: 'Caminos mínimos y análisis sobre grafos dirigidos.' },
   { id: 'asignacion', nombre: 'Asignación', descripcion: 'Emparejar recursos con tareas al menor costo o mayor beneficio.' },
   { id: 'transporte', nombre: 'Transporte', descripcion: 'Distribuir oferta entre destinos con demanda.' },
-  // NUEVA CATEGORÍA AÑADIDA:
-  { id: 'arreglos', nombre: 'Arreglos y Búsqueda', descripcion: 'Visualización y paso a paso de algoritmos de ordenamiento.' }
+  { id: 'arreglos', nombre: 'Ordenamiento', descripcion: 'Visualización de algoritmos de ordenamiento con arreglos y pinos de boliche.' },
+  { id: 'arboles', nombre: 'Árboles', descripcion: 'Construcción, recorridos y reconstrucción de árboles binarios.' }
 ];
 
 /* Iconos como contenido interno de un <svg viewBox="0 0 24 24"> con trazo currentColor. */
@@ -24,8 +24,8 @@ const ICONOS_ALGORITMOS = {
   bipartito: '<circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="18" cy="12" r="2.4"/><circle cx="18" cy="18" r="2.4"/><path d="M8.4 6h7.2M8.4 12l7.2 6M8.4 18l7.2-6"/>',
   tabla: '<rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M3.5 15h17M9 4v16M15 4v16"/>',
   esquina: '<rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M3.5 15h17M9.5 4v16M15 4v16"/><rect x="4.5" y="5" width="4" height="4" rx="1" fill="currentColor" stroke="none"/>',
-  // NUEVO ICONO AÑADIDO:
-  ordenamiento: '<path d="M4 20h16M6 16v4M12 8v12M18 12v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+  ordenamiento: '<path d="M4 20h16M6 16v4M12 8v12M18 12v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  arbol: '<circle cx="12" cy="5" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M12 7.5v4m0 0-6 4m6-4 6 4"/>'
 };
 
 const CATALOGO_ALGORITMOS = [
@@ -33,14 +33,27 @@ const CATALOGO_ALGORITMOS = [
     id: 'ordenamiento',
     nombre: 'Ordenamiento (Bowling)',
     corto: 'Ordenamiento',
-    categoria: 'arreglos', // Usamos una existente para que no falle
-    descripcion: 'Visualización gráfica paso a paso de Selection, Insertion y Bubble Sort usando pinos de boliche, con pseudocódigo y contador de operaciones.',
+    categoria: 'arreglos',
+    descripcion: 'Visualización paso a paso de Selection, Insertion, Bubble, Shell y Merge Sort usando pinos de boliche, pseudocódigo y contadores.',
     entrada: 'Lista de enteros (propia o al azar) y algoritmo',
     resultado: 'Elementos ordenados ascendentemente',
     // ...
     ruta: 'ordenamiento.html',
     icono: 'ordenamiento',
+    metodos: ['Selection Sort', 'Insertion Sort', 'Bubble Sort', 'Shell Sort', 'Merge Sort'],
     video: 'd5tujF0y5TE', // Puedes cambiar 'kPRA0W1kECg' por el ID de tu propio video
+    disponible: true
+  },
+  {
+    id: 'arboles',
+    nombre: 'Árboles binarios',
+    corto: 'Árboles',
+    categoria: 'arboles',
+    descripcion: 'Construye árboles binarios de búsqueda, visualiza sus recorridos y reconstruye árboles binarios desde recorridos compatibles.',
+    entrada: 'Inserciones únicas o recorridos preorden, inorden y postorden',
+    resultado: 'Árbol SVG y recorridos paso a paso',
+    ruta: 'arboles.html',
+    icono: 'arbol',
     disponible: true
   },
   {

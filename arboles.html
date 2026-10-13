@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Construye árboles binarios de búsqueda e interactúa con recorridos y reconstrucciones paso a paso." />
+  <link rel="icon" href="data:," />
+  <title>Árboles binarios | Algoritmos de Optimización</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="css/shell.css" />
+  <link rel="stylesheet" href="css/arboles.css" />
+</head>
+<body class="page-arboles" data-modulo="arboles">
+  <header class="topbar">
+    <button type="button" class="btn btn-fantasma btn-icono topbar__menu" id="btnMenuLateral" aria-label="Abrir menú" aria-expanded="false" aria-controls="barraLateral">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round"/></svg>
+    </button>
+    <a class="topbar__marca" href="index.html">Grafo</a>
+    <span class="topbar__separador"></span>
+    <span class="topbar__modulo" id="topbarModulo">Árboles</span>
+    <div class="topbar__acciones">
+      <button type="button" class="btn btn-fantasma btn-sm" id="btnAyuda">Ayuda</button>
+    </div>
+  </header>
+  <aside class="sidebar" id="barraLateral"></aside>
+  <div class="sidebar-fondo" id="barraLateralFondo" hidden></div>
+
+  <main class="contenido" id="contenido">
+    <section id="introModulo" hidden></section>
+    <div id="moduloContenido">
+      <header class="modulo-cabecera">
+        <div class="modulo-cabecera__texto">
+          <h1>Árboles binarios</h1>
+          <p>Construye un árbol de búsqueda a partir de inserciones o reconstruye un árbol binario desde sus recorridos. La reconstrucción respeta los recorridos y no presupone que el árbol sea de búsqueda.</p>
+        </div>
+      </header>
+
+      <section class="tarjeta arbol-seccion" aria-labelledby="tituloCrear">
+        <div class="tarjeta__cabecera">
+          <div>
+            <h2 id="tituloCrear">Crear árbol con valores</h2>
+            <p class="tarjeta__pista">Árbol binario de búsqueda sin balanceo automático: el primer valor es la raíz, los menores van a la izquierda y los mayores a la derecha. El orden de inserción define la forma.</p>
+          </div>
+        </div>
+        <div class="arbol-formas">
+          <form id="formInsertar" class="arbol-forma">
+            <h3>Entrada manual, uno por uno</h3>
+            <div class="arbol-campos">
+              <div class="campo">
+                <label class="campo__etiqueta" for="valorNodo">Valor del nodo (−999 a 999)</label>
+                <input class="entrada" id="valorNodo" type="text" inputmode="numeric" autocomplete="off" aria-describedby="errorInsercion" />
+              </div>
+              <button type="submit" class="btn btn-primary">Agregar</button>
+              <button type="button" class="btn btn-neutral" id="btnDeshacerInsercion">Deshacer última inserción</button>
+              <button type="button" class="btn btn-neutral" id="btnLimpiarArbol">Limpiar árbol</button>
+              <button type="button" class="btn btn-secondary" id="btnEjemploInsercion">Cargar ejemplo de clase</button>
+            </div>
+            <p id="errorInsercion" class="arbol-mensaje" role="alert"></p>
+            <p class="arbol-secuencia"><strong>Secuencia de inserción:</strong> <span id="secuenciaInsercion">—</span></p>
+          </form>
+          <form id="formAleatorio" class="arbol-forma">
+            <h3>Generación aleatoria</h3>
+            <p class="tarjeta__pista">Genera enteros únicos dentro del rango inclusivo y mezcla el orden antes de insertarlos. Esto reemplaza el árbol actual.</p>
+            <div class="arbol-campos">
+              <div class="campo"><label class="campo__etiqueta" for="cantidadNodos">Cantidad (1 a 31)</label><input class="entrada" id="cantidadNodos" type="text" inputmode="numeric" value="8" /></div>
+              <div class="campo"><label class="campo__etiqueta" for="valorMinimo">Valor mínimo</label><input class="entrada" id="valorMinimo" type="text" inputmode="numeric" value="1" /></div>
+              <div class="campo"><label class="campo__etiqueta" for="valorMaximo">Valor máximo</label><input class="entrada" id="valorMaximo" type="text" inputmode="numeric" value="99" /></div>
+              <button type="submit" class="btn btn-secondary">Generar árbol</button>
+              <button type="button" class="btn btn-neutral" id="btnEjemploAleatorio">Cargar ejemplo de clase</button>
+            </div>
+            <p id="errorAleatorio" class="arbol-mensaje" role="alert"></p>
+            <p class="arbol-secuencia"><strong>Orden generado:</strong> <span id="secuenciaAleatoria">—</span></p>
+          </form>
+        </div>
+      </section>
+
+      <section class="tarjeta arbol-seccion" aria-labelledby="tituloReconstruir">
+        <div>
+          <h2 id="tituloReconstruir">Reconstruir desde recorridos</h2>
+          <p class="tarjeta__pista">Escribe los valores del recorrido separados por comas o espacios. Ejemplo: 5, 3, 1, 4, 7, 11, 8, 15. Cada nodo debe aparecer una sola vez. A diferencia de la sección anterior, el árbol reconstruido no necesariamente cumple las reglas de búsqueda.</p>
+        </div>
+        <div class="campo arbol-selector">
+          <label class="campo__etiqueta" for="modoReconstruccion">Combinación de recorridos</label>
+          <select class="entrada" id="modoReconstruccion">
+            <option value="pre_in">Preorden + inorden</option>
+            <option value="in_post">Inorden + postorden</option>
+            <option value="pre_post">Preorden + postorden (también requiere inorden)</option>
+            <option value="todos">Los tres recorridos</option>
+          </select>
+        </div>
+        <div class="arbol-formas arbol-formas--recorridos">
+          <div class="campo arbol-recorrido-campo" data-recorrido="preorden">
+            <label class="campo__etiqueta" for="entradaPreorden">Preorden (preorder)</label>
+            <textarea class="entrada" id="entradaPreorden" rows="2" placeholder="5, 3, 1, 4, 7, 11, 8, 15"></textarea>
+          </div>
+          <div class="campo arbol-recorrido-campo" data-recorrido="inorden">
+            <label class="campo__etiqueta" for="entradaInorden">Inorden (inorder)</label>
+            <textarea class="entrada" id="entradaInorden" rows="2" placeholder="1, 3, 4, 5, 7, 8, 11, 15"></textarea>
+          </div>
+          <div class="campo arbol-recorrido-campo" data-recorrido="postorden">
+            <label class="campo__etiqueta" for="entradaPostorden">Postorden (postorder)</label>
+            <textarea class="entrada" id="entradaPostorden" rows="2" placeholder="1, 4, 3, 8, 15, 11, 7, 5"></textarea>
+          </div>
+        </div>
+        <p id="avisoPrePost" class="arbol-aviso" hidden>Preorden y postorden no siempre determinan un único árbol binario. Agrega el recorrido inorden para reconstruirlo sin ambigüedad.</p>
+        <div class="arbol-campos">
+          <button type="button" class="btn btn-primary" id="btnReconstruir">Reconstruir árbol</button>
+          <button type="button" class="btn btn-neutral" id="btnEjemploReconstruccion">Cargar ejemplo de clase</button>
+        </div>
+        <p id="errorReconstruccion" class="arbol-mensaje" role="alert"></p>
+      </section>
+
+      <section class="tarjeta arbol-seccion" aria-labelledby="tituloVisualizacion">
+        <div class="tarjeta__cabecera arbol-visual-cabecera">
+          <div><h2 id="tituloVisualizacion">Visualización del árbol</h2><p id="estadoArbol" class="tarjeta__pista" role="status">Sin nodos.</p></div>
+          <div class="arbol-campos arbol-zoom" role="group" aria-label="Controles de vista">
+            <button type="button" class="btn btn-neutral btn-sm" id="btnZoomMenos" aria-label="Alejar el árbol">−</button>
+            <button type="button" class="btn btn-neutral btn-sm" id="btnZoomMas" aria-label="Acercar el árbol">+</button>
+            <button type="button" class="btn btn-neutral btn-sm" id="btnCentrarArbol">Centrar</button>
+            <button type="button" class="btn btn-neutral btn-sm" id="btnAjustarArbol">Ajustar</button>
+          </div>
+        </div>
+        <div id="vistaArbol" class="vista-arbol" aria-label="Área desplazable del árbol"></div>
+        <div class="arbol-detalle" id="detalleNodo" role="status">Selecciona un nodo para ver sus relaciones.</div>
+      </section>
+
+      <section class="tarjeta arbol-seccion" aria-labelledby="tituloRecorridos">
+        <div class="tarjeta__cabecera">
+          <div><h2 id="tituloRecorridos">Recorridos paso a paso</h2><p class="tarjeta__pista">Preorden visita raíz–izquierda–derecha; inorden, izquierda–raíz–derecha; postorden, izquierda–derecha–raíz. Inorden produce valores ordenados solo cuando el árbol es un árbol binario de búsqueda.</p></div>
+        </div>
+        <div class="arbol-campos arbol-recorrido-controles">
+          <div class="campo"><label class="campo__etiqueta" for="selectorRecorrido">Recorrido</label><select class="entrada" id="selectorRecorrido"><option value="preorden">Preorden</option><option value="inorden">Inorden</option><option value="postorden">Postorden</option></select></div>
+          <div class="campo"><label class="campo__etiqueta" for="velocidadRecorrido">Velocidad</label><select class="entrada" id="velocidadRecorrido"><option value="1200">Lento</option><option value="700" selected>Normal</option><option value="350">Rápido</option></select></div>
+          <button type="button" class="btn btn-neutral" id="btnRecorridoAnterior">Anterior</button>
+          <button type="button" class="btn btn-neutral" id="btnRecorridoPlay" aria-pressed="false">Reproducir</button>
+          <button type="button" class="btn btn-primary" id="btnRecorridoSiguiente">Siguiente</button>
+          <button type="button" class="btn btn-neutral" id="btnRecorridoReiniciar">Reiniciar recorrido</button>
+        </div>
+        <p id="explicacionRecorrido" class="arbol-detalle" role="status">Selecciona un recorrido para comenzar.</p>
+        <p class="arbol-secuencia"><strong>Salida construida:</strong> <output id="salidaRecorrido">—</output></p>
+        <div class="arbol-recorridos-completos">
+          <p><strong>Preorden:</strong> <code id="resultadoPreorden">—</code></p>
+          <p><strong>Inorden:</strong> <code id="resultadoInorden">—</code></p>
+          <p><strong>Postorden:</strong> <code id="resultadoPostorden">—</code></p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="modal-fondo" id="modalAyuda" hidden>
+    <div class="modal modal-ancho" role="dialog" aria-modal="true" aria-labelledby="ayudaTitulo">
+      <h3 id="ayudaTitulo">Ayuda: árboles binarios</h3>
+      <div class="modal-scroll">
+        <p>La creación por valores inserta nodos en un árbol binario de búsqueda. La reconstrucción usa las posiciones de los recorridos y puede producir un árbol que no sea de búsqueda. Preorden más postorden no basta para determinar de forma única cualquier árbol; por eso también se exige inorden.</p>
+        <p>Los recorridos aceptan entre 1 y 31 enteros únicos entre −999 y 999. Usa Anterior y Siguiente o Reproducir para seguir una visita. En postorden, los nodos se agregan a la salida solo después de procesar sus hijos.</p>
+        <p>Los datos del árbol se guardan de forma independiente bajo la clave local <code>arboles.v1</code>. Una animación no se reanuda al recargar.</p>
+      </div>
+      <div class="modal-botones"><button type="button" class="btn btn-primary" id="btnCerrarAyuda">Entendido</button></div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/comun/catalogo.js"></script>
+  <script src="js/comun/navegacion.js"></script>
+  <script src="js/comun/intro.js"></script>
+  <script src="js/arboles/modelo.js"></script>
+  <script src="js/arboles/validacion.js"></script>
+  <script src="js/arboles/reconstruccion.js"></script>
+  <script src="js/arboles/estado.js"></script>
+  <script src="js/arboles/dibujo.js"></script>
+  <script src="js/arboles/app.js"></script>
+</body>
+</html>
