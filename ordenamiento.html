@@ -40,58 +40,121 @@
 
       <section class="tarjeta">
         <div class="acciones">
-          <div class="segmentado" role="group">
-            <button type="button" class="btn activo" id="btnSelection" aria-pressed="true">Selection Sort</button>
-            <button type="button" class="btn" id="btnInsertion" aria-pressed="false">Insertion Sort</button>
+          <div class="segmentado" role="group" aria-label="Algoritmo">
+            <button type="button" class="btn" data-algoritmo="selection" aria-pressed="true">Selection Sort</button>
+            <button type="button" class="btn" data-algoritmo="insertion" aria-pressed="false">Insertion Sort</button>
+            <button type="button" class="btn" data-algoritmo="bubble" aria-pressed="false">Bubble Sort</button>
           </div>
-          <button type="button" class="btn btn-secondary" id="btnGenerar">Generar Pinos Nuevos</button>
-          
-          <div class="campo ml-auto">
-            <select class="entrada btn-sm" id="selectorVelocidad" aria-label="Velocidad de reproducción">
-              <option value="800">Lento</option>
-              <option value="400" selected>Normal</option>
-              <option value="100">Rápido</option>
+
+          <span class="acciones__separador"></span>
+
+          <select class="entrada btn-sm" id="selectorVelocidad" aria-label="Velocidad de reproducción" style="width: auto; min-height: 36px;">
+            <option value="1200">Lento</option>
+            <option value="650" selected>Normal</option>
+            <option value="300">Rápido</option>
+            <option value="120">Muy rápido</option>
+          </select>
+          <button type="button" class="btn btn-neutral btn-sm" id="btnReiniciar" title="Volver al paso 0 (Inicio)">⟲ Reiniciar</button>
+          <button type="button" class="btn btn-neutral btn-sm" id="btnAnterior" title="Paso anterior (←)">← Anterior</button>
+          <button type="button" class="btn btn-neutral btn-sm" id="btnAuto" title="Reproducir / pausar (espacio)">▶ Reproducir</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btnSiguiente" title="Paso siguiente (→)">Siguiente →</button>
+        </div>
+
+        <div class="datos-entrada mt-3">
+          <div class="campo campo--valores">
+            <label class="campo__etiqueta" for="entradaValores">Pinos (3 a 12 enteros entre 1 y 99)</label>
+            <input class="entrada" id="entradaValores" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="Ej.: 45, 12, 78, 3, 56" />
+          </div>
+          <div class="campo campo--cantidad">
+            <label class="campo__etiqueta" for="selectorCantidad">Cantidad</label>
+            <select class="entrada" id="selectorCantidad" aria-label="Cantidad de pinos aleatorios">
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="8" selected>8</option>
+              <option value="10">10</option>
+              <option value="12">12</option>
             </select>
           </div>
-          
-          <span class="acciones__separador"></span>
-          
-          <button type="button" class="btn btn-neutral btn-sm" id="btnAnterior">← Anterior</button>
-          <button type="button" class="btn btn-neutral btn-sm" id="btnAuto">Reproducir</button>
-          <button type="button" class="btn btn-primary btn-sm" id="btnSiguiente">Siguiente →</button>
+          <button type="button" class="btn btn-secondary" id="btnAplicar" title="Usar los valores escritos">Usar valores</button>
+          <button type="button" class="btn btn-neutral" id="btnGenerar" title="Generar pinos al azar">Pinos al azar</button>
+          <button type="button" class="btn btn-neutral" id="btnCasiOrdenado" title="Caso favorable: casi ordenado">Casi ordenado</button>
+          <button type="button" class="btn btn-neutral" id="btnInvertido" title="Peor caso: orden inverso">Invertido</button>
         </div>
-        
-        <div class="resumen-datos mt-3 border-top pt-3" style="border-color: var(--borde) !important;">
-          <span>Comparaciones: <strong id="statComparaciones">0</strong></span>
-          <span>Intercambios / Movimientos: <strong id="statIntercambios">0</strong></span>
+        <p class="error-entrada" id="errorEntrada" role="alert"></p>
+      </section>
+
+      <section class="tarjeta mt-4">
+        <div class="pista-caja">
+          <div id="pistaBowling" class="pista-bowling" role="img" aria-label="Pinos de bowling en su orden actual"></div>
+          <div id="pistaIndices" class="pista-indices" aria-hidden="true"></div>
+        </div>
+
+        <div class="leyenda mt-3">
+          <span class="leyenda__item"><span class="leyenda__pino" style="color: var(--aviso);"></span>Comparando</span>
+          <span class="leyenda__item"><span class="leyenda__pino" style="color: var(--info);"></span>Mínimo actual</span>
+          <span class="leyenda__item"><span class="leyenda__pino" style="color: var(--acento);"></span>Moviendo / clave</span>
+          <span class="leyenda__item"><span class="leyenda__pino" style="color: var(--exito);"></span>En su lugar</span>
+          <span class="leyenda__item"><span class="leyenda__pino" style="color: var(--pino-franja);"></span>Sin revisar</span>
         </div>
       </section>
 
       <section class="tarjeta mt-4">
-        <div id="pistaBowling" class="pista-bowling"></div>
-        
-        <div class="leyenda mt-3">
-          <span class="leyenda__item"><span class="leyenda__muestra" style="color: var(--aviso);"></span>Comparando</span>
-          <span class="leyenda__item"><span class="leyenda__muestra" style="color: var(--acento);"></span>Moviendo</span>
-          <span class="leyenda__item"><span class="leyenda__muestra" style="color: var(--exito);"></span>Ordenado</span>
-        </div>
-        
-        <!-- Panel de Detalles de Ejecución -->
-        <div class="panel-ejecucion mt-4" style="background: rgba(30, 41, 59, 0.5); border: 1px solid var(--borde); border-radius: var(--radio); padding: 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-            <span style="color: var(--texto-suave); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Registro de Operaciones</span>
-            <span id="badgePasos" style="background: var(--primario); color: white; padding: 4px 12px; border-radius: 999px; font-weight: bold; font-size: 0.85rem; box-shadow: 0 0 10px rgba(var(--primario-rgb), 0.3);">
-              Paso 0 de 0
-            </span>
+        <div class="panel-pasos">
+          <div class="contador-grande" id="contadorGrande" role="status" aria-live="polite">
+            <div>
+              <span class="contador-grande__num" id="contadorNumero">0</span>
+              <span class="contador-grande__de" id="contadorTotal">de 0</span>
+            </div>
           </div>
-          <div style="width: 100%; background: rgba(0,0,0,0.3); height: 6px; border-radius: 3px; margin-bottom: 12px; overflow: hidden;">
-            <div id="barraProgreso" style="height: 100%; width: 0%; background: var(--acento); transition: width 0.3s ease;"></div>
-          </div>
-          <div style="background: rgba(0,0,0,0.5); padding: 12px; border-radius: 6px; border-left: 3px solid var(--exito);">
-            <p id="textoEstado" style="margin: 0; color: var(--texto); font-family: 'Courier New', Courier, monospace; font-size: 0.95rem;">> Esperando iniciar...</p>
+          <div class="panel-pasos__cuerpo">
+            <div class="panel-pasos__fila">
+              <span class="chip-tipo" id="chipTipo" data-tipo="inicio">Inicio</span>
+              <span class="resumen-datos"><span>Pasada <strong id="statPasada">0</strong> de <strong id="statPasadas">0</strong></span></span>
+              <span class="resumen-datos ml-auto"><span>Paso <strong id="badgePasos">0 de 0</strong></span></span>
+            </div>
+            <div class="mapa-pasos" id="mapaPasos" title="Mapa de pasos: toca para saltar"></div>
+            <input class="deslizador" id="deslizadorPasos" type="range" min="0" max="0" value="0" step="1" aria-label="Ir al paso" />
+            <p class="consola-paso" id="textoEstado">Esperando iniciar...</p>
           </div>
         </div>
 
+        <div class="estadisticas mt-3">
+          <div class="estadistica estadistica--comparaciones">
+            <span class="estadistica__etiqueta">Comparaciones</span>
+            <span class="estadistica__valor" id="statComparaciones">0</span>
+          </div>
+          <div class="estadistica estadistica--movimientos">
+            <span class="estadistica__etiqueta">Movimientos</span>
+            <span class="estadistica__valor" id="statIntercambios">0</span>
+          </div>
+          <div class="estadistica estadistica--ordenados">
+            <span class="estadistica__etiqueta">En su lugar</span>
+            <span class="estadistica__valor" id="statOrdenados">0</span>
+          </div>
+          <div class="estadistica">
+            <span class="estadistica__etiqueta">Total de pasos</span>
+            <span class="estadistica__valor" id="statTotalPasos">0</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="tarjeta mt-4 panel-doble">
+        <div>
+          <div class="tarjeta__cabecera">
+            <h3 id="tituloPseudocodigo">Pseudocódigo</h3>
+            <span class="estado estado--neutro" id="estadoComplejidad">O(n²)</span>
+          </div>
+          <ol class="pseudocodigo" id="pseudocodigo"></ol>
+        </div>
+        <div>
+          <h3 id="tituloAlgoritmo" class="mb-2">Selection Sort</h3>
+          <p class="tarjeta__pista" id="ideaAlgoritmo"></p>
+          <dl class="info-algoritmo mt-3">
+            <dt>Complejidad</dt><dd id="infoComplejidad"></dd>
+            <dt>Estable</dt><dd id="infoEstable"></dd>
+            <dt>Comparaciones (peor caso)</dt><dd id="infoPeorCaso"></dd>
+          </dl>
+        </div>
       </section>
     </div>
   </main>
@@ -102,9 +165,15 @@
       <div class="modal-scroll">
         <p><strong>VIDEO</strong><br>El botón «Video» de la cabecera abre la presentación explicativa de los métodos de ordenamiento.</p>
         <br>
-        <p><strong>1) ALGORITMOS</strong><br>Selecciona entre Selection Sort e Insertion Sort usando los botones superiores.</p>
+        <p><strong>1) ALGORITMOS</strong><br>Elige Selection, Insertion o Bubble Sort. El pseudocódigo de abajo resalta la línea que se está ejecutando en cada paso.</p>
         <br>
-        <p><strong>2) CONTROLES DE REPRODUCCIÓN</strong><br>Usa «Siguiente» y «Anterior» para avanzar manualmente. El botón «Reproducir» inicia la animación automática.</p>
+        <p><strong>2) PINOS</strong><br>Escribe tus propios valores (3 a 12 enteros entre 1 y 99) y pulsa «Usar valores», o genera pinos al azar, casi ordenados (caso favorable) o invertidos (peor caso). El tamaño del pino representa su valor.</p>
+        <br>
+        <p><strong>3) CONTROLES</strong><br>«Siguiente» y «Anterior» avanzan de a un paso; «Reproducir» anima automáticamente a la velocidad elegida. El mapa de pasos y el deslizador permiten saltar a cualquier paso.</p>
+        <br>
+        <p><strong>4) COLORES</strong><br>Franjas amarillas: se está comparando. Celeste: mínimo actual (Selection). Color del módulo: el pino se mueve o es la clave levantada (Insertion). Verde: ya está en su posición definitiva.</p>
+        <br>
+        <p><strong>5) ATAJOS</strong><br>← / → paso anterior y siguiente · Espacio reproducir/pausar · Inicio / Fin saltar al principio o al final · R reiniciar.</p>
       </div>
       <div class="modal-botones">
         <button type="button" class="btn btn-primary" id="btnCerrarAyuda">Entendido</button>

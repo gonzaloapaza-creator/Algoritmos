@@ -34,8 +34,8 @@ const CATALOGO_ALGORITMOS = [
     nombre: 'Ordenamiento (Bowling)',
     corto: 'Ordenamiento',
     categoria: 'arreglos', // Usamos una existente para que no falle
-    descripcion: 'Visualización gráfica paso a paso de los algoritmos Selection Sort e Insertion Sort usando pinos de boliche.',
-    entrada: 'Cantidad de elementos y algoritmo',
+    descripcion: 'Visualización gráfica paso a paso de Selection, Insertion y Bubble Sort usando pinos de boliche, con pseudocódigo y contador de operaciones.',
+    entrada: 'Lista de enteros (propia o al azar) y algoritmo',
     resultado: 'Elementos ordenados ascendentemente',
     // ...
     ruta: 'ordenamiento.html',

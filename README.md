@@ -7,6 +7,7 @@ Proyecto de la materia **Análisis de Algoritmos** del grupo **Los Fanáticos de
 | Grafos y rutas | **Johnson** | Grafo dirigido con pesos enteros (editor visual o ejemplos) | Resolución paso a paso, distancias entre todos los pares y rutas |
 | Asignación | **Asignación (método húngaro)** | Grafo bipartito recursos–tareas o matriz | Asignación óptima, total y procedimiento completo |
 | Transporte | **Esquina noroeste** | Matriz de costos, oferta y demanda | Solución inicial factible paso a paso |
+| Arreglos | **Ordenamiento (Bowling)** | Lista de enteros (propia, al azar, casi ordenada o invertida) | Selection / Insertion / Bubble Sort animados con pinos, pseudocódigo y contador de pasos |
 
 Sin compilación, dependencias, backend ni base de datos: HTML, CSS y JavaScript planos. Cada módulo abre con un **video explicativo** antes de entrar al algoritmo.
 
@@ -52,7 +53,8 @@ grafo/
 │   ├── shell.css            Cabecera compacta, barra lateral plegable, inicio, presentación con video, pie
 │   ├── johnson.css          Editor de grafos, vistas por pasos, grafo de solo lectura, hojas
 │   ├── asignacion.css       Vistas, grafo bipartito, matriz y procedimiento de asignación
-│   └── northwest.css        Matriz de transporte, balanceo, pasos y resultado
+│   ├── northwest.css        Matriz de transporte, balanceo, pasos y resultado
+│   └── ordenamiento.css     Pista y pinos (SVG, estados, movimiento), contador de pasos, pseudocódigo
 ├── app.js                   Punto de entrada de Johnson (botones, menú «Más», atajos)
 ├── js/
 │   ├── config.js            Constantes y límites de toda la aplicación
@@ -92,6 +94,7 @@ grafo/
 │   ├── cargar.js            Carga scripts clásicos en un contexto `vm` de Node
 │   ├── asignacion.test.js   Húngaro, validación, modelo, migración
 │   ├── northwest.test.js    Esquina noroeste, balanceo, validación, modelo
+│   ├── ordenamiento.test.js Selection/Insertion/Bubble: historial, conteos, estabilidad, entrada de valores
 │   ├── johnson.test.js      Johnson vs Floyd-Warshall, ciclos negativos, ejemplos
 │   └── navegador.js         Pruebas en Edge headless (puppeteer-core) + capturas
 └── docs/capturas/           Capturas de escritorio y móvil generadas por tests/navegador.js
@@ -240,6 +243,7 @@ Persistencia sin cambios: `grafo.v1` (autoguardado) y `grafo.biblioteca.v1`. Car
 ```bash
 node tests/asignacion.test.js     # 24 pruebas: húngaro vs fuerza bruta (incl. 300 aleatorias), validación, modelo, migración
 node tests/northwest.test.js      # 20 pruebas: ejemplo 230, exceso oferta/demanda, degeneración, ceros, 1×1, 1×N, M×1, 10×10, 300 aleatorias
+node tests/ordenamiento.test.js   # 12 pruebas: conteos exactos, invariantes del historial, estabilidad, casos borde, 300 aleatorias, análisis de entrada
 node tests/johnson.test.js        # 10 pruebas: ejemplo clásico, rutas, pasos, ∞, ceros, ciclos negativos, ejemplos, 300 aleatorias vs Floyd-Warshall
 node tests/navegador.js --capturas   # 160 comprobaciones en Edge headless + capturas en docs/capturas
 ```
@@ -261,6 +265,7 @@ Las comprobaciones de Johnson de `tests/navegador.js` se ampliaron con las vista
 | Asignación | 1 / 2 | Seleccionar / Conectar |
 | Asignación | Ctrl+Z / Ctrl+Y, Supr | Deshacer / rehacer, eliminar selección |
 | Northwest | Ctrl+Z / Ctrl+Y, ← / → | Deshacer / rehacer, cambiar de paso |
+| Ordenamiento | ← / →, Espacio, Inicio / Fin, R | Paso anterior / siguiente, reproducir / pausar, primer / último paso, reiniciar |
 
 ---
 

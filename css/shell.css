@@ -448,6 +448,7 @@ html { scroll-behavior: smooth; }
 .tarjeta-alg[data-categoria="grafos"] .tarjeta-alg__icono { background: rgba(91, 140, 255, .14); border-color: rgba(91, 140, 255, .45); }
 .tarjeta-alg[data-categoria="asignacion"] .tarjeta-alg__icono { background: rgba(45, 212, 191, .14); border-color: rgba(45, 212, 191, .45); }
 .tarjeta-alg[data-categoria="transporte"] .tarjeta-alg__icono { background: rgba(245, 176, 65, .14); border-color: rgba(245, 176, 65, .45); }
+.tarjeta-alg[data-categoria="arreglos"] .tarjeta-alg__icono { background: rgba(244, 114, 182, .14); border-color: rgba(244, 114, 182, .45); }
 .tarjeta-alg__texto { color: var(--texto-suave); font-size: var(--t-sm); line-height: 1.55; flex: 1 1 auto; }
 .tarjeta-alg__datos {
   display: grid;
