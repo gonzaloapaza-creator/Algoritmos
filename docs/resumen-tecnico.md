@@ -147,11 +147,13 @@ Cada módulo tiene su propio estado y claves de almacenamiento; los datos de un 
 | Área | Persistencia y formatos observados |
 |---|---|
 | Johnson | Autoguardado del grafo en `grafo.v1`, biblioteca de grafos en `grafo.biblioteca.v1`; permite importar y exportar JSON. |
-| Asignación | Modelo y preferencias del módulo en formato `asignacion.v2`; hay lectura y migración del formato anterior `asignacion.v1`. También permite importar y exportar JSON. |
+| Asignación | Modelo y preferencias del módulo en formato `asignacion.v2`; hay lectura y migración del formato anterior `asignacion.v1`. También permite importar y exportar JSON. La matriz editable muestra la fila o columna ficticia necesaria antes de resolver. |
 | Esquina noroeste | Modelo y vista en `northwest.v1`; permite importar y exportar JSON. |
 | Árboles | Estado independiente `arboles.v1`: secuencia de inserción BST o recorridos del árbol reconstruido. Se valida al restaurar, los errores de almacenamiento se notifican sin bloquear la página y no se reanuda la animación. |
 | Presentación y navegación | Preferencias de interfaz almacenadas localmente por clave, como el estado de la introducción por módulo y la navegación lateral. |
-| Ordenamiento | Estado visible e historiales de pasos mantenidos en memoria. |
+| Ordenamiento | Autoguardado en `ordenamiento.v1` (algoritmo, valores, paso actual y velocidad); los historiales de pasos se recalculan al restaurar. |
+
+Todos los módulos ofrecen además los botones **Guardar** y **Cargar** en la barra superior. La biblioteca `algoritmos.trabajos.v1` conserva hasta 50 instantáneas con nombre por algoritmo en el almacenamiento local; desde el panel «Mis trabajos» se puede guardar o reemplazar, cargar, renombrar, eliminar, y exportar o importar en JSON todos los trabajos del módulo (los importados reciben id nuevo y un sufijo si el nombre ya existe). Cargar valida los datos y vuelve a calcular resultados derivados cuando corresponde.
 
 La entrada se valida antes de resolver. En general, un campo vacío no equivale a cero; esto permite distinguir un dato faltante de un valor válido igual a cero. El resultado se considera vigente solo mientras corresponda al modelo usado para calcularlo. Al modificar los datos relevantes, la interfaz advierte que debe recalcularse.
 
@@ -199,6 +201,7 @@ Se ofrece deshacer y rehacer en los módulos de edición que mantienen historial
 │   ├── northwest.test.js      Pruebas de transporte
 │   ├── ordenamiento.test.js   Pruebas de ordenamiento
 │   ├── arboles.test.js        Pruebas de BST, validación y reconstrucción
+│   ├── guardados.test.js      Pruebas de la biblioteca de trabajos
 │   └── navegador.js           Pruebas de interfaz en Edge headless
 └── docs/
     ├── capturas/              Capturas de distintas páginas y tamaños
@@ -227,7 +230,10 @@ node tests/asignacion.test.js
 node tests/northwest.test.js
 node tests/ordenamiento.test.js
 node tests/arboles.test.js
+node tests/guardados.test.js
 ```
+
+O todas juntas con `npm test` (no instala nada: solo encadena los comandos anteriores). El mismo comando se ejecuta en GitHub Actions en cada push (`.github/workflows/pruebas.yml`).
 
 `tests/cargar.js` implementa un cargador pequeño que ejecuta los scripts sin DOM en un contexto `vm`, y proporciona aserciones básicas. Entre las comprobaciones principales del conjunto están:
 

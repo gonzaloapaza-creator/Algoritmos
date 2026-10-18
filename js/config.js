@@ -36,6 +36,9 @@ const ASIGNACION_STORAGE_KEY = 'asignacion.v1';          // formato antiguo: sol
 const ASIGNACION_STORAGE_KEY_V2 = 'asignacion.v2';
 const NORTHWEST_STORAGE_KEY = 'northwest.v1';
 const ARBOLES_STORAGE_KEY = 'arboles.v1';
+const ORDENAMIENTO_STORAGE_KEY = 'ordenamiento.v1';
+const CLAVE_TRABAJOS = 'algoritmos.trabajos.v1';         // biblioteca de trabajos nombrados (todos los módulos)
+const MAX_TRABAJOS_POR_MODULO = 50;
 const MIN_NODOS_ARBOL = 1;
 const MAX_NODOS_ARBOL = 31;
 const MIN_VALOR_ARBOL = -999;
@@ -93,78 +96,5 @@ const OBJETIVOS_ASIGNACION = {
   MAX: 'max'
 };
 
-// Asegurar que las constantes estén disponibles globalmente
-if (typeof window !== 'undefined') {
-  window.CONFIG = {
-    RADIO_NODO,
-    SEPARACION_ARROW,
-    CURVATURA,
-    MAX_LARGO_NOMBRE,
-    MAX_PESO,
-    ERROR_PESO,
-    MAX_GRAFOS,
-    MAX_LARGO_NOMBRE_GRAFO,
-    MAX_ASIGNACION_DIMENSION,
-    MIN_ASIGNACION_DIMENSION,
-    MAX_VALOR_ASIGNACION,
-    MAX_LARGO_ETIQUETA_ASIGNACION,
-    MAX_NORTHWEST_DIMENSION,
-    MIN_NORTHWEST_DIMENSION,
-    MAX_COSTO_NORTHWEST,
-    ESCALA_COSTO_NORTHWEST,
-    MAX_CANTIDAD_NORTHWEST,
-    MAX_LARGO_ETIQUETA_NORTHWEST,
-    CLAVE_ALMACEN,
-    CLAVE_BIBLIOTECA,
-    ASIGNACION_STORAGE_KEY,
-    ASIGNACION_STORAGE_KEY_V2,
-    NORTHWEST_STORAGE_KEY,
-    ARBOLES_STORAGE_KEY,
-    MIN_NODOS_ARBOL,
-    MAX_NODOS_ARBOL,
-    MIN_VALOR_ARBOL,
-    MAX_VALOR_ARBOL,
-    TIMEOUT_AVISO,
-    TIMEOUT_TOAST,
-    FANTASMO_CLICK_TIMEOUT,
-    MODAL_FOCUS_DELAY,
-    ZOOM_MIN,
-    ZOOM_MAX,
-    ZOOM_STEP,
-    MAX_ACCIONES_DESHACER,
-    SIN_CAMINO,
-    SIN_CONEXION,
-    SVG_NS,
-    HERRAMIENTAS,
-    TIPOS_SELECCION,
-    TIPOS_VISUALIZACION,
-    TIPOS_AVISO,
-    OBJETIVOS_ASIGNACION
-  };
-  
-  // También hacer las constantes disponibles directamente en window
-  window.RADIO_NODO = RADIO_NODO;
-  window.SEPARACION_ARROW = SEPARACION_ARROW;
-  window.CURVATURA = CURVATURA;
-  window.MAX_LARGO_NOMBRE = MAX_LARGO_NOMBRE;
-  window.MAX_PESO = MAX_PESO;
-  window.ERROR_PESO = ERROR_PESO;
-  window.MAX_GRAFOS = MAX_GRAFOS;
-  window.MAX_LARGO_NOMBRE_GRAFO = MAX_LARGO_NOMBRE_GRAFO;
-  window.MAX_ASIGNACION_DIMENSION = MAX_ASIGNACION_DIMENSION;
-  window.MIN_ASIGNACION_DIMENSION = MIN_ASIGNACION_DIMENSION;
-  window.CLAVE_ALMACEN = CLAVE_ALMACEN;
-  window.CLAVE_BIBLIOTECA = CLAVE_BIBLIOTECA;
-  window.ASIGNACION_STORAGE_KEY = ASIGNACION_STORAGE_KEY;
-  window.TIMEOUT_AVISO = TIMEOUT_AVISO;
-  window.TIMEOUT_TOAST = TIMEOUT_TOAST;
-  window.FANTASMO_CLICK_TIMEOUT = FANTASMO_CLICK_TIMEOUT;
-  window.MODAL_FOCUS_DELAY = MODAL_FOCUS_DELAY;
-  window.ZOOM_MIN = ZOOM_MIN;
-  window.ZOOM_MAX = ZOOM_MAX;
-  window.ZOOM_STEP = ZOOM_STEP;
-  window.MAX_ACCIONES_DESHACER = MAX_ACCIONES_DESHACER;
-  window.SIN_CAMINO = SIN_CAMINO;
-  window.SIN_CONEXION = SIN_CONEXION;
-  window.SVG_NS = SVG_NS;
-}
+// Las constantes anteriores son `const` de nivel superior en un script clásico:
+// quedan visibles para todos los demás scripts de la página sin copiarlas a `window`.

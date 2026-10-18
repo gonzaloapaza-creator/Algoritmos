@@ -37,11 +37,10 @@ const CATALOGO_ALGORITMOS = [
     descripcion: 'Visualización paso a paso de Selection, Insertion, Bubble, Shell y Merge Sort usando pinos de boliche, pseudocódigo y contadores.',
     entrada: 'Lista de enteros (propia o al azar) y algoritmo',
     resultado: 'Elementos ordenados ascendentemente',
-    // ...
     ruta: 'ordenamiento.html',
     icono: 'ordenamiento',
     metodos: ['Selection Sort', 'Insertion Sort', 'Bubble Sort', 'Shell Sort', 'Merge Sort'],
-    video: 'd5tujF0y5TE', // Puedes cambiar 'kPRA0W1kECg' por el ID de tu propio video
+    video: 'd5tujF0y5TE',
     disponible: true
   },
   {

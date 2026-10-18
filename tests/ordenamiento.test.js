@@ -3,11 +3,12 @@
 const { crearContexto, cargar, evaluar, prueba, igual, cierto, lanza, informe } = require('./cargar');
 
 const ctx = cargar(crearContexto(), [
+  'js/config.js',
   'js/ordenamiento/estado.js',
   'js/ordenamiento/algoritmos.js'
 ]);
 
-const { ordenarSelectionSort, ordenarInsertionSort, ordenarBubbleSort, ordenarShellSort, ordenarMergeSort, ejecutarOrdenamiento, analizarValoresOrdenamiento, valoresDePinos, generarValoresOrdenamiento } = ctx;
+const { ordenarSelectionSort, ordenarInsertionSort, ordenarBubbleSort, ordenarShellSort, ordenarMergeSort, ejecutarOrdenamiento, analizarValoresOrdenamiento, valoresDePinos, generarValoresOrdenamiento, instantaneaOrdenamiento, depurarEstadoOrdenamiento } = ctx;
 const PSEUDOCODIGO = evaluar(ctx, 'PSEUDOCODIGO_ORDENAMIENTO');
 const LIMITES = evaluar(ctx, 'LIMITES_ORDENAMIENTO');
 
@@ -177,6 +178,25 @@ prueba('generarValoresOrdenamiento respeta cantidad y límites', () => {
   const v = generarValoresOrdenamiento(12);
   igual(v.length, 12);
   cierto(v.every(x => Number.isInteger(x) && x >= LIMITES.min && x <= LIMITES.max));
+});
+
+prueba('Persistencia: la instantánea se depura de ida y vuelta', () => {
+  const estado = { algoritmo: 'merge', valores: [5, 3, 9], pasoActual: 4 };
+  const foto = instantaneaOrdenamiento(estado, 300);
+  igual(foto, { version: 1, algoritmo: 'merge', valores: [5, 3, 9], pasoActual: 4, velocidad: '300' });
+  igual(depurarEstadoOrdenamiento(foto), { algoritmo: 'merge', valores: [5, 3, 9], pasoActual: 4, velocidad: '300' });
+  cierto(foto.valores !== estado.valores, 'la instantánea copia el arreglo');
+});
+
+prueba('Persistencia: rechaza datos inválidos y normaliza paso y velocidad', () => {
+  igual(depurarEstadoOrdenamiento(null), null);
+  igual(depurarEstadoOrdenamiento({ algoritmo: 'quick', valores: [1, 2, 3] }), null, 'algoritmo desconocido');
+  igual(depurarEstadoOrdenamiento({ algoritmo: 'bubble', valores: [1, 2] }), null, 'pocos valores');
+  igual(depurarEstadoOrdenamiento({ algoritmo: 'bubble', valores: [1, 2, 500] }), null, 'fuera de rango');
+  igual(depurarEstadoOrdenamiento({ algoritmo: 'bubble', valores: '1,2,3' }), null, 'valores no es arreglo');
+  igual(depurarEstadoOrdenamiento({ algoritmo: 'toString', valores: [1, 2, 3] }), null, 'no usa propiedades heredadas');
+  const limpio = depurarEstadoOrdenamiento({ algoritmo: 'shell', valores: [3, 2, 1], pasoActual: -2, velocidad: 999 });
+  igual(limpio, { algoritmo: 'shell', valores: [3, 2, 1], pasoActual: 0, velocidad: '650' });
 });
 
 process.exit(informe('Ordenamiento') ? 0 : 1);

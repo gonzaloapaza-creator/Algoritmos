@@ -45,6 +45,8 @@ function moverFocoMatriz(tabla, fila, col) {
 function construirTablaAsignacion(opciones) {
   const editable = !!opciones.editable;
   const m = estadoAsignacion.modelo;
+  const filaFicticia = editable && m.recursos.length < m.tareas.length;
+  const columnaFicticia = editable && m.tareas.length < m.recursos.length;
   const asignaciones = modoResultadoAsignacion() || (estadoAsignacion.vista === 'resultado' && resultadoVigenteAsignacion())
     ? estadoAsignacion.resultado.datos.asignaciones : [];
 
@@ -57,6 +59,13 @@ function construirTablaAsignacion(opciones) {
   esquina.className = 'fija';
   esquina.innerHTML = '<span class="tabla__marca">Recurso ↓ / Tarea →</span>';
   filaCabecera.appendChild(esquina);
+  if (columnaFicticia) {
+    const th = document.createElement('th');
+    th.scope = 'col';
+    th.className = 'ficticio';
+    th.innerHTML = 'Tarea ficticia<span class="tabla__nota">costo 0</span>';
+    filaCabecera.appendChild(th);
+  }
   m.tareas.forEach(t => {
     const th = document.createElement('th');
     th.scope = 'col';
@@ -68,6 +77,22 @@ function construirTablaAsignacion(opciones) {
   tabla.appendChild(thead);
 
   const tbody = document.createElement('tbody');
+  if (filaFicticia) {
+    const tr = document.createElement('tr');
+    const th = document.createElement('th');
+    th.scope = 'row';
+    th.className = 'fija ficticio';
+    th.innerHTML = 'Recurso ficticio<span class="tabla__nota">costo 0</span>';
+    tr.appendChild(th);
+    m.tareas.forEach(() => {
+      const td = document.createElement('td');
+      td.className = 'ficticio';
+      td.textContent = '0';
+      td.setAttribute('aria-label', 'Costo 0 del recurso ficticio');
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  }
   m.recursos.forEach((r, i) => {
     const tr = document.createElement('tr');
     const th = document.createElement('th');
@@ -77,6 +102,13 @@ function construirTablaAsignacion(opciones) {
     else th.textContent = r.nombre;
     tr.appendChild(th);
 
+    if (columnaFicticia) {
+      const td = document.createElement('td');
+      td.className = 'ficticio';
+      td.textContent = '0';
+      td.setAttribute('aria-label', 'Costo 0 de la tarea ficticia');
+      tr.appendChild(td);
+    }
     m.tareas.forEach((t, j) => {
       const td = document.createElement('td');
       const valor = obtenerValorAsignacion(m, r.id, t.id);
@@ -155,7 +187,20 @@ function dibujarMatrizAsignacion() {
     aviso.textContent = 'La matriz aparece cuando hay al menos un recurso y una tarea. Vuelve al grafo para agregarlos.';
     matrizAsig.contenedor.replaceChildren(aviso);
   } else {
-    matrizAsig.contenedor.replaceChildren(construirTablaAsignacion({ editable: true }));
+    const elementos = [];
+    if (m.recursos.length < m.tareas.length) {
+      const aviso = document.createElement('div');
+      aviso.className = 'mensaje mensaje--aviso';
+      aviso.textContent = 'Hay más tareas que recursos: se necesita una fila ficticia. Se muestra al inicio de la matriz y representa tareas sin recurso real.';
+      elementos.push(aviso);
+    } else if (m.tareas.length < m.recursos.length) {
+      const aviso = document.createElement('div');
+      aviso.className = 'mensaje mensaje--aviso';
+      aviso.textContent = 'Hay más recursos que tareas: se necesitará una columna ficticia para representar recursos sin tarea.';
+      elementos.push(aviso);
+    }
+    elementos.push(construirTablaAsignacion({ editable: true }));
+    matrizAsig.contenedor.replaceChildren(...elementos);
   }
   dibujarValidacionAsignacion();
 }

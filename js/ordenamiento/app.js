@@ -220,6 +220,20 @@ function actualizarInterfaz(opciones) {
   btnSiguiente.disabled = E.pasoActual === total;
   if (E.pasoActual === total && E.reproduciendo) pausarReproduccion();
   if (n === 0) btnAuto.disabled = true;
+
+  guardarEstadoOrdenamiento(selectorVelocidad.value);
+}
+
+/** Aplica un estado ya validado por depurarEstadoOrdenamiento (autoguardado o trabajo nombrado). */
+function aplicarEstadoOrdenamiento(limpio) {
+  pausarReproduccion();
+  E.algoritmo = limpio.algoritmo;
+  E.cantidad = limpio.valores.length;
+  selectorVelocidad.value = limpio.velocidad;
+  selectorCantidad.value = String(E.cantidad);
+  botonesAlgoritmo.forEach(b => b.setAttribute('aria-pressed', b.dataset.algoritmo === E.algoritmo ? 'true' : 'false'));
+  fijarValores(limpio.valores);
+  irAPaso(limpio.pasoActual, { sinAnimar: true });
 }
 
 // ---- Navegación entre pasos ----
@@ -266,6 +280,7 @@ mapaPasos.addEventListener('click', e => {
 
 selectorVelocidad.addEventListener('change', () => {
   if (E.reproduciendo) { pausarReproduccion(); alternarReproduccion(); }
+  guardarEstadoOrdenamiento(selectorVelocidad.value);
 });
 selectorCantidad.addEventListener('change', () => {
   E.cantidad = parseInt(selectorCantidad.value, 10);
@@ -322,6 +337,8 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modalAyud
 
 // ---- Arranque ----
 window.addEventListener('DOMContentLoaded', () => {
+  const guardado = restaurarEstadoOrdenamiento();
+  if (guardado) { aplicarEstadoOrdenamiento(guardado); return; }
   E.cantidad = parseInt(selectorCantidad.value, 10);
   fijarValores(generarValoresOrdenamiento(E.cantidad));
 });

@@ -190,16 +190,7 @@ function validarValor(texto) {
   return { ok: true, valor: numero };
 }
 
-/**
- * Mantiene un valor dentro de un rango especificado.
- * @param {number} valor - El valor a limitar
- * @param {number} minimo - El valor mínimo permitido
- * @param {number} maximo - El valor máximo permitido
- * @returns {number} El valor limitado al rango especificado
- */
-function limitar(valor, minimo, maximo) {
-  return Math.max(minimo, Math.min(maximo, valor));
-}
+// limitar() viene de js/comun/utilidades.js
 
 let cajaSVG = null;
 

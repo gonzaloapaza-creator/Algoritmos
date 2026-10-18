@@ -14,19 +14,26 @@ const estadoArboles = {
   reproduciendo: false
 };
 
-function guardarEstadoArboles() {
-  if (typeof localStorage === 'undefined') return;
+function instantaneaArboles() {
   const datos = estadoArboles.modo === 'busqueda'
     ? { version: 1, modo: 'busqueda', secuencia: estadoArboles.secuencia.slice() }
     : { version: 1, modo: 'reconstruido', recorridos: recorridosArbol(estadoArboles.raiz) };
+  datos.recorrido = estadoArboles.recorridoSeleccionado;
+  datos.pasoRecorrido = estadoArboles.pasoRecorrido;
+  return datos;
+}
+
+function guardarEstadoArboles() {
+  if (typeof localStorage === 'undefined') return;
   try {
-    localStorage.setItem(ARBOLES_STORAGE_KEY, JSON.stringify(datos));
+    localStorage.setItem(ARBOLES_STORAGE_KEY, JSON.stringify(instantaneaArboles()));
   } catch (error) {
     console.warn('No se pudo guardar el estado de Árboles en el almacenamiento local.', error);
   }
 }
 
-function restaurarEstadoArboles() {
+function restaurarEstadoArboles(datosDirectos) {
+  if (datosDirectos) return depurarEstadoArboles(datosDirectos);
   if (typeof localStorage === 'undefined') return null;
   let texto;
   try {
@@ -37,7 +44,15 @@ function restaurarEstadoArboles() {
   }
   if (!texto) return null;
   try {
-    const datos = JSON.parse(texto);
+    return depurarEstadoArboles(JSON.parse(texto));
+  } catch (error) {
+    console.warn('Se ignoró el estado guardado de Árboles porque no es válido.', error);
+    return null;
+  }
+}
+
+function depurarEstadoArboles(datos) {
+  try {
     if (!datos || datos.version !== 1) throw new Error('La versión guardada no es compatible.');
     if (datos.modo === 'busqueda') {
       const validacion = validarSecuenciaInsercion(datos.secuencia);
@@ -51,7 +66,6 @@ function restaurarEstadoArboles() {
     }
     throw new Error('El contenido guardado no tiene un modo reconocido.');
   } catch (error) {
-    console.warn('Se ignoró el estado guardado de Árboles porque no es válido.', error);
     return null;
   }
 }

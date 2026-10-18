@@ -28,7 +28,7 @@ Sin compilación, dependencias, backend ni base de datos: HTML, CSS y JavaScript
 
 ```bash
 # Desde la carpeta del proyecto
-python -m http.server 8123     # o: npx serve .   /  http-server -p 8123
+python -m http.server 8123     # o: npm start   /  npx serve .   /  http-server -p 8123
 ```
 
 Abrir `http://localhost:8123`. También funciona abriendo los `.html` directamente, pero un servidor local hace que `localStorage` y los `<iframe>` de video se comporten igual que en producción.
@@ -68,7 +68,8 @@ grafo/
 │   │   ├── inicio.js        Tarjetas del inicio
 │   │   ├── dialogo.js       Ventana modal compartida (confirmar / informar / pedir dato)
 │   │   ├── notificaciones.js  Toasts
-│   │   └── utilidades.js    limitar(), escaparHtml()
+│   │   ├── guardados.js     «Mis trabajos»: guardar, cargar, renombrar, eliminar, exportar e importar por módulo
+│   │   └── utilidades.js    limitar(), escaparHtml() (se carga en todas las páginas)
 │   ├── asignacion/
 │   │   ├── modelo.js        Modelo con ids estables, pendientes, serialización v2 y migración v1
 │   │   ├── validacion.js    Validación de valores y nombres
@@ -104,9 +105,10 @@ grafo/
 │   ├── cargar.js            Carga scripts clásicos en un contexto `vm` de Node
 │   ├── asignacion.test.js   Húngaro, validación, modelo, migración
 │   ├── northwest.test.js    Esquina noroeste, balanceo, validación, modelo
-│   ├── ordenamiento.test.js Selection/Insertion/Bubble: historial, conteos, estabilidad, entrada de valores
+│   ├── ordenamiento.test.js Selection/Insertion/Bubble/Shell/Merge: historial, conteos, estabilidad, entrada y persistencia
 │   ├── arboles.test.js      BST, validación, generación y reconstrucción desde recorridos
 │   ├── johnson.test.js      Johnson vs Floyd-Warshall, ciclos negativos, ejemplos
+│   ├── guardados.test.js    Biblioteca de trabajos: insertar/reemplazar, renombrar, eliminar, exportar/importar, límites
 │   └── navegador.js         Pruebas en Edge headless (puppeteer-core) + capturas
 └── docs/capturas/           Capturas de escritorio y móvil generadas por tests/navegador.js
 ```
@@ -258,11 +260,14 @@ Persistencia sin cambios: `grafo.v1` (autoguardado) y `grafo.biblioteca.v1`. Car
 ## 7. Pruebas
 
 ```bash
+npm test                          # ejecuta todas las pruebas unitarias (también corre en GitHub Actions, .github/workflows/pruebas.yml)
+
 node tests/asignacion.test.js     # 24 pruebas: húngaro vs fuerza bruta (incl. 300 aleatorias), validación, modelo, migración
 node tests/northwest.test.js      # 20 pruebas: ejemplo 230, exceso oferta/demanda, degeneración, ceros, 1×1, 1×N, M×1, 10×10, 300 aleatorias
 node tests/ordenamiento.test.js   # Shell/Merge y Selection/Insertion/Bubble: historial, límites, estabilidad y 300 entradas aleatorias
 node tests/arboles.test.js        # BST, validación, generación y reconstrucción compatible/incompatible
 node tests/johnson.test.js        # 10 pruebas: ejemplo clásico, rutas, pasos, ∞, ceros, ciclos negativos, ejemplos, 300 aleatorias vs Floyd-Warshall
+node tests/guardados.test.js      # 12 pruebas: biblioteca de trabajos (CRUD, exportar/importar, límite por módulo, JSON corrupto)
 node tests/navegador.js --capturas   # regresión de navegador, recorridos y tamaños móvil/escritorio
 ```
 

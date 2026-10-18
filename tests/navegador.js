@@ -98,6 +98,19 @@ async function sinScrollHorizontal(page) {
     await new Promise(resolve => setTimeout(resolve, 40));
     await page.click('[data-algoritmo="shell"]');
     check(await page.evaluate(() => !estadoOrdenamiento.reproduciendo && estadoOrdenamiento.intervalo === null), 'Cambiar de algoritmo detiene el temporizador');
+    await page.click('[data-accion-trabajo="guardar"]');
+    await page.waitForSelector('.gd-fondo:not([hidden])');
+    await page.click('#gdNombre', { clickCount: 3 });
+    await page.type('#gdNombre', 'Trabajo Shell');
+    await page.click('#gdGuardar');
+    check(await page.$$eval('.gd-item', i => i.length) === 1, 'El trabajo guardado aparece en la lista');
+    await page.keyboard.press('Escape');
+    check(await page.$eval('.gd-fondo', e => e.hidden), 'Escape cierra el panel de trabajos');
+    await page.click('[data-algoritmo="bubble"]');
+    await page.click('[data-accion-trabajo="cargar"]');
+    await page.click('.gd-item [data-gd="cargar"]');
+    await page.click('.gd-item [data-gd="confirmar"]');
+    check(await page.evaluate(() => estadoOrdenamiento.algoritmo === 'shell' && estadoOrdenamiento.valores.join(',') === '9,4,7,1,5'), 'Guardar y cargar recupera algoritmo y valores de Ordenamiento');
     await page.close();
 
     /* ---------- Árboles: construcción, recorridos, reconstrucción y persistencia ---------- */
@@ -344,6 +357,24 @@ async function sinScrollHorizontal(page) {
       check(await sinScrollHorizontal(page), 'Matriz sin scroll horizontal de página (' + nombre + ')');
       const tabla = await page.$eval('#matrizAsignacion', e => ({ sw: e.scrollWidth, cw: e.clientWidth }));
       check(tabla.sw >= tabla.cw, 'La matriz se desplaza dentro de su contenedor (' + nombre + ')');
+      const ficticios = await page.evaluate(() => {
+        const modelo = estadoAsignacion.modelo;
+        const recursos = modelo.recursos, tareas = modelo.tareas;
+        modelo.recursos = recursos.slice(0, -1);
+        dibujarMatrizAsignacion();
+        const fila = document.querySelector('#matrizAsignacion tbody tr:first-child th')?.textContent.includes('Recurso ficticio');
+        modelo.recursos = recursos;
+        modelo.tareas = tareas.slice(0, -1);
+        dibujarMatrizAsignacion();
+        const tabla = document.querySelector('#matrizAsignacion table');
+        const columna = tabla.tHead.rows[0].cells[1].textContent.includes('Tarea ficticia') && tabla.tBodies[0].rows[0].cells[1].classList.contains('ficticio');
+        const aviso = document.querySelector('#matrizAsignacion .mensaje--aviso')?.textContent.includes('columna ficticia');
+        modelo.tareas = tareas;
+        dibujarMatrizAsignacion();
+        return { fila, columna, aviso };
+      });
+      check(ficticios.fila, 'La fila ficticia aparece al inicio antes de resolver (' + nombre + ')');
+      check(ficticios.columna && ficticios.aviso, 'La matriz advierte y muestra la columna ficticia (' + nombre + ')');
       await capturar(page, 'asignacion-matriz-' + nombre);
       await page.click('#vistaMatriz [data-accion="resolver"]');
       await page.waitForSelector('#vistaResultado:not([hidden])');

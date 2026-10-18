@@ -14,15 +14,7 @@ function avisar(mensaje, tipo) {
   setTimeout(() => nodo.remove(), TIMEOUT_AVISO);
 }
 
-/**
- * Escapa el texto que escribe el usuario antes de insertarlo con innerHTML.
- * Sin esto, un nodo llamado «<b>» rompería el mensaje de ayuda.
- */
-function escaparHtml(texto) {
-  const caja = document.createElement('span');
-  caja.textContent = String(texto == null ? '' : texto);
-  return caja.innerHTML;
-}
+// escaparHtml() viene de js/comun/utilidades.js
 
 /** Recibe HTML: los datos del usuario deben pasar antes por escaparHtml(). */
 function ayudar(html) {

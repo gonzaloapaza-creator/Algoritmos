@@ -1,4 +1,4 @@
-/* Utilidades compartidas por los módulos que no cargan js/estado.js (Johnson). */
+/* Utilidades compartidas por todos los módulos. Debe cargarse antes que el resto de scripts. */
 
 'use strict';
 
