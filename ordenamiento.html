@@ -3,29 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <link rel="icon" href="data:," />
+  <meta name="description" content="Visualización paso a paso de Selection, Insertion, Bubble, Shell y Merge Sort con pinos de boliche, pseudocódigo y contadores." />
+  <meta name="theme-color" content="#0b1020" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='9' cy='23' r='5' fill='%235b8cff'/><circle cx='23' cy='9' r='5' fill='%2300d3a7'/><line x1='12' y1='20' x2='20' y2='12' stroke='white' stroke-width='2'/></svg>" />
   <title>Ordenamiento | Algoritmos de Optimización</title>
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="css/shell.css" />
   <link rel="stylesheet" href="css/ordenamiento.css" />
 </head>
 <body class="page-ordenamiento" data-modulo="ordenamiento">
-  
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
   <header class="topbar">
-    <button type="button" class="btn btn-fantasma btn-icono topbar__menu" id="btnMenuLateral" aria-label="Abrir menú">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round"/></svg>
+    <button type="button" class="btn btn-fantasma btn-icono topbar__menu" id="btnMenuLateral" aria-label="Abrir menú" aria-expanded="false" aria-controls="barraLateral">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     </button>
-    <a class="topbar__marca" href="index.html">Grafo</a>
-    <span class="topbar__separador"></span>
-    <span class="topbar__modulo">Ordenamiento</span>
-    
+    <a class="topbar__marca" href="index.html" aria-label="Grafo · Inicio">
+      <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="9" cy="23" r="5"></circle><circle cx="23" cy="9" r="5"></circle><line x1="12" y1="20" x2="20" y2="12"></line></svg>
+      <span>Grafo</span>
+    </a>
+    <span class="topbar__separador" aria-hidden="true"></span>
+    <span class="topbar__modulo" id="topbarModulo">Ordenamiento</span>
     <div class="topbar__acciones">
       <button type="button" class="btn btn-fantasma btn-sm" id="btnVideoModulo" aria-pressed="false" title="Ver la presentación en video">Video</button>
       <button type="button" class="btn btn-fantasma btn-sm" id="btnAyuda">Ayuda</button>
     </div>
   </header>
-  
-  <aside class="sidebar" id="barraLateral"></aside>
+  <aside class="sidebar" id="barraLateral" aria-label="Navegación principal"></aside>
   <div class="sidebar-fondo" id="barraLateralFondo" hidden></div>
 
   <main class="contenido" id="contenido">
@@ -51,7 +54,7 @@
 
           <span class="acciones__separador"></span>
 
-          <select class="entrada btn-sm" id="selectorVelocidad" aria-label="Velocidad de reproducción" style="width: auto; min-height: 36px;">
+          <select class="entrada entrada--compacta" id="selectorVelocidad" aria-label="Velocidad de reproducción">
             <option value="1200">Lento</option>
             <option value="650" selected>Normal</option>
             <option value="300">Rápido</option>
@@ -98,11 +101,11 @@
         </div>
 
         <div class="leyenda mt-3">
-          <span class="leyenda__item"><span class="leyenda__pino" style="color: var(--aviso);"></span>Comparando</span>
-          <span class="leyenda__item"><span class="leyenda__pino" style="color: var(--info);"></span>Mínimo actual</span>
-          <span class="leyenda__item"><span class="leyenda__pino" style="color: var(--acento);"></span>Moviendo / clave</span>
-          <span class="leyenda__item"><span class="leyenda__pino" style="color: var(--exito);"></span>En su lugar</span>
-          <span class="leyenda__item"><span class="leyenda__pino" style="color: var(--pino-franja);"></span>Sin revisar</span>
+          <span class="leyenda__item"><span class="leyenda__pino" data-color="aviso"></span>Comparando</span>
+          <span class="leyenda__item"><span class="leyenda__pino" data-color="info"></span>Mínimo actual</span>
+          <span class="leyenda__item"><span class="leyenda__pino" data-color="acento"></span>Moviendo / clave</span>
+          <span class="leyenda__item"><span class="leyenda__pino" data-color="exito"></span>En su lugar</span>
+          <span class="leyenda__item"><span class="leyenda__pino" data-color="franja"></span>Sin revisar</span>
         </div>
       </section>
 

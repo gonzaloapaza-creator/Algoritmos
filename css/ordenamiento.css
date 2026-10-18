@@ -159,6 +159,14 @@
 
 /* Leyenda con pino en miniatura */
 .leyenda__pino { width: 14px; height: 14px; border-radius: 50% 50% 40% 40%; background: #f8fafc; border-bottom: 4px solid currentColor; flex: 0 0 auto; }
+.leyenda__pino[data-color="aviso"] { color: var(--aviso); }
+.leyenda__pino[data-color="info"] { color: var(--info); }
+.leyenda__pino[data-color="acento"] { color: var(--acento); }
+.leyenda__pino[data-color="exito"] { color: var(--exito); }
+.leyenda__pino[data-color="franja"] { color: var(--pino-franja); }
+
+/* Selector de velocidad dentro de la barra de acciones. */
+.acciones .entrada--compacta { width: auto; min-height: 36px; }
 
 /* ---------------- Contador de pasos ---------------- */
 .panel-pasos { display: grid; grid-template-columns: auto 1fr; gap: var(--esp-3) var(--esp-4); align-items: center; }

@@ -5,7 +5,8 @@
   "description": "Aplicación web educativa de algoritmos de optimización y estructuras de datos (HTML, CSS y JS planos, sin dependencias).",
   "scripts": {
     "start": "python -m http.server 8123",
-    "test": "node tests/johnson.test.js && node tests/asignacion.test.js && node tests/northwest.test.js && node tests/ordenamiento.test.js && node tests/arboles.test.js && node tests/guardados.test.js",
+    "lint": "node tests/verificar.js",
+    "test": "node tests/verificar.js && node tests/johnson.test.js && node tests/asignacion.test.js && node tests/northwest.test.js && node tests/ordenamiento.test.js && node tests/arboles.test.js && node tests/guardados.test.js",
     "test:navegador": "node tests/navegador.js",
     "capturas": "node tests/navegador.js --capturas"
   },

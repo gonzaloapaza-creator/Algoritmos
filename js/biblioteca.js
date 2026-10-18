@@ -72,7 +72,7 @@ function crearItemGrafo(grafo) {
 
   const botones = document.createElement('div');
   botones.className = 'biblio-botones';
-  botones.appendChild(crearBoton('Cargar', 'btn-claro', () => cargarGrafoGuardado(grafo.id)));
+  botones.appendChild(crearBoton('Cargar', 'btn-neutral', () => cargarGrafoGuardado(grafo.id)));
   botones.appendChild(crearBoton('Eliminar', 'btn-peligro', () => eliminarGrafoGuardado(grafo.id)));
   item.appendChild(botones);
 

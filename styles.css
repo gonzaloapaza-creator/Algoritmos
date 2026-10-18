@@ -208,8 +208,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .btn-secondary:hover { background: var(--acento-tinte); border-color: var(--acento-fuerte); filter: brightness(1.12); }
 
 /* Neutra. */
-.btn-neutral, .btn-claro { background: rgba(148, 163, 184, .08); border-color: rgba(148, 163, 184, .22); color: var(--texto); }
-.btn-neutral:hover, .btn-claro:hover { background: rgba(148, 163, 184, .16); border-color: rgba(148, 163, 184, .38); }
+.btn-neutral { background: rgba(148, 163, 184, .08); border-color: rgba(148, 163, 184, .22); color: var(--texto); }
+.btn-neutral:hover { background: rgba(148, 163, 184, .16); border-color: rgba(148, 163, 184, .38); }
 
 /* Destructiva: separada visualmente. */
 .btn-peligro { background: rgba(248, 113, 113, .12); border-color: rgba(248, 113, 113, .42); color: #ffd7d7; }
