@@ -55,7 +55,8 @@
 .nw-celda__cantidad--basica { font-size: var(--t-sm); color: var(--info); font-weight: 700; }
 .tabla td.basica { background: rgba(245, 176, 65, .12); }
 .tabla td.basica .nw-celda__costo { color: var(--texto-suave); }
-.tabla td.actual { background: rgba(245, 176, 65, .28); outline: 3px solid var(--acento); outline-offset: -3px; }
+.tabla td.actual { background: rgba(245, 176, 65, .28); outline: 3px solid var(--acento); outline-offset: -3px; animation: paso-aparece .45s ease-out; }
+.nw-resta { animation: paso-aparece .45s ease-out; }
 .nw-resta { color: var(--acento-fuerte); font-weight: 700; white-space: nowrap; }
 .leyenda__muestra--actual { border-color: var(--acento); background: rgba(245, 176, 65, .3); border-width: 2px; }
 .leyenda__muestra--basica { border-color: var(--aviso); background: rgba(245, 176, 65, .12); }

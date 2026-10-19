@@ -515,7 +515,8 @@
 .jn-tabla { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .jn-tabla .tabla-caja { max-height: 340px; }
 .jn-tabla .tabla th, .jn-tabla .tabla td { min-width: 0; }
-.tabla td.cambio { color: var(--ruta-texto); font-weight: 700; background: rgba(34, 211, 238, .1); }
+.tabla td.cambio { color: var(--ruta-texto); font-weight: 700; background: rgba(34, 211, 238, .1); animation: paso-aparece .45s ease-out; }
+.tabla-datos td.celda-elegida { animation: paso-aparece .45s ease-out; }
 .tabla td.negativo, .tabla td.cambio.negativo { color: var(--peligro-texto); }
 .tabla td.jn-ruta-celda { text-align: left; }
 .tabla tr.jn-fila-total > * { border-top: 1px solid var(--borde); font-weight: 800; }

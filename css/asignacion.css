@@ -185,6 +185,7 @@ body.grafo-ampliado { overflow: hidden; }
 .tabla-paso td.cero-independiente { font-weight: 800; color: var(--texto); }
 .tabla-paso td.minimo-delta { box-shadow: inset 0 0 0 2px var(--exito); }
 .tabla-paso th.cubierta { box-shadow: inset 0 0 0 2px var(--aviso); }
+.tabla-paso td.cubierta, .tabla-paso td.cubierta-doble, .tabla-paso td.elegida, .tabla-paso td.minimo-delta, .tabla-paso td.cero-independiente { animation: paso-aparece .45s ease-out; }
 
 /* ---------------- Tablet ---------------- */
 @media (max-width: 1180px) {

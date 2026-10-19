@@ -173,6 +173,7 @@ function dibujarProcedimientoAsignacion() {
     leyenda.className = 'leyenda';
     leyenda.innerHTML = leyendaPasoAsignacion(paso);
     if (leyenda.innerHTML) procAsig.tabla.appendChild(leyenda);
+    desplazarHastaCelda(procAsig.tabla.querySelector('td.elegida, td.minimo-delta, td.cero-independiente'));
   }
   if (procAsig.verTodos) procAsig.verTodos.setAttribute('aria-pressed', procAsig.mostrarTodos ? 'true' : 'false');
 }

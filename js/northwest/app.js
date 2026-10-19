@@ -232,6 +232,7 @@ function dibujarResolucionNorthwest() {
     satisfechasFilas,
     satisfechasColumnas
   }));
+  desplazarHastaCelda(appNw.pasoTabla.querySelector('td.actual'));
 }
 
 /* ---------------- Resultado ---------------- */

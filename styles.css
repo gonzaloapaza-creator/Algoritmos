@@ -717,6 +717,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 .total__valor { font-size: var(--t-xl); font-variant-numeric: tabular-nums; color: var(--acento-fuerte); }
 
+/* ---------------- Resalte al cambiar de paso ----------------
+   Las tablas de pasos se vuelven a construir en cada paso, así que las celdas
+   destacadas se animan al aparecer (no con transition). */
+@keyframes paso-aparece {
+  from { box-shadow: inset 0 0 0 999px var(--acento-tinte); outline-color: transparent; }
+}
+.paso-resalte { animation: paso-aparece .45s ease-out; }
+
 /* ---------------- Movimiento reducido ---------------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

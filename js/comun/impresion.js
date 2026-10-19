@@ -51,6 +51,7 @@ function prepararImpresion() {
 
   const total = c.total();
   const actual = c.actual();
+  document.body.classList.add('imprimiendo-pasos');
   const contenedor = document.createElement('section');
   contenedor.id = 'impresionPasos';
   contenedor.setAttribute('aria-hidden', 'true');
