@@ -98,9 +98,11 @@ paginas.forEach(ruta => {
   });
 
   prueba(nombre + ': config.js y utilidades.js se cargan antes que el resto', () => {
-    const orden = referenciasLocales(html, 'script', 'src');
+    // tema.js va en <head> para fijar el tema antes de pintar; no depende de nada.
+    const orden = referenciasLocales(html, 'script', 'src').filter(ref => ref !== 'js/comun/tema.js');
     cierto(orden.length > 0, 'La página no carga scripts');
     igual(orden.slice(0, 2), ['js/config.js', 'js/comun/utilidades.js']);
+    cierto(html.indexOf('js/comun/tema.js') < html.indexOf('</head>'), 'tema.js debe cargarse en <head>');
   });
 
   prueba(nombre + ': estructura común (description, saltar, cabecera, barra lateral)', () => {

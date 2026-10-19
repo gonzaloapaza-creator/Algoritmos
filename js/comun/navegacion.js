@@ -100,6 +100,26 @@ function construirBarraLateral(moduloActivo) {
   });
   barra.appendChild(lista);
 
+  // Selector de tema: dentro de la lista para que también se vea en el cajón móvil.
+  const ajustes = document.createElement('div');
+  ajustes.className = 'sidebar__grupo sidebar__ajustes';
+  const btnTema = document.createElement('button');
+  btnTema.type = 'button';
+  btnTema.className = 'sidebar__enlace sidebar__tema';
+  btnTema.id = 'btnTema';
+  btnTema.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g class="icono-sol"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/></g><path class="icono-luna" d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg><span></span>';
+  const actualizarTema = () => {
+    const claro = typeof temaActual === 'function' && temaActual() === 'claro';
+    btnTema.querySelector('span').textContent = claro ? 'Tema oscuro' : 'Tema claro';
+    btnTema.title = claro ? 'Cambiar al tema oscuro' : 'Cambiar al tema claro';
+    btnTema.setAttribute('aria-pressed', claro ? 'true' : 'false');
+  };
+  btnTema.addEventListener('click', () => { if (typeof alternarTema === 'function') alternarTema(); });
+  window.addEventListener('tema:cambio', actualizarTema);
+  actualizarTema();
+  ajustes.appendChild(btnTema);
+  barra.appendChild(ajustes);
+
   const pie = document.createElement('div');
   pie.className = 'sidebar__pie';
   const btnPlegar = document.createElement('button');

@@ -321,10 +321,10 @@ function dibujarGrafoMiniInterno(svg, op) {
   svg.replaceChildren();
   const prefijo = svg.id + '-';
   const defs = crearSVG('defs', {});
-  marcadorMini(defs, prefijo + 'normal', '#9cb0d4');
-  marcadorMini(defs, prefijo + 'ruta', '#22d3ee');
-  marcadorMini(defs, prefijo + 'ciclo', '#ff5f6d');
-  marcadorMini(defs, prefijo + 'aux', '#7e8ab3');
+  marcadorMini(defs, prefijo + 'normal', 'var(--arista)');
+  marcadorMini(defs, prefijo + 'ruta', 'var(--ruta)');
+  marcadorMini(defs, prefijo + 'ciclo', 'var(--rojo)');
+  marcadorMini(defs, prefijo + 'aux', 'var(--texto-apagado)');
   svg.appendChild(defs);
 
   if (estado.nodos.length === 0) { svg.setAttribute('viewBox', '0 0 100 60'); return; }

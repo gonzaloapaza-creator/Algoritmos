@@ -50,7 +50,7 @@
   gap: 8px;
   border: 1px solid var(--borde);
   border-radius: var(--radio-lg);
-  background: rgba(18, 26, 45, .86);
+  background: var(--superficie);
   box-shadow: var(--sombra-suave);
   padding: 10px;
 }
@@ -67,8 +67,8 @@
   overflow: hidden;
   border: 1px solid var(--borde-suave);
   background:
-    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, .07) 1px, transparent 0) 0 0 / 26px 26px,
-    rgba(10, 13, 22, .7);
+    radial-gradient(circle at 1px 1px, var(--rejilla) 1px, transparent 0) 0 0 / 26px 26px,
+    var(--lienzo);
   /* Solo la superficie del grafo bloquea los gestos del navegador. */
   touch-action: none;
   overscroll-behavior: contain;
@@ -85,7 +85,7 @@
   pointer-events: auto;
   max-width: 420px;
   text-align: center;
-  background: rgba(23, 27, 46, .94);
+  background: var(--flotante);
   border: 1px dashed var(--borde);
   border-radius: var(--radio-lg);
   padding: 20px;
@@ -121,12 +121,12 @@ body.grafo-ampliado { overflow: hidden; }
 .nodo-b { cursor: grab; }
 .nodo-b.arrastrando { cursor: grabbing; }
 .nodo-b rect {
-  fill: #1c2a4f;
-  stroke: #5b8cff;
+  fill: var(--nodo-relleno);
+  stroke: var(--azul);
   stroke-width: 2;
   transition: fill var(--transicion), stroke var(--transicion);
 }
-.nodo-b.tarea rect { fill: #1b3a3a; stroke: #2dd4bf; }
+.nodo-b.tarea rect { fill: var(--nodo-tarea-relleno); stroke: var(--exito); }
 .nodo-b:hover rect { filter: brightness(1.18); }
 .nodo-b.seleccionado rect { stroke: var(--amarillo); stroke-width: 3.5; filter: drop-shadow(0 0 6px rgba(255, 207, 92, .5)); }
 .nodo-b.origen rect { stroke: var(--verde); stroke-width: 3.5; stroke-dasharray: 6 4; }
@@ -145,15 +145,15 @@ body.grafo-ampliado { overflow: hidden; }
 
 .arista__linea {
   fill: none;
-  stroke: #9cb0d4;
+  stroke: var(--arista);
   stroke-width: 2;
   transition: stroke var(--transicion), opacity var(--transicion);
 }
 .arista__zona { fill: none; stroke: transparent; stroke-width: 18; cursor: pointer; }
-.arista:hover .arista__linea { stroke: #d5e2ff; stroke-width: 2.5; }
+.arista:hover .arista__linea { stroke: var(--arista-fuerte); stroke-width: 2.5; }
 .arista.pendiente .arista__linea { stroke: var(--aviso); stroke-dasharray: 5 6; stroke-width: 1.5; opacity: .75; }
 .arista.fuera-foco .arista__linea, .arista.fuera-foco .arista__valor { opacity: .18; }
-.arista.relacionada .arista__linea { stroke: #d5e2ff; stroke-width: 2.5; }
+.arista.relacionada .arista__linea { stroke: var(--arista-fuerte); stroke-width: 2.5; }
 .arista.seleccionada .arista__linea { stroke: var(--amarillo); stroke-width: 3.5; opacity: 1; filter: drop-shadow(0 0 4px rgba(255, 207, 92, .45)); }
 .arista.elegida .arista__linea { stroke: var(--acento); stroke-width: 5; opacity: 1; filter: drop-shadow(0 0 6px rgba(45, 212, 191, .45)); }
 .arista.elegida.seleccionada .arista__linea { stroke: var(--amarillo); }
@@ -167,7 +167,7 @@ body.grafo-ampliado { overflow: hidden; }
   dominant-baseline: central;
   pointer-events: none;
   paint-order: stroke;
-  stroke: #0b1020;
+  stroke: var(--halo);
   stroke-width: 5px;
   stroke-linejoin: round;
 }
@@ -178,7 +178,7 @@ body.grafo-ampliado { overflow: hidden; }
 .arista:focus-visible .arista__linea { stroke: var(--texto); stroke-width: 3.5; opacity: 1; }
 
 /* ---------------- Matriz ---------------- */
-.tabla-asignacion td.relacionada { background: rgba(255, 255, 255, .04); }
+.tabla-asignacion td.relacionada { background: var(--hover); }
 .tabla-asignacion thead th:first-child { min-width: 120px; }
 
 /* ---------------- Procedimiento ---------------- */

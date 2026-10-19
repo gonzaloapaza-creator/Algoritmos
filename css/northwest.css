@@ -34,14 +34,14 @@
 /* ---------------- Tabla de datos ---------------- */
 .tabla-nw thead th:first-child { min-width: 130px; }
 .tabla-nw .nw-col-total { background: rgba(245, 176, 65, .08); }
-.tabla-nw th.nw-col-total, .tabla-nw th.nw-fila-total { color: #f8c66d; }
+.tabla-nw th.nw-col-total, .tabla-nw th.nw-fila-total { color: var(--acento-fuerte); }
 .tabla-nw .nw-fila-total { background: rgba(245, 176, 65, .08); }
 .tabla-nw .nw-totales { text-align: left; line-height: 1.3; font-size: var(--t-sm); }
 .tabla-nw .nw-totales strong { display: block; margin-bottom: 4px; }
 .tabla-nw .nw-col-acciones { min-width: 44px; width: 44px; padding: 4px; background: transparent; }
 .tabla-nw .nw-fila-quitar td, .tabla-nw .nw-fila-quitar th { padding: 4px; background: transparent; border-bottom: 0; }
 .nw-quitar { color: var(--texto-apagado); }
-.nw-quitar:hover { color: #ffd7d7; background: rgba(248, 113, 113, .14); }
+.nw-quitar:hover { color: var(--peligro-texto); background: rgba(248, 113, 113, .14); }
 .tabla-nw th input { min-width: 96px; }
 .tabla-nw input[data-tipo="costo"] { min-width: 72px; }
 .tabla-nw input[data-tipo="oferta"], .tabla-nw input[data-tipo="demanda"] { min-width: 72px; font-weight: 700; }
@@ -70,10 +70,10 @@
 /* Resultado */
 .lista-resultado--estatica li { cursor: default; }
 .lista-resultado--estatica li:hover { background: rgba(148, 163, 184, .04); }
-.lista-resultado li.ficticio { border-style: dashed; border-color: rgba(192, 132, 252, .5); color: #e9d5ff; }
+.lista-resultado li.ficticio { border-style: dashed; border-color: rgba(192, 132, 252, .5); color: var(--ficticio-texto); }
 .nw-verificacion { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: var(--t-sm); }
-.nw-verificacion li.ok { color: #9ff0e2; }
-.nw-verificacion li.error { color: #ffd7d7; font-weight: 700; }
+.nw-verificacion li.ok { color: var(--exito-texto); }
+.nw-verificacion li.error { color: var(--peligro-texto); font-weight: 700; }
 
 /* ---------------- Tablet ---------------- */
 @media (max-width: 1180px) {
