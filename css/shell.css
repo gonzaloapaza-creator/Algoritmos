@@ -145,10 +145,22 @@ body { display: flex; flex-direction: column; }
 .modulo-cabecera p { color: var(--texto-suave); max-width: 72ch; }
 .modulo-cabecera .acciones { flex: 0 0 auto; }
 
+/* ---------------- Modo presentación (proyector) ----------------
+   Solo escritorio: sin barra lateral ni pie, contenido ancho y texto grande. */
+.topbar__presentacion { display: none; order: 10; }
+.topbar__presentacion svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.topbar__presentacion[aria-pressed="true"] { background: var(--acento-tinte); border-color: var(--acento-borde); color: var(--texto); }
+
 /* Escritorio: el cuerpo deja espacio para la barra fija. */
 @media (min-width: 1024px) {
   body { padding-left: var(--lateral); transition: padding-left .18s ease; }
   body.nav-colapsada { padding-left: var(--lateral-colapsada); }
+  .topbar__presentacion { display: inline-flex; }
+  body.presentacion { padding-left: 0; --contenido-max: 1720px; }
+  body.presentacion .sidebar, body.presentacion .app-footer, body.presentacion .modulo-cabecera p { display: none; }
+  body.presentacion .contenido { font-size: 112.5%; }
+  body.presentacion .contenido h1 { font-size: 2.3rem; }
+  body.presentacion .contenido .tabla, body.presentacion .contenido .tabla-datos table { font-size: 1.05rem; }
   body.nav-colapsada .sidebar { width: var(--lateral-colapsada); }
   body.nav-colapsada .sidebar__titulo { text-align: center; margin-left: 0; margin-right: 0; font-size: .6rem; }
   body.nav-colapsada .sidebar__enlace { justify-content: center; padding: 8px; }
