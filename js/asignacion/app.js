@@ -258,6 +258,15 @@ function inicializarAsignacion() {
   alCambiarAsignacion(renderAsignacion);
   inicializarInteraccionGrafo();
   inicializarProcedimientoAsignacion();
+  document.getElementById('btnPasoImprimir').addEventListener('click', imprimirProcedimiento);
+  registrarImpresionPasos({
+    titulo: 'Método húngaro · procedimiento completo',
+    paneles: () => [document.querySelector('#procedimientoConResultado .asig-principal')],
+    total: () => pasosAsignacion().length,
+    actual: () => (estadoAsignacion.resultado ? estadoAsignacion.resultado.pasoActual || 0 : 0),
+    ir: irAPasoAsignacion,
+    activo: () => estadoAsignacion.vista === 'procedimiento' && !procAsig.mostrarTodos
+  });
 
   document.querySelectorAll('#pasosAsignacion .paso').forEach(b => b.addEventListener('click', () => cambiarVistaAsignacion(b.dataset.vista)));
   document.querySelectorAll('[data-ir]').forEach(b => b.addEventListener('click', () => cambiarVistaAsignacion(b.dataset.ir)));

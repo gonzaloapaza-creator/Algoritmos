@@ -444,6 +444,15 @@ function inicializarNorthwest() {
   document.getElementById('btnNwAnterior').addEventListener('click', () => { detenerAutoplayNw(); irAPasoNw(estadoNorthwest.resultado.pasoActual - 1); });
   document.getElementById('btnNwSiguiente').addEventListener('click', () => { detenerAutoplayNw(); irAPasoNw(estadoNorthwest.resultado.pasoActual + 1); });
   document.getElementById('btnNwReiniciar').addEventListener('click', () => { detenerAutoplayNw(); irAPasoNw(0); });
+  document.getElementById('btnNwImprimir').addEventListener('click', () => { detenerAutoplayNw(); imprimirProcedimiento(); });
+  registrarImpresionPasos({
+    titulo: 'Esquina noroeste · resolución paso a paso',
+    paneles: () => [document.querySelector('#resolucionCon .nw-principal'), document.getElementById('nwPasoDetalle')],
+    total: () => pasosNw().length,
+    actual: () => (estadoNorthwest.resultado ? estadoNorthwest.resultado.pasoActual || 0 : 0),
+    ir: irAPasoNw,
+    activo: () => estadoNorthwest.vista === 'resolucion'
+  });
   document.getElementById('btnNwAuto').addEventListener('click', alternarAutoplayNw);
 
   const selector = document.getElementById('selectorEjemploNw');

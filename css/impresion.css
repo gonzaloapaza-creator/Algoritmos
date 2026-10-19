@@ -1,0 +1,66 @@
+/* ============================================================================
+   Impresión (se carga con media="print"). js/comun/impresion.js fuerza el tema
+   claro y, en las vistas paso a paso, vuelca todos los pasos en #impresionPasos.
+   ============================================================================ */
+
+@page { margin: 14mm; }
+
+html, body {
+  background: #fff !important;
+  color: #111 !important;
+  padding: 0 !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+
+/* Interfaz interactiva: fuera. */
+.topbar, .sidebar, .sidebar-fondo, .app-footer, .saltar, .btn, .acciones, .segmentado,
+#introModulo, .modal-fondo, .toast-stack, #avisos, .aviso, .zoom-controls, .panel,
+.pasos, .jn-pasos, .nw-pasos, .asig-pasos, .pasos__contador, .mapa-pasos, .deslizador,
+input[type="range"], select, .leyenda-ayuda, .ayuda, [data-accion-trabajo] {
+  display: none !important;
+}
+
+.contenido { max-width: none !important; padding: 0 !important; margin: 0 !important; }
+.modulo-cabecera { margin-bottom: 8mm; }
+.modulo-cabecera p { display: block !important; }
+
+/* Tarjetas y tablas: sin sombras, sin desplazamiento interno, sin cortes feos. */
+.tarjeta, .tarjeta--plana, .procedure-step, .impresion-paso {
+  box-shadow: none !important;
+  background: #fff !important;
+  border: 1px solid #c7d0e3 !important;
+  break-inside: avoid;
+}
+.tabla-caja, .tabla-datos, .proc-tabla {
+  overflow: visible !important;
+  max-height: none !important;
+  max-width: none !important;
+}
+.tabla th, .tabla td, .tabla-datos th, .tabla-datos td { position: static !important; }
+.tabla, .tabla-datos table { font-size: 10.5pt; }
+a { color: inherit; text-decoration: none; }
+a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 9pt; color: #555; }
+
+/* Grafos y árboles: tamaño fijo para que entren en la hoja. */
+.grafo-workspace, .grafo-b__lienzo, #vistaArbol, .grafo-mini {
+  max-height: 120mm;
+  height: auto !important;
+  background: #fff !important;
+  break-inside: avoid;
+}
+.grafo-workspace svg, .grafo-b__lienzo svg, .grafo-mini svg { max-height: 115mm; }
+
+/* Vista de pasos: se imprime la copia completa, no el paso en pantalla. */
+body.imprimiendo-pasos .vista { display: none !important; }
+body.imprimiendo-pasos .modulo-cabecera { display: block !important; }
+#impresionPasos { display: block; }
+#impresionPasos h2 { font-size: 16pt; margin: 0 0 6mm; }
+#impresionPasos h3 { font-size: 12pt; margin: 0 0 3mm; }
+.impresion-paso { margin: 0 0 7mm; padding: 4mm; page-break-inside: avoid; }
+.impresion-paso > div { border: 0 !important; padding: 0 !important; }
+.impresion-paso .jn-paso-cuerpo { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; align-items: start; }
+.impresion-paso .grafo-mini svg { width: 100%; height: auto; max-height: 70mm; }
+
+/* Colores de estado conservados al imprimir (los navegadores los quitan por defecto). */
+* { -webkit-print-color-adjust: exact; print-color-adjust: exact; }

@@ -911,6 +911,15 @@ function inicializarVistasJohnson() {
   vj.btnAnterior.addEventListener('click', () => irAPasoJohnson(estadoJohnson.pasoActual - 1));
   vj.btnSiguiente.addEventListener('click', () => irAPasoJohnson(estadoJohnson.pasoActual + 1));
   vj.btnReiniciar.addEventListener('click', () => irAPasoJohnson(0));
+  document.getElementById('btnJnImprimir').addEventListener('click', imprimirProcedimiento);
+  registrarImpresionPasos({
+    titulo: 'Algoritmo de Johnson · resolución paso a paso',
+    paneles: () => [document.querySelector('#resolucionConJn .jn-principal')],
+    total: () => (resultadoVigenteJohnson() ? estadoJohnson.resultado.pasos.length : 0),
+    actual: () => estadoJohnson.pasoActual || 0,
+    ir: irAPasoJohnson,
+    activo: () => estadoJohnson.vista === 'resolucion'
+  });
   vj.btnVerEnEditor.addEventListener('click', verEnEditorJohnson);
 
   // Delegación: la tabla se regenera, los manejadores no.
