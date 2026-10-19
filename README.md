@@ -69,6 +69,7 @@ grafo/
 │   │   ├── dialogo.js       Ventana modal compartida (confirmar / informar / pedir dato)
 │   │   ├── notificaciones.js  Toasts
 │   │   ├── guardados.js     «Mis trabajos»: guardar, cargar, renombrar, eliminar, exportar e importar por módulo
+│   │   ├── exportarImagen.js  SVG → PNG copiando los estilos calculados (Johnson, Asignación y Árboles)
 │   │   └── utilidades.js    limitar(), escaparHtml() (se carga en todas las páginas)
 │   ├── asignacion/
 │   │   ├── modelo.js        Modelo con ids estables, pendientes, serialización v2 y migración v1
@@ -297,6 +298,5 @@ Las comprobaciones de Johnson de `tests/navegador.js` se ampliaron con las vista
 
 - Northwest no incluye MODI, Vogel ni costo mínimo (fuera del alcance de esta entrega).
 - La verificación exhaustiva de Asignación se limita a `n ≤ 10` (aquí siempre se cumple: máximo 8×8).
-- El grafo de Asignación no exporta a PNG (sí a JSON).
 - Las capturas de móvil se generan en un navegador de escritorio emulado (Edge headless): conviene una pasada final en un teléfono real, sobre todo con el teclado virtual abierto.
 - Los videos requieren conexión a internet; sin ella la presentación muestra el marco vacío y el botón «Ir al algoritmo» sigue disponible.

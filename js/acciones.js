@@ -329,99 +329,18 @@ function exportarGrafoJSON() {
   avisar('Grafo exportado a JSON correctamente.', 'ok');
 }
 
-/*
- * Estilos que se incrustan en el SVG exportado.
- * Son necesarios: el SVG del documento se pinta con styles.css, pero el archivo
- * que se convierte a PNG viaja solo y sin ellos saldría en negro sobre negro.
- */
-const ESTILOS_EXPORTACION = `
-  .nodo circle { fill: #24305c; stroke: #5b8cff; stroke-width: 3; }
-  .nodo text { fill: #eef1fb; font-size: 16px; font-weight: 700; text-anchor: middle;
-               dominant-baseline: central; font-family: system-ui, "Segoe UI", Roboto, Arial, sans-serif; }
-  .nodo.seleccionado circle { stroke: #ffcf5c; stroke-width: 4.5; fill: #3d3721; }
-  .nodo.origen circle { stroke: #00d3a7; stroke-width: 4.5; fill: #123c36; }
-  .nodo-johnson circle { stroke: #22d3ee; stroke-width: 4; fill: #123a44; }
-  .nodo-johnson-origen circle { stroke: #00d3a7; fill: #0d3b33; }
-  .nodo-johnson-destino circle { stroke: #ff9f43; fill: #45301a; }
-  .nodo-johnson.ciclo-negativo-johnson circle { stroke: #ff5f6d; fill: #451c22; }
-  .conexion-linea { fill: none; stroke: #9cb0d4; stroke-width: 2.5; marker-end: url(#flecha); }
-  .conexion.seleccionada .conexion-linea { stroke: #ffcf5c; stroke-width: 4; marker-end: url(#flechaSel); }
-  .conexion-johnson .conexion-linea { stroke: #22d3ee; stroke-width: 4.5; marker-end: url(#flechaRuta); }
-  .conexion-johnson.ciclo-negativo-johnson .conexion-linea { stroke: #ff5f6d; marker-end: url(#flechaCiclo); }
-  .conexion-johnson-inactiva .conexion-linea { opacity: .28; }
-  .conexion-johnson-inactiva .conexion-valor { opacity: .4; }
-  .conexion-zona { display: none; }
-  .conexion-valor { fill: #eef1fb; font-size: 14px; font-weight: 700; text-anchor: middle;
-                    dominant-baseline: central; paint-order: stroke; stroke: #0f1220;
-                    stroke-width: 6px; stroke-linejoin: round;
-                    font-family: system-ui, "Segoe UI", Roboto, Arial, sans-serif; }
-  .conexion-johnson .conexion-valor { fill: #a5f3fc; }
-  .conexion-johnson.ciclo-negativo-johnson .conexion-valor { fill: #ffc4c8; }
-`;
-
 /**
- * Exporta el grafo actual como imagen PNG.
- * Se exporta una copia del SVG con los estilos incrustados y a doble resolución,
- * para que el archivo se vea igual que en pantalla y no salga borroso.
+ * Exporta el grafo actual como imagen PNG (js/comun/exportarImagen.js copia los
+ * estilos calculados, así la imagen respeta el tema activo).
  */
 function exportarGrafoImagen() {
   if (estado.nodos.length === 0) {
     avisar('El grafo está vacío: no hay nada que exportar.', 'error');
     return;
   }
-
-  const caja = el.svg.getBoundingClientRect();
-  const ancho = Math.max(1, Math.round(caja.width));
-  const alto = Math.max(1, Math.round(caja.height));
-
-  const copia = el.svg.cloneNode(true);
-  copia.setAttribute('xmlns', SVG_NS);
-  copia.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
-  copia.setAttribute('width', ancho);
-  copia.setAttribute('height', alto);
-  copia.setAttribute('viewBox', `0 0 ${ancho} ${alto}`);
-
-  const estilos = document.createElementNS(SVG_NS, 'style');
-  estilos.textContent = ESTILOS_EXPORTACION;
-  copia.insertBefore(estilos, copia.firstChild);
-
-  const svgData = new XMLSerializer().serializeToString(copia);
-  const url = URL.createObjectURL(new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' }));
-
-  const escala = 2;   // el PNG se ve nítido también en pantallas de alta densidad
-  const canvas = document.createElement('canvas');
-  canvas.width = ancho * escala;
-  canvas.height = alto * escala;
-  const ctx = canvas.getContext('2d');
-
-  const img = new Image();
-
-  img.onload = function () {
-    ctx.fillStyle = '#0f1220';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    URL.revokeObjectURL(url);
-
-    canvas.toBlob(blob => {
-      if (!blob) { avisar('Error al exportar la imagen.', 'error'); return; }
-      const enlace = document.createElement('a');
-      const destino = URL.createObjectURL(blob);
-      enlace.href = destino;
-      enlace.download = 'grafo_' + new Date().toISOString().slice(0, 10) + '.png';
-      document.body.appendChild(enlace);
-      enlace.click();
-      document.body.removeChild(enlace);
-      URL.revokeObjectURL(destino);
-      avisar('Grafo exportado como imagen correctamente.', 'ok');
-    }, 'image/png');
-  };
-
-  img.onerror = function () {
-    URL.revokeObjectURL(url);
-    avisar('Error al exportar la imagen.', 'error');
-  };
-
-  img.src = url;
+  exportarSvgComoPng(el.svg, { nombre: 'grafo' })
+    .then(() => avisar('Grafo exportado como imagen correctamente.', 'ok'))
+    .catch(() => avisar('Error al exportar la imagen.', 'error'));
 }
 
 /**

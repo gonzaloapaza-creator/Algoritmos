@@ -312,6 +312,12 @@ arbolElemento('btnZoomMas').addEventListener('click', () => cambiarZoomArbol(1.2
 arbolElemento('btnZoomMenos').addEventListener('click', () => cambiarZoomArbol(1 / 1.2));
 arbolElemento('btnCentrarArbol').addEventListener('click', centrarArbol);
 arbolElemento('btnAjustarArbol').addEventListener('click', ajustarZoomArbol);
+arbolElemento('btnExportarPngArbol').addEventListener('click', () => {
+  if (!arbol.raiz) { notificar('El árbol está vacío: no hay nada que exportar.', 'info'); return; }
+  exportarSvgComoPng(document.querySelector('#vistaArbol svg'), { nombre: 'arbol' })
+    .then(() => notificar('Árbol exportado como imagen PNG.', 'ok'))
+    .catch(error => notificar(error.message, 'error'));
+});
 
 const modalAyudaArbol = arbolElemento('modalAyuda');
 arbolElemento('btnAyuda').addEventListener('click', () => { modalAyudaArbol.hidden = false; });

@@ -278,6 +278,13 @@ function inicializarAsignacion() {
   document.getElementById('btnZoomMasAsig').addEventListener('click', () => zoomAsignacion(1.25));
   document.getElementById('btnZoomMenosAsig').addEventListener('click', () => zoomAsignacion(1 / 1.25));
   document.getElementById('btnAmpliarGrafo').addEventListener('click', () => alternarAmpliarGrafo());
+  document.getElementById('btnExportarPngAsig').addEventListener('click', () => {
+    const m = estadoAsignacion.modelo;
+    if (m.recursos.length + m.tareas.length === 0) { notificar('El grafo está vacío: no hay nada que exportar.', 'info'); return; }
+    exportarSvgComoPng(document.getElementById('svgAsignacion'), { nombre: 'asignacion' })
+      .then(() => notificar('Grafo exportado como imagen PNG.', 'ok'))
+      .catch(error => notificar(error.message, 'error'));
+  });
   document.getElementById('btnMostrarTodas').addEventListener('click', () => { estadoAsignacion.mostrarTodas = !estadoAsignacion.mostrarTodas; renderAsignacion('visual'); });
   document.getElementById('btnMostrarValores').addEventListener('click', () => { estadoAsignacion.mostrarValores = !estadoAsignacion.mostrarValores; renderAsignacion('visual'); });
   document.getElementById('btnDeshacerAsig').addEventListener('click', () => { if (!deshacerAsignacion()) notificar('No hay acciones para deshacer.', 'info'); });
