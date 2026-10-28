@@ -278,40 +278,6 @@
 .panel-detalle { font-size: 1.05rem; font-weight: 700; overflow-wrap: anywhere; }
 .panel-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
 
-/* ---------------- Avisos del lienzo ---------------- */
-/* Fijos a la ventana: así se ven también desde la matriz, la resolución o el resultado. */
-.avisos {
-  position: fixed;
-  z-index: 65;
-  top: calc(var(--topbar) + 12px);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
-  pointer-events: none;
-  width: max-content;
-  max-width: calc(100vw - 24px);
-}
-.aviso {
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  text-align: center;
-  background: var(--fondo-2);
-  border: 1px solid var(--borde);
-  border-left: 5px solid var(--azul);
-  border-radius: var(--radio-chico);
-  padding: 10px 16px;
-  font-size: .92rem;
-  font-weight: 500;
-  color: var(--texto);
-  box-shadow: var(--sombra);
-  animation: entrar .18s ease-out;
-}
-.aviso.ok { border-left-color: var(--verde); }
-.aviso.error { border-left-color: var(--rojo); }
-@keyframes entrar { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
 @keyframes menuAbrir { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 
 /* ---------------- Hojas flotantes (matriz, Johnson, biblioteca) ---------------- */
@@ -582,8 +548,6 @@
 }
 @media (min-width: 1024px) {
   /* Centrados sobre el contenido, no sobre la ventana con la barra lateral. */
-  .avisos { left: calc(50% + var(--lateral) / 2); }
-  body.nav-colapsada .avisos { left: calc(50% + var(--lateral-colapsada) / 2); }
 }
 
 /* ---------------- Pantallas pequeñas ---------------- */
@@ -710,5 +674,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .menu-extra.abierto, .aviso { animation: none; }
+  .menu-extra.abierto { animation: none; }
 }

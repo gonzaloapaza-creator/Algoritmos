@@ -5,7 +5,9 @@ const { crearContexto, cargar, evaluar, prueba, igual, cierto, informe } = requi
 const ctx = cargar(crearContexto(), [
   'js/config.js',
   'js/johnson.js',
-  'js/johnson/ejemplos.js'
+  'js/johnson/ejemplos.js',
+  'js/comun/utilidades.js',
+  'js/almacenamiento.js'
 ]);
 
 const {
@@ -155,6 +157,40 @@ prueba('300 grafos aleatorios coinciden con Floyd-Warshall (y las rutas suman su
     }
   }
   cierto(ciclos > 0, 'Las pruebas aleatorias no generaron ningún ciclo negativo');
+});
+
+prueba('Importación: validarGrafoImportado rechaza ids repetidos, referencias rotas, pesos fuera de rango y nombres inválidos sin tocar nada', () => {
+  const { validarGrafoImportado, depurarGrafo, resumirErroresImportacion } = ctx;
+  const MAX_PESO = evaluar(ctx, 'MAX_PESO');
+  const base = () => ({ nodos: [{ id: 'n_1', nombre: 'a', x: 10, y: 10 }, { id: 'n_2', nombre: 'b', x: 50, y: 50 }], conexiones: [{ id: 'c_1', desde: 'n_1', hacia: 'n_2', valor: -3 }], siguienteId: 3 });
+  const ok = validarGrafoImportado(base());
+  cierto(ok.ok && ok.grafo.nodos.length === 2 && ok.grafo.conexiones[0].valor === -3);
+
+  const casos = [
+    ['id de nodo repetido', g => { g.nodos[1].id = 'n_1'; }, 'repetido'],
+    ['id de conexión repetido', g => { g.conexiones.push({ id: 'c_1', desde: 'n_2', hacia: 'n_1', valor: 1 }); }, 'repetido'],
+    ['conexión hacia nodo inexistente', g => { g.conexiones[0].hacia = 'n_9'; }, 'no existe'],
+    ['peso decimal', g => { g.conexiones[0].valor = 2.5; }, 'entero'],
+    ['peso no finito', g => { g.conexiones[0].valor = Infinity; }, 'entero'],
+    ['peso mayor que MAX_PESO', g => { g.conexiones[0].valor = MAX_PESO + 1; }, 'entre'],
+    ['nombre vacío', g => { g.nodos[0].nombre = '  '; }, 'vacío'],
+    ['nombre repetido', g => { g.nodos[1].nombre = 'A'; }, 'repetido'],
+    ['posición no numérica', g => { g.nodos[0].x = 'x'; }, 'posición']
+  ];
+  casos.forEach(([nombre, romper, fragmento]) => {
+    const g = base(); romper(g);
+    const r = validarGrafoImportado(g);
+    cierto(!r.ok && r.errores.some(e => e.includes(fragmento)), 'Debió rechazar: ' + nombre + ' → ' + JSON.stringify(r.errores));
+  });
+  cierto(!validarGrafoImportado(null).ok && !validarGrafoImportado({ nodos: [] }).ok);
+  // El resumen acota el mensaje a 3 detalles.
+  cierto(resumirErroresImportacion(['a', 'b', 'c', 'd', 'e']).endsWith('(+2 más)'));
+
+  // La depuración del autoguardado también aplica el rango de pesos y no adivina con ids repetidos.
+  const g = base(); g.conexiones[0].valor = MAX_PESO + 1;
+  igual(depurarGrafo(g).conexiones, []);
+  const dup = base(); dup.nodos[1].id = 'n_1';
+  igual(depurarGrafo(dup), null);
 });
 
 process.exitCode = informe('Johnson') ? 0 : 1;

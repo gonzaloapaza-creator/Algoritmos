@@ -197,9 +197,20 @@ function importarAsignacionJSON() {
       try {
         const datos = JSON.parse(e.target.result);
         let modelo = null, objetivo = 'min';
-        if (datos && datos.modelo) { modelo = depurarModeloAsignacion(datos.modelo); objetivo = datos.objetivo === 'max' ? 'max' : 'min'; }
-        else if (datos && Array.isArray(datos.values)) { modelo = migrarAsignacionV1(datos); objetivo = datos.objective === 'max' ? 'max' : 'min'; }
-        if (!modelo) throw new Error('El archivo no contiene un problema de asignación válido.');
+        if (datos && datos.modelo) {
+          // Formato v2: se valida todo antes de tocar el modelo abierto.
+          if (datos.version !== undefined && datos.version !== 2) throw new Error('Versión de archivo no compatible (' + datos.version + '); se admite la versión 2.');
+          const validacion = validarModeloAsignacionImportado(datos.modelo);
+          if (!validacion.ok) throw new Error(resumirErroresImportacion(validacion.errores));
+          modelo = validacion.modelo;
+          objetivo = datos.objetivo === 'max' ? 'max' : 'min';
+        } else if (datos && Array.isArray(datos.values)) {
+          // Formato antiguo v1: migración tolerante (los valores no enteros quedan pendientes).
+          if (datos.version !== undefined && datos.version !== 1) throw new Error('Versión de archivo no compatible (' + datos.version + '); el formato antiguo admite la versión 1.');
+          modelo = migrarAsignacionV1(datos);
+          objetivo = datos.objective === 'max' ? 'max' : 'min';
+        }
+        if (!modelo) throw new Error('El archivo no contiene un problema de asignación válido (se esperaba { version: 2, modelo } o el formato antiguo con «values»).');
         const aplicar = () => {
           aplicarCambioAsignacion((m, est) => {
             est.modelo = modelo;

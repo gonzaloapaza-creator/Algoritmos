@@ -5,7 +5,7 @@
  * MAX_TRABAJOS_POR_MODULO vienen de js/config.js. */
 'use strict';
 
-const MODULOS_TRABAJO = ['johnson', 'asignacion', 'northwest', 'ordenamiento', 'arboles'];
+const MODULOS_TRABAJO = ['johnson', 'dijkstra', 'kruskal', 'asignacion', 'northwest', 'ordenamiento', 'arboles'];
 const MAX_LARGO_NOMBRE_TRABAJO = 60;
 
 /* ---------------- Lógica pura ---------------- */
@@ -36,6 +36,18 @@ function nuevoIdTrabajo() {
 
 function copiarTrabajo(datos) {
   return JSON.parse(JSON.stringify(datos));
+}
+
+function esModuloGrafoTrabajo(modulo) {
+  return modulo === 'dijkstra' || modulo === 'kruskal';
+}
+
+/** Misma puerta de entrada para archivos, bibliotecas y restauración del editor. */
+function documentoTrabajoGrafo(datos, modulo) {
+  if (typeof validarDocumentoGrafo !== 'function') throw new Error('El validador de grafos no está disponible en esta página.');
+  const validacion = validarDocumentoGrafo(datos, modulo);
+  if (!validacion.ok) throw new Error('El grafo guardado no es válido: ' + validacion.error);
+  return validacion.datos;
 }
 
 /** Primer nombre libre de la forma «base», «base (2)», «base (3)»… dentro de un módulo. */
@@ -102,10 +114,22 @@ function exportarTrabajos(trabajos, modulo, ahora) {
  * Devuelve { ok, trabajos, agregados, omitidos } o { ok:false, error }.
  */
 function fusionarTrabajosImportados(trabajos, documento, modulo) {
+  if (documento && !Array.isArray(documento) && documento.version !== undefined && documento.version !== 1) {
+    return { ok: false, error: 'Versión de trabajos no compatible; se admite la versión 1.' };
+  }
   const lista = documento && Array.isArray(documento.trabajos) ? documento.trabajos : (Array.isArray(documento) ? documento : null);
   if (!lista) return { ok: false, error: 'El archivo no contiene una lista de trabajos.' };
-  const validos = depurarListaTrabajos(lista).filter(t => t.modulo === modulo);
+  if (esModuloGrafoTrabajo(modulo) && !Array.isArray(documento) && documento.modulo !== undefined && documento.modulo !== modulo) {
+    return { ok: false, error: 'El archivo pertenece a otro módulo.' };
+  }
+  let validos = depurarListaTrabajos(lista).filter(t => t.modulo === modulo);
   if (!validos.length) return { ok: false, error: 'El archivo no tiene trabajos de ' + (NOMBRES_MODULO_TRABAJO[modulo] || modulo) + '.' };
+  // Validar toda la importación antes de añadir un solo trabajo, incluso si se alcanza el cupo.
+  if (esModuloGrafoTrabajo(modulo)) {
+    try {
+      validos = validos.map(t => Object.assign({}, t, { datos: documentoTrabajoGrafo(t.datos, modulo) }));
+    } catch (error) { return { ok: false, error: error.message }; }
+  }
   let salida = trabajos.slice();
   let agregados = 0;
   for (const t of validos) {
@@ -124,7 +148,7 @@ function fusionarTrabajosImportados(trabajos, documento, modulo) {
   return { ok: true, trabajos: salida, agregados, omitidos: validos.length - agregados };
 }
 
-const NOMBRES_MODULO_TRABAJO = { johnson: 'Johnson', asignacion: 'Asignación', northwest: 'Esquina noroeste', ordenamiento: 'Ordenamiento', arboles: 'Árboles' };
+const NOMBRES_MODULO_TRABAJO = { johnson: 'Johnson', dijkstra: 'Dijkstra', kruskal: 'Kruskal', asignacion: 'Asignación', northwest: 'Esquina noroeste', ordenamiento: 'Ordenamiento', arboles: 'Árboles' };
 const NOMBRES_ORDENAMIENTO_TRABAJO = { selection: 'Selection', insertion: 'Insertion', bubble: 'Bubble', shell: 'Shell', merge: 'Merge' };
 
 function pluralTrabajo(n, singular, plural) {
@@ -134,6 +158,7 @@ function pluralTrabajo(n, singular, plural) {
 function resumenTrabajo(t) {
   try {
     const d = t.datos;
+    if (esModuloGrafoTrabajo(t.modulo)) return pluralTrabajo(d.grafo.nodos.length, 'vértice', 'vértices') + ' · ' + pluralTrabajo(d.grafo.conexiones.length, 'arista', 'aristas') + ' · ' + (t.modulo === 'kruskal' ? (d.objetivo === 'max' ? 'Máximo' : 'Mínimo') : (d.grafo.dirigido ? 'Dirigido' : 'No dirigido'));
     if (t.modulo === 'johnson') return pluralTrabajo(d.grafo.nodos.length, 'nodo', 'nodos') + ' · ' + pluralTrabajo(d.grafo.conexiones.length, 'conexión', 'conexiones');
     if (t.modulo === 'asignacion') return pluralTrabajo(d.modelo.recursos.length, 'recurso', 'recursos') + ' · ' + pluralTrabajo(d.modelo.tareas.length, 'tarea', 'tareas');
     if (t.modulo === 'northwest') return pluralTrabajo(d.modelo.origenes.length, 'origen', 'orígenes') + ' · ' + pluralTrabajo(d.modelo.destinos.length, 'destino', 'destinos');
@@ -160,6 +185,10 @@ function escribirTrabajos(trabajos) {
 /* ---------------- Puente con cada módulo (depende del DOM y del estado de la página) ---------------- */
 
 function instantaneaTrabajoActual(modulo) {
+  if (esModuloGrafoTrabajo(modulo)) {
+    if (typeof moduloGrafo !== 'object' || !moduloGrafo || moduloGrafo.modulo !== modulo) throw new Error('El trabajo pertenece a otro módulo.');
+    return documentoTrabajoGrafo(serializarModuloGrafo(), modulo);
+  }
   if (modulo === 'johnson') return { grafo: instantaneaGrafo(), vista: estadoJohnson.vista };
   if (modulo === 'asignacion') return Object.assign(serializarAsignacion(), {
     resultadoVigente: resultadoVigenteAsignacion(),
@@ -185,10 +214,20 @@ function guardarTrabajoNombrado(modulo, nombre) {
 
 function aplicarTrabajoNombrado(trabajo) {
   const datos = trabajo.datos;
+  const versionEsperada = { johnson: '1.0', dijkstra: 1, kruskal: 1, asignacion: 2, northwest: 1 }[trabajo.modulo];
+  if (datos && datos.version !== undefined && versionEsperada !== undefined && datos.version !== versionEsperada) {
+    throw new Error('Versión del trabajo guardado no compatible; se admite ' + versionEsperada + '.');
+  }
+  if (esModuloGrafoTrabajo(trabajo.modulo)) {
+    const documento = documentoTrabajoGrafo(datos, trabajo.modulo);
+    if (typeof moduloGrafo !== 'object' || !moduloGrafo || moduloGrafo.modulo !== trabajo.modulo) throw new Error('El trabajo pertenece a otro módulo.');
+    aplicarDocumentoModuloGrafo(documento);
+    return;
+  }
   if (trabajo.modulo === 'johnson') {
-    const grafo = depurarGrafo(datos.grafo);
-    if (!grafo) throw new Error('El grafo guardado no es válido.');
-    aplicarGrafo(grafo);
+    const validacion = validarGrafoImportado(datos && datos.grafo);
+    if (!validacion.ok) throw new Error('El grafo guardado no es válido: ' + resumirErroresImportacion(validacion.errores));
+    aplicarGrafo(validacion.grafo);
     estado.visualizacionJohnson = null;
     estadoJohnson.resultado = null;
     estadoJohnson.firma = null;
@@ -199,8 +238,9 @@ function aplicarTrabajoNombrado(trabajo) {
     return;
   }
   if (trabajo.modulo === 'asignacion') {
-    const modelo = depurarModeloAsignacion(datos.modelo);
-    if (!modelo) throw new Error('La matriz guardada no es válida.');
+    const validacion = validarModeloAsignacionImportado(datos && datos.modelo);
+    if (!validacion.ok) throw new Error('La matriz guardada no es válida: ' + resumirErroresImportacion(validacion.errores));
+    const modelo = validacion.modelo;
     estadoAsignacion.modelo = modelo;
     estadoAsignacion.objetivo = datos.objetivo === 'max' ? 'max' : 'min';
     estadoAsignacion.posiciones = depurarPosiciones(datos.posiciones, modelo);
@@ -223,8 +263,9 @@ function aplicarTrabajoNombrado(trabajo) {
     return;
   }
   if (trabajo.modulo === 'northwest') {
-    const modelo = depurarModeloNorthwest(datos.modelo);
-    if (!modelo) throw new Error('Los datos de transporte guardados no son válidos.');
+    const validacion = validarModeloNorthwestImportado(datos && datos.modelo);
+    if (!validacion.ok) throw new Error('Los datos de transporte guardados no son válidos: ' + resumirErroresImportacion(validacion.errores));
+    const modelo = validacion.modelo;
     estadoNorthwest.modelo = modelo;
     estadoNorthwest.vista = ['datos', 'balanceo', 'resolucion', 'resultado'].includes(datos.vista) ? datos.vista : 'datos';
     estadoNorthwest.resultado = null;
@@ -249,21 +290,8 @@ function aplicarTrabajoNombrado(trabajo) {
   if (trabajo.modulo === 'arboles') {
     const limpio = restaurarEstadoArboles(datos);
     if (!limpio) throw new Error('El árbol guardado no es válido.');
-    aplicarNuevoArbol(limpio.raiz, limpio.modo, limpio.secuencia);
-    const recorrido = ['preorden', 'inorden', 'postorden'].includes(datos.recorrido) ? datos.recorrido : 'preorden';
-    arbolElemento('selectorRecorrido').value = recorrido;
-    cambiarRecorridoArbol();
-    arbol.pasoRecorrido = Number.isInteger(datos.pasoRecorrido)
-      ? Math.max(0, Math.min(arbol.historialRecorrido.length, datos.pasoRecorrido)) : 0;
-    actualizarVisualArbol();
-    if (limpio.modo === 'reconstruido') {
-      const recorridos = recorridosArbol(limpio.raiz);
-      Object.entries(recorridos).forEach(([nombre, valores]) => {
-        arbolElemento('entrada' + nombre[0].toUpperCase() + nombre.slice(1)).value = valores.join(', ');
-      });
-      arbolElemento('modoReconstruccion').value = 'todos';
-      actualizarCamposReconstruccion();
-    }
+    // Misma restauración que el autoguardado: árbol, modo, recorrido y paso, en pausa.
+    restaurarArbolDepurado(limpio);
     return;
   }
   throw new Error('El algoritmo del trabajo guardado no está disponible.');
@@ -277,21 +305,9 @@ function fechaTrabajo(iso) {
   return fecha.toLocaleString('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
+/** Avisos breves: usa la pila común de js/comun/notificaciones.js. */
 function avisarTrabajo(texto, tipo) {
-  let pila = document.getElementById('gdAvisos');
-  if (!pila) {
-    pila = document.createElement('div');
-    pila.id = 'gdAvisos';
-    pila.className = 'gd-avisos';
-    pila.setAttribute('role', 'status');
-    pila.setAttribute('aria-live', 'polite');
-    document.body.appendChild(pila);
-  }
-  const aviso = document.createElement('div');
-  aviso.className = 'gd-aviso gd-aviso--' + (tipo || 'ok');
-  aviso.textContent = texto;
-  pila.appendChild(aviso);
-  setTimeout(() => aviso.remove(), 3500);
+  if (typeof notificar === 'function') notificar(texto, tipo || 'ok');
 }
 
 function descargarJsonTrabajos(documento, nombreArchivo) {
@@ -313,7 +329,7 @@ function crearPanelTrabajos(modulo) {
   };
   let confirmacion = null;     // { id, tipo: 'cargar' | 'eliminar' | 'renombrar' }
   let resaltado = null;
-  let abridor = null;
+  let liberarFoco = null;
 
   const fondo = el('div', 'gd-fondo');
   fondo.hidden = true;
@@ -476,7 +492,7 @@ function crearPanelTrabajos(modulo) {
     }
     try {
       aplicarTrabajoNombrado(t);
-      cerrarPanel(false);
+      cerrarPanel(esModuloGrafoTrabajo(t.modulo));
       avisarTrabajo('Trabajo «' + t.nombre + '» cargado.');
     } catch (error) {
       avisarTrabajo(error.message || 'No se pudo cargar el trabajo guardado.', 'error');
@@ -551,7 +567,7 @@ function crearPanelTrabajos(modulo) {
     fondo.hidden = true;
     document.body.classList.remove('gd-abierto');
     confirmacion = null;
-    if (devolverFoco !== false && abridor) abridor.focus();
+    if (liberarFoco) { liberarFoco(devolverFoco); liberarFoco = null; }
   }
 
   cerrar.addEventListener('click', () => cerrarPanel());
@@ -559,19 +575,12 @@ function crearPanelTrabajos(modulo) {
   // Mientras el panel está abierto, los atajos del módulo (flechas, espacio, Ctrl+Z…) no deben actuar.
   document.addEventListener('keydown', e => {
     if (fondo.hidden) return;
+    if (e.key === 'Tab' || e.key === 'Escape') return; // Los gestiona el componente común.
     e.stopPropagation();
-    if (e.key === 'Escape') { e.preventDefault(); cerrarPanel(); return; }
-    if (e.key !== 'Tab') return;
-    const foco = Array.from(panel.querySelectorAll('button, input')).filter(x => !x.disabled && x.offsetParent !== null);
-    if (!foco.length) return;
-    const primero = foco[0], ultimo = foco[foco.length - 1];
-    if (!panel.contains(document.activeElement)) { e.preventDefault(); primero.focus(); }
-    else if (e.shiftKey && document.activeElement === primero) { e.preventDefault(); ultimo.focus(); }
-    else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primero.focus(); }
   }, true);
 
   return function abrirPanel(modo, boton) {
-    abridor = boton;
+    if (!fondo.hidden) return;
     resaltado = null;
     confirmacion = null;
     nombre.value = modo === 'guardar' ? nombreSugerido() : '';
@@ -579,8 +588,12 @@ function crearPanelTrabajos(modulo) {
     dibujarLista();
     fondo.hidden = false;
     document.body.classList.add('gd-abierto');
-    if (modo === 'guardar') { nombre.focus(); nombre.select(); }
-    else (lista.querySelector('[data-gd="cargar"]') || nombre).focus();
+    liberarFoco = activarFocoModal(panel, {
+      cerrar: cerrarPanel,
+      retorno: boton,
+      inicial: modo === 'guardar' ? nombre : (lista.querySelector('[data-gd="cargar"]') || nombre)
+    });
+    if (modo === 'guardar') nombre.select();
   };
 }
 
@@ -604,9 +617,12 @@ function instalarGuardadosNombrados() {
       abrir(modo, elemento);
     });
     acciones.appendChild(elemento);
+    return elemento;
   };
   boton('Guardar', 'guardar', 'btn-secondary', 'Guardar este trabajo con un nombre');
-  boton('Cargar', 'cargar', 'btn-neutral', 'Abrir un trabajo guardado');
+  const cargar = boton('Cargar', 'cargar', 'btn-neutral', 'Abrir un trabajo guardado');
+  // El acceso desde Inicio solo abre la biblioteca; cargar sigue requiriendo confirmación.
+  if (new URLSearchParams(window.location.search).get('trabajos') === '1') cargar.click();
 }
 
 instalarGuardadosNombrados();

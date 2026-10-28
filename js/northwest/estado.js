@@ -19,9 +19,8 @@ function emitirCambioNorthwest(motivo) { estadoNorthwest.escuchas.forEach(fn => 
 /* ---------------- Persistencia ---------------- */
 
 function guardarNorthwest() {
-  try {
-    localStorage.setItem(NORTHWEST_STORAGE_KEY, JSON.stringify({ version: 1, modelo: estadoNorthwest.modelo, vista: estadoNorthwest.vista }));
-  } catch (e) { /* sin almacenamiento */ }
+  // Sin almacenamiento la aplicación sigue funcionando; el aviso se muestra una sola vez.
+  escribirAlmacenamientoLocal(NORTHWEST_STORAGE_KEY, JSON.stringify({ version: 1, modelo: estadoNorthwest.modelo, vista: estadoNorthwest.vista }), { respaldo: 'usa «Exportar JSON» en el panel Ejemplos' });
 }
 
 function cargarNorthwest() {
@@ -88,6 +87,23 @@ function aplicarCambioNorthwest(cambio, opciones) {
 function comprobarVigenciaNorthwest() {
   if (!estadoNorthwest.resultado) return;
   estadoNorthwest.resultado.vigente = estadoNorthwest.resultado.firma === firmaModeloNorthwest(estadoNorthwest.modelo);
+  sincronizarNombresNorthwest(estadoNorthwest.resultado.balance, estadoNorthwest.modelo);
+}
+
+/**
+ * El balance guarda copias de los nombres al resolver. La firma no incluye nombres
+ * (renombrar no invalida el resultado), así que se refrescan por id para que
+ * resultado, procedimiento e impresión muestren siempre el nombre actual.
+ * Los ficticios no están en el modelo y conservan su nombre.
+ */
+function sincronizarNombresNorthwest(balance, modelo) {
+  if (!balance || !modelo) return;
+  const actualizar = (lista, fuente) => {
+    const porId = new Map(fuente.map(e => [e.id, e.nombre]));
+    lista.forEach(e => { if (!e.ficticio && porId.has(e.id)) e.nombre = porId.get(e.id); });
+  };
+  actualizar(balance.origenes, modelo.origenes);
+  actualizar(balance.destinos, modelo.destinos);
 }
 
 function resultadoVigenteNorthwest() {

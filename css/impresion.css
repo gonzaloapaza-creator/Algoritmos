@@ -15,7 +15,7 @@ html, body {
 
 /* Interfaz interactiva: fuera. */
 .topbar, .sidebar, .sidebar-fondo, .app-footer, .saltar, .btn, .acciones, .segmentado,
-#introModulo, .modal-fondo, .toast-stack, #avisos, .aviso, .zoom-controls, .panel,
+#introModulo, .modal-fondo, .toast-stack, .zoom-controls, .panel,
 .pasos, .jn-pasos, .nw-pasos, .asig-pasos, .pasos__contador, .mapa-pasos, .deslizador,
 input[type="range"], select, .leyenda-ayuda, .ayuda, [data-accion-trabajo] {
   display: none !important;

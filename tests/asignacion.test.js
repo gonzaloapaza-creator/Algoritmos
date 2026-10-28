@@ -1,6 +1,6 @@
 'use strict';
 
-const { crearContexto, cargar, prueba, igual, cierto, lanza, informe } = require('./cargar');
+const { crearContexto, cargar, evaluar, prueba, igual, cierto, lanza, informe } = require('./cargar');
 
 const ctx = cargar(crearContexto(), [
   'js/config.js',
@@ -242,6 +242,54 @@ prueba('Firma del modelo cambia con valores/objetivo pero no con nombres', () =>
   cierto(firmaModeloAsignacion(m, 'max') !== f1);
   fijarValorAsignacion(m, m.recursos[0].id, m.tareas[0].id, 99);
   cierto(firmaModeloAsignacion(m, 'min') !== f1);
+});
+
+prueba('Importación: validarModeloAsignacionImportado acepta pendientes y rechaza datos inválidos sin truncar', () => {
+  const { validarModeloAsignacionImportado, ejemploAsignacion } = ctx;
+  const MAXD = evaluar(ctx, 'MAX_ASIGNACION_DIMENSION');
+  const MAXV = evaluar(ctx, 'MAX_VALOR_ASIGNACION');
+  const base = () => JSON.parse(JSON.stringify(ejemploAsignacion()));
+  const ok = validarModeloAsignacionImportado(base());
+  cierto(ok.ok && ok.modelo.recursos.length === 4);
+  // Pareja pendiente (ausente o null): válida y sigue pendiente, nunca 0.
+  const pendiente = base(); const clave = Object.keys(pendiente.valores)[0]; pendiente.valores[clave] = null;
+  const rp = validarModeloAsignacionImportado(pendiente);
+  cierto(rp.ok && !(clave in rp.modelo.valores));
+  // Un modelo con 0 tareas es un estado pendiente que la interfaz puede guardar.
+  const vacio = base(); vacio.tareas = []; vacio.valores = {};
+  cierto(validarModeloAsignacionImportado(vacio).ok);
+
+  const casos = [
+    ['id repetido', m => { m.tareas[1].id = m.tareas[0].id; }, 'repetido'],
+    ['id repetido entre grupos', m => { m.tareas[0].id = m.recursos[0].id; }, 'repetido'],
+    ['valor que referencia ids inexistentes', m => { m.valores['r_99|t_99'] = 1; }, 'existentes'],
+    ['valor decimal', m => { m.valores[Object.keys(m.valores)[0]] = 1.5; }, 'entero'],
+    ['valor como texto', m => { m.valores[Object.keys(m.valores)[0]] = '12'; }, 'entero'],
+    ['valor fuera de rango', m => { m.valores[Object.keys(m.valores)[0]] = MAXV + 1; }, 'entero'],
+    ['nombre demasiado largo (no se recorta)', m => { m.recursos[0].nombre = 'x'.repeat(40); }, 'largo'],
+    ['nombre numérico (no se descarta el recurso)', m => { m.recursos[0].nombre = 123; }, 'texto'],
+    ['nombre repetido', m => { m.recursos[1].nombre = m.recursos[0].nombre.toUpperCase(); }, 'Ya existe'],
+    ['demasiados recursos (no se recorta)', m => { for (let i = 0; i <= MAXD; i++) m.recursos.push({ id: 'r_x' + i, nombre: 'R' + i }); }, 'máximo'],
+    ['siguienteId no entero', m => { m.siguienteId = 'a'; }, 'siguienteId'],
+    ['siguienteId no seguro', m => { m.siguienteId = Number.MAX_SAFE_INTEGER + 1; }, 'siguienteId']
+  ];
+  casos.forEach(([nombre, romper, fragmento]) => {
+    const m = base(); romper(m);
+    const r = validarModeloAsignacionImportado(m);
+    cierto(!r.ok && r.errores.some(e => e.includes(fragmento)), 'Debió rechazar: ' + nombre + ' → ' + JSON.stringify(r.errores));
+  });
+  cierto(!validarModeloAsignacionImportado({ recursos: [] }).ok);
+});
+
+prueba('Renombrar después de resolver: el texto del total se regenera con los nombres actuales', () => {
+  const { resolverHungaro, textoTotalAsignacion } = ctx;
+  const r = resolverHungaro([[4, 1], [2, 3]], 'min', { nombresFilas: ['A', 'B'], nombresColumnas: ['T1', 'T2'] });
+  const total = r.pasos[r.pasos.length - 1];
+  igual(total.tipo, 'total');
+  cierto(total.texto.includes('A → T2: 1') && total.detalleTotal && total.detalleTotal.total === 3);
+  const nuevo = textoTotalAsignacion(total.detalleTotal, ['Ana', 'B'], ['T1', 'Tarea dos']);
+  cierto(nuevo.includes('Ana → Tarea dos: 1') && nuevo.includes('B → T1: 2') && !nuevo.includes('A → T2'));
+  igual(textoTotalAsignacion(total.detalleTotal, ['A', 'B'], ['T1', 'T2']), total.texto);
 });
 
 process.exitCode = informe('Asignación') ? 0 : 1;

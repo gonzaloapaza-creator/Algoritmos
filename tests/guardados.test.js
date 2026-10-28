@@ -1,6 +1,6 @@
 'use strict';
 
-const { crearContexto, cargar, evaluar, prueba, igual, cierto, informe } = require('./cargar');
+const { crearContexto, cargar, evaluar, prueba, igual, cierto, lanza, informe } = require('./cargar');
 
 /* localStorage mínimo en memoria para probar leer/escribir sin navegador. */
 function crearAlmacen() {
@@ -15,7 +15,7 @@ function crearAlmacen() {
 
 const contexto = crearContexto();
 contexto.localStorage = crearAlmacen();
-const ctx = cargar(contexto, ['js/config.js', 'js/comun/guardados.js']);
+const ctx = cargar(contexto, ['js/config.js', 'js/grafos/modelo.js', 'js/comun/utilidades.js', 'js/comun/guardados.js']);
 
 const {
   depurarListaTrabajos, validarNombreTrabajo, nombreLibreTrabajo, insertarTrabajo, renombrarTrabajo,
@@ -137,6 +137,41 @@ prueba('fusionarTrabajosImportados: errores, lista cruda y límite por módulo',
   igual(r.trabajos.length, MAX);
 });
 
+prueba('Mis trabajos rechaza versiones futuras antes de fusionar o aplicar datos', () => {
+  const actual = [trabajo()];
+  const antes = JSON.stringify(actual);
+  cierto(!fusionarTrabajosImportados(actual, { version: 99, trabajos: [trabajo()] }, 'johnson').ok);
+  igual(JSON.stringify(actual), antes);
+  ['johnson', 'asignacion', 'northwest'].forEach(modulo => {
+    lanza(() => ctx.aplicarTrabajoNombrado(trabajo({ modulo, datos: { version: 99 } })));
+  });
+});
+
+prueba('Un trabajo inválido de Johnson, Asignación o Northwest conserva el ejercicio activo', () => {
+  const contexto = crearContexto();
+  cargar(contexto, ['js/config.js', 'js/comun/utilidades.js', 'js/almacenamiento.js',
+    'js/asignacion/validacion.js', 'js/asignacion/modelo.js', 'js/northwest/validacion.js',
+    'js/northwest/modelo.js', 'js/comun/guardados.js']);
+  contexto.estado = { nodos: [{ id: 'actual', nombre: 'Actual', x: 10, y: 10 }], conexiones: [], siguienteId: 2 };
+  contexto.estadoAsignacion = { modelo: contexto.ejemploAsignacion(), resultado: { total: 26 }, historial: { pasado: ['conservado'] } };
+  contexto.estadoNorthwest = { modelo: contexto.ejemploNorthwest('balanceado'), resultado: { total: 230 } };
+  const antes = JSON.stringify([contexto.estado, contexto.estadoAsignacion, contexto.estadoNorthwest]);
+  const grafo = { nodos: [{ id: 'n', nombre: 'Uno', x: 0, y: 0 }, { id: 'n', nombre: 'Dos', x: 1, y: 1 }], conexiones: [] };
+  const asignacion = contexto.ejemploAsignacion(); asignacion.valores['inexistente|inexistente'] = 1;
+  const northwest = contexto.ejemploNorthwest('balanceado'); northwest.origenes[0].oferta = -1;
+  const casos = [
+    ['johnson', { grafo }, 'grafo guardado no es válido'],
+    ['asignacion', { modelo: asignacion }, 'matriz guardada no es válida'],
+    ['northwest', { modelo: northwest }, 'transporte guardados no son válidos']
+  ];
+  casos.forEach(([modulo, datos, mensaje]) => {
+    let error;
+    try { contexto.aplicarTrabajoNombrado(trabajo({ modulo, datos })); } catch (e) { error = e; }
+    cierto(error && error.message.includes(mensaje), 'Debe rechazar por validación: ' + modulo);
+    igual(JSON.stringify([contexto.estado, contexto.estadoAsignacion, contexto.estadoNorthwest]), antes);
+  });
+});
+
 prueba('resumenTrabajo describe cada módulo y tolera datos incompletos', () => {
   igual(resumenTrabajo(trabajo()), '2 nodos · 1 conexión');
   igual(resumenTrabajo({ modulo: 'ordenamiento', datos: { algoritmo: 'merge', valores: [1, 2, 3] } }), 'Merge Sort · 3 pinos');
@@ -144,6 +179,72 @@ prueba('resumenTrabajo describe cada módulo y tolera datos incompletos', () => 
   igual(resumenTrabajo({ modulo: 'asignacion', datos: { modelo: { recursos: [1], tareas: [1, 2] } } }), '1 recurso · 2 tareas');
   igual(resumenTrabajo({ modulo: 'northwest', datos: { modelo: { origenes: [1, 2], destinos: [1] } } }), '2 orígenes · 1 destino');
   igual(resumenTrabajo({ modulo: 'johnson', datos: {} }), '');
+  igual(resumenTrabajo({ modulo: 'dijkstra', datos: { grafo: { dirigido: true, nodos: [1, 2], conexiones: [1] } } }), '2 vértices · 1 arista · Dirigido');
+  igual(resumenTrabajo({ modulo: 'kruskal', datos: { objetivo: 'max', grafo: { nodos: [1], conexiones: [] } } }), '1 vértice · 0 aristas · Máximo');
+});
+
+function documentoGrafo(modulo) {
+  const grafo = ctx.crearEjemploGrafo(modulo);
+  return { version: 1, modulo, grafo, origen: grafo.nodos[0].id, destino: null,
+    objetivo: 'min', vista: 'procedimiento', paso: 2, resuelto: true };
+}
+
+prueba('Dijkstra y Kruskal se guardan como trabajos separados con el mismo nombre', () => {
+  let lista = [];
+  ['dijkstra', 'kruskal'].forEach(modulo => {
+    const insertado = insertarTrabajo(lista, modulo, 'Mi red', documentoGrafo(modulo), fecha);
+    cierto(insertado.ok);
+    lista = insertado.trabajos;
+  });
+  igual(depurarListaTrabajos(lista).map(t => t.modulo), ['dijkstra', 'kruskal']);
+  igual(exportarTrabajos(lista, 'dijkstra').trabajos.map(t => t.modulo), ['dijkstra']);
+  igual(exportarTrabajos(lista, 'kruskal').trabajos.map(t => t.modulo), ['kruskal']);
+});
+
+prueba('La biblioteca de grafos valida todos los documentos antes de fusionar', () => {
+  ['dijkstra', 'kruskal'].forEach(modulo => {
+    const datos = documentoGrafo(modulo);
+    const bueno = trabajo({ modulo, datos });
+    const malo = JSON.parse(JSON.stringify(bueno));
+    malo.id = 'malo'; malo.nombre = 'Roto';
+    malo.datos.grafo.nodos[1].id = malo.datos.grafo.nodos[0].id;
+    const actual = [trabajo()];
+    const antes = JSON.stringify(actual);
+    const resultado = fusionarTrabajosImportados(actual, { version: 1, tipo: 'trabajos', modulo, trabajos: [bueno, malo] }, modulo);
+    cierto(!resultado.ok && resultado.error.includes('repetido'));
+    igual(JSON.stringify(actual), antes, 'No inserta parcialmente la biblioteca');
+    cierto(fusionarTrabajosImportados(actual, { version: 1, modulo, trabajos: [bueno] }, modulo).ok);
+    cierto(!fusionarTrabajosImportados(actual, { version: 1, modulo: 'otro', trabajos: [bueno] }, modulo).ok);
+    malo.datos = documentoGrafo(modulo === 'dijkstra' ? 'kruskal' : 'dijkstra');
+    cierto(!fusionarTrabajosImportados(actual, [malo], modulo).ok, 'Rechaza sobre de otro algoritmo');
+    if (modulo === 'dijkstra') {
+      malo.datos = documentoGrafo(modulo); malo.datos.grafo.conexiones[0].valor = -1;
+      cierto(!fusionarTrabajosImportados(actual, [malo], modulo).ok, 'Rechaza negativos también al importar trabajos');
+    }
+  });
+});
+
+prueba('El puente de grafos valida antes de aplicar y respeta el módulo abierto', () => {
+  const contexto = crearContexto();
+  cargar(contexto, ['js/config.js', 'js/grafos/modelo.js', 'js/comun/guardados.js']);
+  contexto.estado = { nodos: [{ id: 'johnson-previo' }] };
+  contexto.moduloGrafo = { modulo: 'dijkstra', grafo: { actual: true }, reproduciendo: false };
+  let aplicados = 0;
+  contexto.aplicarDocumentoModuloGrafo = datos => { aplicados++; contexto.moduloGrafo.grafo = datos.grafo; };
+  contexto.serializarModuloGrafo = () => documentoGrafo('dijkstra');
+  const antes = JSON.stringify([contexto.estado, contexto.moduloGrafo]);
+  const negativo = documentoGrafo('dijkstra'); negativo.grafo.conexiones[0].valor = -1;
+  lanza(() => contexto.aplicarTrabajoNombrado(trabajo({ modulo: 'dijkstra', datos: negativo })));
+  lanza(() => contexto.aplicarTrabajoNombrado(trabajo({ modulo: 'kruskal', datos: documentoGrafo('kruskal') })));
+  lanza(() => contexto.instantaneaTrabajoActual('kruskal'));
+  igual(JSON.stringify([contexto.estado, contexto.moduloGrafo]), antes);
+  igual(aplicados, 0);
+  const instantanea = contexto.instantaneaTrabajoActual('dijkstra');
+  igual(instantanea.modulo, 'dijkstra');
+  cierto(instantanea.resuelto && instantanea.paso === 2);
+  contexto.aplicarTrabajoNombrado(trabajo({ modulo: 'dijkstra', datos: instantanea }));
+  igual(aplicados, 1);
+  igual(contexto.estado.nodos, [{ id: 'johnson-previo' }]);
 });
 
 prueba('leerTrabajos/escribirTrabajos usan la clave de config y toleran JSON corrupto', () => {
@@ -153,6 +254,64 @@ prueba('leerTrabajos/escribirTrabajos usan la clave de config y toleran JSON cor
   igual(leerTrabajos().length, 1, 'al leer se depura');
   contexto.localStorage.setItem(CLAVE, '{no es json');
   igual(leerTrabajos(), []);
+});
+
+prueba('Autoguardado: un fallo de escritura avisa una sola vez, la sesión sigue y el estado se limpia al volver a escribir', () => {
+  const { escribirAlmacenamientoLocal } = ctx;
+  const estadoAlm = evaluar(ctx, 'estadoAlmacenamientoLocal');
+  const avisos = [];
+  contexto.notificar = (texto, tipo) => avisos.push(tipo + ': ' + texto);
+  const almacenReal = contexto.localStorage;
+  let fallar = true;
+  contexto.localStorage = {
+    getItem: almacenReal.getItem,
+    removeItem: almacenReal.removeItem,
+    setItem: (k, v) => { if (fallar) throw new Error('QuotaExceededError'); almacenReal.setItem(k, v); }
+  };
+  try {
+    igual(escribirAlmacenamientoLocal('prueba.clave', '1'), false);
+    igual(escribirAlmacenamientoLocal('prueba.clave', '2'), false);
+    cierto(estadoAlm.fallando, 'Debe quedar marcado el fallo');
+    igual(avisos, [], 'Sin DOM no hay toast por cada edición ni aviso de éxito falso');
+    fallar = false;
+    igual(escribirAlmacenamientoLocal('prueba.clave', '3'), true);
+    cierto(!estadoAlm.fallando, 'Una escritura posterior con éxito limpia el estado de error');
+    igual(almacenReal.getItem('prueba.clave'), '3');
+    igual(avisos, ['ok: El guardado local volvió a funcionar.']);
+    igual(escribirAlmacenamientoLocal('prueba.clave', '4'), true);
+    igual(avisos.length, 1, 'El aviso de recuperación se muestra solo al salir del fallo');
+  } finally {
+    contexto.localStorage = almacenReal;
+    almacenReal.removeItem('prueba.clave');
+    delete contexto.notificar;
+  }
+});
+
+prueba('El aviso visible de autoguardado se conserva sin duplicados y se retira al recuperarse', () => {
+  const contexto = crearContexto();
+  const visibles = [];
+  let creados = 0;
+  let fallar = true;
+  contexto.document = {
+    getElementById: () => ({ prepend: aviso => visibles.push(aviso) }),
+    createElement: () => {
+      creados++;
+      return { atributos: {}, setAttribute(nombre, valor) { this.atributos[nombre] = valor; },
+        remove() { visibles.splice(visibles.indexOf(this), 1); } };
+    }
+  };
+  contexto.localStorage = { setItem: () => { if (fallar) throw new Error('QuotaExceededError'); } };
+  cargar(contexto, ['js/comun/utilidades.js']);
+  contexto.escribirAlmacenamientoLocal('ejercicio', '1', { respaldo: 'exporta JSON' });
+  contexto.escribirAlmacenamientoLocal('ejercicio', '2');
+  igual(creados, 1);
+  igual(visibles.length, 1);
+  igual(visibles[0].atributos.role, 'alert');
+  cierto(visibles[0].textContent.includes('exporta JSON'));
+  fallar = false;
+  contexto.escribirAlmacenamientoLocal('ejercicio', '3');
+  igual(visibles.length, 0);
+  cierto(!evaluar(contexto, 'estadoAlmacenamientoLocal.fallando'));
 });
 
 process.exit(informe('Guardados') ? 0 : 1);

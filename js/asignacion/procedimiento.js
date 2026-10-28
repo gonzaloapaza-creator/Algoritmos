@@ -23,6 +23,13 @@ function pasosAsignacion() {
   return resultadoVigenteAsignacion() ? estadoAsignacion.resultado.datos.pasos : [];
 }
 
+/** Texto del paso con los nombres actuales del modelo (el guardado al resolver puede estar desactualizado). */
+function textoPasoAsignacion(paso) {
+  if (paso.tipo !== 'total' || !paso.detalleTotal) return paso.texto;
+  const m = estadoAsignacion.modelo;
+  return textoTotalAsignacion(paso.detalleTotal, m.recursos.map(r => r.nombre), m.tareas.map(t => t.nombre));
+}
+
 function irAPasoAsignacion(indice) {
   const pasos = pasosAsignacion();
   if (!pasos.length) return;
@@ -113,7 +120,7 @@ function bloquePasoAsignacion(paso, indice, total) {
   h.textContent = 'Paso ' + (indice + 1) + ' de ' + total + ': ' + paso.titulo;
   seccion.appendChild(h);
   const p = document.createElement('p');
-  p.textContent = paso.texto;
+  p.textContent = textoPasoAsignacion(paso);
   seccion.appendChild(p);
   const caja = document.createElement('div');
   caja.className = 'tabla-caja';
@@ -164,7 +171,7 @@ function dibujarProcedimientoAsignacion() {
   } else {
     const paso = pasos[actual];
     procAsig.titulo.textContent = paso.titulo;
-    procAsig.texto.textContent = paso.texto;
+    procAsig.texto.textContent = textoPasoAsignacion(paso);
     const caja = document.createElement('div');
     caja.className = 'tabla-caja';
     caja.appendChild(tablaPasoAsignacion(paso));

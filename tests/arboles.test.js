@@ -1,12 +1,13 @@
 'use strict';
 
-const { crearContexto, cargar, prueba, igual, cierto, lanza, informe } = require('./cargar');
+const { crearContexto, cargar, evaluar, prueba, igual, cierto, lanza, informe } = require('./cargar');
 
 const ctx = cargar(crearContexto(), [
   'js/config.js',
   'js/arboles/modelo.js',
   'js/arboles/validacion.js',
-  'js/arboles/reconstruccion.js'
+  'js/arboles/reconstruccion.js',
+  'js/arboles/estado.js'
 ]);
 const {
   crearArbolBusqueda, insertarNodoArbol, recorridosArbol, generarValoresArbol,
@@ -110,6 +111,95 @@ prueba('Rechaza particiones incompatibles, tercer recorrido incorrecto y falta d
   cierto(!tercer.ok && tercer.error.includes('postorden ingresado no corresponde'));
   const sinInorden = validarYReconstruirArbol({ preorden: [2, 1], postorden: [1, 2] }, 'pre_post');
   cierto(!sinInorden.ok && sinInorden.error.includes('inorden'));
+});
+
+prueba('Recuperación: depurarEstadoArboles conserva recorrido y paso, con valores seguros para formatos antiguos', () => {
+  const { depurarEstadoArboles } = ctx;
+  const antiguo = depurarEstadoArboles({ version: 1, modo: 'busqueda', secuencia: [5, 3, 8] });
+  cierto(antiguo && antiguo.recorrido === 'preorden' && antiguo.pasoRecorrido === 0);
+  const completo = depurarEstadoArboles({ version: 1, modo: 'busqueda', secuencia: [5, 3, 8], recorrido: 'postorden', pasoRecorrido: 4 });
+  cierto(completo && completo.recorrido === 'postorden' && completo.pasoRecorrido === 4);
+  const raro = depurarEstadoArboles({ version: 1, modo: 'busqueda', secuencia: [5], recorrido: 'otro', pasoRecorrido: -2 });
+  cierto(raro && raro.recorrido === 'preorden' && raro.pasoRecorrido === 0);
+  const reconstruido = depurarEstadoArboles({ version: 1, modo: 'reconstruido', recorridos: { preorden: [2, 1, 3], inorden: [1, 2, 3], postorden: [1, 3, 2] }, recorrido: 'inorden', pasoRecorrido: 1 });
+  cierto(reconstruido && reconstruido.modo === 'reconstruido' && reconstruido.recorrido === 'inorden' && reconstruido.pasoRecorrido === 1);
+  igual(depurarEstadoArboles({ version: 2, modo: 'busqueda', secuencia: [1] }), null);
+});
+
+prueba('El guardado diferido conserva el último paso al salir u ocultar la página', () => {
+  const contexto = crearContexto();
+  const eventos = {};
+  const pendientes = new Map();
+  const escrituras = [];
+  let reloj = 0;
+  contexto.window = { addEventListener: (nombre, fn) => { eventos[nombre] = fn; } };
+  contexto.document = { hidden: false, addEventListener: (nombre, fn) => { eventos[nombre] = fn; } };
+  contexto.localStorage = {};
+  contexto.setTimeout = (fn, retraso) => { pendientes.set(++reloj, { fn, retraso }); return reloj; };
+  contexto.clearTimeout = id => pendientes.delete(id);
+  contexto.escribirAlmacenamientoLocal = (clave, texto) => escrituras.push(JSON.parse(texto));
+  cargar(contexto, ['js/config.js', 'js/arboles/estado.js']);
+  const estado = evaluar(contexto, 'estadoArboles');
+  estado.secuencia = [5, 3, 8];
+  estado.recorridoSeleccionado = 'postorden';
+  estado.pasoRecorrido = 2;
+  contexto.programarGuardadoArboles();
+  igual([...pendientes.values()].map(t => t.retraso), [400]);
+  estado.pasoRecorrido = 4;
+  contexto.programarGuardadoArboles();
+  igual(pendientes.size, 1, 'Las ediciones consecutivas agrupan la escritura');
+  igual(escrituras.length, 0);
+  eventos.pagehide();
+  igual(escrituras.length, 1);
+  igual(escrituras[0].pasoRecorrido, 4);
+  igual(escrituras[0].recorrido, 'postorden');
+  igual(pendientes.size, 0);
+  eventos.pagehide();
+  igual(escrituras.length, 1, 'Sin guardado pendiente no se repite la escritura');
+  estado.pasoRecorrido = 5;
+  contexto.programarGuardadoArboles();
+  eventos.visibilitychange();
+  igual(escrituras.length, 1, 'Una página visible conserva la espera');
+  contexto.document.hidden = true;
+  eventos.visibilitychange();
+  igual(escrituras[1].pasoRecorrido, 5);
+  igual(pendientes.size, 0);
+});
+
+prueba('Restaurar Árboles aplica estructura, recorrido y paso con la reproducción pausada', () => {
+  const contexto = crearContexto();
+  const elementos = new Map();
+  const elemento = id => {
+    if (!elementos.has(id)) elementos.set(id, { value: '', addEventListener() {}, setAttribute() {} });
+    return elementos.get(id);
+  };
+  contexto.document = { getElementById: elemento, querySelectorAll: () => [], addEventListener() {} };
+  contexto.dibujarArbol = () => {};
+  contexto.cambiarZoomArbol = contexto.centrarArbol = contexto.ajustarZoomArbol = () => {};
+  contexto.instalarAyudaModal = () => {};
+  contexto.escribirAlmacenamientoLocal = () => true;
+  contexto.clearInterval = () => {};
+  const guardado = { version: 1, modo: 'busqueda', secuencia: [5, 3, 8], recorrido: 'postorden', pasoRecorrido: 4 };
+  contexto.localStorage = { getItem: () => JSON.stringify(guardado) };
+  cargar(contexto, ['js/config.js', 'js/arboles/modelo.js', 'js/arboles/validacion.js',
+    'js/arboles/reconstruccion.js', 'js/arboles/estado.js', 'js/arboles/app.js']);
+  const estado = evaluar(contexto, 'estadoArboles');
+  igual(contexto.recorridosArbol(estado.raiz).inorden, [3, 5, 8]);
+  igual(elemento('selectorRecorrido').value, 'postorden');
+  igual(estado.pasoRecorrido, 4);
+  cierto(!estado.reproduciendo && estado.intervaloRecorrido === null);
+  cierto(elemento('explicacionRecorrido').textContent.includes('Paso 4 de 6'));
+  const reconstruido = contexto.depurarEstadoArboles({ version: 1, modo: 'reconstruido',
+    recorridos: { preorden: [10, 15, 5], inorden: [15, 10, 5], postorden: [15, 5, 10] },
+    recorrido: 'inorden', pasoRecorrido: 99 });
+  estado.reproduciendo = true;
+  estado.intervaloRecorrido = 42;
+  contexto.restaurarArbolDepurado(reconstruido);
+  igual(estado.raiz.izquierdo.valor, 15, 'La restauración conserva el árbol reconstruido que no es BST');
+  igual(estado.recorridoSeleccionado, 'inorden');
+  igual(estado.pasoRecorrido, 6, 'El paso se limita al historial real');
+  igual(elemento('entradaPreorden').value, '10, 15, 5');
+  cierto(!estado.reproduciendo && estado.intervaloRecorrido === null);
 });
 
 process.exit(informe('Árboles') ? 0 : 1);

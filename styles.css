@@ -189,18 +189,7 @@ html[data-tema="claro"] {
   --col-cantidad-fondo-fuerte: rgba(3, 105, 161, .2);
   color-scheme: light;
 }
-html[data-tema="claro"] body[data-modulo="johnson"] { --acento: #2f5fd6; --acento-fuerte: #1d4ed8; --acento-tinte: rgba(47, 95, 214, .1); --acento-borde: rgba(47, 95, 214, .4); }
-html[data-tema="claro"] body[data-modulo="asignacion"] { --acento: #0f9f8f; --acento-fuerte: #0d8a7c; --acento-tinte: rgba(15, 159, 143, .1); --acento-borde: rgba(15, 159, 143, .4); }
-html[data-tema="claro"] body[data-modulo="northwest"] { --acento: #c27a06; --acento-fuerte: #a56505; --acento-tinte: rgba(194, 122, 6, .1); --acento-borde: rgba(194, 122, 6, .4); }
-html[data-tema="claro"] body[data-modulo="ordenamiento"] { --acento: #db2777; --acento-fuerte: #be185d; --acento-tinte: rgba(219, 39, 119, .1); --acento-borde: rgba(219, 39, 119, .4); }
-html[data-tema="claro"] body[data-modulo="arboles"] { --acento: #7c3aed; --acento-fuerte: #6d28d9; --acento-tinte: rgba(124, 58, 237, .1); --acento-borde: rgba(124, 58, 237, .4); }
-
-/* Acento moderado por módulo. */
-body[data-modulo="johnson"] { --acento: #5b8cff; --acento-fuerte: #7ea0ff; --acento-tinte: rgba(91, 140, 255, .14); --acento-borde: rgba(91, 140, 255, .45); }
-body[data-modulo="asignacion"] { --acento: #2dd4bf; --acento-fuerte: #5eead4; --acento-tinte: rgba(45, 212, 191, .14); --acento-borde: rgba(45, 212, 191, .45); }
-body[data-modulo="northwest"] { --acento: #f5b041; --acento-fuerte: var(--acento-fuerte); --acento-tinte: rgba(245, 176, 65, .14); --acento-borde: rgba(245, 176, 65, .45); }
-body[data-modulo="ordenamiento"] { --acento: #f472b6; --acento-fuerte: #f9a8d4; --acento-tinte: rgba(244, 114, 182, .14); --acento-borde: rgba(244, 114, 182, .45); }
-body[data-modulo="arboles"] { --acento: #a78bfa; --acento-fuerte: #c4b5fd; --acento-tinte: rgba(167, 139, 250, .14); --acento-borde: rgba(167, 139, 250, .45); }
+/* El acento de cada módulo lo fija css/shell.css a partir de --identidad* (catálogo + navegacion.js). */
 
 /* ---------------- Reinicio ---------------- */
 *, *::before, *::after { box-sizing: border-box; }
@@ -656,7 +645,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .toast {
   padding: 12px 14px;
   border-radius: var(--radio);
-  border: 1px solid rgba(148, 163, 184, .2);
+  border: 1px solid var(--borde);
   border-left-width: 4px;
   border-left-color: var(--info);
   background: var(--flotante);

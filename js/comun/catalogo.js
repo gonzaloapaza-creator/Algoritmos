@@ -11,7 +11,7 @@
 'use strict';
 
 const CATEGORIAS_ALGORITMOS = [
-  { id: 'grafos', nombre: 'Grafos y rutas', descripcion: 'Caminos mínimos y análisis sobre grafos dirigidos.' },
+  { id: 'grafos', nombre: 'Grafos y rutas', descripcion: 'Johnson calcula caminos mínimos entre todos los pares y admite pesos negativos; Dijkstra parte de un origen con pesos no negativos; Kruskal conecta cada componente con peso total mínimo o máximo.' },
   { id: 'asignacion', nombre: 'Asignación', descripcion: 'Emparejar recursos con tareas al menor costo o mayor beneficio.' },
   { id: 'transporte', nombre: 'Transporte', descripcion: 'Distribuir oferta entre destinos con demanda.' },
   { id: 'arreglos', nombre: 'Ordenamiento', descripcion: 'Visualización de algoritmos de ordenamiento con arreglos y pinos de boliche.' },
@@ -21,6 +21,8 @@ const CATEGORIAS_ALGORITMOS = [
 /* Iconos como contenido interno de un <svg viewBox="0 0 24 24"> con trazo currentColor. */
 const ICONOS_ALGORITMOS = {
   grafo: '<circle cx="5" cy="17" r="2.8"/><circle cx="12" cy="6" r="2.8"/><circle cx="19" cy="15" r="2.8"/><path d="M7.2 15.3 10.5 8.5l5.6 4.7"/>',
+  navegacion: '<circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M7.5 12H12m0 0 5-6m-5 6 5 6M13 6h4v4m-4 8h4v-4"/>',
+  conexiones: '<circle cx="5" cy="5" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M7.5 5h9M5 7.5v9m2.5 2.5h9"/>',
   bipartito: '<circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="18" cy="12" r="2.4"/><circle cx="18" cy="18" r="2.4"/><path d="M8.4 6h7.2M8.4 12l7.2 6M8.4 18l7.2-6"/>',
   tabla: '<rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M3.5 15h17M9 4v16M15 4v16"/>',
   esquina: '<rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M3.5 15h17M9.5 4v16M15 4v16"/><rect x="4.5" y="5" width="4" height="4" rx="1" fill="currentColor" stroke="none"/>',
@@ -31,6 +33,11 @@ const ICONOS_ALGORITMOS = {
 const CATALOGO_ALGORITMOS = [
   {
     id: 'ordenamiento',
+    zona: 'Planta clasificadora',
+    etiqueta: 'Ordenamiento · Cinco métodos',
+    distrito: 'arreglos',
+    escena: 'clasificadora',
+    color: '#eba2c4', colorClaro: '#a33669', colorFuerte: '#f4c0d8',
     nombre: 'Ordenamiento (Bowling)',
     corto: 'Ordenamiento',
     categoria: 'arreglos',
@@ -45,6 +52,11 @@ const CATALOGO_ALGORITMOS = [
   },
   {
     id: 'arboles',
+    zona: 'Jardín de estructuras',
+    etiqueta: 'Árboles · Estructuras y recorridos',
+    distrito: 'arboles',
+    escena: 'jardin',
+    color: '#88c7a2', colorClaro: '#32764a', colorFuerte: '#b0e0c3',
     nombre: 'Árboles binarios',
     corto: 'Árboles',
     categoria: 'arboles',
@@ -58,6 +70,11 @@ const CATALOGO_ALGORITMOS = [
   },
   {
     id: 'johnson',
+    zona: 'Estación de rutas',
+    etiqueta: 'Johnson · Todos los pares',
+    distrito: 'grafos',
+    escena: 'estacion',
+    color: '#ac9bfa', colorClaro: '#6550b6', colorFuerte: '#c8bafa',
     nombre: 'Algoritmo de Johnson',
     corto: 'Johnson',
     categoria: 'grafos',
@@ -70,7 +87,46 @@ const CATALOGO_ALGORITMOS = [
     disponible: true
   },
   {
+    id: 'dijkstra',
+    zona: 'Centro de navegación',
+    etiqueta: 'Dijkstra · Desde un origen',
+    distrito: 'grafos',
+    escena: 'navegacion',
+    color: '#69d4df', colorClaro: '#147481', colorFuerte: '#a4edf2',
+    nombre: 'Algoritmo de Dijkstra',
+    corto: 'Dijkstra',
+    categoria: 'grafos',
+    descripcion: 'Caminos mínimos desde un origen a todos los vértices de un grafo dirigido o no dirigido, con pesos no negativos. Selecciona un destino para destacar su ruta.',
+    entrada: 'Grafo con pesos enteros no negativos y origen',
+    resultado: 'Distancias desde el origen y ruta al destino',
+    ruta: 'dijkstra.html',
+    icono: 'navegacion',
+    disponible: true
+  },
+  {
+    id: 'kruskal',
+    zona: 'Central de conexiones',
+    etiqueta: 'Kruskal · Árbol y bosque',
+    distrito: 'grafos',
+    escena: 'conexiones',
+    color: '#dfca78', colorClaro: '#806b1a', colorFuerte: '#f2e0a0',
+    nombre: 'Algoritmo de Kruskal',
+    corto: 'Kruskal',
+    categoria: 'grafos',
+    descripcion: 'Conecta cada componente de un grafo no dirigido con un árbol de expansión de peso mínimo o máximo, descartando enlaces que crean ciclos. Admite pesos negativos.',
+    entrada: 'Grafo no dirigido ponderado y objetivo mínimo/máximo',
+    resultado: 'Árbol o bosque de expansión y peso total',
+    ruta: 'kruskal.html',
+    icono: 'conexiones',
+    disponible: true
+  },
+  {
     id: 'asignacion',
+    zona: 'Centro de coordinación',
+    etiqueta: 'Asignación · Método húngaro',
+    distrito: 'asignacion',
+    escena: 'coordinacion',
+    color: '#80b8fc', colorClaro: '#2863a8', colorFuerte: '#b1d3ff',
     nombre: 'Asignación (método húngaro)',
     corto: 'Asignación',
     categoria: 'asignacion',
@@ -84,8 +140,13 @@ const CATALOGO_ALGORITMOS = [
   },
   {
     id: 'northwest',
+    zona: 'Centro logístico',
+    etiqueta: 'Northwest · Esquina noroeste',
+    distrito: 'transporte',
+    escena: 'logistica',
+    color: '#f4b773', colorClaro: '#965312', colorFuerte: '#ffd4a1',
     nombre: 'Esquina noroeste',
-    corto: 'Esquina noroeste',
+    corto: 'Northwest',
     categoria: 'transporte',
     descripcion: 'Solución inicial factible para el problema de transporte, paso a paso. No garantiza el costo mínimo.',
     entrada: 'Matriz de costos, oferta y demanda',

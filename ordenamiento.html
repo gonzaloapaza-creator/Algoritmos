@@ -6,7 +6,7 @@
   <meta name="description" content="Visualización paso a paso de Selection, Insertion, Bubble, Shell y Merge Sort con pinos de boliche, pseudocódigo y contadores." />
   <meta name="theme-color" content="#0b1020" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='9' cy='23' r='5' fill='%235b8cff'/><circle cx='23' cy='9' r='5' fill='%2300d3a7'/><line x1='12' y1='20' x2='20' y2='12' stroke='white' stroke-width='2'/></svg>" />
-  <title>Ordenamiento | Algoritmos de Optimización</title>
+  <title>Ordenamiento | Ciudad de los Algoritmos</title>
   <link rel="stylesheet" href="styles.css" />
   <script src="js/comun/tema.js"></script>
   <link rel="stylesheet" href="css/shell.css" />
@@ -19,9 +19,9 @@
     <button type="button" class="btn btn-fantasma btn-icono topbar__menu" id="btnMenuLateral" aria-label="Abrir menú" aria-expanded="false" aria-controls="barraLateral">
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     </button>
-    <a class="topbar__marca" href="index.html" aria-label="Grafo · Inicio">
+    <a class="topbar__marca" href="index.html" aria-label="Ciudad de los Algoritmos · Inicio">
       <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="9" cy="23" r="5"></circle><circle cx="23" cy="9" r="5"></circle><line x1="12" y1="20" x2="20" y2="12"></line></svg>
-      <span>Grafo</span>
+      <span>Algoritmos</span>
     </a>
     <span class="topbar__separador" aria-hidden="true"></span>
     <span class="topbar__modulo" id="topbarModulo">Ordenamiento</span>
@@ -62,31 +62,20 @@
             <option value="300">Rápido</option>
             <option value="120">Muy rápido</option>
           </select>
-          <button type="button" class="btn btn-neutral btn-sm" id="btnReiniciar" title="Volver al paso 0 (Inicio)">⟲ Reiniciar</button>
+          <button type="button" class="btn btn-neutral btn-sm" id="btnReiniciar" title="Volver al paso 0 (Inicio)"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12a8 8 0 1 0 2.5-5.8M4 4v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Reiniciar</button>
           <button type="button" class="btn btn-neutral btn-sm" id="btnAnterior" title="Paso anterior (←)">← Anterior</button>
-          <button type="button" class="btn btn-neutral btn-sm" id="btnAuto" title="Reproducir / pausar (espacio)">▶ Reproducir</button>
+          <button type="button" class="btn btn-neutral btn-sm" id="btnAuto" title="Reproducir / pausar (espacio)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="icono-reproducir" d="M8 5.5v13l11-6.5z" fill="currentColor"/><path class="icono-pausar" d="M7 5h4v14H7zm6 0h4v14h-4z" fill="currentColor"/></svg><span>Reproducir</span></button>
           <button type="button" class="btn btn-primary btn-sm" id="btnSiguiente" title="Paso siguiente (→)">Siguiente →</button>
         </div>
 
         <div class="datos-entrada mt-3">
           <div class="campo campo--valores">
-            <label class="campo__etiqueta" for="entradaValores">Pinos (3 a 12 enteros entre 1 y 99)</label>
+            <label class="campo__etiqueta" for="entradaValores">Valores (3 a 200 enteros entre 1 y 99)</label>
             <input class="entrada" id="entradaValores" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="Ej.: 45, 12, 78, 3, 56" />
           </div>
           <div class="campo campo--cantidad">
             <label class="campo__etiqueta" for="selectorCantidad">Cantidad</label>
-            <select class="entrada" id="selectorCantidad" aria-label="Cantidad de pinos aleatorios">
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-              <option value="6">6</option>
-              <option value="7">7</option>
-              <option value="8" selected>8</option>
-              <option value="9">9</option>
-              <option value="10">10</option>
-              <option value="11">11</option>
-              <option value="12">12</option>
-            </select>
+            <input class="entrada" id="selectorCantidad" type="number" min="3" max="200" step="1" value="8" inputmode="numeric" aria-label="Cantidad de valores aleatorios, entre 3 y 200" />
           </div>
           <button type="button" class="btn btn-secondary" id="btnAplicar" title="Usar los valores escritos">Usar valores</button>
           <button type="button" class="btn btn-neutral" id="btnGenerar" title="Generar pinos al azar">Pinos al azar</button>
@@ -94,12 +83,22 @@
           <button type="button" class="btn btn-neutral" id="btnInvertido" title="Peor caso: orden inverso">Invertido</button>
         </div>
         <p class="error-entrada" id="errorEntrada" role="alert"></p>
+        <div class="preparacion-ordenamiento">
+          <p class="tarjeta__pista" id="estadoPreparacion" role="status" aria-live="polite"></p>
+          <button type="button" class="btn btn-neutral btn-sm" id="btnCancelarPreparacion" hidden>Cancelar preparación</button>
+        </div>
       </section>
 
       <section class="tarjeta mt-4">
-        <div class="pista-caja">
-          <div id="pistaBowling" class="pista-bowling" role="img" aria-label="Pinos de bowling en su orden actual"></div>
+        <p class="tarjeta__pista">Hasta 12 valores: pinos. A partir de 13: barras con desplazamiento interno. Selecciona un elemento para consultar su valor; usa ← y → con el elemento enfocado.</p>
+        <div class="pista-caja" tabindex="0" role="region" aria-label="Visualización del arreglo con desplazamiento horizontal">
+          <div id="pistaBowling" class="pista-bowling" role="group" aria-label="Elementos en su orden actual"></div>
           <div id="pistaIndices" class="pista-indices" aria-hidden="true"></div>
+        </div>
+        <div class="detalle-ordenamiento">
+          <label for="indiceSeleccionado">Consultar posición</label>
+          <input class="entrada" id="indiceSeleccionado" type="number" min="0" max="7" step="1" value="0" inputmode="numeric" />
+          <p id="detallePino" role="status" aria-live="polite"></p>
         </div>
 
         <div class="leyenda mt-3">
@@ -192,6 +191,13 @@
     </div>
   </main>
 
+  <footer class="app-footer">
+    <div class="app-footer__inner">
+      <p><strong>Los Fanáticos del Nabo</strong> · Proyecto de la materia Análisis de Algoritmos</p>
+      <p>Herramienta educativa. Todo se guarda en tu navegador; nada se envía a ningún servidor.</p>
+    </div>
+  </footer>
+
   <div class="modal-fondo" id="modalAyuda" hidden>
     <div class="modal modal-ancho" role="dialog" aria-modal="true" aria-labelledby="ayudaTitulo">
       <h3 id="ayudaTitulo">Cómo usar Ordenamiento</h3>
@@ -200,11 +206,11 @@
         <br>
         <p><strong>1) ALGORITMOS</strong><br>Elige Selection, Insertion, Bubble, Shell o Merge Sort. El pseudocódigo de abajo resalta la línea que se está ejecutando en cada paso. Shell usa saltos decrecientes; Merge divide el arreglo y mezcla mitades de forma estable.</p>
         <br>
-        <p><strong>2) PINOS</strong><br>Escribe tus propios valores (3 a 12 enteros entre 1 y 99) y pulsa «Usar valores», o genera pinos al azar, casi ordenados (caso favorable) o invertidos (peor caso). El tamaño del pino representa su valor.</p>
+        <p><strong>2) DATOS</strong><br>Escribe de 3 a 200 enteros entre 1 y 99, incluidos repetidos, y pulsa «Usar valores». También puedes generar datos al azar, casi ordenados o invertidos. Hasta 12 se muestran pinos; después, barras con desplazamiento interno. Seleccionar o enfocar un elemento muestra valor, posición e identificador estable. La consulta de posición ofrece una alternativa de teclado y táctil.</p>
         <br>
-        <p><strong>3) CONTROLES</strong><br>«Siguiente» y «Anterior» avanzan de a un paso; «Reproducir» anima automáticamente a la velocidad elegida. El mapa de pasos y el deslizador permiten saltar a cualquier paso.</p>
+        <p><strong>3) CONTROLES</strong><br>«Siguiente» y «Anterior» avanzan un evento; «Reproducir» usa el intervalo elegido (120 a 1200 ms) y «Reiniciar» vuelve al inicio. El mapa resume hasta 120 marcas; el deslizador accede a cada evento. La preparación se divide en lotes cancelables y no depende de la velocidad de animación.</p>
         <br>
-        <p><strong>4) APOYO VISUAL</strong><br>La pista conserva todos los pinos. Shell muestra el grupo y el salto actual; Merge muestra las mitades y las escrituras del auxiliar. Sus contadores consideran comparaciones de valores y cada intercambio o escritura, respectivamente.</p>
+        <p><strong>4) APOYO VISUAL Y CONTEOS</strong><br>Shell muestra grupo y salto; Merge muestra mitades y auxiliar. Cada comparación de valores suma una comparación. Selection, Bubble y Shell cuentan un movimiento por intercambio; Insertion cuenta uno por desplazamiento representado mediante un intercambio con la clave. Merge cuenta cada escritura auxiliar y cada elemento copiado de vuelta. Los contadores son acumulados y retroceden con el paso. El historial conserva eventos compactos y un punto de recuperación cada 128 eventos; solo se reconstruye el estado visible.</p>
         <br>
         <p><strong>5) COLORES</strong><br>Franjas amarillas: se está comparando. Celeste: mínimo actual (Selection). Color del módulo: pino movido o clave de inserción. Verde: posición definitiva; Shell solo marca todos los pinos al terminar.</p>
         <br>
@@ -219,6 +225,8 @@
   <script src="js/config.js"></script>
   <script src="js/comun/utilidades.js"></script>
   <script src="js/comun/catalogo.js"></script>
+  <script src="js/comun/dialogo.js"></script>
+  <script src="js/comun/notificaciones.js"></script>
   <script src="js/comun/navegacion.js"></script>
   <script src="js/comun/presentacion.js"></script>
   <script src="js/comun/intro.js"></script>

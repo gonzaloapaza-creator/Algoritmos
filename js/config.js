@@ -37,6 +37,8 @@ const ASIGNACION_STORAGE_KEY_V2 = 'asignacion.v2';
 const NORTHWEST_STORAGE_KEY = 'northwest.v1';
 const ARBOLES_STORAGE_KEY = 'arboles.v1';
 const ORDENAMIENTO_STORAGE_KEY = 'ordenamiento.v1';
+const DIJKSTRA_STORAGE_KEY = 'dijkstra.v1';
+const KRUSKAL_STORAGE_KEY = 'kruskal.v1';
 const CLAVE_TRABAJOS = 'algoritmos.trabajos.v1';         // biblioteca de trabajos nombrados (todos los módulos)
 const MAX_TRABAJOS_POR_MODULO = 50;
 const MIN_NODOS_ARBOL = 1;
@@ -45,7 +47,6 @@ const MIN_VALOR_ARBOL = -999;
 const MAX_VALOR_ARBOL = 999;
 
 // Constantes de UI
-const TIMEOUT_AVISO = 2600;
 const TIMEOUT_TOAST = 2200;
 const FANTASMO_CLICK_TIMEOUT = 350;
 const MODAL_FOCUS_DELAY = 30;

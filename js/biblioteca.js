@@ -210,19 +210,26 @@ function eliminarGrafoGuardado(id) {
 
 /* ---------------- Mostrar y ocultar ---------------- */
 
+let liberarFocoBiblioteca = null;
+
 function bibliotecaVisible() {
   return !el.bibliotecaFondo.hidden;
 }
 
 function mostrarBiblioteca() {
+  if (bibliotecaVisible()) return;
   cerrarEjemplos();   // dos paneles a la vez se taparían
   el.bibliotecaFondo.hidden = false;
   actualizarBiblioteca();
-  el.btnGuardarActual.focus();
+  liberarFocoBiblioteca = activarFocoModal(el.bibliotecaFondo.querySelector('[role="dialog"]'), {
+    cerrar: cerrarBiblioteca, inicial: el.btnGuardarActual,
+    retorno: document.getElementById('btnMasOpciones')
+  });
 }
 
 function cerrarBiblioteca() {
   el.bibliotecaFondo.hidden = true;
+  if (liberarFocoBiblioteca) { liberarFocoBiblioteca(); liberarFocoBiblioteca = null; }
 }
 
 function alternarBiblioteca() {

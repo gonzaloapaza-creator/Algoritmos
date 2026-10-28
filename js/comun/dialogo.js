@@ -10,6 +10,74 @@
 /* Marca de cancelación: distinta de `null`, que puede ser un valor válido («pendiente»). */
 const DIALOGO_CANCELADO = { cancelado: true };
 
+/* Las ayudas, hojas y el menú móvil comparten el mismo contrato de foco.
+ * La pila permite confirmar una acción desde otra ventana sin perder su foco. */
+const pilaFocoModal = [];
+
+function controlesFocoModal(caja) {
+  return Array.from(caja.querySelectorAll('a[href], button, input, select, textarea, [tabindex]'))
+    .filter(control => !control.disabled && !control.hidden && control.tabIndex >= 0 && control.getClientRects().length > 0);
+}
+
+function activarFocoModal(caja, opciones) {
+  opciones = opciones || {};
+  const registro = { caja: caja, previo: opciones.retorno || document.activeElement, cerrar: opciones.cerrar };
+  const teniaTabindex = caja.hasAttribute('tabindex');
+  if (!teniaTabindex) caja.setAttribute('tabindex', '-1');
+  pilaFocoModal.push(registro);
+  const inicial = opciones.inicial || controlesFocoModal(caja)[0] || caja;
+  inicial.focus({ preventScroll: true });
+
+  return function liberarFoco(devolver) {
+    const indice = pilaFocoModal.indexOf(registro);
+    if (indice === -1) return;
+    pilaFocoModal.splice(indice, 1);
+    if (!teniaTabindex) caja.removeAttribute('tabindex');
+    if (devolver !== false && registro.previo && document.contains(registro.previo)) registro.previo.focus({ preventScroll: true });
+  };
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('keydown', evento => {
+    const actual = pilaFocoModal[pilaFocoModal.length - 1];
+    if (!actual) return;
+    if (evento.key === 'Escape') {
+      evento.preventDefault();
+      evento.stopImmediatePropagation();
+      if (actual.cerrar) actual.cerrar();
+    } else if (evento.key === 'Tab') {
+      evento.preventDefault();
+      evento.stopImmediatePropagation();
+      const controles = controlesFocoModal(actual.caja);
+      if (!controles.length) { actual.caja.focus(); return; }
+      const indice = controles.indexOf(document.activeElement);
+      const siguiente = indice < 0 ? (evento.shiftKey ? controles.length - 1 : 0)
+        : (indice + (evento.shiftKey ? -1 : 1) + controles.length) % controles.length;
+      controles[siguiente].focus();
+    }
+  }, true);
+  document.addEventListener('focusin', evento => {
+    const actual = pilaFocoModal[pilaFocoModal.length - 1];
+    if (actual && !actual.caja.contains(evento.target)) (controlesFocoModal(actual.caja)[0] || actual.caja).focus();
+  });
+}
+
+function instalarAyudaModal(fondo, botonAbrir, botonCerrar, antesDeAbrir) {
+  let liberar = null;
+  const cerrar = () => {
+    fondo.hidden = true;
+    if (liberar) { liberar(); liberar = null; }
+  };
+  botonAbrir.addEventListener('click', () => {
+    if (!fondo.hidden) return;
+    if (antesDeAbrir) antesDeAbrir();
+    fondo.hidden = false;
+    liberar = activarFocoModal(fondo.querySelector('[role="dialog"]'), { cerrar: cerrar, inicial: botonCerrar });
+  });
+  botonCerrar.addEventListener('click', cerrar);
+  fondo.addEventListener('click', evento => { if (evento.target === fondo) cerrar(); });
+}
+
 const dialogo = {
   fondo: null,
   caja: null,
@@ -22,7 +90,7 @@ const dialogo = {
   cancelar: null,
   cerrar: null,        // función que resuelve la promesa abierta
   abiertaDesde: 0,
-  focoPrevio: null
+  liberarFoco: null
 };
 
 function construirDialogo() {
@@ -67,18 +135,6 @@ function construirDialogo() {
   dialogo.input.addEventListener('keydown', evento => {
     if (evento.key === 'Enter') { evento.preventDefault(); dialogo.aceptar.click(); }
   });
-  document.addEventListener('keydown', evento => {
-    if (!dialogo.cerrar) return;
-    if (evento.key === 'Escape') { evento.preventDefault(); dialogo.cerrar(DIALOGO_CANCELADO); return; }
-    // El foco no sale de la ventana con Tab.
-    if (evento.key === 'Tab') {
-      const focables = Array.from(dialogo.caja.querySelectorAll('input, button')).filter(e => !e.hidden && e.offsetParent !== null);
-      if (!focables.length) return;
-      const primero = focables[0], ultimo = focables[focables.length - 1];
-      if (evento.shiftKey && document.activeElement === primero) { evento.preventDefault(); ultimo.focus(); }
-      else if (!evento.shiftKey && document.activeElement === ultimo) { evento.preventDefault(); primero.focus(); }
-    }
-  });
 }
 
 function dialogoAbierto() {
@@ -103,7 +159,6 @@ function abrirDialogo(config) {
   if (dialogo.cerrar) return Promise.resolve(DIALOGO_CANCELADO);
 
   return new Promise(resolve => {
-    dialogo.focoPrevio = document.activeElement;
     dialogo.titulo.textContent = config.titulo;
     dialogo.mensaje.textContent = config.mensaje || '';
     dialogo.mensaje.hidden = !config.mensaje;
@@ -124,22 +179,20 @@ function abrirDialogo(config) {
     dialogo.fondo.scrollTop = 0;
     dialogo.abiertaDesde = Date.now();
 
-    if (!pantallaTactil() || !config.pedirTexto) {
-      setTimeout(() => {
-        if (config.pedirTexto) { dialogo.input.focus(); dialogo.input.select(); }
-        else dialogo.aceptar.focus();
-      }, MODAL_FOCUS_DELAY);
-    }
-
     dialogo.cerrar = respuesta => {
       dialogo.input.blur();
       dialogo.fondo.hidden = true;
       dialogo.cerrar = null;
-      const previo = dialogo.focoPrevio;
-      dialogo.focoPrevio = null;
-      if (previo && typeof previo.focus === 'function' && document.contains(previo)) previo.focus();
+      dialogo.liberarFoco();
+      dialogo.liberarFoco = null;
       resolve(respuesta);
     };
+    // En táctil se enfoca la caja para que el teclado no tape la ventana.
+    dialogo.liberarFoco = activarFocoModal(dialogo.caja, {
+      cerrar: () => dialogo.cerrar(DIALOGO_CANCELADO),
+      inicial: config.pedirTexto ? (pantallaTactil() ? dialogo.caja : dialogo.input) : dialogo.aceptar
+    });
+    if (config.pedirTexto && !pantallaTactil()) dialogo.input.select();
 
     dialogo.aceptar.onclick = () => {
       if (clicFantasmaDialogo()) return;

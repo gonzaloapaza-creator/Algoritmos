@@ -1,7 +1,7 @@
 /* Pruebas en navegador (Edge headless mediante puppeteer-core) y capturas.
  *
  * Uso:  node tests/navegador.js [--capturas]
- * Requiere un servidor en http://localhost:8123 (python -m http.server 8123) y
+ * Requiere un servidor local (node tests/servidor-local.js) y
  * puppeteer-core instalado en %TEMP%/grafo-e2e (fuera del proyecto).
  */
 
@@ -12,8 +12,9 @@ const fs = require('fs');
 const os = require('os');
 const puppeteer = require(path.join(os.tmpdir(), 'grafo-e2e', 'node_modules', 'puppeteer-core'));
 
-const BASE = 'http://localhost:8123/';
-const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
+const BASE = process.env.URL_PRUEBAS || 'http://127.0.0.1:8123/';
+// Edge por defecto; NAVEGADOR=ruta/al/chrome.exe permite usar otro Chromium.
+const EDGE = process.env.NAVEGADOR || 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const CAPTURAS = process.argv.includes('--capturas');
 const DIR_CAPTURAS = path.join(__dirname, '..', 'docs', 'capturas');
 
@@ -24,6 +25,8 @@ function check(cond, msg) { if (cond) { ok++; console.log('  ✓ ' + msg); } els
 async function nuevaPagina(browser, ancho, alto) {
   const page = await browser.newPage();
   await page.setViewport({ width: ancho, height: alto, deviceScaleFactor: 1, hasTouch: ancho < 900 });
+  // Las capturas se toman en tema oscuro (el de referencia); el claro se captura aparte.
+  await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'dark' }]);
   page.on('pageerror', e => errores.push(page.url() + ': ' + e.message));
   page.on('console', m => { if (m.type() === 'error') errores.push(page.url() + ': ' + m.text()); });
   return page;
@@ -46,10 +49,17 @@ async function sinScrollHorizontal(page) {
     console.log('\nInicio');
     let page = await nuevaPagina(browser, 1440, 900);
     await page.goto(BASE + 'index.html', { waitUntil: 'networkidle0' });
-    check(await page.$$eval('.tarjeta-alg', t => t.length) === 5, 'Cinco módulos reales');
+    check(await page.$$eval('.tarjeta-alg', t => t.length) === 7, 'Siete módulos reales');
     check(await page.$$eval('.categoria', c => c.length) === 5, 'Cinco categorías');
-    check(await page.$$eval('.sidebar__enlace', e => e.length) === 6, 'Barra lateral: inicio + 5 módulos');
+    check(await page.$$eval('a.sidebar__enlace', e => e.length) === 8, 'Barra lateral: inicio + 7 módulos');
+    check(await page.$$eval('#btnTema', e => e.length) === 1, 'Barra lateral: conmutador de tema');
     await capturar(page, 'inicio-1440');
+    await page.click('#btnTema');
+    check(await page.evaluate(() => document.documentElement.dataset.tema) === 'claro', 'El conmutador activa el tema claro');
+    check(await page.evaluate(() => localStorage.getItem('ui.tema.v1')) === 'claro', 'El tema claro se recuerda');
+    await capturar(page, 'inicio-claro-1440');
+    await page.click('#btnTema');
+    check(await page.evaluate(() => document.documentElement.dataset.tema) === 'oscuro', 'El conmutador vuelve al tema oscuro');
     await page.goto(BASE + 'index.html?simular=10', { waitUntil: 'networkidle0' });
     check(await page.$$eval('.tarjeta-alg', t => t.length) === 10, 'Catálogo simulado con 10 entradas');
     check(await page.$$eval('.tarjeta-alg--pendiente a', a => a.length) === 0, 'Las simuladas no enlazan a ninguna ruta');

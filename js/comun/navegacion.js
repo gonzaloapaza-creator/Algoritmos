@@ -21,7 +21,8 @@ const nav = {
   barra: document.getElementById('barraLateral'),
   fondo: document.getElementById('barraLateralFondo'),
   modulo: document.getElementById('topbarModulo'),
-  abierta: false
+  abierta: false,
+  liberarFoco: null
 };
 
 function svgIcono(nombre, clase) {
@@ -52,6 +53,12 @@ function construirBarraLateral(moduloActivo) {
 
   const cabecera = document.createElement('div');
   cabecera.className = 'sidebar__cabecera';
+  const cerrar = document.createElement('button');
+  cerrar.type = 'button';
+  cerrar.className = 'btn btn-fantasma sidebar__cerrar';
+  cerrar.textContent = 'Cerrar menú';
+  cerrar.addEventListener('click', () => cerrarLateral());
+  cabecera.appendChild(cerrar);
   const inicio = document.createElement('a');
   inicio.className = 'sidebar__enlace sidebar__inicio' + (moduloActivo === 'inicio' ? ' activo' : '');
   inicio.href = 'index.html';
@@ -66,6 +73,27 @@ function construirBarraLateral(moduloActivo) {
   inicio.appendChild(textoInicio);
   cabecera.appendChild(inicio);
   barra.appendChild(cabecera);
+
+  if (moduloActivo === 'inicio') {
+    const secciones = document.createElement('div');
+    secciones.className = 'sidebar__grupo sidebar__secciones-inicio';
+    [['Módulos', 'titulo-algoritmos'], ['Mis trabajos', 'titulo-trabajos']].forEach(([texto, id]) => {
+      const boton = document.createElement('button');
+      boton.type = 'button';
+      boton.className = 'sidebar__enlace sidebar__tema';
+      boton.textContent = texto;
+      boton.addEventListener('click', () => {
+        cerrarLateral(false);
+        const destino = document.getElementById(id);
+        if (!destino) return;
+        destino.setAttribute('tabindex', '-1');
+        destino.scrollIntoView({ block: 'start' });
+        destino.focus({ preventScroll: true });
+      });
+      secciones.appendChild(boton);
+    });
+    barra.appendChild(secciones);
+  }
 
   const lista = document.createElement('nav');
   lista.className = 'sidebar__lista';
@@ -85,6 +113,8 @@ function construirBarraLateral(moduloActivo) {
       if (alg.disponible) enlace.href = alg.ruta;
       if (alg.id === moduloActivo) enlace.setAttribute('aria-current', 'page');
       enlace.title = alg.nombre;
+      if (alg.color) enlace.style.setProperty('--zona-color', alg.color);
+      if (alg.colorClaro) enlace.style.setProperty('--zona-color-claro', alg.colorClaro);
       enlace.appendChild(svgIcono(alg.icono));
       const texto = document.createElement('span');
       texto.textContent = alg.corto;
@@ -118,6 +148,17 @@ function construirBarraLateral(moduloActivo) {
   window.addEventListener('tema:cambio', actualizarTema);
   actualizarTema();
   ajustes.appendChild(btnTema);
+  // Video y ayuda siguen accesibles cuando la cabecera se compacta en móvil.
+  ['btnVideoModulo', 'btnAyuda', 'btnAyudaAsignacion', 'btnAyudaNw'].forEach(id => {
+    const original = document.getElementById(id);
+    if (!original) return;
+    const acceso = document.createElement('button');
+    acceso.type = 'button';
+    acceso.className = 'sidebar__enlace sidebar__tema sidebar__acceso-modulo';
+    acceso.textContent = id === 'btnVideoModulo' ? 'Video del módulo' : 'Ayuda del módulo';
+    acceso.addEventListener('click', () => { cerrarLateral(); original.click(); });
+    ajustes.appendChild(acceso);
+  });
   barra.appendChild(ajustes);
 
   const pie = document.createElement('div');
@@ -147,14 +188,15 @@ function fijarColapsada(valor) {
 }
 
 function abrirLateral() {
-  if (nav.abierta) return;
+  if (nav.abierta || esEscritorio()) return;
   nav.abierta = true;
   document.body.classList.add('nav-abierta');
   nav.fondo.hidden = false;
   nav.btn.setAttribute('aria-expanded', 'true');
   nav.btn.setAttribute('aria-label', 'Cerrar menú');
-  const primero = nav.barra.querySelector('a, button');
-  if (primero) primero.focus();
+  nav.barra.setAttribute('role', 'dialog');
+  nav.barra.setAttribute('aria-modal', 'true');
+  nav.liberarFoco = activarFocoModal(nav.barra, { cerrar: cerrarLateral });
 }
 
 function cerrarLateral(devolverFoco) {
@@ -164,7 +206,10 @@ function cerrarLateral(devolverFoco) {
   nav.fondo.hidden = true;
   nav.btn.setAttribute('aria-expanded', 'false');
   nav.btn.setAttribute('aria-label', 'Abrir menú');
-  if (devolverFoco !== false) nav.btn.focus();
+  nav.barra.removeAttribute('role');
+  nav.barra.removeAttribute('aria-modal');
+  nav.liberarFoco(devolverFoco);
+  nav.liberarFoco = null;
 }
 
 function lateralAbierta() {
@@ -176,9 +221,34 @@ function inicializarNavegacion() {
   const moduloActivo = document.body.dataset.modulo || '';
   construirBarraLateral(moduloActivo);
 
+  const alg = algoritmoPorId(moduloActivo);
+  if (alg) {
+    [['--identidad', alg.color], ['--identidad-claro', alg.colorClaro], ['--identidad-fuerte', alg.colorFuerte]].forEach(([clave, valor]) => {
+      if (valor) document.body.style.setProperty(clave, valor);
+    });
+    const texto = document.querySelector('.modulo-cabecera__texto');
+    if (texto) {
+      const zona = document.createElement('div');
+      zona.className = 'modulo-identidad';
+      zona.appendChild(svgIcono(alg.icono));
+      const nombre = document.createElement('span');
+      nombre.textContent = alg.zona || alg.corto;
+      zona.appendChild(nombre);
+      texto.prepend(zona);
+      const titulo = texto.querySelector('h1');
+      if (titulo && alg.etiqueta) titulo.textContent = alg.etiqueta;
+    }
+  }
+
   if (nav.modulo) {
-    const alg = algoritmoPorId(moduloActivo);
     nav.modulo.textContent = alg ? alg.corto : (moduloActivo === 'inicio' ? 'Inicio' : nav.modulo.textContent);
+    if (alg) {
+      const nombre = document.createElement('span');
+      nombre.textContent = alg.corto;
+      nav.modulo.replaceChildren(svgIcono(alg.icono), nombre);
+      nav.modulo.classList.add('topbar__modulo--identidad');
+      nav.modulo.title = alg.etiqueta || alg.nombre;
+    }
   }
 
   if (leerColapsada()) document.body.classList.add('nav-colapsada');
@@ -186,14 +256,6 @@ function inicializarNavegacion() {
 
   nav.btn.addEventListener('click', () => (nav.abierta ? cerrarLateral() : abrirLateral()));
   nav.fondo.addEventListener('click', () => cerrarLateral());
-  // Escape cierra el cajón antes que cualquier otra cosa. Se escucha en captura
-  // para que los módulos que también usan Escape no actúen sobre un menú abierto.
-  document.addEventListener('keydown', evento => {
-    if (evento.key === 'Escape' && nav.abierta) {
-      evento.stopPropagation();
-      cerrarLateral();
-    }
-  }, true);
   // Al pasar a escritorio el cajón deja de tener sentido.
   window.matchMedia('(min-width: ' + PUNTO_CORTE_LATERAL + 'px)').addEventListener('change', e => {
     if (e.matches) cerrarLateral(false);

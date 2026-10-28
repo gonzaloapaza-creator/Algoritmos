@@ -388,8 +388,14 @@ function importarNorthwestJSON() {
     lector.onload = e => {
       try {
         const datos = JSON.parse(e.target.result);
-        const modelo = depurarModeloNorthwest(datos && datos.modelo ? datos.modelo : datos);
-        if (!modelo || (!modelo.origenes.length && !modelo.destinos.length)) throw new Error('El archivo no contiene un problema de transporte válido.');
+        if (datos && datos.version !== undefined && datos.version !== 1) {
+          throw new Error('Versión de archivo no compatible (' + datos.version + '); se admite la versión 1.');
+        }
+        // Se valida todo antes de tocar el modelo abierto; nada se recorta en silencio.
+        const validacion = validarModeloNorthwestImportado(datos && datos.modelo ? datos.modelo : datos);
+        if (!validacion.ok) throw new Error(resumirErroresImportacion(validacion.errores));
+        const modelo = validacion.modelo;
+        if (!modelo.origenes.length && !modelo.destinos.length) throw new Error('El archivo no contiene orígenes ni destinos.');
         dialogoConfirmar({ titulo: 'Importar', mensaje: 'Se reemplazarán los datos actuales. Podrás deshacerlo con Ctrl+Z.' }).then(ok => {
           if (!ok) return;
           aplicarCambioNorthwest((m, est) => { est.modelo = modelo; }, { motivo: 'importar' });

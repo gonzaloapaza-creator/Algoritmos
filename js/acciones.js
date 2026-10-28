@@ -360,14 +360,17 @@ function importarGrafoJSON() {
       try {
         const datos = JSON.parse(e.target.result);
         
-        if (!datos.grafo || !datos.grafo.nodos || !datos.grafo.conexiones) {
-          throw new Error('Formato de archivo inválido');
+        if (!datos || !datos.grafo || !datos.grafo.nodos || !datos.grafo.conexiones) {
+          throw new Error('Formato de archivo inválido: se esperaba { grafo: { nodos, conexiones } }.');
         }
-        
-        const limpio = depurarGrafo(datos.grafo);
-        if (!limpio) {
-          throw new Error('El archivo contiene datos inválidos');
+        if (datos.version !== undefined && String(datos.version) !== '1.0') {
+          throw new Error('Versión de archivo no compatible (' + datos.version + '); se admite 1.0.');
         }
+
+        // Nada se reemplaza hasta comprobar todo el archivo: el grafo abierto queda intacto.
+        const validacion = validarGrafoImportado(datos.grafo);
+        if (!validacion.ok) throw new Error(resumirErroresImportacion(validacion.errores));
+        const limpio = validacion.grafo;
 
         const importar = () => {
           guardarEstadoParaDeshacer();

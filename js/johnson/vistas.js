@@ -832,15 +832,19 @@ function verEnEditorJohnson() {
 
 /* ---------------- Ejemplos ---------------- */
 
+let liberarFocoEjemplos = null;
+
 function ejemplosVisible() {
   return !el.ejemplosFondo.hidden;
 }
 
 function cerrarEjemplos() {
   el.ejemplosFondo.hidden = true;
+  if (liberarFocoEjemplos) { liberarFocoEjemplos(); liberarFocoEjemplos = null; }
 }
 
 function mostrarEjemplos() {
+  if (ejemplosVisible()) return;
   cerrarBiblioteca();
   el.ejemplosLista.replaceChildren();
   EJEMPLOS_JOHNSON.forEach(ejemplo => {
@@ -862,7 +866,9 @@ function mostrarEjemplos() {
   });
   el.ejemplosFondo.hidden = false;
   const primero = el.ejemplosLista.querySelector('button');
-  if (primero) primero.focus();
+  liberarFocoEjemplos = activarFocoModal(el.ejemplosFondo.querySelector('[role="dialog"]'), {
+    cerrar: cerrarEjemplos, inicial: primero
+  });
 }
 
 function aplicarEjemploJohnson(ejemplo) {

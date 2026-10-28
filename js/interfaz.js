@@ -2,16 +2,9 @@
 
 'use strict';
 
-// Las constantes TIMEOUT_AVISO ahora vienen de config.js
-
+/** Avisos breves: usa la pila común de js/comun/notificaciones.js. */
 function avisar(mensaje, tipo) {
-  const nodo = document.createElement('div');
-  nodo.className = 'aviso' + (tipo ? ' ' + tipo : '');
-  nodo.textContent = mensaje;
-  // Como mucho tres avisos a la vez: en el móvil no deben tapar la pantalla.
-  while (el.avisos.children.length >= 3) el.avisos.firstChild.remove();
-  el.avisos.appendChild(nodo);
-  setTimeout(() => nodo.remove(), TIMEOUT_AVISO);
+  notificar(mensaje, tipo);
 }
 
 // escaparHtml() viene de js/comun/utilidades.js

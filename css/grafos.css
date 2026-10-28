@@ -1,0 +1,111 @@
+/* Editor compartido exclusivamente por Dijkstra y Kruskal. */
+.grafo-modulo .gm-flujo { margin-bottom: 16px; overflow-x: auto; }
+.grafo-modulo .gm-flujo .pasos { min-width: 0; }
+.gm-herramientas { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; padding: 14px; margin-bottom: 14px; border: 1px solid var(--borde); border-radius: 12px; background: var(--bg-2); }
+.gm-herramientas label { display: flex; flex-direction: column; gap: 4px; font-size: .76rem; color: var(--texto-suave); }
+.gm-herramientas select, .gm-herramientas input { max-width: 205px; }
+.gm-herramientas input[type=number] { width: 80px; }
+.grafo-modulo .entrada { min-height: 44px; font-family: var(--fuente); }
+.gm-distribucion { display: grid; grid-template-columns: minmax(0, 1fr) 295px; gap: 16px; align-items: start; }
+.gm-panel { min-width: 0; background: var(--bg-2); border: 1px solid var(--borde); border-radius: 14px; padding: 16px; }
+.gm-lienzo-panel { padding: 0; overflow: hidden; }
+.gm-lienzo-cab { padding: 12px 14px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--borde); }
+.gm-lienzo-cab h2 { font-size: 1rem; }
+.gm-zoom { display: flex; flex-wrap: wrap; gap: 4px; }
+.gm-zoom .btn { min-width: 44px; min-height: 44px; padding: 6px 10px; }
+.gm-vista-opciones { display: block; max-width: 100%; }
+.gm-vista-opciones summary { cursor: pointer; min-height: 44px; padding: 10px 8px; font-size: .8rem; font-weight: 650; }
+.gm-vista-opciones[open] { flex-basis: 100%; }
+.gm-vista-opciones[open] .btn { margin: 0 3px 6px 0; }
+.gm-lienzo { width: 100%; max-height: 520px; overflow: auto; overscroll-behavior-x: contain; background: radial-gradient(var(--rejilla) 1px, transparent 1px) 0 0 / 20px 20px, var(--lienzo); }
+.gm-lienzo svg { display: block; width: 100%; min-width: 0; height: clamp(300px, 42vw, 480px); touch-action: auto; }
+.gm-lienzo svg text { font-family: var(--fuente); font-size: var(--gm-texto, 20px); fill: var(--texto); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.gm-lienzo circle, .gm-lienzo path { vector-effect: non-scaling-stroke; }
+.gm-lienzo .arista-editor-grafo { cursor: pointer; }
+.gm-lienzo .gm-arista-hit { stroke: transparent; stroke-width: 22; fill: none; }
+.gm-lienzo .gm-arista-linea { stroke: var(--arista); stroke-width: 3; fill: none; }
+.gm-lienzo .gm-peso { font-size: var(--gm-peso, 18px); font-weight: 650; paint-order: stroke; stroke: var(--bg-2); stroke-width: var(--gm-halo, 7px); stroke-linejoin: round; }
+.gm-lienzo .gm-flecha { fill: var(--arista); }
+.gm-lienzo .nodo-editor-grafo { cursor: grab; }
+.gm-lienzo .nodo-editor-grafo circle { fill: var(--nodo-relleno); stroke: var(--acento); stroke-width: 3; }
+.gm-lienzo .nodo-editor-grafo.seleccionado circle { stroke-width: 6; stroke-dasharray: 5 3; }
+.gm-lienzo .arista-editor-grafo.seleccionado .gm-arista-linea { stroke-width: 6; stroke-dasharray: 8 4; }
+.gm-lienzo .arista-editor-grafo.elegida .gm-arista-linea { stroke: var(--exito); stroke-width: 6; }
+.gm-lienzo .arista-editor-grafo.ruta .gm-arista-linea { stroke: var(--acento); stroke-width: 8; }
+.gm-lienzo .arista-editor-grafo.actual .gm-arista-linea { stroke: var(--aviso); stroke-width: 6; stroke-dasharray: 8 4; }
+.gm-lienzo .nodo-editor-grafo.actual circle { stroke: var(--aviso); stroke-width: 6; }
+.gm-lienzo .nodo-editor-grafo.finalizado circle { fill: color-mix(in srgb, var(--exito) 18%, var(--bg-2)); }
+.gm-lienzo [tabindex]:focus-visible { outline: none; }
+.gm-lienzo [tabindex]:focus-visible circle, .gm-lienzo [tabindex]:focus-visible .gm-arista-linea { stroke: var(--texto); stroke-width: 7; stroke-dasharray: 3 3; }
+.gm-leyenda, .gm-ayuda-corta { padding: 10px 14px; font-size: .73rem; color: var(--texto-suave); line-height: 1.6; }
+.gm-leyenda { border-top: 1px solid var(--borde); }
+.gm-editor h2, .gm-config h2 { font-size: 1.05rem; margin-bottom: 14px; }
+.gm-editor h3 { font-size: .85rem; margin: 18px 0 10px; padding-top: 14px; border-top: 1px solid var(--borde); }
+.gm-editor label, .gm-config label { display: block; font-size: .76rem; font-weight: 650; margin: 10px 0 5px; color: var(--texto-suave); }
+.gm-editor input, .gm-editor select, .gm-config select { width: 100%; min-width: 0; }
+.gm-fila { display: flex; gap: 8px; margin-top: 8px; }
+.gm-fila > * { flex: 1 1 0; min-width: 0; }
+.gm-fila .btn { padding-inline: 8px; min-height: 44px; font-size: .76rem; }
+.gm-posiciones label { margin-top: 0; }
+.gm-info { margin-top: 14px; font-size: .78rem; line-height: 1.65; color: var(--texto-suave); }
+.gm-cinta { margin: 12px; }
+.gm-cinta .btn { min-height: 44px; }
+.gm-cinta label { font-size: .76rem; }
+.gm-cinta select { width: 115px; }
+.gm-repro-principal { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.gm-repro-principal .btn { min-width: 0; padding: 8px 5px; font-size: .78rem; white-space: normal; }
+.gm-repro-opciones { margin-top: 4px; }
+.gm-repro-opciones summary { cursor: pointer; min-height: 44px; padding-block: 10px; font-size: .78rem; font-weight: 650; }
+.gm-repro-opciones .btn { margin: 0 4px 8px 0; padding-inline: 10px; }
+.gm-repro-opciones label { display: inline-block; margin-right: 6px; }
+.gm-repro-opciones select { max-width: 100%; margin-bottom: 8px; }
+.gm-repro-opciones #contadorPasosGrafo { display: block; font-size: .78rem; padding-block: 4px; }
+.gm-explicacion { margin: 12px; border-left: 4px solid var(--acento); padding: 12px; border-radius: 0 10px 10px 0; background: var(--acento-tinte); font-size: .9rem; line-height: 1.65; }
+.gm-distribucion[data-vista=procedimiento] .gm-ayuda-corta, .gm-distribucion[data-vista=procedimiento] .gm-leyenda, .gm-distribucion[data-vista=resultado] .gm-ayuda-corta { display: none; }
+#tituloEtapaGrafo, #tituloConfigGrafo { scroll-margin-top: calc(var(--topbar) + 12px); }
+.gm-tabla-caja { overflow: auto; max-height: 380px; border: 1px solid var(--borde); border-radius: 10px; }
+.gm-tabla-caja table { width: 100%; min-width: 480px; }
+.gm-tabla-caja td, .gm-tabla-caja th { padding: 9px 12px; font-size: .8rem; white-space: normal; overflow-wrap: anywhere; }
+.gm-resultado { margin-top: 16px; }
+.gm-resultado h2 { margin-bottom: 12px; font-size: 1.15rem; }
+.gm-resultado p { line-height: 1.7; margin-bottom: 12px; }
+.gm-resultado ul { margin: 8px 0; padding-left: 22px; font-size: .85rem; line-height: 1.8; }
+.gm-resultado .gm-total { font-size: 1.3rem; font-weight: 750; }
+.gm-guia-etapa { margin: 14px 0; padding: 14px 16px; border: 1px solid var(--borde); border-radius: 12px; background: var(--acento-tinte); }
+.gm-guia-etapa h2 { margin: 0 0 5px; font-size: 1rem; }
+.gm-guia-etapa p { font-size: .86rem; line-height: 1.65; }
+.gm-opciones { margin-bottom: 14px; border: 1px solid var(--borde); border-radius: 12px; background: var(--bg-2); }
+.gm-opciones > summary { cursor: pointer; min-height: 44px; padding: 12px 14px; font-size: .82rem; font-weight: 650; }
+.gm-opciones .gm-herramientas { margin: 0; border: 0; border-top: 1px solid var(--borde); border-radius: 0 0 12px 12px; }
+.gm-herramientas > .gm-opciones { margin-bottom: 0; }
+.gm-herramientas > .gm-opciones[open] { flex-basis: 100%; width: 100%; min-width: 0; }
+.gm-opciones-contenido { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; padding: 12px; }
+.gm-zoom-detalle { display: flex; flex-wrap: wrap; gap: 4px; }
+.gm-teoria { margin-top: 12px; }
+.gm-teoria > summary { cursor: pointer; min-height: 44px; padding-block: 10px; font-size: .82rem; }
+.gm-avance { margin-top: 16px; }
+.gm-avance .btn { min-height: 44px; white-space: normal; }
+.gm-distribucion[data-vista=procedimiento], .gm-distribucion[data-vista=resultado] { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.gm-distribucion > .gm-resultado { margin-top: 0; }
+.gm-estado { margin-bottom: 14px; font-size: .82rem; color: var(--texto-suave); }
+.gm-ampliado { grid-template-columns: minmax(0, 1fr); }
+.gm-distribucion.gm-ampliado { grid-template-columns: minmax(0, 1fr); }
+.gm-ampliado .gm-lienzo { max-height: 75vh; }
+.gm-ampliado .gm-lienzo svg { height: min(680px, 70vh); min-height: 300px; }
+.gm-ampliado .gm-editor, .gm-ampliado .gm-config { max-width: 650px; }
+.gm-no-visible, .grafo-modulo [hidden] { display: none !important; }
+@media (max-width: 1199px) { .gm-distribucion, .gm-distribucion[data-vista=procedimiento], .gm-distribucion[data-vista=resultado] { grid-template-columns: minmax(0, 1fr); } .gm-editor { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; } .gm-editor h2, .gm-editor > .gm-info, .gm-editor > .gm-avance { grid-column: 1 / -1; } }
+@media (max-width: 600px) {
+  .gm-editor { display: block; }
+  .gm-herramientas { padding: 10px; gap: 8px; }
+  .gm-herramientas > .btn { flex: 1 1 100px; min-height: 44px; }
+  .gm-lienzo-cab { padding: 10px; }
+  .gm-panel { padding: 12px; }
+  .gm-lienzo-panel { padding: 0; }
+  .gm-estado { font-size: .75rem; }
+  .gm-tabla-caja table { min-width: 0; table-layout: fixed; }
+  .gm-tabla-caja td, .gm-tabla-caja th { padding: 8px 5px; font-size: .75rem; overflow-wrap: anywhere; }
+  .gm-leyenda, .gm-ayuda-corta { font-size: .78rem; }
+  .gm-avance .btn { width: 100%; }
+}
+@media print { .gm-herramientas, .gm-editor, .gm-config, .gm-flujo, .gm-zoom, .gm-cinta { display: none !important; } .gm-lienzo { max-height: none; overflow: visible; } .gm-lienzo svg { min-width: 0; } .gm-distribucion { display: block; } }

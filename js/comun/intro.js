@@ -63,7 +63,7 @@ function construirIntro() {
   intro.marco = s.querySelector('#introMarco');
 }
 
-function mostrarIntro() {
+function mostrarIntro(inicial) {
   if (!intro.marco.firstChild) {
     const iframe = document.createElement('iframe');
     iframe.src = 'https://www.youtube-nocookie.com/embed/' + intro.alg.video + '?rel=0';
@@ -79,6 +79,11 @@ function mostrarIntro() {
   document.body.classList.add('intro-visible');
   if (intro.btnVideo) intro.btnVideo.setAttribute('aria-pressed', 'true');
   window.scrollTo({ top: 0 });
+  if (inicial !== true) {
+    const titulo = intro.seccion.querySelector('#introTitulo');
+    titulo.setAttribute('tabindex', '-1');
+    titulo.focus({ preventScroll: true });
+  }
 }
 
 function cerrarIntro(inicial) {
@@ -91,7 +96,8 @@ function cerrarIntro(inicial) {
   // El lienzo pasó de oculto a visible: quien dibuje sobre él escucha este evento.
   window.dispatchEvent(new CustomEvent('navegacion:cambio'));
   if (inicial === true) return;
-  const primero = intro.contenido.querySelector('h1, h2, button, a');
+  const primero = Array.from(intro.contenido.querySelectorAll('h1, h2, button, a'))
+    .find(elemento => elemento.getClientRects().length > 0 && !elemento.disabled);
   if (primero && typeof primero.focus === 'function') { primero.setAttribute('tabindex', '-1'); primero.focus({ preventScroll: true }); }
 }
 
@@ -106,7 +112,7 @@ function inicializarIntro() {
   construirIntro();
   if (intro.btnVideo) intro.btnVideo.addEventListener('click', () => (introVisible() ? cerrarIntro(false) : mostrarIntro()));
   const parametros = new URLSearchParams(window.location.search);
-  if (parametros.get('intro') === 'no' || introOmitida()) cerrarIntro(true); else mostrarIntro();
+  if (parametros.get('intro') === 'no' || introOmitida()) cerrarIntro(true); else mostrarIntro(true);
 }
 
 inicializarIntro();

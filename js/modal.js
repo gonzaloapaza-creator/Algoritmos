@@ -6,6 +6,7 @@
 
 let cerrarModal = null;   // función que resuelve la promesa abierta
 let abiertaDesde = 0;     // momento en que se abrió, para ignorar el toque que la abrió
+let liberarFocoJohnson = null;
 
 function modalAbierto() {
   return cerrarModal !== null;
@@ -48,21 +49,19 @@ function abrirModal(config) {
     el.modalFondo.scrollTop = 0;
     abiertaDesde = Date.now();
 
-    // En el móvil el usuario toca el campo cuando quiere escribir: así el teclado
-    // no aparece de golpe ni tapa los botones al abrirse la ventana.
-    if (!esTactil()) {
-      setTimeout(() => {
-        if (config.pedirTexto) { el.modalInput.focus(); el.modalInput.select(); }
-        else el.modalAceptar.focus();
-      }, MODAL_FOCUS_DELAY);
-    }
-
     cerrarModal = respuesta => {
       el.modalInput.blur();   // cierra el teclado del móvil antes de ocultar la ventana
       el.modalFondo.hidden = true;
       cerrarModal = null;
+      liberarFocoJohnson();
+      liberarFocoJohnson = null;
       resolve(respuesta);
     };
+    liberarFocoJohnson = activarFocoModal(el.modal, {
+      cerrar: () => cerrarModal(null),
+      inicial: config.pedirTexto ? (esTactil() ? el.modal : el.modalInput) : el.modalAceptar
+    });
+    if (config.pedirTexto && !esTactil()) el.modalInput.select();
 
     // La ventana no se cierra hasta que el dato sea válido o el usuario cancele.
     el.modalAceptar.onclick = () => {

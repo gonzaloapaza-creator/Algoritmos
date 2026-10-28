@@ -13,6 +13,10 @@ const btnAplicar = $('btnAplicar');
 const btnGenerar = $('btnGenerar');
 const btnCasiOrdenado = $('btnCasiOrdenado');
 const btnInvertido = $('btnInvertido');
+const estadoPreparacion = $('estadoPreparacion');
+const btnCancelarPreparacion = $('btnCancelarPreparacion');
+let versionPreparacion = 0;
+let cuadroPendiente = null;
 
 const btnReiniciar = $('btnReiniciar');
 const btnAnterior = $('btnAnterior');
@@ -61,11 +65,14 @@ const NOMBRES_TIPO = {
 };
 
 // ---- Datos ----
-function fijarValores(valores) {
+function fijarValores(valores, pasoInicial) {
   E.valores = valores.slice();
+  E.cantidad = valores.length;
+  selectorCantidad.value = String(E.cantidad);
   entradaValores.value = valores.join(', ');
+  entradaValores.removeAttribute('aria-invalid');
   errorEntrada.textContent = '';
-  ejecutarAlgoritmo();
+  return ejecutarAlgoritmo(pasoInicial);
 }
 
 function valoresCasiOrdenados(cantidad) {
@@ -75,26 +82,59 @@ function valoresCasiOrdenados(cantidad) {
   return v;
 }
 
-function ejecutarAlgoritmo() {
+async function ejecutarAlgoritmo(pasoInicial) {
   pausarReproduccion();
-  E.historial = ejecutarOrdenamiento(E.algoritmo, E.valores);
-  E.pasoActual = 0;
-  construirMapaPasos();
+  const version = ++versionPreparacion;
+  E.preparando = true;
+  E.historial = [];
+  E.registro = null;
+  E.pasoActual = Number.isInteger(pasoInicial) && pasoInicial >= 0 ? pasoInicial : 0;
   construirPseudocodigo();
+  estadoPreparacion.textContent = `Preparando ${E.valores.length} valores; puedes cambiar datos o cancelar.`;
+  btnCancelarPreparacion.hidden = false;
+  [btnAnterior, btnSiguiente, btnAuto, btnReiniciar, deslizadorPasos].forEach(b => { b.disabled = true; });
+  mapaPasos.replaceChildren();
+  dibujarPinos({ arreglo: pinosDesdeValores(E.valores) }, { sinAnimar: true });
+  guardarEstadoOrdenamiento(selectorVelocidad.value);
+  const inicio = performance.now();
+  const registro = await prepararOrdenamiento(E.algoritmo, E.valores, { cancelado: () => version !== versionPreparacion });
+  if (!registro || version !== versionPreparacion) return false;
+  E.preparando = false;
+  E.registro = registro;
+  E.historial = registro.eventos;
+  E.pasoActual = Math.min(E.pasoActual, E.historial.length - 1);
+  estadoPreparacion.textContent = `${E.valores.length} valores · ${E.historial.length.toLocaleString('es')} eventos · ${registro.checkpoints.length} puntos de recuperación · preparación ${(performance.now() - inicio).toFixed(0)} ms. La animación recorre cada evento.`;
+  btnCancelarPreparacion.hidden = true;
+  btnAuto.disabled = deslizadorPasos.disabled = false;
+  construirMapaPasos();
   deslizadorPasos.max = E.historial.length - 1;
   actualizarInterfaz({ sinAnimar: true });
+  return true;
 }
+
+function cancelarPreparacion() {
+  if (!E.preparando) return;
+  versionPreparacion++;
+  E.preparando = false;
+  btnCancelarPreparacion.hidden = true;
+  estadoPreparacion.textContent = 'Preparación cancelada. Pulsa «Usar valores» o elige otro algoritmo para preparar de nuevo.';
+}
+btnCancelarPreparacion.addEventListener('click', cancelarPreparacion);
 
 // ---- Paneles estáticos por ejecución ----
 function construirMapaPasos() {
   mapaPasos.innerHTML = '';
-  E.historial.forEach((paso, i) => {
+  const cantidad = Math.min(120, E.historial.length);
+  for (let muestra = 0; muestra < cantidad; muestra++) {
+    const i = Math.round(muestra * (E.historial.length - 1) / Math.max(1, cantidad - 1));
+    const paso = E.historial[i];
     const s = document.createElement('span');
     s.dataset.tipo = paso.tipo;
     s.dataset.indice = i;
     s.title = `Paso ${i}: ${NOMBRES_TIPO[paso.tipo] || paso.tipo}`;
     mapaPasos.appendChild(s);
-  });
+  }
+  mapaPasos.title = `Vista resumida: ${cantidad} marcas para ${E.historial.length} eventos. Usa el deslizador para acceder a cualquiera.`;
 }
 
 function construirPseudocodigo() {
@@ -126,17 +166,21 @@ function construirPseudocodigo() {
 }
 
 function renderPinosAuxiliares(contenedor, pinos, inicio) {
-  contenedor.replaceChildren();
+  while (contenedor.children.length > (pinos || []).length) contenedor.lastElementChild.remove();
   (pinos || []).forEach((pino, indice) => {
-    const caja = document.createElement('span');
+    let caja = contenedor.children[indice];
+    if (!caja) {
+      caja = document.createElement('span');
+      caja.append(document.createElement('b'), document.createElement('small'));
+      contenedor.appendChild(caja);
+    }
     caja.className = 'auxiliar-pino' + (pino ? '' : ' auxiliar-pino--vacio');
-    caja.textContent = pino ? String(pino.valor) : '·';
+    const valor = pino ? String(pino.valor) : '·';
+    if (caja.firstElementChild.textContent !== valor) caja.firstElementChild.textContent = valor;
     caja.title = pino ? `Pino ${pino.id}: valor ${pino.valor}` : 'Sin copiar todavía';
     caja.setAttribute('aria-label', pino ? `Pino ${pino.valor}, identificador ${pino.id}` : 'Espacio vacío');
-    const posicion = document.createElement('small');
+    const posicion = caja.lastElementChild;
     posicion.textContent = String((inicio || 0) + indice);
-    caja.appendChild(posicion);
-    contenedor.appendChild(caja);
   });
 }
 
@@ -159,7 +203,7 @@ function actualizarAuxiliar(paso) {
     renderPinosAuxiliares(derechoMerge, paso.derecho || []);
     renderPinosAuxiliares(auxiliarMerge, paso.auxiliar || []);
     (paso.comparando || []).forEach(indice => {
-      const posicion = paso.segmento ? indice - paso.segmento[0] : -1;
+      const posicion = paso.segmento ? indice : -1;
       if (posicion >= 0) {
         const el = auxiliarMerge.children[posicion];
         if (el) el.classList.add('auxiliar-pino--activo');
@@ -177,7 +221,7 @@ function animarTic(el) {
 
 function actualizarInterfaz(opciones) {
   if (!E.historial.length) return;
-  const paso = E.historial[E.pasoActual];
+  const paso = obtenerPasoOrdenamiento(E.registro, E.pasoActual);
   const total = E.historial.length - 1;
   const n = paso.arreglo.length;
 
@@ -199,9 +243,11 @@ function actualizarInterfaz(opciones) {
   statPasada.textContent = paso.salto ? `${paso.pasada || 0} · salto ${paso.salto}` : paso.pasada || 0;
 
   // Mapa de pasos y deslizador
-  Array.from(mapaPasos.children).forEach((s, i) => {
+  Array.from(mapaPasos.children).forEach((s, muestra) => {
+    const i = Number(s.dataset.indice);
+    const siguiente = mapaPasos.children[muestra + 1];
     s.classList.toggle('hecho', i <= E.pasoActual);
-    s.classList.toggle('actual', i === E.pasoActual);
+    s.classList.toggle('actual', i <= E.pasoActual && (!siguiente || Number(siguiente.dataset.indice) > E.pasoActual));
   });
   deslizadorPasos.value = E.pasoActual;
 
@@ -225,19 +271,19 @@ function actualizarInterfaz(opciones) {
 }
 
 /** Aplica un estado ya validado por depurarEstadoOrdenamiento (autoguardado o trabajo nombrado). */
-function aplicarEstadoOrdenamiento(limpio) {
+async function aplicarEstadoOrdenamiento(limpio) {
   pausarReproduccion();
   E.algoritmo = limpio.algoritmo;
   E.cantidad = limpio.valores.length;
   selectorVelocidad.value = limpio.velocidad;
   selectorCantidad.value = String(E.cantidad);
   botonesAlgoritmo.forEach(b => b.setAttribute('aria-pressed', b.dataset.algoritmo === E.algoritmo ? 'true' : 'false'));
-  fijarValores(limpio.valores);
-  irAPaso(limpio.pasoActual, { sinAnimar: true });
+  await fijarValores(limpio.valores, limpio.pasoActual);
 }
 
 // ---- Navegación entre pasos ----
 function irAPaso(i, opciones) {
+  if (!E.historial.length || E.preparando) return;
   const total = E.historial.length - 1;
   E.pasoActual = Math.max(0, Math.min(total, i));
   actualizarInterfaz(opciones);
@@ -246,10 +292,11 @@ function pasoSiguiente() { if (E.pasoActual < E.historial.length - 1) irAPaso(E.
 function pasoAnterior() { if (E.pasoActual > 0) irAPaso(E.pasoActual - 1); }
 
 function alternarReproduccion() {
+  if (E.preparando || !E.historial.length) return;
   if (E.reproduciendo) { pausarReproduccion(); return; }
   if (E.pasoActual === E.historial.length - 1) irAPaso(0, { sinAnimar: true });
   E.reproduciendo = true;
-  btnAuto.textContent = '❚❚ Pausar';
+  btnAuto.querySelector('span').textContent = 'Pausar';
   btnAuto.classList.replace('btn-neutral', 'btn-secondary');
   btnAuto.setAttribute('aria-pressed', 'true');
   E.intervalo = setInterval(pasoSiguiente, parseInt(selectorVelocidad.value, 10));
@@ -259,7 +306,7 @@ function pausarReproduccion() {
   E.reproduciendo = false;
   clearInterval(E.intervalo);
   E.intervalo = null;
-  btnAuto.textContent = '▶ Reproducir';
+  btnAuto.querySelector('span').textContent = 'Reproducir';
   btnAuto.classList.replace('btn-secondary', 'btn-neutral');
   btnAuto.setAttribute('aria-pressed', 'false');
 }
@@ -270,7 +317,14 @@ btnAnterior.addEventListener('click', () => { pausarReproduccion(); pasoAnterior
 btnReiniciar.addEventListener('click', () => { pausarReproduccion(); irAPaso(0, { sinAnimar: true }); });
 btnAuto.addEventListener('click', alternarReproduccion);
 
-deslizadorPasos.addEventListener('input', () => { pausarReproduccion(); irAPaso(parseInt(deslizadorPasos.value, 10), { sinAnimar: true }); });
+deslizadorPasos.addEventListener('input', () => {
+  pausarReproduccion();
+  if (cuadroPendiente != null) return;
+  cuadroPendiente = requestAnimationFrame(() => {
+    cuadroPendiente = null;
+    irAPaso(parseInt(deslizadorPasos.value, 10), { sinAnimar: true });
+  });
+});
 mapaPasos.addEventListener('click', e => {
   const s = e.target.closest('span[data-indice]');
   if (!s) return;
@@ -283,7 +337,13 @@ selectorVelocidad.addEventListener('change', () => {
   guardarEstadoOrdenamiento(selectorVelocidad.value);
 });
 selectorCantidad.addEventListener('change', () => {
-  E.cantidad = parseInt(selectorCantidad.value, 10);
+  const cantidad = Number(selectorCantidad.value);
+  if (!Number.isInteger(cantidad) || cantidad < LIMITES_ORDENAMIENTO.cantidadMin || cantidad > LIMITES_ORDENAMIENTO.cantidadMax) {
+    errorEntrada.textContent = `Elige entre ${LIMITES_ORDENAMIENTO.cantidadMin} y ${LIMITES_ORDENAMIENTO.cantidadMax} valores.`;
+    selectorCantidad.value = String(E.cantidad);
+    return;
+  }
+  E.cantidad = cantidad;
   fijarValores(generarValoresOrdenamiento(E.cantidad));
 });
 
@@ -299,7 +359,7 @@ function aplicarValoresEscritos() {
 }
 btnAplicar.addEventListener('click', aplicarValoresEscritos);
 entradaValores.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); aplicarValoresEscritos(); } });
-entradaValores.addEventListener('input', () => { errorEntrada.textContent = ''; entradaValores.removeAttribute('aria-invalid'); });
+entradaValores.addEventListener('input', () => { cancelarPreparacion(); errorEntrada.textContent = ''; entradaValores.removeAttribute('aria-invalid'); });
 
 botonesAlgoritmo.forEach(btn => btn.addEventListener('click', () => {
   const alg = btn.dataset.algoritmo;
@@ -313,6 +373,7 @@ botonesAlgoritmo.forEach(btn => btn.addEventListener('click', () => {
 document.addEventListener('keydown', evento => {
   const t = evento.target.tagName;
   if (t === 'SELECT' || t === 'INPUT' || t === 'TEXTAREA') return;
+  if (evento.target.closest('.pino-caja')) return;
   if (!modalAyuda.hidden) return;
   if (evento.ctrlKey || evento.metaKey || evento.altKey) return;
 
@@ -330,10 +391,7 @@ document.addEventListener('keydown', evento => {
 });
 
 // ---- Ayuda ----
-btnAyuda.addEventListener('click', () => { pausarReproduccion(); modalAyuda.hidden = false; });
-btnCerrarAyuda.addEventListener('click', () => { modalAyuda.hidden = true; });
-modalAyuda.addEventListener('click', e => { if (e.target === modalAyuda) modalAyuda.hidden = true; });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modalAyuda.hidden) modalAyuda.hidden = true; });
+instalarAyudaModal(modalAyuda, btnAyuda, btnCerrarAyuda, pausarReproduccion);
 
 // ---- Arranque ----
 window.addEventListener('DOMContentLoaded', () => {

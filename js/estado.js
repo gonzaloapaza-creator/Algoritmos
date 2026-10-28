@@ -45,7 +45,6 @@ const el = {
   capaConexiones: document.getElementById('capaConexiones'),
   ayuda: document.getElementById('ayuda'),
   vacio: document.getElementById('vacio'),
-  avisos: document.getElementById('avisos'),
   panel: document.getElementById('panel'),
   panelTitulo: document.getElementById('panelTitulo'),
   panelDetalle: document.getElementById('panelDetalle'),

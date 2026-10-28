@@ -53,9 +53,8 @@ function serializarAsignacion() {
 }
 
 function guardarAsignacion() {
-  try {
-    localStorage.setItem(ASIGNACION_STORAGE_KEY_V2, JSON.stringify(serializarAsignacion()));
-  } catch (e) { /* sin almacenamiento: la aplicación sigue funcionando */ }
+  // Sin almacenamiento la aplicación sigue funcionando; el aviso se muestra una sola vez.
+  escribirAlmacenamientoLocal(ASIGNACION_STORAGE_KEY_V2, JSON.stringify(serializarAsignacion()), { respaldo: 'usa «Exportar JSON» en el panel Edición' });
 }
 
 /**

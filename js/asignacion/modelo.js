@@ -182,6 +182,8 @@ function depurarModeloAsignacion(datos) {
   const tareas = limpiarLista(datos.tareas);
   const idsR = new Set(recursos.map(e => e.id));
   const idsT = new Set(tareas.map(e => e.id));
+  // Ids repetidos harían ambiguas las claves «recurso|tarea»: no se adivina cuál conservar.
+  if (idsR.size !== recursos.length || idsT.size !== tareas.length || tareas.some(e => idsR.has(e.id))) return null;
   const valores = {};
   if (datos.valores && typeof datos.valores === 'object') {
     Object.keys(datos.valores).forEach(clave => {
@@ -199,6 +201,57 @@ function depurarModeloAsignacion(datos) {
   const siguienteId = Number.isInteger(datos.siguienteId) && datos.siguienteId > mayor ? datos.siguienteId : mayor + 1;
 
   return { recursos, tareas, valores, siguienteId };
+}
+
+/**
+ * Validación estricta para importar (archivo JSON v2 o «Mis trabajos»). No recorta
+ * nombres, no descarta valores ni convierte nada: devuelve la lista de problemas y el
+ * modelo abierto no se toca. Las parejas sin valor siguen siendo pendientes válidas.
+ * @returns {{ok:true, modelo:Object}|{ok:false, errores:string[]}}
+ */
+function validarModeloAsignacionImportado(datos) {
+  if (!datos || typeof datos !== 'object' || !Array.isArray(datos.recursos) || !Array.isArray(datos.tareas)) {
+    return { ok: false, errores: ['El archivo no contiene las listas «recursos» y «tareas».'] };
+  }
+  const errores = [];
+  const revisarLista = (lista, etiqueta, ids) => {
+    // El mínimo se exige al resolver, no al importar: un estado con menos elementos es un dato pendiente válido.
+    if (lista.length > MAX_ASIGNACION_DIMENSION) errores.push('Como máximo ' + MAX_ASIGNACION_DIMENSION + ' ' + etiqueta + ' (hay ' + lista.length + ').');
+    const validos = [];
+    lista.forEach((e, i) => {
+      const ref = etiqueta.charAt(0).toUpperCase() + etiqueta.slice(1, -1) + ' ' + (i + 1);
+      if (!e || typeof e.id !== 'string' || e.id === '') { errores.push(ref + ': falta el identificador.'); return; }
+      if (ids.has(e.id)) errores.push(ref + ': identificador «' + e.id + '» repetido.');
+      ids.add(e.id);
+      const nombre = typeof e.nombre === 'string' ? validarNombreAsignacion(e.nombre, validos, e.id)
+        : { ok: false, error: 'El nombre debe ser texto.' };
+      if (!nombre.ok) errores.push(ref + ' (' + e.id + '): ' + nombre.error);
+      else validos.push({ id: e.id, nombre: nombre.valor });
+    });
+  };
+  const idsR = new Set(), idsT = new Set();
+  revisarLista(datos.recursos, 'recursos', idsR);
+  revisarLista(datos.tareas, 'tareas', idsT);
+  idsT.forEach(id => { if (idsR.has(id)) errores.push('El identificador «' + id + '» está repetido entre recursos y tareas.'); });
+  if (datos.valores !== undefined && (datos.valores === null || typeof datos.valores !== 'object' || Array.isArray(datos.valores))) {
+    errores.push('«valores» debe ser un objeto { "recurso|tarea": entero }.');
+  } else if (datos.valores) {
+    Object.keys(datos.valores).forEach(clave => {
+      const partes = clave.split('|');
+      const v = datos.valores[clave];
+      if (partes.length !== 2 || !idsR.has(partes[0]) || !idsT.has(partes[1])) {
+        errores.push('Valor «' + clave + '»: no corresponde a un recurso y una tarea existentes.');
+        return;
+      }
+      if (v === null) return; // pendiente explícito
+      const valor = validarValorAsignacion(typeof v === 'number' ? String(v) : v);
+      if (!valor.ok || valor.valor === null || !Number.isInteger(v)) errores.push('Valor «' + clave + '» = ' + JSON.stringify(v) + ': debe ser un entero entre -' + MAX_VALOR_ASIGNACION + ' y ' + MAX_VALOR_ASIGNACION + '.');
+    });
+  }
+  if (datos.siguienteId !== undefined && !Number.isSafeInteger(datos.siguienteId)) errores.push('«siguienteId» debe ser un entero seguro.');
+  if (errores.length) return { ok: false, errores };
+  const modelo = depurarModeloAsignacion(datos);
+  return modelo ? { ok: true, modelo } : { ok: false, errores: ['El modelo no se pudo reconstruir.'] };
 }
 
 /**

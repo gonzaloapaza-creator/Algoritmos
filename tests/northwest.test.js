@@ -7,7 +7,9 @@ const ctx = cargar(crearContexto(), [
   'js/northwest/validacion.js',
   'js/northwest/modelo.js',
   'js/northwest/balanceo.js',
-  'js/northwest/noroeste.js'
+  'js/northwest/noroeste.js',
+  'js/comun/utilidades.js',
+  'js/northwest/estado.js'
 ]);
 
 const {
@@ -234,6 +236,49 @@ prueba('Barrido aleatorio: 300 problemas verifican sumas, base y costo', () => {
     const { r } = resolverDesde(costos, ofertas, demandas);
     cierto(r.verificacion.ok);
   }
+});
+
+prueba('Importación: validarModeloNorthwestImportado acepta pendientes y rechaza datos inválidos sin truncar', () => {
+  const { validarModeloNorthwestImportado, ejemploNorthwest } = ctx;
+  const MAXD = evaluar(ctx, 'MAX_NORTHWEST_DIMENSION');
+  const MAXC = evaluar(ctx, 'MAX_CANTIDAD_NORTHWEST');
+  const base = () => JSON.parse(JSON.stringify(ejemploNorthwest('balanceado')));
+  cierto(validarModeloNorthwestImportado(base()).ok);
+  const pendiente = base(); pendiente.origenes[0].oferta = null; delete pendiente.costos[Object.keys(pendiente.costos)[0]];
+  const rp = validarModeloNorthwestImportado(pendiente);
+  cierto(rp.ok && rp.modelo.origenes[0].oferta === null);
+
+  const casos = [
+    ['id repetido', m => { m.destinos[1].id = m.destinos[0].id; }, 'repetido'],
+    ['id repetido entre grupos', m => { m.destinos[0].id = m.origenes[0].id; }, 'repetido'],
+    ['costo con ids inexistentes', m => { m.costos['o_9|d_9'] = 100; }, 'existentes'],
+    ['costo negativo', m => { m.costos[Object.keys(m.costos)[0]] = -1; }, 'entero'],
+    ['costo no entero (escalado)', m => { m.costos[Object.keys(m.costos)[0]] = 2.5; }, 'entero'],
+    ['oferta decimal', m => { m.origenes[0].oferta = 1.5; }, 'oferta'],
+    ['demanda fuera de rango', m => { m.destinos[0].demanda = MAXC + 1; }, 'demanda'],
+    ['demanda no finita', m => { m.destinos[0].demanda = NaN; }, 'demanda'],
+    ['nombre demasiado largo', m => { m.origenes[0].nombre = 'x'.repeat(41); }, 'largo'],
+    ['nombre numérico (no se descarta el origen)', m => { m.origenes[0].nombre = 123; }, 'texto'],
+    ['siguienteId no seguro', m => { m.siguienteId = Number.MAX_SAFE_INTEGER + 1; }, 'siguienteId'],
+    ['demasiados destinos', m => { for (let i = 0; i <= MAXD; i++) m.destinos.push({ id: 'd_x' + i, nombre: 'D' + i, demanda: 1 }); }, 'máximo']
+  ];
+  casos.forEach(([nombre, romper, fragmento]) => {
+    const m = base(); romper(m);
+    const r = validarModeloNorthwestImportado(m);
+    cierto(!r.ok && r.errores.some(e => e.includes(fragmento)), 'Debió rechazar: ' + nombre + ' → ' + JSON.stringify(r.errores));
+  });
+});
+
+prueba('Renombrar después de resolver: el balance muestra el nombre actual y el resultado sigue vigente', () => {
+  const { ejemploNorthwest, balancearNorthwest, firmaModeloNorthwest, sincronizarNombresNorthwest } = ctx;
+  const modelo = ejemploNorthwest('exceso-oferta');
+  const balance = balancearNorthwest(modelo);
+  const firma = firmaModeloNorthwest(modelo);
+  modelo.origenes[0].nombre = 'Planta renombrada';
+  igual(firmaModeloNorthwest(modelo), firma, 'Renombrar no debe invalidar el resultado');
+  sincronizarNombresNorthwest(balance, modelo);
+  igual(balance.origenes[0].nombre, 'Planta renombrada');
+  cierto(balance.destinos.some(d => d.ficticio && d.nombre === 'Destino ficticio'), 'El ficticio conserva su nombre');
 });
 
 process.exitCode = informe('Northwest') ? 0 : 1;

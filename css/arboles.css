@@ -29,7 +29,7 @@
   border: 1px solid var(--borde-suave);
   border-radius: var(--radio);
   background:
-    radial-gradient(circle at 1px 1px, rgba(167, 139, 250, .08) 1px, transparent 0) 0 0 / 20px 20px,
+    radial-gradient(circle at 1px 1px, var(--acento-tinte) 1px, transparent 0) 0 0 / 20px 20px,
     var(--bg-input);
   touch-action: pan-x pan-y;
 }
@@ -38,11 +38,11 @@
 .arbol-rama { stroke: #64748b; stroke-width: 3; }
 .arbol-rama--activa { stroke: var(--acento-fuerte); stroke-width: 5; }
 .arbol-nodo { cursor: pointer; outline: none; }
-.arbol-nodo__circulo { fill: #312e81; stroke: var(--acento); stroke-width: 3; transition: fill .15s ease, stroke .15s ease, filter .15s ease; }
+.arbol-nodo__circulo { fill: #174c36; stroke: var(--acento); stroke-width: 3; transition: fill .15s ease, stroke .15s ease, filter .15s ease; }
 .arbol-nodo__valor { fill: #fff; font: 800 14px var(--fuente); pointer-events: none; }
 .arbol-nodo__etiqueta { fill: var(--texto-suave); font: 700 10px var(--fuente); }
 .arbol-nodo:hover .arbol-nodo__circulo, .arbol-nodo:focus-visible .arbol-nodo__circulo { stroke: #fff; stroke-width: 4; }
-.arbol-nodo--raiz .arbol-nodo__circulo { fill: #5b21b6; }
+.arbol-nodo--raiz .arbol-nodo__circulo { fill: #245e3e; }
 .arbol-nodo--hoja .arbol-nodo__circulo { stroke-dasharray: 4 2; }
 .arbol-nodo--visitado .arbol-nodo__circulo { fill: #0f766e; stroke: #5eead4; }
 .arbol-nodo--actual .arbol-nodo__circulo, .arbol-nodo--nuevo .arbol-nodo__circulo, .arbol-nodo--seleccionado .arbol-nodo__circulo { fill: #a16207; stroke: #fde68a; filter: drop-shadow(0 0 7px rgba(253, 230, 138, .6)); }

@@ -34,11 +34,14 @@ function depurarGrafo(datos) {
     .map(n => ({ id: n.id, nombre: n.nombre, x: n.x, y: n.y }));
 
   const ids = new Set(nodos.map(n => n.id));
-  // El peso solo tiene que ser entero: el cero y los negativos son válidos.
+  // Ids repetidos: las conexiones serían ambiguas; no se adivina cuál era el nodo real.
+  if (ids.size !== nodos.length) return null;
+  // El peso solo tiene que ser entero dentro del rango de la interfaz: el cero y los negativos son válidos.
   const conexiones = datos.conexiones
     .filter(c => c && typeof c.id === 'string' && ids.has(c.desde) && ids.has(c.hacia) &&
-                 Number.isInteger(c.valor))
+                 Number.isInteger(c.valor) && Math.abs(c.valor) <= MAX_PESO)
     .map(c => ({ id: c.id, desde: c.desde, hacia: c.hacia, valor: c.valor }));
+  if (new Set(conexiones.map(c => c.id)).size !== conexiones.length) return null;
 
   // El contador debe quedar por encima del número más alto ya usado,
   // o los identificadores nuevos chocarían con los recuperados.
@@ -51,6 +54,48 @@ function depurarGrafo(datos) {
   const siguienteId = Number.isInteger(guardado) && guardado > mayor ? guardado : mayor + 1;
 
   return { nodos: nodos, conexiones: conexiones, siguienteId: siguienteId };
+}
+
+/**
+ * Validación estricta para importar un grafo (archivo JSON o «Mis trabajos»).
+ * A diferencia de depurarGrafo(), no descarta nada en silencio: devuelve la lista
+ * de problemas para que el usuario corrija el archivo y el grafo abierto quede intacto.
+ * Aplica las mismas reglas que la interfaz (nombres únicos de hasta MAX_LARGO_NOMBRE
+ * caracteres, pesos enteros entre -MAX_PESO y MAX_PESO).
+ * @param {Object} datos - { nodos, conexiones, siguienteId }
+ * @returns {{ok:true, grafo:Object}|{ok:false, errores:string[]}}
+ */
+function validarGrafoImportado(datos) {
+  const errores = [];
+  if (!datos || typeof datos !== 'object' || !Array.isArray(datos.nodos) || !Array.isArray(datos.conexiones)) {
+    return { ok: false, errores: ['El archivo no contiene las listas «nodos» y «conexiones».'] };
+  }
+  const ids = new Set(), nombres = new Set();
+  datos.nodos.forEach((n, i) => {
+    const ref = 'Nodo ' + (i + 1);
+    if (!n || typeof n.id !== 'string' || n.id === '') { errores.push(ref + ': falta el identificador.'); return; }
+    if (ids.has(n.id)) errores.push(ref + ': identificador «' + n.id + '» repetido.');
+    ids.add(n.id);
+    const nombre = typeof n.nombre === 'string' ? n.nombre.trim() : '';
+    if (nombre === '') errores.push(ref + ' (' + n.id + '): el nombre está vacío.');
+    else if (nombre.length > MAX_LARGO_NOMBRE) errores.push(ref + ' (' + n.id + '): nombre de más de ' + MAX_LARGO_NOMBRE + ' caracteres.');
+    else if (nombres.has(nombre.toLowerCase())) errores.push(ref + ' (' + n.id + '): el nombre «' + nombre + '» está repetido.');
+    nombres.add(nombre.toLowerCase());
+    if (!Number.isFinite(n.x) || !Number.isFinite(n.y)) errores.push(ref + ' (' + n.id + '): posición no numérica.');
+  });
+  const idsConexion = new Set();
+  datos.conexiones.forEach((c, i) => {
+    const ref = 'Conexión ' + (i + 1);
+    if (!c || typeof c.id !== 'string' || c.id === '') { errores.push(ref + ': falta el identificador.'); return; }
+    if (idsConexion.has(c.id)) errores.push(ref + ': identificador «' + c.id + '» repetido.');
+    idsConexion.add(c.id);
+    if (!ids.has(c.desde)) errores.push(ref + ' (' + c.id + '): el nodo de origen «' + c.desde + '» no existe.');
+    if (!ids.has(c.hacia)) errores.push(ref + ' (' + c.id + '): el nodo de destino «' + c.hacia + '» no existe.');
+    if (!Number.isInteger(c.valor)) errores.push(ref + ' (' + c.id + '): el peso debe ser un número entero.');
+    else if (Math.abs(c.valor) > MAX_PESO) errores.push(ref + ' (' + c.id + '): el peso debe estar entre -' + MAX_PESO + ' y ' + MAX_PESO + '.');
+  });
+  if (errores.length) return { ok: false, errores };
+  return { ok: true, grafo: depurarGrafo(datos) };
 }
 
 /** Reemplaza el grafo en pantalla por uno ya depurado. */
@@ -67,11 +112,8 @@ function aplicarGrafo(limpio) {
  * Si el navegador bloquea el almacenamiento, la aplicación sigue funcionando.
  */
 function guardar() {
-  try {
-    localStorage.setItem(CLAVE_ALMACEN, JSON.stringify(instantaneaGrafo()));
-  } catch (e) {
-    // Si el navegador bloquea el almacenamiento, la aplicación sigue funcionando.
-  }
+  // Si el navegador bloquea el almacenamiento, la aplicación sigue funcionando y se avisa una sola vez.
+  escribirAlmacenamientoLocal(CLAVE_ALMACEN, JSON.stringify(instantaneaGrafo()), { respaldo: 'usa «Más → Exportar JSON»' });
 }
 
 /**

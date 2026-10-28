@@ -112,12 +112,14 @@ function cambiarRecorridoArbol() {
   arbol.recorridoSeleccionado = arbolElemento('selectorRecorrido').value;
   arbol.historialRecorrido = crearHistorialRecorrido(arbol.raiz, arbol.recorridoSeleccionado);
   actualizarVisualArbol();
+  programarGuardadoArboles();
 }
 
 function pasoSiguienteRecorrido() {
   if (arbol.pasoRecorrido < arbol.historialRecorrido.length) {
     arbol.pasoRecorrido++;
     actualizarVisualArbol();
+    programarGuardadoArboles();
   }
   if (arbol.pasoRecorrido >= arbol.historialRecorrido.length) detenerRecorridoArbol();
 }
@@ -125,6 +127,7 @@ function pasoSiguienteRecorrido() {
 function pasoAnteriorRecorrido() {
   if (arbol.pasoRecorrido > 0) arbol.pasoRecorrido--;
   actualizarVisualArbol();
+  programarGuardadoArboles();
 }
 
 function alternarReproduccionRecorrido() {
@@ -155,6 +158,26 @@ function aplicarNuevoArbol(raiz, modo, secuencia, opciones) {
   arbol.historialRecorrido = crearHistorialRecorrido(arbol.raiz, arbol.recorridoSeleccionado);
   actualizarVisualArbol();
   guardarEstadoArboles();
+}
+
+/**
+ * Restaura un estado ya depurado (autoguardado o «Mis trabajos»): árbol, modo,
+ * recorrido seleccionado y paso, siempre con la reproducción pausada.
+ */
+function restaurarArbolDepurado(limpio) {
+  arbolElemento('selectorRecorrido').value = limpio.recorrido || 'preorden';
+  aplicarNuevoArbol(limpio.raiz, limpio.modo, limpio.secuencia);
+  arbol.pasoRecorrido = Math.max(0, Math.min(arbol.historialRecorrido.length, limpio.pasoRecorrido || 0));
+  if (limpio.modo === 'reconstruido') {
+    const recorridos = recorridosArbol(limpio.raiz);
+    Object.entries(recorridos).forEach(([nombre, valores]) => {
+      arbolElemento('entrada' + nombre[0].toUpperCase() + nombre.slice(1)).value = valores.join(', ');
+    });
+    arbolElemento('modoReconstruccion').value = 'todos';
+    actualizarCamposReconstruccion();
+  }
+  actualizarVisualArbol();
+  if (arbol.pasoRecorrido > 0) guardarEstadoArboles();
 }
 
 function agregarValorArbol(texto) {
@@ -285,6 +308,7 @@ arbolElemento('btnRecorridoReiniciar').addEventListener('click', () => {
   detenerRecorridoArbol();
   arbol.pasoRecorrido = 0;
   actualizarVisualArbol();
+  programarGuardadoArboles();
 });
 arbolElemento('velocidadRecorrido').addEventListener('change', () => {
   if (arbol.reproduciendo) {
@@ -320,23 +344,12 @@ arbolElemento('btnExportarPngArbol').addEventListener('click', () => {
 });
 
 const modalAyudaArbol = arbolElemento('modalAyuda');
-arbolElemento('btnAyuda').addEventListener('click', () => { modalAyudaArbol.hidden = false; });
-arbolElemento('btnCerrarAyuda').addEventListener('click', () => { modalAyudaArbol.hidden = true; });
-modalAyudaArbol.addEventListener('click', evento => { if (evento.target === modalAyudaArbol) modalAyudaArbol.hidden = true; });
-document.addEventListener('keydown', evento => { if (evento.key === 'Escape' && !modalAyudaArbol.hidden) modalAyudaArbol.hidden = true; });
+instalarAyudaModal(modalAyudaArbol, arbolElemento('btnAyuda'), arbolElemento('btnCerrarAyuda'));
 
 actualizarCamposReconstruccion();
 const guardado = restaurarEstadoArboles();
 if (guardado) {
-  aplicarNuevoArbol(guardado.raiz, guardado.modo, guardado.secuencia);
-  if (guardado.modo === 'reconstruido') {
-    const recorridos = recorridosArbol(guardado.raiz);
-    Object.entries(recorridos).forEach(([nombre, valores]) => {
-      arbolElemento('entrada' + nombre[0].toUpperCase() + nombre.slice(1)).value = valores.join(', ');
-    });
-    arbolElemento('modoReconstruccion').value = 'todos';
-    actualizarCamposReconstruccion();
-  }
+  restaurarArbolDepurado(guardado);
 } else {
   arbol.historialRecorrido = crearHistorialRecorrido(null, arbol.recorridoSeleccionado);
   actualizarVisualArbol();

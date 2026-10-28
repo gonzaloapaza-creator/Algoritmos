@@ -210,12 +210,12 @@ function resolverHungaro(matriz, objetivo, opciones) {
   const sinAsignarFilas = matriz.map((_, i) => i).filter(i => !asignaciones.some(a => a.fila === i));
   const sinAsignarColumnas = matriz[0].map((_, j) => j).filter(j => !asignaciones.some(a => a.col === j));
 
+  // El texto se guarda por compatibilidad, pero la vista lo regenera con los nombres
+  // actuales a partir de `detalleTotal` (renombrar no cambia la asignación).
+  const detalleTotal = { asignaciones, total, esMax, sinAsignarFilas, sinAsignarColumnas };
   paso('total', 'Total con los valores originales',
-    asignaciones.map(a => nombresFilas[a.fila] + ' → ' + nombresColumnas[a.col] + ': ' + a.valor).join('  +  ') +
-    '  =  ' + total + (esMax ? ' (beneficio máximo)' : ' (costo mínimo)') +
-    (sinAsignarFilas.length ? '. Sin tarea: ' + sinAsignarFilas.map(i => nombresFilas[i]).join(', ') : '') +
-    (sinAsignarColumnas.length ? '. Sin recurso: ' + sinAsignarColumnas.map(j => nombresColumnas[j]).join(', ') : '') + '.',
-    matriz, { destacadas: asignaciones.map(a => ({ fila: a.fila, col: a.col })) });
+    textoTotalAsignacion(detalleTotal, nombresFilas, nombresColumnas),
+    matriz, { destacadas: asignaciones.map(a => ({ fila: a.fila, col: a.col })), detalleTotal });
 
   return {
     objetivo: esMax ? 'max' : 'min',
@@ -229,6 +229,19 @@ function resolverHungaro(matriz, objetivo, opciones) {
     costoReducidoFinal: copiarMatriz(costo),
     maximo
   };
+}
+
+/**
+ * Explicación del paso final con los nombres que se indiquen. Sin DOM.
+ * @param {{asignaciones:Array, total:number, esMax:boolean, sinAsignarFilas:number[], sinAsignarColumnas:number[]}} d
+ */
+function textoTotalAsignacion(d, nombresFilas, nombresColumnas) {
+  const nf = i => (nombresFilas && nombresFilas[i] != null ? nombresFilas[i] : 'Fila ' + (i + 1));
+  const nc = j => (nombresColumnas && nombresColumnas[j] != null ? nombresColumnas[j] : 'Columna ' + (j + 1));
+  return d.asignaciones.map(a => nf(a.fila) + ' → ' + nc(a.col) + ': ' + a.valor).join('  +  ') +
+    '  =  ' + d.total + (d.esMax ? ' (beneficio máximo)' : ' (costo mínimo)') +
+    (d.sinAsignarFilas.length ? '. Sin tarea: ' + d.sinAsignarFilas.map(nf).join(', ') : '') +
+    (d.sinAsignarColumnas.length ? '. Sin recurso: ' + d.sinAsignarColumnas.map(nc).join(', ') : '') + '.';
 }
 
 /* ---------------- Verificación independiente ---------------- */

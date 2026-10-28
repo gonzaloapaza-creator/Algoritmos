@@ -168,6 +168,8 @@ function depurarModeloNorthwest(datos) {
   const destinos = limpiarLista(datos.destinos, 'demanda');
   const idsO = new Set(origenes.map(e => e.id));
   const idsD = new Set(destinos.map(e => e.id));
+  // Ids repetidos harían ambiguas las claves «origen|destino»: no se adivina cuál conservar.
+  if (idsO.size !== origenes.length || idsD.size !== destinos.length || destinos.some(e => idsO.has(e.id))) return null;
   const costos = {};
   if (datos.costos && typeof datos.costos === 'object') {
     Object.keys(datos.costos).forEach(clave => {
@@ -183,6 +185,65 @@ function depurarModeloNorthwest(datos) {
   });
   const siguienteId = Number.isInteger(datos.siguienteId) && datos.siguienteId > mayor ? datos.siguienteId : mayor + 1;
   return { origenes, destinos, costos, siguienteId };
+}
+
+/**
+ * Validación estricta para importar (archivo JSON o «Mis trabajos»). Mismas reglas que
+ * la interfaz: 1–MAX_NORTHWEST_DIMENSION orígenes y destinos, nombres únicos de hasta
+ * MAX_LARGO_ETIQUETA_NORTHWEST caracteres, cantidades enteras 0–MAX_CANTIDAD_NORTHWEST
+ * (o null = pendiente) y costos escalados enteros 0–MAX_COSTO_NORTHWEST×100 (ausente =
+ * pendiente). Nada se recorta ni se descarta en silencio.
+ * @returns {{ok:true, modelo:Object}|{ok:false, errores:string[]}}
+ */
+function validarModeloNorthwestImportado(datos) {
+  if (!datos || typeof datos !== 'object' || !Array.isArray(datos.origenes) || !Array.isArray(datos.destinos)) {
+    return { ok: false, errores: ['El archivo no contiene las listas «origenes» y «destinos».'] };
+  }
+  const errores = [];
+  const maximoCosto = MAX_COSTO_NORTHWEST * ESCALA_COSTO_NORTHWEST;
+  const revisarLista = (lista, etiqueta, campo, ids) => {
+    // El mínimo se exige al resolver, no al importar: un estado con menos elementos es un dato pendiente válido.
+    if (lista.length > MAX_NORTHWEST_DIMENSION) errores.push('Como máximo ' + MAX_NORTHWEST_DIMENSION + ' ' + etiqueta + ' (hay ' + lista.length + ').');
+    const validos = [];
+    lista.forEach((e, i) => {
+      const ref = (etiqueta === 'orígenes' ? 'Origen ' : 'Destino ') + (i + 1);
+      if (!e || typeof e.id !== 'string' || e.id === '') { errores.push(ref + ': falta el identificador.'); return; }
+      if (ids.has(e.id)) errores.push(ref + ': identificador «' + e.id + '» repetido.');
+      ids.add(e.id);
+      const nombre = typeof e.nombre === 'string' ? validarEtiquetaNorthwest(e.nombre, validos, e.id)
+        : { ok: false, error: 'El nombre debe ser texto.' };
+      if (!nombre.ok) errores.push(ref + ' (' + e.id + '): ' + nombre.error);
+      else validos.push({ id: e.id, nombre: nombre.valor });
+      const cantidad = e[campo];
+      if (cantidad !== null && cantidad !== undefined && !(Number.isInteger(cantidad) && cantidad >= 0 && cantidad <= MAX_CANTIDAD_NORTHWEST)) {
+        errores.push(ref + ' (' + e.id + '): la ' + campo + ' debe ser un entero entre 0 y ' + MAX_CANTIDAD_NORTHWEST + ' o quedar pendiente.');
+      }
+    });
+  };
+  const idsO = new Set(), idsD = new Set();
+  revisarLista(datos.origenes, 'orígenes', 'oferta', idsO);
+  revisarLista(datos.destinos, 'destinos', 'demanda', idsD);
+  idsD.forEach(id => { if (idsO.has(id)) errores.push('El identificador «' + id + '» está repetido entre orígenes y destinos.'); });
+  if (datos.costos !== undefined && (datos.costos === null || typeof datos.costos !== 'object' || Array.isArray(datos.costos))) {
+    errores.push('«costos» debe ser un objeto { "origen|destino": entero escalado ×' + ESCALA_COSTO_NORTHWEST + ' }.');
+  } else if (datos.costos) {
+    Object.keys(datos.costos).forEach(clave => {
+      const partes = clave.split('|');
+      const v = datos.costos[clave];
+      if (partes.length !== 2 || !idsO.has(partes[0]) || !idsD.has(partes[1])) {
+        errores.push('Costo «' + clave + '»: no corresponde a un origen y un destino existentes.');
+        return;
+      }
+      if (v === null) return; // pendiente explícito
+      if (!(Number.isInteger(v) && v >= 0 && v <= maximoCosto)) {
+        errores.push('Costo «' + clave + '» = ' + JSON.stringify(v) + ': debe ser un entero entre 0 y ' + maximoCosto + ' (costo ×' + ESCALA_COSTO_NORTHWEST + ').');
+      }
+    });
+  }
+  if (datos.siguienteId !== undefined && !Number.isSafeInteger(datos.siguienteId)) errores.push('«siguienteId» debe ser un entero seguro.');
+  if (errores.length) return { ok: false, errores };
+  const modelo = depurarModeloNorthwest(datos);
+  return modelo ? { ok: true, modelo } : { ok: false, errores: ['El modelo no se pudo reconstruir.'] };
 }
 
 /**

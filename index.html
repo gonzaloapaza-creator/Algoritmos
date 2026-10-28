@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="description" content="Proyecto de la materia Análisis de Algoritmos: Johnson, método húngaro, esquina noroeste, ordenamiento y árboles binarios resueltos paso a paso. Grupo Los Fanáticos del Nabo." />
+  <meta name="description" content="Ciudad de los Algoritmos: Johnson, Dijkstra, Kruskal, método húngaro, esquina noroeste, ordenamiento y árboles binarios resueltos paso a paso. Grupo Los Fanáticos del Nabo." />
   <meta name="theme-color" content="#0b1020" />
-  <title>Algoritmos de Optimización | Análisis de Algoritmos</title>
+  <title>Ciudad de los Algoritmos | Explora cada paso</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='9' cy='23' r='5' fill='%235b8cff'/><circle cx='23' cy='9' r='5' fill='%2300d3a7'/><line x1='12' y1='20' x2='20' y2='12' stroke='white' stroke-width='2'/></svg>" />
   <link rel="stylesheet" href="styles.css" />
   <script src="js/comun/tema.js"></script>
   <link rel="stylesheet" href="css/shell.css" />
+  <link rel="stylesheet" href="css/ciudad.css" />
   <link rel="stylesheet" href="css/impresion.css" media="print" />
 </head>
 <body class="page-home" data-modulo="inicio">
@@ -18,16 +19,17 @@
     <button type="button" class="btn btn-fantasma btn-icono topbar__menu" id="btnMenuLateral" aria-label="Abrir menú" aria-expanded="false" aria-controls="barraLateral">
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     </button>
-    <a class="topbar__marca" href="index.html" aria-label="Grafo · Inicio">
+    <a class="topbar__marca" href="index.html" aria-label="Ciudad de los Algoritmos · Inicio">
       <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="9" cy="23" r="5"></circle><circle cx="23" cy="9" r="5"></circle><line x1="12" y1="20" x2="20" y2="12"></line></svg>
-      <span>Grafo</span>
+      <span>Algoritmos<span class="marca-ciudad"> / ciudad</span></span>
     </a>
     <span class="topbar__separador" aria-hidden="true"></span>
     <span class="topbar__modulo" id="topbarModulo">Inicio</span>
     <nav class="topbar__acciones inicio-atajos" aria-label="Secciones del inicio">
-      <a class="btn btn-fantasma btn-sm" href="#que-es">¿Qué es?</a>
-      <a class="btn btn-fantasma btn-sm" href="#algoritmos">Algoritmos</a>
-      <a class="btn btn-fantasma btn-sm" href="#equipo">Equipo</a>
+      <a class="btn btn-fantasma btn-sm" href="#algoritmos">Módulos</a>
+      <a class="btn btn-fantasma btn-sm" href="#trabajos">Mis trabajos</a>
+      <button type="button" class="btn btn-fantasma btn-sm" id="btnTemaInicio">Tema</button>
+      <button type="button" class="btn btn-fantasma btn-sm" id="btnAyudaInicio">Ayuda</button>
     </nav>
   </header>
   <aside class="sidebar" id="barraLateral" aria-label="Navegación principal"></aside>
@@ -35,57 +37,50 @@
 
   <main class="contenido" id="contenido">
 
-    <!-- Portada -->
-    <section class="hero" aria-labelledby="titulo-principal">
-      <div class="hero__texto">
-        <p class="eyebrow">Proyecto · Análisis de Algoritmos</p>
-        <h1 id="titulo-principal">Algoritmos de Optimización, <span class="hero__resalte">paso a paso</span></h1>
-        <p class="hero__lead">
-          Una herramienta web educativa para <strong>ver cómo piensa un algoritmo</strong>: ingresas los datos
-          (o cargas un ejemplo), el algoritmo se ejecuta y cada decisión que toma queda a la vista, con tablas y
-          grafos resaltados en cada paso.
-        </p>
-        <div class="hero__acciones">
-          <a class="btn btn-primary" href="#algoritmos">Explorar los algoritmos</a>
-          <a class="btn btn-neutral" href="#que-es">¿Qué es un algoritmo?</a>
-        </div>
-        <dl class="hero__datos">
-          <div><dt>Módulos</dt><dd id="datoModulos">5</dd></div>
-          <div><dt>Métodos de ordenamiento</dt><dd id="datoAlgoritmos">5</dd></div>
-          <div><dt>Integrantes</dt><dd>5</dd></div>
-        </dl>
-      </div>
-      <div class="hero__ilustracion" aria-hidden="true">
-        <svg viewBox="0 0 320 260" focusable="false">
-          <defs>
-            <marker id="heroFlecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z"/></marker>
-            <marker id="heroFlechaRuta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z"/></marker>
-          </defs>
-          <g class="hero__aristas">
-            <path d="M74 132 L136 62" />
-            <path d="M74 132 L136 202" class="ruta" />
-            <path d="M162 62 L236 112" />
-            <path d="M162 202 L236 150" class="ruta" />
-            <path d="M149 76 L149 188" />
-          </g>
-          <g class="hero__pesos">
-            <text x="92" y="88">4</text>
-            <text x="90" y="186">2</text>
-            <text x="206" y="78">5</text>
-            <text x="208" y="196">1</text>
-            <text x="160" y="136">3</text>
-          </g>
-          <g class="hero__nodos">
-            <circle cx="60" cy="132" r="20" class="origen" /><text x="60" y="132">a</text>
-            <circle cx="149" cy="54" r="20" /><text x="149" y="54">b</text>
-            <circle cx="149" cy="210" r="20" class="paso" /><text x="149" y="210">c</text>
-            <circle cx="252" cy="130" r="20" class="destino" /><text x="252" y="130">d</text>
-          </g>
-          <text x="160" y="250" class="hero__nota">ruta mínima a → c → d = 3</text>
-        </svg>
-      </div>
+    <section class="ciudad-intro" aria-labelledby="titulo-principal">
+      <p class="eyebrow">Un campus para aprender haciendo</p>
+      <h1 id="titulo-principal">Explora algoritmos y<br class="salto-escritorio" /> comprende <em>cada paso.</em></h1>
+      <p>Siete módulos, una ciudad de ideas. Elige una zona y transforma tus datos en algo que puedes ver y comprender.</p>
     </section>
 
+    <section class="ciudad-explorar" id="algoritmos" aria-labelledby="titulo-algoritmos">
+      <div class="ciudad-herramientas">
+        <div><h2 id="titulo-algoritmos">Ciudad de los Algoritmos</h2><p id="resumenCatalogo">Siete zonas conectadas por el conocimiento.</p></div>
+        <div class="ciudad-controles">
+          <div class="ciudad-vistas" role="group" aria-label="Vista de los módulos">
+            <button type="button" id="vistaCiudad" aria-pressed="true">Vista ciudad</button>
+            <button type="button" id="vistaLista" aria-pressed="false">Vista lista</button>
+          </div>
+          <button type="button" class="ciudad-movimiento" id="btnMovimiento" aria-pressed="false" aria-label="Pausar demostraciones"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="icono-pausar" d="M7 5h4v14H7zm6 0h4v14h-4z" fill="currentColor"/><path class="icono-reproducir" d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><span>Pausar movimiento</span></button>
+        </div>
+      </div>
+      <div class="ciudad-distribucion" id="ciudadDistribucion">
+        <div class="ciudad-mapa" id="ciudadMapa" aria-label="Zonas de la ciudad">
+          <svg class="ciudad-terreno" viewBox="0 0 900 810" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <defs><pattern id="puntosCiudad" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="currentColor" opacity=".12"/></pattern></defs>
+            <rect width="900" height="810" fill="url(#puntosCiudad)"/>
+            <path class="ciudad-isla" d="M25 170 432 24 873 175 873 636 457 792 25 633Z"/>
+            <path class="ciudad-verde" d="m62 188 172-62 136 48-166 67Zm480 222 170-62 120 44-169 64Z"/>
+            <g class="ciudad-callles"><path d="M45 245 443 130 857 245M90 474 456 340 815 467M90 704 456 570 815 697M260 95 661 731M683 102 264 732"/></g>
+            <g class="ciudad-calles-lineas"><path d="M45 245 443 130 857 245M90 474 456 340 815 467M90 704 456 570 815 697M260 95 661 731M683 102 264 732"/></g>
+            <g class="ciudad-plaza"><path d="m396 279 60-22 59 22-59 23Z"/><path d="m428 277 28-10 28 10-28 10Z"/><path d="M456 267v-28"/><circle cx="456" cy="235" r="5"/></g>
+            <g class="ciudad-bancos" fill="none" stroke="currentColor" stroke-width="4"><path d="m94 332 30 11m-27-17 30 11M741 328l30-11m-27-6 30-11M395 493l30 11m-27-17 30 11"/></g>
+          </svg>
+          <div class="ciudad-zonas" id="ciudadZonas"></div>
+          <div class="ciudad-mapa-pie"><span><i></i> Campus interactivo</span><span>Selecciona una zona para explorar ↗</span></div>
+        </div>
+        <div id="catalogo" class="ciudad-lista" aria-label="Catálogo de módulos" hidden></div>
+        <aside class="ciudad-panel" id="panelModulo" aria-labelledby="panelTitulo"></aside>
+      </div>
+      <p class="ciudad-nota">Cada edificio representa un módulo. Las demostraciones ilustran su idea; los cálculos y sus pasos se realizan dentro del módulo.</p>
+    </section>
+
+    <section class="ciudad-recientes" id="trabajos" aria-labelledby="titulo-trabajos">
+      <div class="ciudad-seccion-cab"><div><p class="eyebrow">Retoma tus ideas</p><h2 id="titulo-trabajos">Mis trabajos recientes</h2></div><span class="ciudad-local">Solo en este navegador</span></div>
+      <div id="trabajosRecientes"></div>
+    </section>
+
+    <div class="ciudad-secundaria"><p class="eyebrow">Detrás de cada solución, una idea</p><h2>Fundamentos, recursos y equipo</h2><p>Conoce el proyecto y los conceptos que dan vida a esta ciudad.</p></div>
     <!-- ¿Qué es un algoritmo? -->
     <section class="inicio-seccion" id="que-es" aria-labelledby="titulo-que-es">
       <div class="inicio-seccion__cabecera">
@@ -114,7 +109,13 @@
         <figure class="concepto__video">
           <div class="video-perezoso" id="videoAlgoritmo" data-video="f10jKIslSUY" data-titulo="¿Qué es un algoritmo?">
             <button type="button" class="video-perezoso__boton" id="btnVideoAlgoritmo" aria-label="Reproducir el video: ¿Qué es un algoritmo?">
-              <img src="https://i.ytimg.com/vi/f10jKIslSUY/hqdefault.jpg" alt="" loading="lazy" width="480" height="360" />
+              <svg class="video-perezoso__ilustracion" viewBox="0 0 480 300" aria-hidden="true" focusable="false">
+                <rect width="480" height="300" fill="#17323a"/>
+                <g fill="none" stroke="#577970" stroke-width="2"><path d="m0 100 240-85 240 85M0 200l240-85 240 85M80 0v300m160-300v300M400 0v300" opacity=".35"/><path d="M100 150h280" stroke-dasharray="5 8"/></g>
+                <g fill="#d8e4d7" stroke="#89b59a" stroke-width="2"><rect x="70" y="120" width="60" height="60" rx="10"/><rect x="350" y="120" width="60" height="60" rx="10"/></g>
+                <g fill="none" stroke="#426e59" stroke-width="4"><path d="M84 137h32m-32 13h32m-32 13h22M363 165v-13m12 13v-26m12 26v-36"/></g>
+                <g fill="#b0d2bc" font-size="12" font-family="system-ui, sans-serif" text-anchor="middle"><text x="100" y="207">ENTRADA</text><text x="240" y="230">UNA IDEA, PASO A PASO</text><text x="380" y="207">RESULTADO</text></g>
+              </svg>
               <span class="video-perezoso__play" aria-hidden="true">
                 <svg viewBox="0 0 24 24" focusable="false"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>
               </span>
@@ -164,18 +165,6 @@
       </ol>
     </section>
 
-    <!-- Catálogo -->
-    <section class="inicio-seccion" id="algoritmos" aria-labelledby="titulo-algoritmos">
-      <div class="inicio-seccion__cabecera inicio-seccion__cabecera--fila">
-        <div>
-          <p class="eyebrow">Módulos y algoritmos</p>
-          <h2 id="titulo-algoritmos">Elige por dónde empezar</h2>
-        </div>
-        <p class="inicio-resumen" id="resumenCatalogo"></p>
-      </div>
-      <div id="catalogo" aria-label="Catálogo de algoritmos"></div>
-    </section>
-
     <!-- Equipo -->
     <section class="inicio-seccion equipo" id="equipo" aria-labelledby="titulo-equipo">
       <div class="inicio-seccion__cabecera">
@@ -222,7 +211,11 @@
   <script src="js/config.js"></script>
   <script src="js/comun/utilidades.js"></script>
   <script src="js/comun/catalogo.js"></script>
+  <script src="js/comun/dialogo.js"></script>
+  <script src="js/comun/notificaciones.js"></script>
   <script src="js/comun/navegacion.js"></script>
+  <script src="js/comun/guardados.js"></script>
+  <script src="js/comun/ciudad.js"></script>
   <script src="js/comun/inicio.js"></script>
 </body>
 </html>
