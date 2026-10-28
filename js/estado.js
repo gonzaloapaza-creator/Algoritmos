@@ -140,7 +140,7 @@ function nombrePorIndice(indice) {
  * @returns {string} Un nombre disponible para un nuevo nodo
  */
 function nombreAutomatico() {
-  const usados = new Set(estado.nodos.map(n => n.nombre));
+  const usados = new Set(estado.nodos.map(n => n.nombre.trim().toLowerCase()));
   let i = 0;
   while (usados.has(nombrePorIndice(i))) i++;
   return nombrePorIndice(i);
@@ -210,20 +210,14 @@ function area() {
   return cajaSVG || medirArea();
 }
 
-/** Coloca los nodos dentro del área visible. Devuelve true si movió alguno. */
-function ajustarNodosAlArea() {
+/** Extensión del plano lógico; cambiar la pantalla nunca cambia los datos. */
+function limitesPlanoGrafo() {
   const a = area();
-  const maxX = Math.max(RADIO_NODO, a.ancho - RADIO_NODO);
-  const maxY = Math.max(RADIO_NODO, a.alto - RADIO_NODO);
-  const minX = RADIO_NODO;
-  const minY = RADIO_NODO;
-  let cambio = false;
-
-  estado.nodos.forEach(nodo => {
-    const x = limitar(nodo.x, minX, maxX);
-    const y = limitar(nodo.y, minY, maxY);
-    if (x !== nodo.x || y !== nodo.y) { nodo.x = x; nodo.y = y; cambio = true; }
-  });
-
-  return cambio;
+  const margen = RADIO_NODO + 16;
+  return estado.nodos.reduce((limites, nodo) => ({
+    izquierda: Math.min(limites.izquierda, nodo.x - margen),
+    arriba: Math.min(limites.arriba, nodo.y - margen),
+    derecha: Math.max(limites.derecha, nodo.x + margen),
+    abajo: Math.max(limites.abajo, nodo.y + margen)
+  }), { izquierda: 0, arriba: 0, derecha: a.ancho, abajo: a.alto });
 }

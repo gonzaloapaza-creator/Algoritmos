@@ -55,6 +55,11 @@ async function importarInvalido(page, selector, datos, fragmento, instantanea) {
     if (!(await page.$eval('#btnMasOpciones', e => e.getAttribute('aria-expanded') === 'true'))) await page.click('#btnMasOpciones');
     await importarInvalido(page, '#btnImportarJSON', { version: '99', grafo }, 'Versión',
       () => JSON.stringify({ grafo: instantaneaGrafo(), historial: estado.historial }));
+    const parejaRepetida = JSON.parse(JSON.stringify(grafo));
+    parejaRepetida.conexiones.push(Object.assign({}, parejaRepetida.conexiones[0], { id: 'duplicada', valor: 5 }));
+    if (!(await page.$eval('#btnMasOpciones', e => e.getAttribute('aria-expanded') === 'true'))) await page.click('#btnMasOpciones');
+    await importarInvalido(page, '#btnImportarJSON', { version: '1.0', grafo: parejaRepetida }, 'repetida',
+      () => JSON.stringify({ grafo: instantaneaGrafo(), historial: estado.historial }));
     await page.close();
 
     page = await pagina('asignacion');

@@ -208,9 +208,9 @@ el.svg.addEventListener('pointermove', evento => {
   if (!nodo) return;
 
   const punto = posicionEnSVG(evento);
-  const a = area();
-  const maxX = Math.max(RADIO_NODO, a.ancho - RADIO_NODO);
-  const maxY = Math.max(RADIO_NODO, a.alto - RADIO_NODO);
+  const plano = limitesPlanoGrafo();
+  const maxX = Math.max(RADIO_NODO, plano.derecha - RADIO_NODO);
+  const maxY = Math.max(RADIO_NODO, plano.abajo - RADIO_NODO);
 
   nodo.x = limitar(punto.x - arrastre.dx, RADIO_NODO, maxX);
   nodo.y = limitar(punto.y - arrastre.dy, RADIO_NODO, maxY);
@@ -259,9 +259,23 @@ function tecladoSobreGrafo(evento) {
 // Navegación por teclado en el área de trabajo: las flechas recorren los nodos y
 // Enter renombra el seleccionado. Suprimir se atiende en app.js.
 document.addEventListener('keydown', evento => {
-  if (estado.herramienta !== 'seleccionar') return;
   if (evento.ctrlKey || evento.metaKey || evento.altKey) return;
   if (!tecladoSobreGrafo(evento)) return;
+
+  const grupo = evento.target.closest && evento.target.closest('#svg [data-id]');
+  if (grupo && (evento.key === 'Enter' || evento.key === ' ')) {
+    evento.preventDefault();
+    const tipo = grupo.classList.contains('nodo') ? 'nodo' : 'conexion';
+    if (tipo === 'nodo' && estado.herramienta === 'conectar') {
+      manejarConectar(buscarNodo(grupo.dataset.id));
+    } else {
+      estado.seleccion = { tipo, id: grupo.dataset.id };
+      dibujar();
+      if (evento.key === 'Enter') editarSeleccion();
+    }
+    return;
+  }
+  if (estado.herramienta !== 'seleccionar') return;
 
   const flechas = ['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'];
   if (flechas.includes(evento.key)) {
@@ -280,6 +294,7 @@ document.addEventListener('keydown', evento => {
     const nodo = estado.nodos[nuevoIndice];
     estado.seleccion = { tipo: 'nodo', id: nodo.id };
     dibujar();
+    enfocarElementoJohnson('nodo', nodo.id);
     // Anunciar cambio para lectores de pantalla
     ayudar('Nodo seleccionado: <strong>' + escaparHtml(nodo.nombre) + '</strong>');
     return;

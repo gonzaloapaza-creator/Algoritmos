@@ -34,7 +34,7 @@ function geometriaConexion(conexion) {
     const r = RADIO_NODO;
     // El bucle se dibuja arriba; si no cabe, se dibuja abajo para que no quede fuera de la vista.
     const cabeArriba = a.y > r * 3.4;
-    const cabeAbajo = a.y + r * 3.4 < area().alto;
+    const cabeAbajo = a.y + r * 3.4 < limitesPlanoGrafo().abajo;
     const lado = (cabeArriba || !cabeAbajo) ? -1 : 1;
     const d = 'M ' + (a.x - r * 0.55) + ' ' + (a.y + r * 0.83 * lado) +
               ' C ' + (a.x - r * 2.1) + ' ' + (a.y + r * 3 * lado) +
@@ -63,9 +63,9 @@ function geometriaConexion(conexion) {
   // La perpendicular se calcula con la dirección propia de cada conexión,
   // por eso a->b y b->a se desvían automáticamente a lados opuestos.
   // El punto de control se mantiene dentro del área para que la curva y su valor no se salgan.
-  const zona = area();
-  const cx = limitar((a.x + b.x) / 2 + (-uy) * CURVATURA, 14, Math.max(14, zona.ancho - 14));
-  const cy = limitar((a.y + b.y) / 2 + (ux) * CURVATURA, 14, Math.max(14, zona.alto - 14));
+  const zona = limitesPlanoGrafo();
+  const cx = limitar((a.x + b.x) / 2 + (-uy) * CURVATURA, zona.izquierda + 14, zona.derecha - 14);
+  const cy = limitar((a.y + b.y) / 2 + (ux) * CURVATURA, zona.arriba + 14, zona.abajo - 14);
   const inicio = puntoEnBorde(a, cx, cy, RADIO_NODO);
   const fin = puntoEnBorde(b, cx, cy, RADIO_NODO + SEPARACION_ARROW);
 
@@ -119,6 +119,9 @@ function dibujar() {
 
 /** Solo el SVG del editor: nodos, conexiones y resaltado. */
 function dibujarLienzo() {
+  const activo = document.activeElement;
+  const enfocado = activo && el.svg.contains(activo) && activo.closest('[data-id]');
+  const foco = enfocado ? { tipo: enfocado.classList.contains('nodo') ? 'nodo' : 'conexion', id: enfocado.dataset.id } : null;
   el.capaConexiones.textContent = '';
   el.capaNodos.textContent = '';
 
@@ -146,7 +149,8 @@ function dibujarLienzo() {
       class: 'conexion',
       role: 'button',
       'aria-label': `Conexión de ${origenNombre} a ${destinoNombre} con peso ${conexion.valor}`,
-      tabindex: '0'
+      tabindex: '0',
+      'aria-pressed': String(!!(estado.seleccion && estado.seleccion.tipo === 'conexion' && estado.seleccion.id === conexion.id))
     });
     grupo.dataset.id = conexion.id;
     if (estado.seleccion && estado.seleccion.tipo === 'conexion' && estado.seleccion.id === conexion.id) {
@@ -171,7 +175,8 @@ function dibujarLienzo() {
       class: 'nodo',
       role: 'button',
       'aria-label': `Nodo ${nodo.nombre}. Coordenadas: ${Math.round(nodo.x)}, ${Math.round(nodo.y)}`,
-      tabindex: '0'
+      tabindex: '0',
+      'aria-pressed': String(!!(estado.seleccion && estado.seleccion.tipo === 'nodo' && estado.seleccion.id === nodo.id))
     });
     grupo.dataset.id = nodo.id;
     if (estado.seleccion && estado.seleccion.tipo === 'nodo' && estado.seleccion.id === nodo.id) {
@@ -194,6 +199,13 @@ function dibujarLienzo() {
   // Agregar todos los elementos de una vez para mejor rendimiento
   el.capaConexiones.appendChild(conexionesFragment);
   el.capaNodos.appendChild(nodosFragment);
+  if (foco) enfocarElementoJohnson(foco.tipo, foco.id);
+}
+
+function enfocarElementoJohnson(tipo, id) {
+  const capa = tipo === 'nodo' ? el.capaNodos : el.capaConexiones;
+  const elemento = Array.from(capa.children).find(nodo => nodo.dataset.id === id);
+  if (elemento) elemento.focus({ preventScroll: true });
 }
 
 let dibujoPendiente = false;

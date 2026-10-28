@@ -83,12 +83,15 @@ function validarGrafoImportado(datos) {
     nombres.add(nombre.toLowerCase());
     if (!Number.isFinite(n.x) || !Number.isFinite(n.y)) errores.push(ref + ' (' + n.id + '): posición no numérica.');
   });
-  const idsConexion = new Set();
+  const idsConexion = new Set(), parejas = new Set();
   datos.conexiones.forEach((c, i) => {
     const ref = 'Conexión ' + (i + 1);
     if (!c || typeof c.id !== 'string' || c.id === '') { errores.push(ref + ': falta el identificador.'); return; }
     if (idsConexion.has(c.id)) errores.push(ref + ': identificador «' + c.id + '» repetido.');
     idsConexion.add(c.id);
+    const pareja = JSON.stringify([c.desde, c.hacia]);
+    if (parejas.has(pareja)) errores.push(ref + ': conexión repetida entre el mismo origen y destino.');
+    parejas.add(pareja);
     if (!ids.has(c.desde)) errores.push(ref + ' (' + c.id + '): el nodo de origen «' + c.desde + '» no existe.');
     if (!ids.has(c.hacia)) errores.push(ref + ' (' + c.id + '): el nodo de destino «' + c.hacia + '» no existe.');
     if (!Number.isInteger(c.valor)) errores.push(ref + ' (' + c.id + '): el peso debe ser un número entero.');
@@ -105,6 +108,10 @@ function aplicarGrafo(limpio) {
   estado.siguienteId = limpio.siguienteId;
   estado.seleccion = null;
   estado.origenConexion = null;
+  // También al cargar un trabajo nombrado: ajustar la vista nunca altera el grafo.
+  if (typeof restablecerZoomSilencioso === 'function' && area().ancho >= 50 && area().alto >= 50) {
+    restablecerZoomSilencioso();
+  }
 }
 
 /**

@@ -17,8 +17,9 @@
  */
 function limitarPan() {
   const a = area();
-  const anchoEscalado = a.ancho * estado.zoom.escala;
-  const altoEscalado = a.alto * estado.zoom.escala;
+  const plano = limitesPlanoGrafo();
+  const anchoEscalado = (plano.derecha - plano.izquierda) * estado.zoom.escala;
+  const altoEscalado = (plano.abajo - plano.arriba) * estado.zoom.escala;
 
   const limiteX = anchoEscalado >= a.ancho
     ? [a.ancho - anchoEscalado, 0]
@@ -27,8 +28,10 @@ function limitarPan() {
     ? [a.alto - altoEscalado, 0]
     : [0, a.alto - altoEscalado];
 
-  estado.zoom.offsetX = limitar(estado.zoom.offsetX, limiteX[0], limiteX[1]);
-  estado.zoom.offsetY = limitar(estado.zoom.offsetY, limiteY[0], limiteY[1]);
+  const origenX = plano.izquierda * estado.zoom.escala;
+  const origenY = plano.arriba * estado.zoom.escala;
+  estado.zoom.offsetX = limitar(estado.zoom.offsetX, limiteX[0] - origenX, limiteX[1] - origenX);
+  estado.zoom.offsetY = limitar(estado.zoom.offsetY, limiteY[0] - origenY, limiteY[1] - origenY);
 }
 
 /** Aplica la transformación actual a las dos capas del SVG. */
@@ -52,7 +55,7 @@ function actualizarEtiquetaZoom() {
  * o el centro del lienzo). Sin esto el grafo "salta" al hacer zoom.
  */
 function fijarEscala(nuevaEscala, pantallaX, pantallaY) {
-  const escala = limitar(nuevaEscala, ZOOM_MIN, ZOOM_MAX);
+  const escala = limitar(nuevaEscala, Math.min(ZOOM_MIN, escalaAjustadaGrafo()), ZOOM_MAX);
   if (escala === estado.zoom.escala) { aplicarZoom(); return; }
 
   const logicoX = (pantallaX - estado.zoom.offsetX) / estado.zoom.escala;
@@ -82,17 +85,24 @@ function zoomOut() {
   avisar(`Zoom: ${Math.round(estado.zoom.escala * 100)}%`);
 }
 
-/** Vuelve al 100 % sin aviso: se usa al cargar un grafo nuevo. */
+function escalaAjustadaGrafo() {
+  const a = area(), plano = limitesPlanoGrafo();
+  return Math.min(1, a.ancho / Math.max(1, plano.derecha - plano.izquierda),
+    a.alto / Math.max(1, plano.abajo - plano.arriba));
+}
+
+/** Encuadra el plano completo sin recolocar ni guardar ningún nodo. */
 function restablecerZoomSilencioso() {
-  estado.zoom.escala = 1;
-  estado.zoom.offsetX = 0;
-  estado.zoom.offsetY = 0;
+  const a = area(), plano = limitesPlanoGrafo();
+  estado.zoom.escala = escalaAjustadaGrafo();
+  estado.zoom.offsetX = (a.ancho - (plano.derecha + plano.izquierda) * estado.zoom.escala) / 2;
+  estado.zoom.offsetY = (a.alto - (plano.abajo + plano.arriba) * estado.zoom.escala) / 2;
   aplicarZoom();
 }
 
 function zoomReset() {
   restablecerZoomSilencioso();
-  avisar('Zoom al 100%');
+  avisar('Vista ajustada: se muestra el grafo completo.');
 }
 
 /** Desplaza la vista una cantidad en píxeles de pantalla. */

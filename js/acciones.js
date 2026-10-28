@@ -10,9 +10,9 @@
 function crearNodo(x, y) {
   guardarEstadoParaDeshacer();
   
-  const a = area();
-  const maxX = Math.max(RADIO_NODO, a.ancho - RADIO_NODO);
-  const maxY = Math.max(RADIO_NODO, a.alto - RADIO_NODO);
+  const plano = limitesPlanoGrafo();
+  const maxX = Math.max(RADIO_NODO, plano.derecha - RADIO_NODO);
+  const maxY = Math.max(RADIO_NODO, plano.abajo - RADIO_NODO);
   const minX = RADIO_NODO;
   const minY = RADIO_NODO;
   
@@ -177,6 +177,8 @@ const TEXTO_AYUDA =
   '¿QUÉ ES ESTA APLICACIÓN?\n' +
   'Un editor visual de grafos dirigidos y ponderados. Un grafo está formado por nodos (los círculos) y por conexiones entre ellos (las flechas). Cada conexión lleva un valor o peso, que puede representar una distancia, un costo, un tiempo, etc.\n' +
   '· El botón «Video» de la cabecera abre la presentación con el video explicativo del algoritmo. El menú ☰ (o la barra lateral) cambia de algoritmo.\n' +
+  '· «Ir al algoritmo» cierra la presentación sin reemplazar tu ejercicio. «No mostrar al entrar» recuerda tu preferencia; puedes recuperar el video con «Video». El video necesita internet.\n' +
+  '· En móvil, abre el menú ☰ para acceder a «Video del módulo» y «Ayuda del módulo».\n' +
   '· El módulo se recorre en cuatro pasos (barra numerada de arriba): 1 Grafo → 2 Matriz → 3 Paso a paso → 4 Resultado.\n\n' +
 
   '1) HERRAMIENTAS DE LA BARRA SUPERIOR\n' +
@@ -205,7 +207,7 @@ const TEXTO_AYUDA =
   '· Rueda del ratón: acercar y alejar sobre el puntero.\n' +
   '· Dos dedos: pellizcar para acercar y arrastrar para desplazar la vista.\n' +
   '· Botón central del ratón, o arrastrar una zona vacía con la herramienta Seleccionar: desplaza la vista.\n' +
-  '· Los botones −, % y + de la esquina superior derecha hacen lo mismo; el del centro vuelve al 100 %.\n\n' +
+  '· Los botones −, % y + de la esquina superior derecha controlan el zoom; el del centro encuadra el grafo completo sin mover los nodos.\n\n' +
 
   '1.c) LOS CUATRO PASOS\n' +
   '· 2 Matriz: matriz de adyacencia con sus sumas y una revisión de los datos (nodos, conexiones, pesos negativos, bucles).\n' +
@@ -225,6 +227,7 @@ const TEXTO_AYUDA =
   '· Un peso de 0 es una conexión real que no cuesta nada recorrer; no es lo mismo que no tener conexión.\n' +
   '· El grafo es DIRIGIDO: a → b y b → a son dos conexiones distintas y cada una puede tener su propio valor. Cuando existen las dos, se dibujan curvadas para que ninguna tape a la otra.\n' +
   '· Si vuelves a conectar dos nodos en el mismo sentido, no se duplica la conexión: se actualiza el valor de la que ya existía.\n' +
+  '· Al importar JSON, las conexiones repetidas entre el mismo origen y destino se rechazan antes de reemplazar tu trabajo. Las conexiones inversas y los bucles sí son válidos.\n' +
   '· Un nodo puede conectarse consigo mismo (bucle); se dibuja como un lazo.\n' +
   '· Los nombres de los nodos no se repiten y admiten hasta ' + MAX_LARGO_NOMBRE + ' caracteres.\n\n' +
 
@@ -241,11 +244,13 @@ const TEXTO_AYUDA =
   '5) GUARDADO\n' +
   '· El grafo en pantalla se guarda solo y se recupera al volver a entrar, sin hacer nada.\n' +
   '· Además, con el botón Guardar puedes conservar varios grafos con nombre y alternar entre ellos.\n' +
+  '· «Guardar» y «Cargar» de la cabecera usan «Mis trabajos»: permite cargar, renombrar, eliminar y exportar/importar trabajos de este módulo. «Más → Guardar grafo» y «Biblioteca» conservan la biblioteca de grafos anterior.\n' +
   '· Si al guardar repites un nombre, se te ofrece reemplazar ese grafo: así se actualiza uno ya guardado.\n' +
   '· Cargar un grafo guardado reemplaza el que esté en pantalla, por eso se pide confirmación.\n' +
   '· Limpiar solo borra el grafo en pantalla; los grafos guardados no se tocan.\n' +
-  '· Todo el guardado es local: no se envía nada a internet y no se comparte entre dispositivos.\n' +
-  '· Si cambias el tamaño de la ventana o giras el teléfono, los nodos se reacomodan para no quedar fuera del área visible.\n\n' +
+  '· Los ejercicios se guardan localmente y no se sincronizan entre dispositivos. Borrar los datos del navegador puede eliminarlos; exporta JSON para conservar una copia o llevarla a otro equipo. Si falla el autoguardado, usa la exportación indicada en el aviso.\n' +
+  '· Al cambiar el tamaño de la ventana, girar el teléfono o recuperar un grafo, se ajusta la vista y se conservan las posiciones de los nodos.\n' +
+  '· «Exportar imagen» descarga el grafo visible como PNG. «Imprimir» en Paso a paso prepara el procedimiento completo para imprimir o guardar como PDF desde el navegador.\n\n' +
 
   '6) EL ALGORITMO DE JOHNSON\n' +
   '· Calcula la distancia mínima entre TODOS los pares de nodos, admitiendo pesos negativos.\n' +
@@ -259,6 +264,7 @@ const TEXTO_AYUDA =
   '· Escape: cierra la ventana o el panel abierto sin guardar cambios.\n' +
   '· 1 / 2 / 3: cambia a Seleccionar, Nodo o Conectar.\n' +
   '· Flechas: recorre los nodos; Enter los renombra y Suprimir los elimina.\n' +
+  '· Tab enfoca nodos y conexiones; Espacio selecciona el elemento enfocado y Enter abre su edición. En Conectar, Enter o Espacio eligen el origen y el destino. El foco se conserva al redibujar.\n' +
   '· Ctrl+Z deshace y Ctrl+Y (o Ctrl+Shift+Z) rehace.\n' +
   '· Ctrl+S guarda el grafo, Ctrl+B abre la biblioteca, Ctrl+M va a la matriz y Ctrl+J calcula Johnson.\n' +
   '· En «Paso a paso», ← y → cambian de paso.\n' +
@@ -266,7 +272,7 @@ const TEXTO_AYUDA =
 
 function mostrarAyuda() {
   abrirModal({
-    titulo: 'Cómo usar Grafo',
+    titulo: 'Ayuda: Johnson',
     mensaje: TEXTO_AYUDA,
     pedirTexto: false,
     soloAceptar: true,
@@ -377,7 +383,6 @@ function importarGrafoJSON() {
           irAlEditorJohnson();
           aplicarGrafo(limpio);
           medirArea();
-          ajustarNodosAlArea();
           restablecerZoomSilencioso();
           guardar();
           dibujar();

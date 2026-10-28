@@ -118,6 +118,8 @@ document.addEventListener('keydown', evento => {
 });
 
 /** Vuelve a medir el área y mete los nodos dentro de ella. */
+let ultimaAreaAjustada = null;
+
 function adaptarAlArea() {
   // Con una ventana abierta, el teclado del móvil reduce la pantalla:
   // si se recolocaran los nodos ahora, quedarían amontonados al cerrarlo.
@@ -127,8 +129,10 @@ function adaptarAlArea() {
   // Con el lienzo oculto (la presentación con video u otra vista del módulo)
   // el área mide 0 y los nodos se amontonarían en la esquina.
   if (a.ancho < 50 || a.alto < 50) return;
-  if (ajustarNodosAlArea()) guardar();
-  aplicarZoom();
+  if (!ultimaAreaAjustada || ultimaAreaAjustada.ancho !== a.ancho || ultimaAreaAjustada.alto !== a.alto) {
+    ultimaAreaAjustada = { ancho: a.ancho, alto: a.alto };
+    restablecerZoomSilencioso();
+  } else aplicarZoom();
   dibujarPronto();
 }
 
@@ -144,7 +148,7 @@ window.addEventListener('orientationchange', adaptarAlArea);
 inicializarVistasJohnson();
 cargar();
 const areaInicial = medirArea();
-if (areaInicial.ancho >= 50 && areaInicial.alto >= 50 && ajustarNodosAlArea()) guardar();   // el grafo pudo guardarse en una pantalla más grande
+if (areaInicial.ancho >= 50 && areaInicial.alto >= 50) adaptarAlArea();
 elegirHerramienta('seleccionar');
 if (estado.nodos.length === 0) {
   // Mensaje corto: la explicación completa está en el botón Ayuda.

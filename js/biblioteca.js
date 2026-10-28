@@ -164,7 +164,6 @@ function aplicarGuardado(grafo) {
   irAlEditorJohnson();   // el área debe estar a la vista para medirla
   aplicarGrafo({ nodos: grafo.nodos, conexiones: grafo.conexiones, siguienteId: grafo.siguienteId });
   medirArea();
-  ajustarNodosAlArea();   // el grafo pudo guardarse en una pantalla más grande
   guardar();
   cerrarBiblioteca();
   restablecerZoomSilencioso();

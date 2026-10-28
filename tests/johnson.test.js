@@ -169,6 +169,7 @@ prueba('Importación: validarGrafoImportado rechaza ids repetidos, referencias r
   const casos = [
     ['id de nodo repetido', g => { g.nodos[1].id = 'n_1'; }, 'repetido'],
     ['id de conexión repetido', g => { g.conexiones.push({ id: 'c_1', desde: 'n_2', hacia: 'n_1', valor: 1 }); }, 'repetido'],
+    ['pareja de nodos repetida', g => { g.conexiones.push({ id: 'c_2', desde: 'n_1', hacia: 'n_2', valor: 5 }); }, 'repetida'],
     ['conexión hacia nodo inexistente', g => { g.conexiones[0].hacia = 'n_9'; }, 'no existe'],
     ['peso decimal', g => { g.conexiones[0].valor = 2.5; }, 'entero'],
     ['peso no finito', g => { g.conexiones[0].valor = Infinity; }, 'entero'],
@@ -191,6 +192,17 @@ prueba('Importación: validarGrafoImportado rechaza ids repetidos, referencias r
   igual(depurarGrafo(g).conexiones, []);
   const dup = base(); dup.nodos[1].id = 'n_1';
   igual(depurarGrafo(dup), null);
+});
+
+prueba('Importación: conserva aristas inversas y bucles válidos sin modificar el documento', () => {
+  const grafo = { nodos: [{ id: 'a', nombre: 'A', x: 100, y: 100 }, { id: 'b', nombre: 'B', x: 300, y: 100 }],
+    conexiones: [{ id: 'ab', desde: 'a', hacia: 'b', valor: 1 }, { id: 'ba', desde: 'b', hacia: 'a', valor: 5 },
+      { id: 'aa', desde: 'a', hacia: 'a', valor: 0 }], siguienteId: 4 };
+  const antes = JSON.stringify(grafo);
+  const validacion = ctx.validarGrafoImportado(grafo);
+  cierto(validacion.ok);
+  igual(validacion.grafo.conexiones, grafo.conexiones);
+  igual(JSON.stringify(grafo), antes);
 });
 
 process.exitCode = informe('Johnson') ? 0 : 1;
