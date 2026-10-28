@@ -227,7 +227,7 @@ function inicializarNavegacion() {
       if (valor) document.body.style.setProperty(clave, valor);
     });
     const texto = document.querySelector('.modulo-cabecera__texto');
-    if (texto) {
+    if (texto && !texto.closest('.gm-portada')) {
       const zona = document.createElement('div');
       zona.className = 'modulo-identidad';
       zona.appendChild(svgIcono(alg.icono));

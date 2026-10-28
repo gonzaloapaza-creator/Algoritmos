@@ -196,7 +196,7 @@ async function sinScrollHorizontal(page) {
 
     /* ---------- Presentación con video ---------- */
     console.log('\nPresentación (video)');
-    for (const [pagina, video] of [['johnson.html', 'jkJd1UjUdAo'], ['asignacion.html', '_XvIC2KvWvo'], ['northwest.html', 'HjXWStUh0yE'], ['arboles.html', 'tBaOQeyXYqg']]) {
+    for (const [pagina, video] of [['johnson.html', 'jkJd1UjUdAo'], ['asignacion.html', '_XvIC2KvWvo'], ['northwest.html', 'HjXWStUh0yE'], ['arboles.html', 'tBaOQeyXYqg'], ['ordenamiento.html', 'd5tujF0y5TE'], ['dijkstra.html', 'UnsRfl6xw2o'], ['kruskal.html', 'Wo-Pk0Iq3oU']]) {
       page = await nuevaPagina(browser, 1440, 900);
       await page.goto(BASE + pagina, { waitUntil: 'domcontentloaded' });
       await page.evaluate(() => localStorage.clear());
@@ -232,6 +232,53 @@ async function sinScrollHorizontal(page) {
     await page.waitForSelector('#introModulo:not([hidden])');
     await capturar(page, 'johnson-video-1440');
     await page.close();
+
+    /* ---------- Ayuda de todos los módulos, también desde el menú móvil ---------- */
+    console.log('\nAyudas');
+    const ayudas = [
+      ['johnson', '#btnAyuda', '#modalFondo'],
+      ['dijkstra', '#btnAyuda', '#dialogoFondo'],
+      ['kruskal', '#btnAyuda', '#dialogoFondo'],
+      ['asignacion', '#btnAyudaAsignacion', '#dialogoFondo'],
+      ['northwest', '#btnAyudaNw', '#dialogoFondo'],
+      ['ordenamiento', '#btnAyuda', '#modalAyuda'],
+      ['arboles', '#btnAyuda', '#modalAyuda']
+    ];
+    for (const [modulo, boton, fondo] of ayudas) for (const ancho of [320, 1440]) {
+      page = await nuevaPagina(browser, ancho, 900);
+      await page.goto(BASE + modulo + '.html?intro=no', { waitUntil: 'networkidle0' });
+      const contenido = await page.$eval('#moduloContenido', e => e.textContent);
+      if (ancho === 320) {
+        await page.click('#btnMenuLateral');
+        await page.waitForFunction(() => document.getElementById('barraLateral').getBoundingClientRect().left >= -.01);
+        const acceso = '#barraLateral .sidebar__acceso-modulo:last-child';
+        await page.$eval(acceso, e => e.scrollIntoView({ block: 'center', behavior: 'instant' }));
+        await page.click(acceso);
+      } else await page.click(boton);
+      await page.waitForSelector(fondo + ':not([hidden])', { visible: true });
+      check(await page.$eval(fondo, e => e.contains(document.activeElement)), modulo + ': la ayuda recibe el foco (' + ancho + ')');
+      check(await sinScrollHorizontal(page), modulo + ': ayuda sin desbordamiento horizontal (' + ancho + ')');
+      const accesible = await page.$eval(fondo, e => {
+        const panel = e.querySelector('.modal-scroll') || e.querySelector('#modalMensaje');
+        if (!panel) return false;
+        panel.scrollTop = panel.scrollHeight;
+        return panel.clientHeight > 0 && panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 2 && panel.scrollWidth <= panel.clientWidth + 1;
+      });
+      check(accesible, modulo + ': todo el texto de ayuda se puede consultar (' + ancho + ')');
+      await page.keyboard.press('Escape');
+      check(await page.$eval(fondo, e => e.hidden) && await page.evaluate(id => document.activeElement.id === id, ancho === 320 ? 'btnMenuLateral' : boton.slice(1)), modulo + ': Escape cierra la ayuda y devuelve el foco (' + ancho + ')');
+      check(await page.$eval('#moduloContenido', e => e.textContent) === contenido, modulo + ': consultar la ayuda conserva el ejercicio (' + ancho + ')');
+      if (ancho === 320) {
+        await page.click('#btnMenuLateral');
+        await page.waitForFunction(() => document.getElementById('barraLateral').getBoundingClientRect().left >= -.01);
+        const video = '#barraLateral .sidebar__acceso-modulo:nth-last-child(2)';
+        await page.$eval(video, e => e.scrollIntoView({ block: 'center', behavior: 'instant' }));
+        await page.click(video);
+        check(await page.$eval('#introModulo', e => !e.hidden), modulo + ': el video se puede volver a abrir desde el menú móvil');
+        await page.click('#btnComenzarModulo');
+      }
+      await page.close();
+    }
 
     /* ---------- Asignación ---------- */
     console.log('\nAsignación');

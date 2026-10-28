@@ -28,7 +28,7 @@ El repositorio es una aplicación estática de varias páginas. No hay servidor 
 - No hay compilación, backend, API propia ni base de datos.
 - No hay un paso de empaquetado: el navegador ejecuta directamente los HTML, CSS y JavaScript del repositorio.
 
-Los videos explicativos de YouTube son contenido externo. La aplicación solo presenta los videos registrados en el catálogo y permite volver a abrir la presentación desde la cabecera. El funcionamiento de los algoritmos no depende del video ni de conectarse a un servidor propio.
+Los videos explicativos de YouTube son contenido externo. Los siete módulos tienen una presentación registrada en el catálogo; Dijkstra usa `UnsRfl6xw2o` y Kruskal, `Wo-Pk0Iq3oU`. Se puede volver a abrir desde «Video» en la cabecera o «Video del módulo» en el menú móvil. Las ayudas textuales explican entradas, límites, controles, resultados y guardados; se accede con «Ayuda» o «Ayuda del módulo». El funcionamiento de los algoritmos no depende del video ni de conectarse a un servidor propio. Dijkstra y Kruskal pausan la reproducción al consultar video o ayuda sin reemplazar el ejercicio.
 
 ## 3. Páginas y módulos
 
@@ -117,7 +117,7 @@ La aplicación muestra los cálculos intermedios y verifica no negatividad, tota
 
 ### 5.4 Ordenamiento: Selection, Insertion, Bubble, Shell y Merge Sort
 
-La entrada es una lista de 3 a 12 enteros entre 1 y 99. Se puede escribir la lista, generar valores aleatorios, crear una secuencia casi ordenada o usar el caso invertido. Cada elemento conserva un identificador propio para que la animación muestre el mismo pino aunque cambie de posición. Los cinco algoritmos están disponibles en el selector.
+La entrada es una lista de 3 a 200 enteros entre 1 y 99. Se puede escribir la lista, generar valores aleatorios, crear una secuencia casi ordenada o usar el caso invertido. Cada elemento conserva un identificador propio para que la animación muestre el mismo pino aunque cambie de posición. Los cinco algoritmos están disponibles en el selector.
 
 Los cinco métodos ordenan de forma ascendente:
 

@@ -101,6 +101,7 @@ const CATALOGO_ALGORITMOS = [
     resultado: 'Distancias desde el origen y ruta al destino',
     ruta: 'dijkstra.html',
     icono: 'navegacion',
+    video: 'UnsRfl6xw2o',
     disponible: true
   },
   {
@@ -118,6 +119,7 @@ const CATALOGO_ALGORITMOS = [
     resultado: 'Árbol o bosque de expansión y peso total',
     ruta: 'kruskal.html',
     icono: 'conexiones',
+    video: 'Wo-Pk0Iq3oU',
     disponible: true
   },
   {

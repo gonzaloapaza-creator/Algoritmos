@@ -20,13 +20,14 @@
     <a class="topbar__marca" href="index.html" aria-label="Ciudad de los Algoritmos · Inicio"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="9" cy="23" r="5"/><circle cx="23" cy="9" r="5"/><line x1="12" y1="20" x2="20" y2="12"/></svg><span>Algoritmos</span></a>
     <span class="topbar__separador" aria-hidden="true"></span>
     <span class="topbar__modulo" id="topbarModulo">Dijkstra</span>
-    <div class="topbar__acciones"><button type="button" class="btn btn-fantasma btn-sm" id="btnAyuda">Ayuda</button></div>
+    <div class="topbar__acciones"><button type="button" class="btn btn-fantasma btn-sm" id="btnVideoModulo" aria-pressed="false" title="Ver la presentación en video">Video</button><button type="button" class="btn btn-fantasma btn-sm" id="btnAyuda">Ayuda</button></div>
   </header>
   <aside class="sidebar" id="barraLateral" aria-label="Navegación principal"></aside>
   <div class="sidebar-fondo" id="barraLateralFondo" hidden></div>
   <main class="contenido" id="contenido">
+    <section id="introModulo" hidden></section>
     <div id="moduloContenido">
-      <section class="modulo-cabecera"><div class="modulo-cabecera__texto"><h1>Dijkstra</h1><p>Caminos mínimos desde un origen en grafos dirigidos o no dirigidos con pesos no negativos.</p></div></section>
+      <section class="modulo-cabecera gm-portada"><div class="modulo-cabecera__texto"><p class="gm-eyebrow">Explora rutas · Aprende paso a paso</p><h1>Dijkstra</h1><p>Encuentra el camino más corto desde un punto y descubre cómo se elige cada ruta.</p><span class="gm-portada-nota">Distancias y costos desde cero · Con o sin dirección</span></div><svg class="gm-portada-red" viewBox="0 0 220 130" aria-hidden="true" focusable="false"><path class="gm-red-base" d="M25 88 80 30 130 95 194 38M25 88 130 95M80 30 194 38"/><path class="gm-red-ruta" d="M25 88 80 30 194 38"/><circle cx="25" cy="88" r="12"/><circle cx="80" cy="30" r="12"/><circle cx="130" cy="95" r="12"/><circle cx="194" cy="38" r="12"/></svg></section>
       <div id="editorModuloGrafo"></div>
     </div>
   </main>
@@ -42,6 +43,7 @@
   <script src="js/comun/dialogo.js"></script>
   <script src="js/comun/navegacion.js"></script>
   <script src="js/comun/presentacion.js"></script>
+  <script src="js/comun/intro.js"></script>
   <script src="js/comun/notificaciones.js"></script>
   <script src="js/comun/exportarImagen.js"></script>
   <script src="js/grafos/modelo.js"></script>

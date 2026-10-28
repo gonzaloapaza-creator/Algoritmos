@@ -12,7 +12,7 @@ Proyecto de la materia **Análisis de Algoritmos** del grupo **Los Fanáticos de
 | Ordenamiento | **Ordenamiento (Bowling)** | 3–200 enteros entre 1 y 99 | Selection, Insertion, Bubble, Shell y Merge Sort animados con pinos, pseudocódigo e historial |
 | Árboles | **Árboles binarios** | 1–31 enteros únicos entre −999 y 999, o recorridos | Árbol SVG, recorridos animados y reconstrucción validada |
 
-Sin compilación, dependencias, backend ni base de datos: HTML, CSS y JavaScript planos. Todos los módulos ofrecen ayuda textual; los cinco originales conservan sus presentaciones en video.
+Sin compilación, dependencias, backend ni base de datos: HTML, CSS y JavaScript planos. Los siete módulos ofrecen ayuda textual y una presentación en video. Dijkstra usa `UnsRfl6xw2o` y Kruskal, `Wo-Pk0Iq3oU`.
 
 El inicio es una ciudad SVG con siete zonas seleccionables y un panel con entrada, resultado y acceso a cada módulo. En móvil, las escenas se conectan en una columna y el acceso al módulo seleccionado permanece visible mientras recorres la ciudad. «Vista lista» ofrece el mismo catálogo por categorías. La vista y la pausa de demostraciones se recuerdan en `ui.inicio.vista.v1` y `ui.inicio.movimiento.v1`; se respeta el movimiento reducido del sistema. Los trabajos recientes usan la biblioteca local existente: abren «Cargar» sin reemplazar el ejercicio hasta confirmar. Fundamentos, videos y equipo continúan al final del inicio.
 
@@ -162,6 +162,10 @@ Ambos editores admiten hasta 24 vértices y 96 aristas, IDs estables, nombres de
 
 Las cuatro etapas incluyen instrucciones, «Continuar», «Ver resultado» y retorno al procedimiento, con foco en la etapa elegida. La explicación y los controles de reproducción aparecen inmediatamente debajo del grafo; las decisiones se muestran al lado en escritorio y debajo en móvil. Dijkstra explica cada suma de distancia y peso y distingue «Sin camino» al terminar; Kruskal explica el orden de revisión, los grupos conectados y los ciclos descartados. Las opciones avanzadas se despliegan cuando se necesitan.
 
+La bienvenida permite cargar un ejemplo o enfocar la creación del primer punto. Los formularios explican «punto/vértice» y «conexión/arista»; Enter añade puntos y conexiones, y la edición de elementos existentes se despliega por separado. Las cuatro etapas mantienen sus nombres visibles en móvil. El procedimiento tiene una barra de avance y destaca la fila actual. Los resultados resumen las cifras reales: en Dijkstra, cada tarjeta de destino muestra su ruta sin repetir el cálculo, con opción de volver a todos los caminos; Kruskal resume peso, conexiones elegidas y grupos.
+
+Johnson conserva las coordenadas al redimensionar, importar o recuperar un grafo: se adapta el encuadre, sin sobrescribir su distribución. El botón de porcentaje encuadra la red completa. Espacio selecciona un elemento SVG, Enter permite editarlo y las flechas conservan la selección y el foco. Los nombres automáticos respetan las mayúsculas/minúsculas y la importación rechaza conexiones repetidas con el mismo origen y destino.
+
 - **Dijkstra:** dirigido o no dirigido, enteros 0…999999. Calcula todas las distancias con lista de adyacencia y barrido lineal de pendientes: núcleo `O(V² + E)`, registro de estados `O((V + E)V)`. Los empates siguen el orden de vértices y aristas; una igualdad conserva el primer predecesor. Cambiar el destino reconstruye su ruta con pesos originales sin recalcular. Convertir a dirigido duplica cada arista; convertir a no dirigido fusiona las opuestas y solicita resolver cualquier peso diferente.
 - **Kruskal:** no dirigido, enteros −999999…999999. Ordena ascendente/descendente según mínimo/máximo y usa Union-Find con compresión y rango: núcleo `O(E log E + E α(V))`; registrar componentes añade estados de tamaño `O(EV)`. Los empates siguen el orden original de aristas. Un grafo desconectado entrega un bosque con `V−C` aristas, incluye aislados y no añade conexiones. No se afirma unicidad.
 
@@ -184,6 +188,7 @@ En el ejemplo solicitado de Kruskal, el mínimo suma 6; el máximo correcto suma
 - **Cabecera compacta**: menú ☰ (móvil/tablet), marca, nombre del módulo activo, botones «Video» y «Ayuda».
 - **Barra lateral** construida desde el catálogo y agrupada por categoría. En escritorio (≥ 1024 px) es una columna fija que se pliega a iconos (se recuerda en `ui.navegacion.v1`); por debajo es un cajón lateral con fondo, cierre con Escape y devolución del foco.
 - **Presentación con video**: los módulos que tienen un video registrado muestran primero una sección con el video de YouTube (dominio `youtube-nocookie.com`, insertado solo mientras está visible), la descripción, entrada y resultado, y el botón «Ir al algoritmo». «No mostrar al entrar» se guarda por módulo (`ui.intro.<id>`); el botón «Video» de la cabecera la reabre.
+- **Ayuda de los siete módulos**: incluye entrada y límites, significado del resultado, controles, guardados con nombre, importación/exportación y recuperación en el navegador. En móvil, «Video del módulo» y «Ayuda del módulo» están en el menú lateral. Dijkstra y Kruskal pausan la reproducción al consultar el video o la ayuda, conservando el cálculo, el paso y los campos sin aplicar; Árboles, Ordenamiento y Northwest también pausan su reproducción al abrir la ayuda.
 - **Tema claro y oscuro**: `js/comun/tema.js` (en `<head>`, sin parpadeo) aplica la elección guardada en `ui.tema.v1` o, si no hay ninguna, la del sistema (`prefers-color-scheme`, con cambios en vivo). El conmutador está en la barra lateral (también en el cajón móvil). Las superficies, hovers, texto sobre tintes y colores de grafos son variables que `html[data-tema="claro"]` redefine; los acentos por módulo tienen su variante oscura para contraste sobre blanco.
 - **Modo presentación** (escritorio, botón de la cabecera o Alt+P): oculta barra lateral y pie, ensancha el contenido y agranda la tipografía; Escape lo cierra si no hay diálogos abiertos. Se recuerda en `ui.presentacion.v1`.
 - **Impresión / PDF**: `css/impresion.css` quita la interfaz y expande las tablas. En las vistas paso a paso de Johnson, Asignación y Northwest el botón «Imprimir» (o Ctrl+P) vuelca **todos** los pasos con su tabla y grafo en tema claro, y al terminar restaura el paso y el tema en pantalla.
@@ -314,6 +319,7 @@ npm run lint                      # solo la verificación estática (tests/verif
 node tests/grafos.test.js         # Dijkstra vs Floyd; Kruskal vs enumeración exhaustiva, validación y límites
 node tests/usabilidad-grafos-navegador.js --capturas # cuatro etapas, teclado, encuadre y responsive de Dijkstra/Kruskal en ambos temas
 npm run test:ampliacion           # ciudad de siete zonas, CRUD, persistencia, archivos, PNG y Ordenamiento grande
+npm run test:mejoras              # distribución y teclado de Johnson, bienvenida, progreso y destinos interactivos
 npm run medir:ordenamiento        # 45 casos reproducibles: 40/100/200 × 3 entradas × 5 métodos
 node tests/asignacion.test.js     # húngaro vs fuerza bruta (incl. 300 aleatorias), validación, modelo, migración e importación
 node tests/northwest.test.js      # ejemplo 230, exceso oferta/demanda, degeneración, límites, 300 aleatorias e importación
@@ -326,7 +332,7 @@ node tests/regresiones-navegador.js  # importación por archivo, renombrado, nav
 node tests/navegador.js --capturas   # regresión de navegador, recorridos y tamaños móvil/escritorio
 ```
 
-Las suites de navegador necesitan el servidor local y `puppeteer-core` instalado en `%TEMP%/grafo-e2e` (fuera del proyecto). Usan `127.0.0.1:8123` por defecto; `URL_PRUEBAS` permite cambiarlo. La suite existente cubre los cinco módulos, navegación, pantallas de móvil, controles, historiales y persistencia. Ejecuta sin `--capturas` para validar; la suite de ciudad guarda solo sus vistas representativas con ese argumento. En PowerShell con scripts bloqueados, usa `npm.cmd`.
+Las suites de navegador necesitan el servidor local y `puppeteer-core` instalado en `%TEMP%/grafo-e2e` (fuera del proyecto). Usan `127.0.0.1:8123` por defecto; `URL_PRUEBAS` permite cambiarlo. Las pruebas cubren las presentaciones y ayudas de los siete módulos, acceso desde el menú móvil, lectura del texto completo, foco, controles, historiales y persistencia. `test:mejoras` comprueba además que abrir Video/Ayuda en Dijkstra y Kruskal pausa sin perder cálculo, paso o borradores. Ejecuta sin `--capturas` para validar; la suite de ciudad guarda solo sus vistas representativas con ese argumento. En PowerShell con scripts bloqueados, usa `npm.cmd`.
 
 Las comprobaciones de Johnson de `tests/navegador.js` se ampliaron con las vistas por pasos; vuelve a ejecutarlo para regenerar el recuento y las capturas. Capturas en `docs/capturas/` (`*-1440`, `*-768`, `*-390`, `*-375`, `*-320`, `*-horizontal`, `*-video-*`).
 

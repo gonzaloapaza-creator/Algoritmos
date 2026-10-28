@@ -344,7 +344,7 @@ arbolElemento('btnExportarPngArbol').addEventListener('click', () => {
 });
 
 const modalAyudaArbol = arbolElemento('modalAyuda');
-instalarAyudaModal(modalAyudaArbol, arbolElemento('btnAyuda'), arbolElemento('btnCerrarAyuda'));
+instalarAyudaModal(modalAyudaArbol, arbolElemento('btnAyuda'), arbolElemento('btnCerrarAyuda'), detenerRecorridoArbol);
 
 actualizarCamposReconstruccion();
 const guardado = restaurarEstadoArboles();

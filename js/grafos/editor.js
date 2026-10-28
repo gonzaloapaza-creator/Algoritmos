@@ -15,7 +15,7 @@ function encuadreEditorGrafo() {
   const ancho = Math.max(120, mayorX - menorX), alto = Math.max(120, mayorY - menorY);
   // El margen se calcula en píxeles visibles e incluye círculos, trazos y etiquetas.
   const escala = Math.min(Math.max(80, caja.width - 64) / ancho, Math.max(80, caja.height - 64) / alto);
-  const margen = Math.max(38, 32 / escala);
+  const margen = Math.max(46, 48 / escala);
   return { x: (menorX + mayorX - ancho) / 2 - margen, y: (menorY + mayorY - alto) / 2 - margen,
     ancho: ancho + margen * 2, alto: alto + margen * 2 };
 }
@@ -88,6 +88,9 @@ function textoAristaGrafo(id) {
 function seleccionarElementoGrafo(tipo, id) {
   moduloGrafo.seleccion = { tipo, id };
   actualizarCamposEditorGrafo();
+  if (moduloGrafo.vista === 'grafo') {
+    document.getElementById(tipo === 'nodo' ? 'ajustesVerticeGrafo' : 'ajustesAristaGrafo').open = true;
+  }
   dibujarEditorGrafo();
   // Cambia solo el encuadre del dibujo y conserva la posición de la página.
   centrarSeleccionEditorGrafo(tipo, id);
@@ -104,8 +107,8 @@ function actualizarCamposEditorGrafo() {
     datos.forEach(([clave, texto]) => campo.add(new Option(texto, clave)));
     if (datos.some(d => d[0] === valor)) campo.value = valor;
   }
-  const nodos = g.nodos.map(n => [n.id, n.nombre + ' · ' + n.id]);
-  ['seleccionVertice', 'aristaDesde', 'aristaHacia', 'origenGrafo'].forEach(id => opciones(id, nodos, 'Selecciona un vértice'));
+  const nodos = g.nodos.map(n => [n.id, n.nombre]);
+  ['seleccionVertice', 'aristaDesde', 'aristaHacia', 'origenGrafo'].forEach(id => opciones(id, nodos, id === 'aristaDesde' || id === 'aristaHacia' ? 'Elige…' : 'Elige un punto'));
   opciones('destinoGrafo', nodos, 'Todos los destinos');
   opciones('seleccionArista', g.conexiones.map(c => [c.id, textoAristaGrafo(c.id)]), 'Selecciona una arista');
   document.getElementById('seleccionVertice').value = seleccion && seleccion.tipo === 'nodo' ? seleccion.id : '';
@@ -139,6 +142,8 @@ function actualizarCamposEditorGrafo() {
 
 function dibujarEditorGrafo() {
   const svg = document.getElementById('svgModuloGrafo');
+  // La presentación oculta el editor. Se dibuja al mostrarlo, cuando tiene medidas.
+  if (!svg.getClientRects().length) return;
   const radio = aplicarVistaEditorGrafo();
   const matrizVista = svg.getScreenCTM();
   const escalaVista = Math.max(.05, Math.hypot(matrizVista.a, matrizVista.b));
@@ -184,10 +189,13 @@ function dibujarEditorGrafo() {
   });
   g.nodos.forEach(n => {
     const seleccionado = moduloGrafo.seleccion && moduloGrafo.seleccion.id === n.id;
-    const grupo = elementoSvgGrafo('g', { transform: 'translate(' + n.x + ' ' + n.y + ')', class: 'nodo-editor-grafo' + (seleccionado ? ' seleccionado' : '') + (paso && !mostrandoResultado && paso.actual === n.id ? ' actual' : '') + (finalizados.has(n.id) ? ' finalizado' : ''), 'data-id': n.id, tabindex: 0, role: 'button', 'aria-label': 'Seleccionar vértice ' + n.nombre });
+    const grupo = elementoSvgGrafo('g', { transform: 'translate(' + n.x + ' ' + n.y + ')', class: 'nodo-editor-grafo' + (seleccionado ? ' seleccionado' : '') + (paso && !mostrandoResultado && paso.actual === n.id ? ' actual' : '') + (finalizados.has(n.id) ? ' finalizado' : '') + (esDijkstraModulo && n.id === moduloGrafo.origen ? ' gm-origen' : '') + (esDijkstraModulo && n.id === moduloGrafo.destino ? ' gm-destino' : ''), 'data-id': n.id, tabindex: 0, role: 'button', 'aria-label': 'Seleccionar vértice ' + n.nombre + (esDijkstraModulo && n.id === moduloGrafo.origen ? ', origen' : '') + (esDijkstraModulo && n.id === moduloGrafo.destino ? ', destino' : '') });
     grupo.appendChild(elementoSvgGrafo('title', {}, n.nombre + ' · ' + n.id));
     grupo.appendChild(elementoSvgGrafo('circle', { r: radio }));
     grupo.appendChild(elementoSvgGrafo('text', { y: 0 }, n.nombre.length > 5 ? n.nombre.slice(0, 4) + '…' : n.nombre));
+    if (esDijkstraModulo && (n.id === moduloGrafo.origen || n.id === moduloGrafo.destino)) {
+      grupo.appendChild(elementoSvgGrafo('text', { y: radio + 16 / escalaVista, class: 'gm-nodo-etiqueta' }, n.id === moduloGrafo.origen ? 'Origen' : 'Destino'));
+    }
     activarSeleccionSvgGrafo(grupo, 'nodo', n.id);
     grupo.addEventListener('pointerdown', evento => comenzarArrastreGrafo(evento, grupo, n));
     capa.appendChild(grupo);
@@ -201,8 +209,11 @@ function dibujarEditorGrafo() {
   }
   svg.replaceChildren(capa);
   colocarPesosEditorGrafo(svg, etiquetas, separacionPeso, escalaVista);
-  document.getElementById('resumenGrafo').textContent = g.nodos.length + ' / ' + GRAFOS_MAX_NODOS + ' vértices · ' + g.conexiones.length + ' / ' + GRAFOS_MAX_ARISTAS + ' aristas · ' + (g.dirigido ? 'Dirigido' : 'No dirigido');
-  document.getElementById('seleccionTextoGrafo').textContent = (moduloGrafo.seleccion ? 'Selección: ' + (moduloGrafo.seleccion.tipo === 'nodo' ? nombreNodoGrafo(moduloGrafo.seleccion.id) : textoAristaGrafo(moduloGrafo.seleccion.id)) : 'Selecciona un vértice o una arista, o usa las listas de edición.') + ' Ver todo muestra el grafo completo. Abre Zoom y más para acercar y recorrerlo con las flechas. Las listas llevan a la selección aunque esté fuera de la vista.';
+  document.getElementById('bienvenidaGrafo').hidden = !!g.nodos.length;
+  document.getElementById('resumenGrafo').textContent = g.nodos.length + ' puntos · ' + g.conexiones.length + ' conexiones · ' + (g.dirigido ? 'Con dirección →' : 'En ambos sentidos ↔');
+  document.getElementById('seleccionTextoGrafo').textContent = moduloGrafo.seleccion
+    ? 'Selección: ' + (moduloGrafo.seleccion.tipo === 'nodo' ? nombreNodoGrafo(moduloGrafo.seleccion.id) : textoAristaGrafo(moduloGrafo.seleccion.id)) + '. Puedes editar sus datos en el formulario.'
+    : 'Toca un punto o una conexión para seleccionarlo. Arrastra los puntos con el ratón; también puedes moverlos desde «Editar un punto». Usa «Ver todo» para encuadrar la red.';
 }
 
 function colocarPesosEditorGrafo(svg, etiquetas, separacion, escala) {

@@ -15,13 +15,14 @@ const elementoGrafo = id => document.getElementById(id);
 function construirInterfazModuloGrafo() {
   elementoGrafo('editorModuloGrafo').innerHTML = `
     <nav class="gm-flujo" aria-label="Etapas del módulo"><ol class="pasos">
-      <li><button type="button" class="paso" data-vista-grafo="grafo" aria-label="Etapa 1: Grafo y datos"><span class="paso__numero">1</span><span class="paso__texto">Grafo y datos</span></button></li>
-      <li><button type="button" class="paso" data-vista-grafo="configuracion" aria-label="Etapa 2: ${esDijkstraModulo ? 'Origen y destino' : 'Objetivo'}"><span class="paso__numero">2</span><span class="paso__texto">${esDijkstraModulo ? 'Origen y destino' : 'Objetivo'}</span></button></li>
-      <li><button type="button" class="paso" data-vista-grafo="procedimiento" aria-label="Etapa 3: Procedimiento"><span class="paso__numero">3</span><span class="paso__texto">Procedimiento</span></button></li>
-      <li><button type="button" class="paso" data-vista-grafo="resultado" aria-label="Etapa 4: Resultado"><span class="paso__numero">4</span><span class="paso__texto">Resultado</span></button></li>
+      <li><button type="button" class="paso" data-vista-grafo="grafo" aria-label="Etapa 1: Grafo y datos"><span class="paso__numero">1</span><span class="paso__texto">Crea tu grafo<small>Puntos y conexiones</small></span></button></li>
+      <li><button type="button" class="paso" data-vista-grafo="configuracion" aria-label="Etapa 2: ${esDijkstraModulo ? 'Origen y destino' : 'Objetivo'}"><span class="paso__numero">2</span><span class="paso__texto">${esDijkstraModulo ? 'Elige el origen' : 'Elige el objetivo'}<small>${esDijkstraModulo ? '¿Desde dónde sales?' : '¿Mínimo o máximo?'}</small></span></button></li>
+      <li><button type="button" class="paso" data-vista-grafo="procedimiento" aria-label="Etapa 3: Procedimiento"><span class="paso__numero">3</span><span class="paso__texto">Sigue los pasos<small>Observa cada decisión</small></span></button></li>
+      <li><button type="button" class="paso" data-vista-grafo="resultado" aria-label="Etapa 4: Resultado"><span class="paso__numero">4</span><span class="paso__texto">Tu resultado<small>${esDijkstraModulo ? 'Distancias y rutas' : 'Conexiones y peso total'}</small></span></button></li>
     </ol></nav>
     <div class="gm-herramientas" id="herramientasGrafo">
-      <label>Ejemplo<select id="ejemploGrafo"><option value="obligatorio">Caso de clase</option><option value="ceros">${esDijkstraModulo ? 'Ceros y empates' : 'Negativos, cero y empates'}</option><option value="desconectado">Componentes y aislados</option></select></label>
+      <div class="gm-ejemplo-intro"><strong>Prueba y aprende</strong><span>Carga un ejemplo y explóralo.</span></div>
+      <label>Ejemplo<select id="ejemploGrafo"><option value="obligatorio">Caso de clase</option><option value="ceros">${esDijkstraModulo ? 'Ceros y empates' : 'Negativos, cero y empates'}</option><option value="desconectado">Grupos separados</option></select></label>
       <button type="button" class="btn btn-secondary" id="btnEjemploGrafo">Cargar ejemplo</button>
       <button type="button" class="btn btn-neutral" id="btnDeshacerGrafo">Deshacer</button>
       <button type="button" class="btn btn-neutral" id="btnRehacerGrafo">Rehacer</button>
@@ -45,31 +46,32 @@ function construirInterfazModuloGrafo() {
           <button type="button" class="btn btn-fantasma" data-pan-grafo="izquierda" aria-label="Desplazar vista a la izquierda">←</button><button type="button" class="btn btn-fantasma" data-pan-grafo="arriba" aria-label="Desplazar vista arriba">↑</button><button type="button" class="btn btn-fantasma" data-pan-grafo="abajo" aria-label="Desplazar vista abajo">↓</button><button type="button" class="btn btn-fantasma" data-pan-grafo="derecha" aria-label="Desplazar vista a la derecha">→</button>
           </div></details>
         </div></div>
-        <div class="gm-lienzo" tabindex="0" aria-label="Lienzo con desplazamiento interno"><svg id="svgModuloGrafo" viewBox="0 0 1000 600" role="group" aria-label="Grafo editable. También puedes usar los formularios y listas."></svg></div>
-        <p class="gm-leyenda">${esDijkstraModulo ? 'Línea verde: caminos elegidos · Línea del color del módulo: ruta al destino' : 'Línea verde: conexión aceptada'} · Trazo amarillo: conexión que se está evaluando · Contorno discontinuo: selección.</p>
+        <div class="gm-lienzo" tabindex="0" aria-label="Lienzo con desplazamiento interno"><svg id="svgModuloGrafo" viewBox="0 0 1000 600" role="group" aria-label="Grafo editable. También puedes usar los formularios y listas."></svg>
+          <div class="gm-vacio" id="bienvenidaGrafo"><span class="gm-vacio-icono" aria-hidden="true">↗</span><h3>Tu primera red empieza aquí</h3><p>Prueba un ejemplo listo o añade dos puntos y conéctalos.</p><button type="button" class="btn btn-primary" id="btnEjemploRapidoGrafo">Explorar un ejemplo</button><button type="button" class="btn btn-fantasma" id="btnCrearPrimerPunto">Crear mi primer punto →</button></div>
+        </div>
+        <div class="gm-leyenda" aria-label="Leyenda del grafo"><span><i class="gm-muestra gm-muestra-elegida" aria-hidden="true"></i>${esDijkstraModulo ? 'Camino elegido' : 'Conexión aceptada'}</span><span><i class="gm-muestra gm-muestra-actual" aria-hidden="true"></i>En este paso</span><span><i class="gm-muestra gm-muestra-seleccion" aria-hidden="true"></i>Tu selección</span>${esDijkstraModulo ? '<span><i class="gm-muestra gm-muestra-ruta" aria-hidden="true"></i>Ruta al destino</span>' : ''}</div>
         <p class="gm-ayuda-corta" id="seleccionTextoGrafo"></p>
       </section>
-      <section class="gm-panel gm-editor" id="panelEditorGrafo" aria-labelledby="tituloEditorGrafo"><h2 id="tituloEditorGrafo">Editar datos</h2>
-        <div><label for="nombreVertice">Nuevo vértice (hasta 12 caracteres)</label><input id="nombreVertice" maxlength="12" placeholder="Por ejemplo, A" autocomplete="off" /><div class="gm-fila"><button type="button" class="btn btn-primary" id="btnCrearVertice">Crear vértice</button></div>
-        <label for="seleccionVertice">Vértice seleccionado</label><select id="seleccionVertice"></select>
+      <section class="gm-panel gm-editor" id="panelEditorGrafo" aria-labelledby="tituloEditorGrafo"><h2 id="tituloEditorGrafo">Construye tu grafo</h2>
+        <div class="gm-editor-bloque"><h3><span class="gm-numero" aria-hidden="true">1</span> Añade puntos</h3><p class="gm-info">Cada punto es un vértice: una ciudad, una parada o un lugar.</p><label for="nombreVertice">Nombre del punto</label><div class="gm-nuevo-punto"><input id="nombreVertice" maxlength="12" placeholder="Por ejemplo, A" autocomplete="off" aria-describedby="ayudaNombreVertice" /><button type="button" class="btn btn-primary" id="btnCrearVertice">Añadir</button></div><p class="gm-microayuda" id="ayudaNombreVertice">Hasta 12 caracteres. También puedes pulsar Enter.</p>
+        <details class="gm-editar" id="ajustesVerticeGrafo"><summary>Editar un punto existente</summary><label for="seleccionVertice">Vértice seleccionado</label><select id="seleccionVertice"></select>
         <label for="nombreSeleccionado">Nombre</label><input id="nombreSeleccionado" maxlength="12" /><div class="gm-fila"><button type="button" class="btn btn-secondary" id="btnRenombrarVertice">Renombrar</button><button type="button" class="btn btn-peligro" id="btnEliminarVertice">Eliminar</button></div>
-        <div class="gm-fila gm-posiciones"><div><label for="posicionNodoX">Posición X</label><input id="posicionNodoX" type="number" min="30" max="970" /></div><div><label for="posicionNodoY">Posición Y</label><input id="posicionNodoY" type="number" min="30" max="570" /></div></div><div class="gm-fila"><button type="button" class="btn btn-neutral" id="btnMoverVertice">Aplicar posición</button></div></div>
-        <div><h3>Nueva arista</h3><label for="aristaDesde">Desde</label><select id="aristaDesde"></select><label for="aristaHacia">Hasta</label><select id="aristaHacia"></select><label for="pesoArista">Peso entero ${esDijkstraModulo ? 'no negativo' : '(admite negativos)'}</label><input id="pesoArista" inputmode="numeric" value="1" /><div class="gm-fila"><button type="button" class="btn btn-primary" id="btnCrearArista">Crear arista</button></div>
+        <details class="gm-editar gm-posicion-opciones"><summary>Ajustar posición con coordenadas</summary><div class="gm-fila gm-posiciones"><div><label for="posicionNodoX">Posición X</label><input id="posicionNodoX" type="number" min="30" max="970" /></div><div><label for="posicionNodoY">Posición Y</label><input id="posicionNodoY" type="number" min="30" max="570" /></div></div><div class="gm-fila"><button type="button" class="btn btn-neutral" id="btnMoverVertice">Aplicar posición</button></div></details></details></div>
+        <div class="gm-editor-bloque"><h3><span class="gm-numero" aria-hidden="true">2</span> Conecta los puntos</h3><p class="gm-info">Una conexión es una arista. Su peso indica la distancia o el costo.</p><div class="gm-extremos"><div><label for="aristaDesde">Desde</label><select id="aristaDesde"></select></div><span aria-hidden="true">${esDijkstraModulo ? '→' : '↔'}</span><div><label for="aristaHacia">Hasta</label><select id="aristaHacia"></select></div></div><label for="pesoArista">Peso ${esDijkstraModulo ? '(0 o un entero positivo)' : '(entero; puede ser negativo)'}</label><div class="gm-nueva-arista"><input id="pesoArista" inputmode="numeric" value="1" aria-describedby="ayudaCrearArista" /><button type="button" class="btn btn-primary" id="btnCrearArista">Conectar</button></div>
         <p class="gm-info" id="ayudaCrearArista">Una arista conecta dos vértices distintos. El peso representa su distancia o costo.</p>
-        <label for="seleccionArista">Arista seleccionada</label><select id="seleccionArista"></select><label for="pesoSeleccionado">Editar peso</label><input id="pesoSeleccionado" inputmode="numeric" /><div class="gm-fila"><button type="button" class="btn btn-secondary" id="btnEditarPeso">Cambiar peso</button><button type="button" class="btn btn-peligro" id="btnEliminarArista">Eliminar</button></div></div>
-        <p class="gm-info">Arrastra vértices con ratón. En táctil o con teclado, usa la selección y las posiciones X/Y. El lienzo no captura los gestos verticales de la página.</p>
+        <details class="gm-editar" id="ajustesAristaGrafo"><summary>Editar una conexión existente</summary><label for="seleccionArista">Arista seleccionada</label><select id="seleccionArista"></select><label for="pesoSeleccionado">Editar peso</label><input id="pesoSeleccionado" inputmode="numeric" /><div class="gm-fila"><button type="button" class="btn btn-secondary" id="btnEditarPeso">Cambiar peso</button><button type="button" class="btn btn-peligro" id="btnEliminarArista">Eliminar</button></div></details></div>
         <div class="gm-avance"><button type="button" class="btn btn-primary" id="btnContinuarGrafo">Continuar: ${esDijkstraModulo ? 'elegir origen' : 'elegir objetivo'} →</button></div>
       </section>
       <section class="gm-panel gm-config" id="panelConfigGrafo" aria-labelledby="tituloConfigGrafo"><h2 id="tituloConfigGrafo">${esDijkstraModulo ? 'Origen y destino' : 'Objetivo del bosque'}</h2>
         <div id="configDijkstra"><label for="selectorModoGrafo">Modo del grafo</label><select id="selectorModoGrafo"><option value="dirigido">Dirigido</option><option value="no-dirigido">No dirigido</option></select><label for="origenGrafo">Origen</label><select id="origenGrafo"></select><label for="destinoGrafo">Destino opcional</label><select id="destinoGrafo"></select></div>
         <div id="configKruskal"><label for="objetivoGrafo">Peso del árbol o bosque</label><select id="objetivoGrafo"><option value="min">Mínimo</option><option value="max">Máximo</option></select></div>
-        <p class="gm-info" id="contratoGrafo"></p><details class="gm-teoria"><summary>Cómo funciona y límites</summary><p class="gm-info" id="detalleContratoGrafo"></p></details><div class="gm-fila"><button type="button" class="btn btn-primary" id="btnResolverGrafo">Calcular ${esDijkstraModulo ? 'distancias' : 'árbol / bosque'}</button></div>
+        <p class="gm-info" id="contratoGrafo"></p><div class="gm-config-resumen" id="resumenConfigGrafo" role="status"></div><div class="gm-fila"><button type="button" class="btn btn-primary" id="btnResolverGrafo">${esDijkstraModulo ? 'Encontrar caminos mínimos' : 'Encontrar conexiones'} →</button></div><details class="gm-teoria"><summary>Cómo funciona y límites</summary><p class="gm-info" id="detalleContratoGrafo"></p></details>
         <button type="button" class="btn btn-neutral" id="btnCancelarCalculoGrafo" hidden>Cancelar preparación</button>
         <div class="gm-avance"><button type="button" class="btn btn-fantasma" id="btnVolverEditarGrafo">← Volver al grafo</button></div>
       </section>
     <section id="procedimientoGrafo" class="gm-panel gm-resultado" aria-labelledby="tituloProcedimientoGrafo"><h2 id="tituloProcedimientoGrafo">Decisiones de la ejecución</h2>
       <p class="gm-info">${esDijkstraModulo ? 'El predecesor es el vértice anterior en el camino elegido. ∞ indica que aún no se ha encontrado un camino.' : 'Una componente es un grupo de vértices ya conectados. Unir dos del mismo grupo formaría un ciclo.'}</p>
-      <div class="gm-cinta"><div class="gm-repro-principal"><button type="button" class="btn btn-neutral" id="btnAnteriorGrafo">Anterior</button><button type="button" class="btn btn-primary" id="btnReproducirGrafo">Reproducir</button><button type="button" class="btn btn-neutral" id="btnSiguienteGrafo">Siguiente</button></div><details class="gm-repro-opciones"><summary>Más controles</summary><div class="gm-repro-detalle"><button type="button" class="btn btn-fantasma" id="btnReiniciarGrafo">Reiniciar</button><button type="button" class="btn btn-fantasma" id="btnUltimoGrafo">Último paso</button><label for="velocidadGrafo">Velocidad</label><select id="velocidadGrafo"><option value="1400">Lenta</option><option value="750" selected>Normal</option><option value="250">Rápida</option></select><span id="contadorPasosGrafo"></span></div></details></div>
+      <div class="gm-cinta"><div class="gm-progreso"><span id="contadorPasosGrafo"></span><progress id="progresoPasosGrafo" value="0" max="1" aria-label="Avance del procedimiento"></progress></div><div class="gm-repro-principal"><button type="button" class="btn btn-neutral" id="btnAnteriorGrafo">← Anterior</button><button type="button" class="btn btn-primary" id="btnReproducirGrafo">Reproducir</button><button type="button" class="btn btn-neutral" id="btnSiguienteGrafo">Siguiente →</button></div><details class="gm-repro-opciones"><summary>Velocidad y más controles</summary><div class="gm-repro-detalle"><button type="button" class="btn btn-fantasma" id="btnReiniciarGrafo">Reiniciar</button><button type="button" class="btn btn-fantasma" id="btnUltimoGrafo">Último paso</button><label for="velocidadGrafo">Velocidad</label><select id="velocidadGrafo"><option value="1400">Lenta</option><option value="750" selected>Normal</option><option value="250">Rápida</option></select></div></details></div>
       <p class="gm-explicacion" id="explicacionPasoGrafo" role="status"></p><div id="detallePasoGrafo" class="gm-info"></div><div class="gm-tabla-caja"><table class="tabla" id="tablaEstadoGrafo"></table></div>
       <div class="gm-avance"><button type="button" class="btn btn-primary" id="btnVerResultadoGrafo">Ver resultado →</button></div>
     </section>
@@ -235,10 +237,13 @@ function renderizarProcedimientoGrafo() {
   tabla.replaceChildren();
   const sinDatos = !resultado;
   elementoGrafo('contadorPasosGrafo').textContent = resultado && resultado.pasos.length ? 'Paso ' + (moduloGrafo.paso + 1) + ' de ' + resultado.pasos.length : 'Sin pasos para recorrer';
+  elementoGrafo('progresoPasosGrafo').max = Math.max(1, resultado ? resultado.pasos.length : 0);
+  elementoGrafo('progresoPasosGrafo').value = resultado && resultado.pasos.length ? moduloGrafo.paso + 1 : 0;
   ['btnAnteriorGrafo', 'btnSiguienteGrafo', 'btnReproducirGrafo', 'btnReiniciarGrafo', 'btnUltimoGrafo'].forEach(id => { elementoGrafo(id).disabled = sinDatos || !resultado.pasos.length; });
   elementoGrafo('btnAnteriorGrafo').disabled = sinDatos || moduloGrafo.paso === 0;
   elementoGrafo('btnSiguienteGrafo').disabled = sinDatos || moduloGrafo.paso >= resultado.pasos.length - 1;
   elementoGrafo('btnReproducirGrafo').textContent = moduloGrafo.reproduciendo ? 'Pausar' : 'Reproducir';
+  elementoGrafo('btnReproducirGrafo').setAttribute('aria-pressed', String(moduloGrafo.reproduciendo));
   const explicacion = elementoGrafo('explicacionPasoGrafo'), detalle = elementoGrafo('detallePasoGrafo');
   detalle.replaceChildren();
   elementoGrafo('btnVerResultadoGrafo').textContent = sinDatos ? 'Elegir datos y calcular →' : 'Ver resultado →';
@@ -264,6 +269,7 @@ function renderizarProcedimientoGrafo() {
       const fila = document.createElement('tr');
       const estado = paso.finalizados.includes(n.id) ? '✓ Distancia definitiva' : paso.tipo === 'final' && !Number.isFinite(paso.distancias[n.id]) ? 'Sin camino' : 'Por revisar';
       [n.nombre, distanciaTextoGrafo(paso.distancias[n.id]), paso.predecesores[n.id] ? nombreNodoGrafo(paso.predecesores[n.id].nodo) : '—', estado].forEach(texto => { const celda = document.createElement('td'); celda.textContent = texto; fila.appendChild(celda); });
+      if (paso.actual === n.id) fila.classList.add('gm-fila-actual');
       cuerpo.appendChild(fila);
     }); tabla.appendChild(cuerpo);
   } else {
@@ -273,9 +279,31 @@ function renderizarProcedimientoGrafo() {
     const cuerpo = document.createElement('tbody');
     resultado.ordenadas.forEach((id, indice) => {
       const fila = document.createElement('tr');
-      [String(indice + 1), textoAristaGrafo(id), indice <= moduloGrafo.paso ? (resultado.pasos[indice].aceptada ? '✓ Aceptada' : '× Ciclo') : 'Pendiente'].forEach(texto => { const celda = document.createElement('td'); celda.textContent = texto; fila.appendChild(celda); }); cuerpo.appendChild(fila);
+      [String(indice + 1), textoAristaGrafo(id), indice <= moduloGrafo.paso ? (resultado.pasos[indice].aceptada ? '✓ Aceptada' : '× Ciclo') : 'Pendiente'].forEach(texto => { const celda = document.createElement('td'); celda.textContent = texto; fila.appendChild(celda); });
+      if (indice === moduloGrafo.paso) { fila.classList.add('gm-fila-actual'); fila.setAttribute('aria-current', 'step'); }
+      cuerpo.appendChild(fila);
     }); tabla.appendChild(cuerpo);
   }
+}
+
+function agregarMetricasGrafo(contenedor, datos) {
+  const lista = document.createElement('dl'); lista.className = 'gm-metricas';
+  datos.forEach(([nombre, valor]) => {
+    const grupo = document.createElement('div');
+    const etiqueta = document.createElement('dt'); etiqueta.textContent = nombre;
+    const cifra = document.createElement('dd'); cifra.textContent = valor;
+    grupo.append(etiqueta, cifra); lista.appendChild(grupo);
+  });
+  contenedor.appendChild(lista);
+}
+
+function cambiarDestinoResultadoGrafo(destino) {
+  if (destino === moduloGrafo.destino) return;
+  guardarHistoriaGrafo(); moduloGrafo.destino = destino;
+  actualizarModuloGrafo(); guardarModuloGrafo();
+  const boton = destino === null ? elementoGrafo('btnTodasRutasGrafo') :
+    Array.from(elementoGrafo('resultadoGrafo').querySelectorAll('[data-destino-resultado]')).find(b => b.dataset.destinoResultado === destino);
+  if (boton) boton.focus({ preventScroll: true });
 }
 
 function renderizarResultadoGrafo() {
@@ -290,24 +318,43 @@ function renderizarResultadoGrafo() {
   };
   if (!r) { parrafo('Todavía no hay un resultado. Revisa tus datos y elige ' + (esDijkstraModulo ? 'el origen' : 'el objetivo') + ' antes de calcular.'); avanzar('Ir a configurar y calcular →', 'configuracion', 'btnConfigurarResultadoGrafo'); return; }
   if (esDijkstraModulo) {
+    titulo.textContent = 'Tus caminos mínimos';
     parrafo('Estas son las distancias mínimas desde ' + nombreNodoGrafo(r.origen) + '. Las conexiones verdes forman los caminos elegidos hasta cada vértice alcanzable.');
-    const lista = document.createElement('ul');
+    const alcanzables = moduloGrafo.grafo.nodos.filter(n => Number.isFinite(r.distancias[n.id])).length;
+    agregarMetricasGrafo(caja, [['Origen', nombreNodoGrafo(r.origen)], ['Otros puntos alcanzables', String(alcanzables - 1)], ['Sin camino', String(moduloGrafo.grafo.nodos.length - alcanzables)]]);
+    const resumenRuta = document.createElement('div'); resumenRuta.className = 'gm-ruta-resultado'; resumenRuta.setAttribute('role', 'status');
+    const ruta = moduloGrafo.destino ? reconstruirRutaGrafo(r, moduloGrafo.destino) : null;
+    const descripcion = document.createElement('p'); descripcion.className = 'gm-total';
+    descripcion.textContent = moduloGrafo.destino
+      ? (ruta ? 'Ruta: ' + ruta.nodos.map(nombreNodoGrafo).join(' → ') + '. Suma de pesos originales: ' + ruta.distancia + '.' : 'Sin camino desde el origen hasta ' + nombreNodoGrafo(moduloGrafo.destino) + '.')
+      : '¿Hasta dónde quieres llegar?';
+    const ayuda = document.createElement('p'); ayuda.textContent = moduloGrafo.destino
+      ? 'El destino seleccionado se destaca en el grafo. Puedes elegir otro sin repetir el cálculo.'
+      : 'Selecciona un punto de la lista para ver su ruta en el grafo.';
+    resumenRuta.append(descripcion, ayuda); caja.appendChild(resumenRuta);
+    const lista = document.createElement('ul'); lista.className = 'gm-destinos'; lista.setAttribute('aria-label', 'Destinos y distancias mínimas');
     moduloGrafo.grafo.nodos.forEach(n => {
       const item = document.createElement('li');
-      item.textContent = n.nombre + ': ' + (Number.isFinite(r.distancias[n.id]) ? 'distancia ' + r.distancias[n.id] : 'Sin camino (∞)'); lista.appendChild(item);
+      const boton = document.createElement('button'); boton.type = 'button'; boton.dataset.destinoResultado = n.id;
+      boton.setAttribute('aria-pressed', String(moduloGrafo.destino === n.id));
+      const nombre = document.createElement('span'); nombre.textContent = n.nombre;
+      const valor = document.createElement('strong'); valor.textContent = Number.isFinite(r.distancias[n.id]) ? String(r.distancias[n.id]) : '∞';
+      const nota = document.createElement('small'); nota.textContent = n.id === r.origen ? 'Punto de partida' : Number.isFinite(r.distancias[n.id]) ? 'Ver camino →' : 'Sin camino';
+      boton.setAttribute('aria-label', n.nombre + ': ' + (Number.isFinite(r.distancias[n.id]) ? 'distancia ' + r.distancias[n.id] + '. Ver ruta.' : 'Sin camino desde el origen.'));
+      boton.append(nombre, valor, nota); boton.addEventListener('click', () => cambiarDestinoResultadoGrafo(n.id)); item.appendChild(boton); lista.appendChild(item);
     }); caja.appendChild(lista);
-    if (moduloGrafo.destino) {
-      const ruta = reconstruirRutaGrafo(r, moduloGrafo.destino);
-      parrafo(ruta ? 'Ruta: ' + ruta.nodos.map(nombreNodoGrafo).join(' → ') + '. Suma de pesos originales: ' + ruta.distancia + '.' : 'Sin camino desde el origen hasta ' + nombreNodoGrafo(moduloGrafo.destino) + '.', 'gm-total');
-    } else parrafo('Puedes elegir un destino en la etapa 2 para ver su ruta, sin repetir el cálculo.');
+    const todas = document.createElement('button'); todas.type = 'button'; todas.id = 'btnTodasRutasGrafo'; todas.className = 'btn btn-neutral'; todas.textContent = 'Ver todos los caminos'; todas.setAttribute('aria-pressed', String(moduloGrafo.destino === null));
+    todas.addEventListener('click', () => cambiarDestinoResultadoGrafo(null)); caja.appendChild(todas);
   } else {
     const conectado = r.componentes.length === 1;
+    titulo.textContent = conectado ? 'Tu red está conectada' : 'Tu red tiene grupos separados';
     parrafo((conectado ? 'Árbol' : 'Bosque') + ' de expansión de peso ' + (moduloGrafo.objetivo === 'min' ? 'mínimo' : 'máximo') + '. Peso total: ' + r.total, 'gm-total');
+    agregarMetricasGrafo(caja, [['Peso total', String(r.total)], ['Conexiones elegidas', String(r.elegidas.length)], ['Grupos conectados', String(r.componentes.length)]]);
     if (!conectado) parrafo('El grafo está desconectado: no existe un árbol que abarque todos los vértices. No se han añadido conexiones.');
     parrafo('Componentes (' + r.componentes.length + '): ' + componentesTextoGrafo(r.componentes) + '. Aristas elegidas: ' + r.elegidas.length + ' = V − C = ' + moduloGrafo.grafo.nodos.length + ' − ' + r.componentes.length + '.');
     const aislados = moduloGrafo.grafo.nodos.filter(n => !moduloGrafo.grafo.conexiones.some(c => c.desde === n.id || c.hacia === n.id));
     if (aislados.length) parrafo('Vértices aislados: ' + aislados.map(n => n.nombre).join(', ') + '.');
-    const lista = document.createElement('ul'); r.elegidas.forEach(id => { const item = document.createElement('li'); item.textContent = textoAristaGrafo(id); lista.appendChild(item); }); caja.appendChild(lista);
+    const lista = document.createElement('ul'); lista.className = 'gm-conexiones-elegidas'; r.elegidas.forEach(id => { const item = document.createElement('li'); item.textContent = '✓ ' + textoAristaGrafo(id); lista.appendChild(item); }); caja.appendChild(lista);
     parrafo('El total es la suma de estas conexiones. Si hay empates, otras elecciones pueden conseguir el mismo total.');
   }
   avanzar('← Revisar el procedimiento', 'procedimiento', 'btnRevisarProcedimiento');
@@ -315,7 +362,8 @@ function renderizarResultadoGrafo() {
 
 function actualizarModuloGrafo() {
   actualizarCamposEditorGrafo();
-  document.querySelectorAll('[data-vista-grafo]').forEach(b => { const actual = b.dataset.vistaGrafo === moduloGrafo.vista; b.classList.toggle('activo', actual); if (actual) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); });
+  const etapas = ['grafo', 'configuracion', 'procedimiento', 'resultado'];
+  document.querySelectorAll('[data-vista-grafo]').forEach(b => { const actual = b.dataset.vistaGrafo === moduloGrafo.vista; b.classList.toggle('activo', actual); b.classList.toggle('completo', etapas.indexOf(b.dataset.vistaGrafo) < etapas.indexOf(moduloGrafo.vista)); if (actual) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); });
   elementoGrafo('panelEditorGrafo').hidden = moduloGrafo.vista !== 'grafo';
   elementoGrafo('panelConfigGrafo').hidden = moduloGrafo.vista !== 'configuracion';
   elementoGrafo('distribucionGrafo').dataset.vista = moduloGrafo.vista;
@@ -331,6 +379,10 @@ function actualizarModuloGrafo() {
   elementoGrafo('btnCrearArista').disabled = moduloGrafo.grafo.nodos.length < 2;
   elementoGrafo('ayudaCrearArista').textContent = moduloGrafo.grafo.nodos.length < 2 ? 'Primero crea dos vértices para poder conectarlos.' : 'Elige dos vértices distintos y escribe el peso de su conexión.';
   elementoGrafo('btnCancelarCalculoGrafo').hidden = !moduloGrafo.preparando;
+  elementoGrafo('estadoCalculoGrafo').dataset.estado = moduloGrafo.preparando ? 'preparando' : moduloGrafo.resultado ? 'listo' : 'edicion';
+  elementoGrafo('resumenConfigGrafo').textContent = !moduloGrafo.grafo.nodos.length ? 'Añade al menos un punto o carga un ejemplo para comenzar.' : esDijkstraModulo
+    ? (moduloGrafo.origen ? 'Saldrás de ' + nombreNodoGrafo(moduloGrafo.origen) + (moduloGrafo.destino ? ' y verás la ruta hasta ' + nombreNodoGrafo(moduloGrafo.destino) + '.' : ' y verás la distancia a todos los puntos.') : 'Elige el punto de origen para calcular las distancias.')
+    : 'Buscaremos las conexiones con ' + (moduloGrafo.objetivo === 'min' ? 'el menor' : 'el mayor') + ' peso total, sin formar ciclos.';
   elementoGrafo('estadoCalculoGrafo').textContent = moduloGrafo.preparando ? 'Preparando cálculo… puedes cancelar o editar los datos.' : moduloGrafo.resultado ? '✓ Resultado actualizado. Puedes revisar cada paso' + (esDijkstraModulo ? ' o elegir otro destino sin recalcular.' : ' y comprobar el peso total.') : 'Tus cambios se guardan en este navegador. Cuando estén listos, continúa a la etapa 2.';
   const guias = {
     grafo: ['1. Prepara tu grafo', moduloGrafo.grafo.nodos.length ? 'Añade o edita conexiones y después pulsa «Continuar» para elegir ' + (esDijkstraModulo ? 'el origen.' : 'el objetivo.') : 'Para empezar, carga un ejemplo o crea tus propios vértices y conexiones. Los datos actuales solo pertenecen a este módulo.'],
@@ -377,6 +429,26 @@ async function convertirModoGrafo() {
   comprometerGrafo(grafo, 'Modo convertido de forma explícita.');
 }
 
+function textoAyudaModuloGrafo() {
+  return [
+    'VIDEO Y PRIMEROS PASOS\nEl botón «Video» abre la presentación explicativa. «Ir al algoritmo» vuelve a tu ejercicio; «No mostrar al entrar» recuerda tu preferencia solo para este módulo. El video necesita internet. En móvil, abre el menú ☰ y usa «Video del módulo» o «Ayuda del módulo». Puedes trabajar sin el video y consultar esta ayuda en cualquier momento.',
+    '1) CREA TU GRAFO\nCarga un ejemplo o usa «Crear mi primer punto». Un punto es un vértice; una conexión es una arista. Añade el nombre y pulsa «Añadir» o Enter. Para conectar, elige «Desde», «Hasta» y un peso; pulsa «Conectar» o Enter desde el campo de peso. Se admiten hasta ' + GRAFOS_MAX_NODOS + ' vértices, ' + GRAFOS_MAX_ARISTAS + ' aristas y nombres de hasta ' + MAX_LARGO_NOMBRE + ' caracteres. No se admiten conexiones de un punto consigo mismo ni aristas repetidas.\n' +
+      (esDijkstraModulo ? 'Los pesos son enteros entre 0 y ' + MAX_PESO + '. Un peso cero es una conexión real; los negativos no se admiten.' : 'Los pesos son enteros entre −' + MAX_PESO + ' y ' + MAX_PESO + ', incluidos cero y negativos. Las conexiones funcionan en ambos sentidos.'),
+    '2) CONFIGURA EL CÁLCULO\n' + (esDijkstraModulo
+      ? 'Pulsa «Continuar: elegir origen». El origen es el punto desde el que sales. El destino es opcional: siempre se calculan las distancias a todos los puntos. En modo dirigido se respetan las flechas; en no dirigido se puede recorrer una conexión en ambos sentidos. Cambiar de modo pide confirmación y resuelve los conflictos de pesos entre conexiones opuestas.'
+      : 'Pulsa «Continuar: elegir objetivo». Mínimo busca el menor peso total y Máximo, el mayor, conectando cada grupo sin formar ciclos. Kruskal usa un grafo no dirigido y no necesita un origen o destino. No calcula rutas mínimas desde un punto.'),
+    '3) SIGUE LOS PASOS\nDespués de calcular, usa «Anterior», «Siguiente» o «Reproducir/Pausar». La barra indica el avance real. «Velocidad y más controles» permite cambiar el ritmo, reiniciar o saltar al último paso. La velocidad regula la animación, no mide el rendimiento del algoritmo.\n' +
+      (esDijkstraModulo ? 'Dijkstra comienza con distancia 0 en el origen y ∞ en los demás. Elige el pendiente con menor distancia y revisa si pasar por él mejora las distancias vecinas. La tabla muestra distancias, predecesores (el punto anterior del camino) y estados.' : 'Kruskal ordena las conexiones por peso y acepta una solo cuando une dos grupos separados. Una conexión entre puntos ya unidos se descarta porque formaría un ciclo. La tabla muestra cada decisión y el peso acumulado.') +
+      '\nVerde: conexión elegida. Amarillo: elemento del paso actual. Contorno discontinuo: tu selección. La fila destacada corresponde al paso actual.',
+    '4) ENTIENDE EL RESULTADO\n' + (esDijkstraModulo
+      ? 'Las tarjetas muestran la distancia mínima desde el origen. Selecciona un destino para ver la ruta y la suma de sus pesos originales en el grafo, sin recalcular. «Ver todos los caminos» recupera el árbol completo de caminos mínimos. La distancia del origen a sí mismo es 0. ∞ o «Sin camino» indica que el punto no se puede alcanzar desde ese origen; no significa un costo cero. Los empates conservan el primer camino encontrado.'
+      : 'Verás el peso total, las conexiones elegidas y la cantidad de grupos. Si todos los puntos están conectados, se obtiene un árbol; si hay grupos separados, un bosque. Los puntos aislados se conservan y no se inventan conexiones entre grupos. Se eligen V − C aristas: cantidad de vértices menos cantidad de grupos. Sin aristas, el total es 0. Si hay pesos iguales, otras elecciones pueden dar el mismo total; se conserva el orden original para desempatar.'),
+    '5) EDITA Y RECORRE EL GRAFO\nSelecciona un elemento en el dibujo o abre «Editar un punto existente» / «Editar una conexión existente». Puedes renombrar, cambiar pesos y eliminar; al borrar un punto se borran sus conexiones. Arrastra puntos con el ratón o usa «Ajustar posición con coordenadas» con teclado o pantalla táctil. «Ver todo» encuadra la red sin mover los puntos; «Ampliar» da más espacio y «Zoom y más» ofrece acercamiento y desplazamiento.\nCambiar conexiones, pesos, modo, origen u objetivo invalida el cálculo. Renombrar o mover puntos conserva el resultado. ' + (esDijkstraModulo ? 'Cambiar solo el destino también conserva el cálculo. ' : '') + 'Los botones «Deshacer» y «Rehacer» permiten recuperar hasta ' + MAX_ACCIONES_DESHACER + ' cambios.',
+    '6) GUARDA Y COMPARTE\nEl ejercicio se guarda automáticamente en este navegador. «Guardar» conserva un trabajo con nombre; «Cargar» abre «Mis trabajos» para cargar, renombrar, eliminar, exportar o importar trabajos. Cargar reemplaza el ejercicio después de confirmar. Dijkstra y Kruskal tienen guardados independientes.\nEn «Más opciones», Exportar/Importar JSON lleva un ejercicio a otro equipo; el archivo se valida antes de reemplazar datos. «PNG», dentro de «Zoom y más», descarga la vista del grafo. Limpiar pide confirmación y se puede deshacer. Borrar los datos del navegador puede borrar tus trabajos: exporta JSON para conservar una copia. Si falla el autoguardado, sigue el aviso visible y exporta tu ejercicio.',
+    '7) TECLADO Y AYUDA\nTab recorre los controles. Enter o Espacio seleccionan puntos y conexiones enfocados en el dibujo. Las listas y los campos de posición permiten editar sin arrastrar. Escape cierra la ayuda o el diálogo y devuelve el foco. Los botones «Video» y «Ayuda» pausan la reproducción para conservar el paso que estabas revisando.'
+  ].join('\n\n');
+}
+
 function instalarAccionesModuloGrafo() {
   const al = (id, accion) => elementoGrafo(id).addEventListener('click', accion);
   const seleccionado = tipo => {
@@ -388,7 +460,7 @@ function instalarAccionesModuloGrafo() {
     if (!nombre || nombre.length > MAX_LARGO_NOMBRE) { notificar('Escribe un nombre de 1 a 12 caracteres.', 'error'); return; }
     const i = g.nodos.length, id = siguienteIdModuloGrafo(g, 'n');
     g.nodos.push({ id, nombre, x: 100 + (i % 6) * 160, y: 100 + Math.floor(i / 6) * 120 });
-    if (comprometerGrafo(g, 'Vértice creado.')) { elementoGrafo('nombreVertice').value = ''; seleccionarElementoGrafo('nodo', id); }
+    if (comprometerGrafo(g, 'Punto añadido.')) { elementoGrafo('nombreVertice').value = ''; seleccionarElementoGrafo('nodo', id); elementoGrafo('ajustesVerticeGrafo').open = false; elementoGrafo('nombreVertice').focus({ preventScroll: true }); }
   });
   al('btnRenombrarVertice', () => {
     const id = seleccionado('nodo'); if (!id) return;
@@ -448,6 +520,10 @@ function instalarAccionesModuloGrafo() {
     comprometerGrafo(grafo, 'Datos actualizados.');
   }
   al('btnEjemploGrafo', () => reemplazarGrafo(crearEjemploGrafo(moduloGrafo.modulo, elementoGrafo('ejemploGrafo').value), 'Cargar ejemplo'));
+  al('btnEjemploRapidoGrafo', () => reemplazarGrafo(crearEjemploGrafo(moduloGrafo.modulo), 'Cargar ejemplo'));
+  al('btnCrearPrimerPunto', () => { elementoGrafo('nombreVertice').focus(); elementoGrafo('nombreVertice').scrollIntoView({ block: 'center', behavior: 'instant' }); });
+  elementoGrafo('nombreVertice').addEventListener('keydown', evento => { if (evento.key === 'Enter') { evento.preventDefault(); elementoGrafo('btnCrearVertice').click(); } });
+  elementoGrafo('pesoArista').addEventListener('keydown', evento => { if (evento.key === 'Enter') { evento.preventDefault(); elementoGrafo('btnCrearArista').click(); } });
   al('btnAleatorioGrafo', () => {
     try { reemplazarGrafo(generarGrafoAleatorio(moduloGrafo.modulo, { cantidad: Number(elementoGrafo('cantidadAleatoriaGrafo').value), aristas: Number(elementoGrafo('aristasAleatoriasGrafo').value), dirigido: moduloGrafo.grafo.dirigido }), 'Generar grafo'); }
     catch (error) { notificar(error.message, 'error'); }
@@ -486,9 +562,11 @@ function instalarAccionesModuloGrafo() {
   al('btnAjustarGrafo', ajustarVistaEditorGrafo);
   document.querySelectorAll('[data-pan-grafo]').forEach(b => b.addEventListener('click', () => { const v = moduloGrafo.vistaSvg, d = b.dataset.panGrafo; v.x += d === 'derecha' ? 60 : d === 'izquierda' ? -60 : 0; v.y += d === 'abajo' ? 60 : d === 'arriba' ? -60 : 0; vistaSvg(); }));
   document.addEventListener('visibilitychange', () => { if (document.hidden) { detenerReproduccionGrafo(); actualizarModuloGrafo(); } });
-  al('btnAyuda', () => dialogoInformar({ titulo: 'Ayuda: ' + (esDijkstraModulo ? 'Dijkstra' : 'Kruskal'), ancho: true, mensaje: esDijkstraModulo
-    ? 'Crea vértices y aristas desde los formularios o carga un ejemplo. Hasta 24 vértices y 96 aristas, sin bucles ni duplicados. Dijkstra encuentra caminos mínimos desde un origen usando pesos enteros no negativos; cero es válido. En no dirigido cada arista sirve en ambos sentidos. El procedimiento muestra el barrido lineal de pendientes, finalizaciones y relajaciones reales; se calculan todas las distancias. La lista de predecesores forma el árbol de caminos mínimos, que no es un árbol de expansión de peso mínimo. Un destino inalcanzable se indica como Sin camino. Cambiar el destino conserva el cálculo. Usa las listas y X/Y para editar sin ratón; Tab, Enter y Espacio seleccionan elementos del SVG. Exportar JSON conserva el ejercicio y PNG descarga la vista actual. La velocidad de reproducción no mide el rendimiento del algoritmo.'
-    : 'Kruskal ordena las aristas por peso y usa conjuntos disjuntos (Union-Find con compresión y rango). Acepta una conexión solo cuando une componentes diferentes. Busca un árbol o bosque de expansión mínimo o máximo; no calcula caminos mínimos desde un origen como Dijkstra. Hasta 24 vértices y 96 aristas no dirigidas, sin bucles ni duplicados; admite pesos enteros negativos y cero. Los empates siguen el orden original de aristas, sin afirmar unicidad. En grafos desconectados se conservan las componentes y los aislados: se obtiene un bosque con V−C aristas. Sin aristas, el peso es cero. Usa listas y posiciones X/Y para editar con teclado o en táctil. Exportar JSON conserva el ejercicio y PNG descarga la vista actual. La velocidad de animación solo regula la reproducción.' }));
+  al('btnVideoModulo', () => { detenerReproduccionGrafo(); renderizarProcedimientoGrafo(); requestAnimationFrame(dibujarEditorGrafo); });
+  al('btnAyuda', () => {
+    detenerReproduccionGrafo(); renderizarProcedimientoGrafo();
+    dialogoInformar({ titulo: 'Ayuda: ' + (esDijkstraModulo ? 'Dijkstra' : 'Kruskal'), ancho: true, mensaje: textoAyudaModuloGrafo() });
+  });
 }
 
 construirInterfazModuloGrafo();

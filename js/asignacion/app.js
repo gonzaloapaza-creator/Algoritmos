@@ -239,6 +239,7 @@ function importarAsignacionJSON() {
 const TEXTO_AYUDA_ASIGNACION =
   'VIDEO\n' +
   '· El botón «Video» de la cabecera abre la presentación con el video explicativo del método húngaro.\n\n' +
+  '· En móvil, «Video del módulo» y «Ayuda del módulo» están en el menú ☰.\n\n' +
   '1) GRAFO (paso 1)\n' +
   '· Recursos a la izquierda, tareas a la derecha. Cada pareja recurso–tarea tiene una conexión con un costo o beneficio.\n' +
   '· «+ Recurso» y «+ Tarea» agregan elementos (hasta ' + MAX_ASIGNACION_DIMENSION + ' por grupo). Doble toque sobre un nodo: renombrar.\n' +
@@ -250,15 +251,20 @@ const TEXTO_AYUDA_ASIGNACION =
   '· La matriz es la misma información que el grafo: cambiar una celda actualiza el grafo y viceversa.\n' +
   '· Valores enteros entre -' + MAX_VALOR_ASIGNACION + ' y ' + MAX_VALOR_ASIGNACION + '. El 0 es válido; vacío es pendiente. Texto, decimales o infinitos se rechazan sin convertirse.\n' +
   '· Si hay más recursos que tareas (o al revés) se hacen min(recursos, tareas) asignaciones y el resto queda sin asignar.\n\n' +
+  '· Elige Minimizar para costos o Maximizar para beneficios antes de resolver. La matriz muestra los recursos o tareas ficticios necesarios para cuadrarla; no se agregan a tus datos originales. Las asignaciones ficticias representan elementos que quedan sin asignar.\n' +
+  '· «Completar pendientes» permite dar un mismo valor a todas las parejas vacías; revisa ese valor antes de aceptarlo. Resolver queda deshabilitado mientras falten datos o haya entradas inválidas.\n\n' +
   '3) RESULTADO (paso 3)\n' +
   '· El grafo destaca las conexiones elegidas y atenúa u oculta las demás («Mostrar todas» las recupera). Tocar una pareja la resalta también en la lista y en la matriz.\n' +
-  '· Si cambias costos, conexiones, dimensiones u objetivo, el resultado se marca como no vigente y hay que recalcular. Mover un nodo no lo invalida.\n\n' +
+  '· Si cambias costos, conexiones, dimensiones u objetivo, el resultado se marca como no vigente y hay que recalcular. Renombrar o mover un nodo conserva los valores del resultado y actualiza sus etiquetas.\n\n' +
   '4) PROCEDIMIENTO (paso 4)\n' +
   '· Pasos reales del método húngaro: matriz original, conversión de maximizar a minimizar, balanceo con ficticios, reducciones, cobertura mínima de líneas y ajustes con δ, selección final y total con los valores originales.\n' +
   '· Una búsqueda exhaustiva independiente comprueba el total y si la solución es única.\n\n' +
+  '· «Anterior», «Siguiente» y «Reiniciar» recorren los pasos. Puedes elegir una fase en la lista o usar «Ver todos». «Imprimir» prepara el procedimiento completo; desde el navegador también puedes guardarlo como PDF. La vista del grafo se puede exportar como PNG.\n\n' +
   '5) GUARDADO Y ATAJOS\n' +
-  '· Todo se guarda solo en este navegador. Exportar/Importar JSON (panel «Edición») permite llevarte el problema.\n' +
-  '· Ctrl+Z / Ctrl+Y deshacen y rehacen. 1 / 2 cambian de herramienta. Supr elimina la selección. Esc cierra el grafo ampliado o quita la selección.';
+  '· El ejercicio se guarda automáticamente en este navegador. «Guardar» conserva un trabajo con nombre y «Cargar» abre «Mis trabajos» para cargar, renombrar, eliminar y exportar/importar trabajos. Cargar un trabajo requiere confirmar el reemplazo del ejercicio.\n' +
+  '· Exportar/Importar JSON (panel «Edición») permite llevarte el problema. Un archivo inválido se rechaza antes de reemplazar los datos. Los trabajos no se sincronizan: exporta una copia antes de borrar los datos del navegador o si aparece un aviso de fallo de autoguardado.\n' +
+  '· Ctrl+Z / Ctrl+Y deshacen y rehacen. 1 / 2 cambian de herramienta. Supr elimina la selección. Esc cierra el grafo ampliado o quita la selección; con un diálogo abierto, primero cierra el diálogo.\n' +
+  '· En el video, «Ir al algoritmo» conserva el ejercicio y «No mostrar al entrar» recuerda tu preferencia. El video necesita internet y se puede volver a abrir desde «Video».';
 
 /* ---------------- Inicio ---------------- */
 

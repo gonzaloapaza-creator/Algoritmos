@@ -8,6 +8,7 @@
     "lint": "node tests/verificar.js",
     "test": "node tests/verificar.js && node tests/johnson.test.js && node tests/asignacion.test.js && node tests/northwest.test.js && node tests/ordenamiento.test.js && node tests/arboles.test.js && node tests/guardados.test.js && node tests/foco.test.js && node tests/grafos.test.js",
     "test:ampliacion": "node tests/ampliacion-navegador.js",
+    "test:mejoras": "node tests/mejoras-grafos-navegador.js",
     "medir:ordenamiento": "node --expose-gc tests/medir-ordenamiento.js",
     "test:navegador": "node tests/navegador.js",
     "capturas": "node tests/navegador.js --capturas"

@@ -413,6 +413,7 @@ function importarNorthwestJSON() {
 const TEXTO_AYUDA_NORTHWEST =
   'VIDEO\n' +
   '· El botón «Video» de la cabecera abre la presentación con el video explicativo del método.\n\n' +
+  '· En móvil, abre el menú ☰ para usar «Video del módulo» y «Ayuda del módulo».\n\n' +
   'QUÉ HACE\n' +
   '· El método de la esquina noroeste obtiene una solución inicial factible del problema de transporte. No garantiza el costo mínimo: los costos no intervienen en la elección de las celdas.\n\n' +
   '1) DATOS\n' +
@@ -423,13 +424,20 @@ const TEXTO_AYUDA_NORTHWEST =
   '2) BALANCEO\n' +
   '· Si la oferta total supera la demanda, se agrega un destino ficticio con costo 0 que absorbe el sobrante. Si la demanda supera la oferta, un origen ficticio con costo 0 representa la demanda no cubierta.\n' +
   '· El ficticio se muestra como vista previa y se confirma antes de resolver; nunca se guarda en tus datos.\n\n' +
+  '· El costo ficticio 0 es una convención del modelo: no significa que el sobrante o la demanda sin cubrir carezcan de consecuencias económicas. Si editas la entrada, el balanceo se vuelve a derivar sin acumular ficticios.\n\n' +
   '3) RESOLUCIÓN PASO A PASO\n' +
   '· Se empieza en la esquina superior izquierda, se asigna min(oferta restante, demanda restante) y se avanza hacia abajo (oferta agotada) o a la derecha (demanda cubierta).\n' +
   '· Si ambas se agotan a la vez, la siguiente celda recibe un «0 básico» para conservar m + n − 1 variables básicas (degeneración).\n\n' +
+  '· «Anterior», «Siguiente» y «Reiniciar» recorren las decisiones; «Reproducir» y «Pausar» controlan el avance automático. Un 0 básico pertenece a la base aunque no implique un envío; no es una cantidad pequeña añadida artificialmente.\n\n' +
   '4) RESULTADO\n' +
   '· Matriz final de cantidades, lista de envíos, costo total = Σ cantidad × costo unitario y verificación de sumas y de la base.\n\n' +
+  '· Cambiar costos, oferta o demanda exige resolver de nuevo. Si solo cambias costos, el recorrido noroeste conserva las cantidades y cambia el total. Renombrar conserva la solución y actualiza los nombres de los envíos.\n' +
+  '· «Imprimir» en la resolución incluye todos los pasos; puedes imprimir o guardar como PDF desde el navegador.\n\n' +
   'GUARDADO Y ATAJOS\n' +
-  '· Todo se guarda en este navegador. Exportar/Importar JSON (panel «Ejemplos»). Ctrl+Z / Ctrl+Y deshacen y rehacen; en la resolución, ← y → cambian de paso.';
+  '· El ejercicio se guarda automáticamente en este navegador. «Guardar» conserva un trabajo con nombre; «Cargar» abre «Mis trabajos» para cargar, renombrar, eliminar y exportar/importar trabajos. Confirma el reemplazo antes de cargar otro trabajo.\n' +
+  '· Exportar/Importar JSON está en el panel «Ejemplos». Los archivos inválidos no reemplazan tu problema. Los trabajos no se sincronizan entre equipos; exporta una copia antes de borrar los datos del navegador o si aparece un fallo de autoguardado.\n' +
+  '· Ctrl+Z / Ctrl+Y deshacen y rehacen; en la resolución, ← y → cambian de paso. Escape cierra el diálogo o la ayuda y devuelve el foco.\n' +
+  '· Los ejemplos permiten comenzar con datos completos. En la presentación, «Ir al algoritmo» conserva el ejercicio y «No mostrar al entrar» recuerda tu elección. «Video» la vuelve a abrir; el video necesita internet.';
 
 /* ---------------- Inicio ---------------- */
 
@@ -447,7 +455,7 @@ function inicializarNorthwest() {
   document.getElementById('btnLimpiarNw').addEventListener('click', limpiarNorthwest);
   document.getElementById('btnExportarNw').addEventListener('click', exportarNorthwestJSON);
   document.getElementById('btnImportarNw').addEventListener('click', importarNorthwestJSON);
-  document.getElementById('btnAyudaNw').addEventListener('click', () => dialogoInformar({ titulo: 'Cómo usar Esquina noroeste', mensaje: TEXTO_AYUDA_NORTHWEST, ancho: true }));
+  document.getElementById('btnAyudaNw').addEventListener('click', () => { detenerAutoplayNw(); dialogoInformar({ titulo: 'Cómo usar Esquina noroeste', mensaje: TEXTO_AYUDA_NORTHWEST, ancho: true }); });
   document.getElementById('btnNwAnterior').addEventListener('click', () => { detenerAutoplayNw(); irAPasoNw(estadoNorthwest.resultado.pasoActual - 1); });
   document.getElementById('btnNwSiguiente').addEventListener('click', () => { detenerAutoplayNw(); irAPasoNw(estadoNorthwest.resultado.pasoActual + 1); });
   document.getElementById('btnNwReiniciar').addEventListener('click', () => { detenerAutoplayNw(); irAPasoNw(0); });
