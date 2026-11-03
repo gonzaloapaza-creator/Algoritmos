@@ -160,6 +160,14 @@ function aplicarNuevoArbol(raiz, modo, secuencia, opciones) {
   guardarEstadoArboles();
 }
 
+function confirmarReemplazoArbol(accion, vaciar) {
+  if (!arbol.raiz) { accion(); return; }
+  dialogoConfirmar({
+    titulo: vaciar ? 'Vaciar árbol' : 'Reemplazar árbol',
+    mensaje: vaciar ? 'Se eliminarán los nodos del árbol actual. Puedes guardar el trabajo antes de vaciarlo.' : 'El árbol actual será reemplazado. Puedes guardarlo antes de continuar.'
+  }).then(aceptado => { if (aceptado) accion(); });
+}
+
 /**
  * Restaura un estado ya depurado (autoguardado o «Mis trabajos»): árbol, modo,
  * recorrido seleccionado y paso, siempre con la reproducción pausada.
@@ -225,7 +233,7 @@ function mostrarErrorReconstruccion(texto) {
   arbolElemento('errorReconstruccion').dataset.sinResultado = 'true';
 }
 
-function ejecutarReconstruccion() {
+function ejecutarReconstruccion(opciones) {
   const resultado = leerEntradasReconstruccion();
   if (!resultado.ok) {
     mostrarErrorReconstruccion(`${resultado.error} No se reconstruyó el árbol; los campos se conservaron.`);
@@ -233,17 +241,21 @@ function ejecutarReconstruccion() {
   }
   arbolElemento('errorReconstruccion').textContent = '';
   arbolElemento('errorReconstruccion').removeAttribute('data-sin-resultado');
-  aplicarNuevoArbol(resultado.raiz, 'reconstruido', []);
+  const aplicar = () => aplicarNuevoArbol(resultado.raiz, 'reconstruido', []);
+  if (opciones && opciones.confirmar) confirmarReemplazoArbol(aplicar);
+  else aplicar();
   return true;
 }
 
 function cargarEjemploReconstruccion() {
-  arbolElemento('modoReconstruccion').value = 'todos';
-  actualizarCamposReconstruccion();
-  Object.entries(recorridosEjemploClase).forEach(([nombre, valores]) => {
-    arbolElemento('entrada' + nombre[0].toUpperCase() + nombre.slice(1)).value = valores.join(', ');
+  confirmarReemplazoArbol(() => {
+    arbolElemento('modoReconstruccion').value = 'todos';
+    actualizarCamposReconstruccion();
+    Object.entries(recorridosEjemploClase).forEach(([nombre, valores]) => {
+      arbolElemento('entrada' + nombre[0].toUpperCase() + nombre.slice(1)).value = valores.join(', ');
+    });
+    ejecutarReconstruccion();
   });
-  ejecutarReconstruccion();
 }
 
 arbolElemento('formInsertar').addEventListener('submit', evento => {
@@ -262,16 +274,20 @@ arbolElemento('btnDeshacerInsercion').addEventListener('click', () => {
   aplicarNuevoArbol(crearArbolBusqueda(secuencia), 'busqueda', secuencia);
 });
 
-arbolElemento('btnLimpiarArbol').addEventListener('click', () => aplicarNuevoArbol(null, 'busqueda', []));
+arbolElemento('btnLimpiarArbol').addEventListener('click', () => confirmarReemplazoArbol(() => aplicarNuevoArbol(null, 'busqueda', []), true));
 
 arbolElemento('btnEjemploInsercion').addEventListener('click', () => {
-  aplicarNuevoArbol(crearArbolBusqueda(nodosEjemploClase), 'busqueda', nodosEjemploClase);
-  arbolElemento('errorInsercion').textContent = '';
+  confirmarReemplazoArbol(() => {
+    aplicarNuevoArbol(crearArbolBusqueda(nodosEjemploClase), 'busqueda', nodosEjemploClase);
+    arbolElemento('errorInsercion').textContent = '';
+  });
 });
 arbolElemento('btnEjemploAleatorio').addEventListener('click', () => {
-  aplicarNuevoArbol(crearArbolBusqueda(nodosEjemploClase), 'busqueda', nodosEjemploClase);
-  arbolElemento('secuenciaAleatoria').textContent = nodosEjemploClase.join(', ');
-  arbolElemento('errorAleatorio').textContent = '';
+  confirmarReemplazoArbol(() => {
+    aplicarNuevoArbol(crearArbolBusqueda(nodosEjemploClase), 'busqueda', nodosEjemploClase);
+    arbolElemento('secuenciaAleatoria').textContent = nodosEjemploClase.join(', ');
+    arbolElemento('errorAleatorio').textContent = '';
+  });
 });
 
 arbolElemento('formAleatorio').addEventListener('submit', evento => {
@@ -291,13 +307,15 @@ arbolElemento('formAleatorio').addEventListener('submit', evento => {
     arbolElemento('errorAleatorio').textContent = secuencia.error;
     return;
   }
-  aplicarNuevoArbol(crearArbolBusqueda(valores), 'busqueda', valores);
-  arbolElemento('secuenciaAleatoria').textContent = valores.join(', ');
-  arbolElemento('errorAleatorio').textContent = '';
+  confirmarReemplazoArbol(() => {
+    aplicarNuevoArbol(crearArbolBusqueda(valores), 'busqueda', valores);
+    arbolElemento('secuenciaAleatoria').textContent = valores.join(', ');
+    arbolElemento('errorAleatorio').textContent = '';
+  });
 });
 
 arbolElemento('modoReconstruccion').addEventListener('change', actualizarCamposReconstruccion);
-arbolElemento('btnReconstruir').addEventListener('click', ejecutarReconstruccion);
+arbolElemento('btnReconstruir').addEventListener('click', () => ejecutarReconstruccion({ confirmar: true }));
 arbolElemento('btnEjemploReconstruccion').addEventListener('click', cargarEjemploReconstruccion);
 
 arbolElemento('selectorRecorrido').addEventListener('change', cambiarRecorridoArbol);
@@ -317,18 +335,21 @@ arbolElemento('velocidadRecorrido').addEventListener('change', () => {
   }
 });
 
-arbolElemento('vistaArbol').addEventListener('click', evento => {
-  const nodo = evento.target.closest('[data-valor]');
-  if (!nodo) return;
+function seleccionarNodoArbol(nodo) {
   arbol.seleccion = Number(nodo.dataset.valor);
   arbol.camino = [];
   arbol.nuevo = null;
   actualizarVisualArbol();
+}
+
+arbolElemento('vistaArbol').addEventListener('click', evento => {
+  const nodo = evento.target.closest('[data-valor]');
+  if (nodo) seleccionarNodoArbol(nodo);
 });
 arbolElemento('vistaArbol').addEventListener('keydown', evento => {
   if ((evento.key === 'Enter' || evento.key === ' ') && evento.target.matches('[data-valor]')) {
     evento.preventDefault();
-    evento.target.click();
+    seleccionarNodoArbol(evento.target);
   }
 });
 

@@ -64,6 +64,12 @@ const NOMBRES_TIPO = {
   mover: 'Movimiento', fijar: 'En su lugar', fin: 'Ordenado'
 };
 
+function nombreTipoPasoOrdenamiento(tipo) {
+  if (tipo === 'fijar' && E.algoritmo === 'insertion') return 'Prefijo ordenado';
+  if (tipo === 'fijar' && E.algoritmo === 'merge') return 'Segmento mezclado';
+  return NOMBRES_TIPO[tipo] || tipo;
+}
+
 // ---- Datos ----
 function fijarValores(valores, pasoInicial) {
   E.valores = valores.slice();
@@ -94,6 +100,15 @@ async function ejecutarAlgoritmo(pasoInicial) {
   btnCancelarPreparacion.hidden = false;
   [btnAnterior, btnSiguiente, btnAuto, btnReiniciar, deslizadorPasos].forEach(b => { b.disabled = true; });
   mapaPasos.replaceChildren();
+  // Una preparación nueva no debe mostrar contadores ni auxiliares de la anterior.
+  contadorNumero.textContent = '0'; contadorTotal.textContent = 'de —'; badgePasos.textContent = 'Preparando';
+  contadorGrande.style.setProperty('--progreso', '0');
+  chipTipo.textContent = 'Preparando'; chipTipo.dataset.tipo = 'inicio';
+  [statPasada, statComparaciones, statIntercambios, statOrdenados, statTotalPasos].forEach(el => { el.textContent = '0'; });
+  textoEstado.textContent = 'Los datos nuevos están listos; se está preparando su procedimiento.';
+  actualizarAuxiliar({ arreglo: pinosDesdeValores(E.valores) });
+  $('pistaBowling').classList.remove('celebrar');
+  deslizadorPasos.value = '0';
   dibujarPinos({ arreglo: pinosDesdeValores(E.valores) }, { sinAnimar: true });
   guardarEstadoOrdenamiento(selectorVelocidad.value);
   const inicio = performance.now();
@@ -118,6 +133,8 @@ function cancelarPreparacion() {
   E.preparando = false;
   btnCancelarPreparacion.hidden = true;
   estadoPreparacion.textContent = 'Preparación cancelada. Pulsa «Usar valores» o elige otro algoritmo para preparar de nuevo.';
+  badgePasos.textContent = chipTipo.textContent = 'Sin procedimiento';
+  textoEstado.textContent = 'La preparación se canceló. Los valores se conservan; vuelve a prepararlos para recorrer los pasos.';
 }
 btnCancelarPreparacion.addEventListener('click', cancelarPreparacion);
 
@@ -131,7 +148,7 @@ function construirMapaPasos() {
     const s = document.createElement('span');
     s.dataset.tipo = paso.tipo;
     s.dataset.indice = i;
-    s.title = `Paso ${i}: ${NOMBRES_TIPO[paso.tipo] || paso.tipo}`;
+    s.title = `Paso ${i}: ${nombreTipoPasoOrdenamiento(paso.tipo)}`;
     mapaPasos.appendChild(s);
   }
   mapaPasos.title = `Vista resumida: ${cantidad} marcas para ${E.historial.length} eventos. Usa el deslizador para acceder a cualquiera.`;
@@ -140,6 +157,10 @@ function construirMapaPasos() {
 function construirPseudocodigo() {
   const info = INFO_ALGORITMOS_ORDENAMIENTO[E.algoritmo];
   const n = E.valores.length;
+  const etiquetaOrdenados = E.algoritmo === 'insertion' ? 'Prefijo ordenado' : 'En su lugar';
+  document.querySelector('.estadistica--ordenados .estadistica__etiqueta').textContent = etiquetaOrdenados;
+  const leyendaOrdenados = document.querySelector('.leyenda__pino[data-color="exito"]').parentElement;
+  leyendaOrdenados.lastChild.textContent = etiquetaOrdenados;
   pseudocodigo.innerHTML = '';
   PSEUDOCODIGO_ORDENAMIENTO[E.algoritmo].forEach(linea => {
     const li = document.createElement('li');
@@ -239,7 +260,7 @@ function actualizarInterfaz(opciones) {
   contadorTotal.textContent = `de ${total}`;
   badgePasos.textContent = `${E.pasoActual} de ${total}`;
   chipTipo.dataset.tipo = paso.tipo;
-  chipTipo.textContent = NOMBRES_TIPO[paso.tipo] || paso.tipo;
+  chipTipo.textContent = nombreTipoPasoOrdenamiento(paso.tipo);
   statPasada.textContent = paso.salto ? `${paso.pasada || 0} · salto ${paso.salto}` : paso.pasada || 0;
 
   // Mapa de pasos y deslizador
@@ -371,9 +392,8 @@ botonesAlgoritmo.forEach(btn => btn.addEventListener('click', () => {
 
 // ---- Atajos de teclado ----
 document.addEventListener('keydown', evento => {
-  const t = evento.target.tagName;
-  if (t === 'SELECT' || t === 'INPUT' || t === 'TEXTAREA') return;
-  if (evento.target.closest('.pino-caja')) return;
+  if (evento.defaultPrevented || evento.target.closest('input, select, textarea, button, a, summary, [contenteditable], .pino-caja')) return;
+  if (Array.from(document.querySelectorAll('[role="dialog"], dialog[open]')).some(panel => panel.getClientRects().length > 0)) return;
   if (!modalAyuda.hidden) return;
   if (evento.ctrlKey || evento.metaKey || evento.altKey) return;
 

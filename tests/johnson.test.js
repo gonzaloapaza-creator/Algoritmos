@@ -93,7 +93,7 @@ prueba('Nodos sin camino: ∞ y sin ruta', () => {
   igual(formatearDistancia(Infinity), '∞');
 });
 
-prueba('Ceros y bucle positivo: el bucle no cambia las distancias', () => {
+prueba('Ceros y negativos: distancias originales verificadas independientemente', () => {
   const g = grafoDeEjemploJohnson(ejemploJohnsonPorId('ceros'), 800, 500, 26);
   const r = resolver(g);
   igual(r.tieneCicloNegativo, false);
@@ -176,6 +176,7 @@ prueba('Importación: validarGrafoImportado rechaza ids repetidos, referencias r
     ['peso mayor que MAX_PESO', g => { g.conexiones[0].valor = MAX_PESO + 1; }, 'entre'],
     ['nombre vacío', g => { g.nodos[0].nombre = '  '; }, 'vacío'],
     ['nombre repetido', g => { g.nodos[1].nombre = 'A'; }, 'repetido'],
+    ['nombre con exceso de espacios', g => { g.nodos[0].nombre = ' '.repeat(1000) + 'A'; }, 'nombre de más'],
     ['posición no numérica', g => { g.nodos[0].x = 'x'; }, 'posición']
   ];
   casos.forEach(([nombre, romper, fragmento]) => {
@@ -189,20 +190,61 @@ prueba('Importación: validarGrafoImportado rechaza ids repetidos, referencias r
 
   // La depuración del autoguardado también aplica el rango de pesos y no adivina con ids repetidos.
   const g = base(); g.conexiones[0].valor = MAX_PESO + 1;
-  igual(depurarGrafo(g).conexiones, []);
+  igual(depurarGrafo(g), null);
   const dup = base(); dup.nodos[1].id = 'n_1';
   igual(depurarGrafo(dup), null);
 });
 
-prueba('Importación: conserva aristas inversas y bucles válidos sin modificar el documento', () => {
+prueba('Núcleo matemático rechaza referencias rotas y números inválidos sin omitir aristas', () => {
+  const casos = [grafo(['a', 'b'], [['a', 'b', 1.2]]), grafo(['a', 'b'], [['a', 'b', Infinity]])];
+  const roto = grafo(['a', 'b'], [['a', 'b', 1]]); roto.conexiones[0].hacia = 'inexistente'; casos.push(roto);
+  casos.forEach(g => { let lanzo = false; try { resolver(g); } catch (_) { lanzo = true; } cierto(lanzo); });
+});
+
+prueba('Contrato del editor: rechaza inversas y bucles sin modificar el documento original', () => {
   const grafo = { nodos: [{ id: 'a', nombre: 'A', x: 100, y: 100 }, { id: 'b', nombre: 'B', x: 300, y: 100 }],
     conexiones: [{ id: 'ab', desde: 'a', hacia: 'b', valor: 1 }, { id: 'ba', desde: 'b', hacia: 'a', valor: 5 },
       { id: 'aa', desde: 'a', hacia: 'a', valor: 0 }], siguienteId: 4 };
   const antes = JSON.stringify(grafo);
   const validacion = ctx.validarGrafoImportado(grafo);
-  cierto(validacion.ok);
-  igual(validacion.grafo.conexiones, grafo.conexiones);
+  cierto(!validacion.ok);
+  cierto(validacion.errores.some(e => e.includes('sentido contrario')));
+  cierto(validacion.errores.some(e => e.includes('consigo mismo')));
   igual(JSON.stringify(grafo), antes);
+});
+
+prueba('Todos los ejemplos cumplen el contrato; ciclos de tres y pesos negativos siguen siendo válidos', () => {
+  EJEMPLOS_JOHNSON.forEach(ej => {
+    const g = grafoDeEjemploJohnson(ej, 800, 500, 26);
+    cierto(ctx.validarGrafoImportado(g).ok, ej.id);
+    const r = resolver(g), ref = floyd(g);
+    igual(r.tieneCicloNegativo, ref.ciclo);
+    if (!ref.ciclo) igual(r.distancias, ref.d);
+  });
+});
+
+prueba('Conexiones por ID: duplicada, inversa, bucle, referencias y exclusión de la propia arista', () => {
+  const g = grafo(['a', 'b', 'c'], [['a', 'b', 0]]);
+  const validar = (a, b, excluir) => ctx.validarConexionJohnson(g, 'n_' + a, 'n_' + b, excluir);
+  igual(validar(0, 0).error, 'Selecciona otro vértice: no se permiten conexiones consigo mismo.');
+  igual(validar(0, 1).error, 'Esta conexión ya existe. Puedes editar su peso.');
+  igual(validar(1, 0).error, 'Ya existe una conexión entre estos vértices en el sentido contrario.');
+  cierto(validar(0, 1, 'c_0').ok);
+  cierto(validar(1, 0, 'c_0').ok);
+  cierto(!validar(3, 0).ok);
+  g.nodos.forEach(n => { n.nombre = 'igual'; n.x = 0; n.y = 0; });
+  cierto(validar(0, 2).ok, 'Las reglas de parejas no comparan nombres ni coordenadas');
+});
+
+prueba('Importación rechaza dimensiones, contador y posiciones extremas antes de copiar', () => {
+  const g = grafoDeEjemploJohnson(ejemploJohnsonPorId('negativos'), 800, 500, 26);
+  for (const valor of [NaN, Infinity, -1, 0, Number.MAX_SAFE_INTEGER, 2.1]) {
+    cierto(!ctx.validarGrafoImportado(Object.assign({}, g, { siguienteId: valor })).ok);
+  }
+  const grande = Object.assign({}, g, { nodos: Array(41).fill(g.nodos[0]) });
+  cierto(!ctx.validarGrafoImportado(grande).ok);
+  g.nodos[0].x = 1e20;
+  cierto(!ctx.validarGrafoImportado(g).ok);
 });
 
 process.exitCode = informe('Johnson') ? 0 : 1;

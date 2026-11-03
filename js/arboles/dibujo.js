@@ -14,6 +14,8 @@ function elementoSvgArbol(nombre, atributos, texto) {
 function dibujarArbol(raiz, opciones) {
   const contenedor = document.getElementById('vistaArbol');
   if (!contenedor) return;
+  const foco = document.activeElement;
+  const valorEnFoco = foco && contenedor.contains(foco) && foco.hasAttribute('data-valor') ? foco.getAttribute('data-valor') : null;
   const opcionesDibujo = opciones || {};
   const anchoVisible = Math.max(320, contenedor.clientWidth || 640);
   if (!raiz) {
@@ -85,6 +87,7 @@ function dibujarArbol(raiz, opciones) {
       transform: `translate(${item.x} ${item.y})`,
       tabindex: '0',
       role: 'button',
+      'aria-pressed': opcionesDibujo.seleccion === valor ? 'true' : 'false',
       'data-valor': valor,
       'aria-label': `Nodo ${valor}${!item.padre ? ', raíz' : ''}${!item.nodo.izquierdo && !item.nodo.derecho ? ', hoja' : ''}`
     });
@@ -100,6 +103,10 @@ function dibujarArbol(raiz, opciones) {
   svg.style.width = `${ancho * zoomDibujoArbol}px`;
   svg.style.height = `${alto * zoomDibujoArbol}px`;
   contenedor.replaceChildren(svg);
+  if (valorEnFoco !== null) {
+    const nuevoFoco = Array.from(svg.querySelectorAll('[data-valor]')).find(nodo => nodo.getAttribute('data-valor') === valorEnFoco);
+    if (nuevoFoco) nuevoFoco.focus({ preventScroll: true });
+  }
 }
 
 function cambiarZoomArbol(factor) {

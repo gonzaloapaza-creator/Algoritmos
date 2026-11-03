@@ -419,6 +419,23 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .mensaje ul { margin: 4px 0 0; padding-left: 18px; }
 .mensaje--permanente { font-weight: 600; }
 
+/* Recuperación y fallo de autoguardado deben poder leerse sin consumir todo
+   el editor en un teléfono. El texto largo se desplaza dentro del aviso. */
+.aviso-almacenamiento {
+  display: flex;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+  min-width: 0;
+  max-height: min(32svh, 300px);
+  margin-bottom: 12px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  overscroll-behavior: contain;
+  scroll-margin-top: calc(var(--topbar) + 12px);
+}
+.aviso-almacenamiento p { flex: 1 1 100%; min-width: 0; margin: 0; }
+.aviso-almacenamiento .btn { flex: 1 1 110px; min-width: 0; white-space: normal; }
+
 .estado {
   display: inline-flex;
   align-items: center;

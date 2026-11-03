@@ -125,6 +125,13 @@ async function sinScrollHorizontal(page) {
 
     /* ---------- Árboles: construcción, recorridos, reconstrucción y persistencia ---------- */
     console.log('\nÁrboles');
+    const confirmarCambioArbolSiAbierto = async () => {
+      const abierto = await page.$eval('#dialogoFondo', fondo => !fondo.hidden).catch(() => false);
+      if (!abierto) return;
+      await page.waitForFunction(() => Date.now() - dialogo.abiertaDesde >= FANTASMO_CLICK_TIMEOUT);
+      await page.click('#dialogoAceptar');
+      await page.waitForSelector('#dialogoFondo', { hidden: true });
+    };
     page = await nuevaPagina(browser, 1440, 900);
     await page.goto(BASE + 'arboles.html?intro=no', { waitUntil: 'networkidle0' });
     await page.evaluate(() => localStorage.clear());
@@ -135,6 +142,7 @@ async function sinScrollHorizontal(page) {
     await page.click('#vistaArbol [data-valor="8"]');
     check((await page.$eval('#detalleNodo', e => e.textContent)).includes('padre: 11') && (await page.$eval('#detalleNodo', e => e.textContent)).includes('hoja'), 'Seleccionar nodo muestra padre y condición de hoja');
     await page.click('#btnLimpiarArbol');
+    await confirmarCambioArbolSiAbierto();
     await page.$eval('#valorNodo', e => { e.value = '-5'; });
     await page.focus('#valorNodo');
     await page.keyboard.press('Enter');
@@ -169,6 +177,7 @@ async function sinScrollHorizontal(page) {
     for (let i = 0; i < 13; i++) await page.click('#btnRecorridoSiguiente');
     check((await page.$eval('#salidaRecorrido', e => e.textContent)) === '1, 4, 3, 8, 15, 11, 7, 5', 'Postorden termina con la secuencia esperada');
     await page.click('#btnEjemploReconstruccion');
+    await confirmarCambioArbolSiAbierto();
     check(await page.evaluate(() => estadoArboles.modo === 'reconstruido' && recorridosArbol(estadoArboles.raiz).postorden.join(',') === '1,4,3,8,15,11,7,5'), 'Reconstrucción de ejemplo coincide con los tres recorridos');
     await page.select('#modoReconstruccion', 'pre_post');
     check(await page.$eval('#entradaInorden', e => e.required && !e.disabled), 'Preorden + postorden exige inorden');
@@ -484,7 +493,9 @@ async function sinScrollHorizontal(page) {
     await page.click('#johnsonTabla td[data-origen="0"][data-destino="2"]');
     check((await page.$eval('#jnRutaDetalle', e => e.textContent)).includes('4 + (-2) = 2'), 'La ruta muestra la suma de pesos');
     await capturar(page, 'johnson-resultado-1440');
-    await page.evaluate(() => { estado.conexiones.push({ id: nuevoId('c'), desde: estado.nodos[2].id, hacia: estado.nodos[0].id, valor: -10 }); guardar(); dibujar(); });
+    // Sustituir a→c por c→a produce el ciclo a→b→c→a de peso 4−2−10=−8,
+    // sin introducir un par opuesto prohibido por el contrato del editor.
+    await page.evaluate(() => { estado.conexiones = estado.conexiones.filter(c => !(c.desde === estado.nodos[0].id && c.hacia === estado.nodos[2].id)); estado.conexiones.push({ id: nuevoId('c'), desde: estado.nodos[2].id, hacia: estado.nodos[0].id, valor: -10 }); guardar(); dibujar(); });
     check((await page.$eval('#estadoResultadoJn', e => e.textContent)).includes('recalcular'), 'Cambiar el grafo deja el resultado desactualizado');
     await page.click('#resultadoSinJn [data-accion="calcular"]');
     await page.waitForSelector('#vistaResolucionJn:not([hidden])');

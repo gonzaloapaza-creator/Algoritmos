@@ -8,6 +8,7 @@
  * Guarda el estado actual en el historial para poder deshacer cambios.
  */
 function guardarEstadoParaDeshacer() {
+  if (!validarGrafoImportado(instantaneaGrafo()).ok) return;
   const snapshot = {
     nodos: JSON.parse(JSON.stringify(estado.nodos)),
     conexiones: JSON.parse(JSON.stringify(estado.conexiones)),
@@ -34,6 +35,8 @@ function deshacer() {
     avisar('No hay acciones para deshacer.', 'error');
     return;
   }
+  const validacion = validarGrafoImportado(estado.historial.pasado[estado.historial.pasado.length - 1]);
+  if (!validacion.ok) { avisar('No se restauró el historial incompatible: ' + resumirErroresImportacion(validacion.errores), 'error'); return; }
   
   // Guardar estado actual en el futuro
   const estadoActual = {
@@ -50,6 +53,7 @@ function deshacer() {
   estado.conexiones = anterior.conexiones;
   estado.siguienteId = anterior.siguienteId;
   estado.seleccion = anterior.seleccion;
+  estado.origenConexion = null;
   
   guardar();
   dibujar();
@@ -64,6 +68,8 @@ function rehacer() {
     avisar('No hay acciones para rehacer.', 'error');
     return;
   }
+  const validacion = validarGrafoImportado(estado.historial.futuro[estado.historial.futuro.length - 1]);
+  if (!validacion.ok) { avisar('No se restauró el historial incompatible: ' + resumirErroresImportacion(validacion.errores), 'error'); return; }
   
   // Guardar estado actual en el pasado
   const estadoActual = {
@@ -80,6 +86,7 @@ function rehacer() {
   estado.conexiones = siguiente.conexiones;
   estado.siguienteId = siguiente.siguienteId;
   estado.seleccion = siguiente.seleccion;
+  estado.origenConexion = null;
   
   guardar();
   dibujar();

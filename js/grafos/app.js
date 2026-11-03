@@ -77,6 +77,7 @@ function construirInterfazModuloGrafo() {
     </section>
     <section id="resultadoGrafo" class="gm-panel gm-resultado" aria-labelledby="tituloResultadoGrafo"></section>
     </div>`;
+  elementoGrafo('btnUltimoGrafo').insertAdjacentHTML('afterend', '<button type="button" class="btn btn-fantasma" id="btnImprimirGrafo">Imprimir todos los pasos</button>');
   const lienzo = elementoGrafo('svgModuloGrafo').parentElement;
   lienzo.after(elementoGrafo('explicacionPasoGrafo'), elementoGrafo('editorModuloGrafo').querySelector('.gm-cinta'));
   elementoGrafo('configDijkstra').hidden = !esDijkstraModulo;
@@ -86,7 +87,7 @@ function construirInterfazModuloGrafo() {
     ? 'Elige desde dónde comenzar. El destino es opcional: siempre se calculan los caminos a todos los vértices. Cambiar solo el destino conserva el cálculo.'
     : 'Mínimo: conecta cada grupo con el menor peso total. Máximo: busca el mayor peso total. Si hay grupos separados, obtendrás un bosque, sin añadir conexiones.';
   elementoGrafo('detalleContratoGrafo').textContent = esDijkstraModulo
-    ? 'Pesos enteros de 0 a 999999. Sin bucles ni aristas duplicadas. Se calculan todos los destinos, incluso si seleccionas uno. Barrido lineal: O(V² + E). Empates por orden de vértices; se conserva el primer predecesor.'
+    ? 'Pesos enteros de 0 a 999999. Sin bucles ni aristas duplicadas. En modo dirigido sí se admiten A→B y B→A como aristas distintas; en no dirigido A–B y B–A son una sola conexión. Se calculan todos los destinos, incluso si seleccionas uno. Barrido lineal: O(V² + E). Empates por orden de vértices; se conserva el primer predecesor.'
     : 'Pesos enteros de −999999 a 999999. Grafo no dirigido, sin bucles ni duplicados. Orden O(E log E) y Union-Find con compresión/rango. Empates por orden original de aristas. Registrar componentes añade O(EV) al procedimiento educativo.';
 }
 
@@ -96,7 +97,9 @@ function serializarModuloGrafo() {
 }
 
 function guardarModuloGrafo() {
-  escribirAlmacenamientoLocal(esDijkstraModulo ? DIJKSTRA_STORAGE_KEY : KRUSKAL_STORAGE_KEY, JSON.stringify(serializarModuloGrafo()), { respaldo: 'usa «Exportar JSON»' });
+  const clave = esDijkstraModulo ? DIJKSTRA_STORAGE_KEY : KRUSKAL_STORAGE_KEY;
+  if (typeof permiteEscrituraGuardado === 'function' && !permiteEscrituraGuardado(clave)) return;
+  escribirAlmacenamientoLocal(clave, JSON.stringify(serializarModuloGrafo()), { respaldo: 'usa «Exportar JSON»' });
 }
 
 function aplicarDocumentoModuloGrafo(documento, mantenerHistorial) {
@@ -127,10 +130,15 @@ function invalidarResultadoGrafo() {
 
 function comprometerGrafo(grafo, mensaje, invalidar) {
   const comprobacion = validarGrafoModulo(grafo, moduloGrafo.modulo);
-  if (!comprobacion.ok) { notificar(comprobacion.error, 'error'); return false; }
+  if (!comprobacion.ok) {
+    const guia = comprobacion.error === 'Hay una arista duplicada entre los mismos nodos.'
+      ? ' Elige otra pareja o abre «Editar una conexión existente» para cambiar su peso.' : '';
+    notificar(comprobacion.error + guia, 'error'); return false;
+  }
+  const cambioMatematico = firmaCalculoGrafo(moduloGrafo.grafo) !== firmaCalculoGrafo(comprobacion.grafo);
   guardarHistoriaGrafo();
   moduloGrafo.grafo = comprobacion.grafo;
-  if (invalidar !== false) invalidarResultadoGrafo();
+  if (invalidar !== false || cambioMatematico) invalidarResultadoGrafo();
   else {
     moduloGrafo.revision++;
     moduloGrafo.preparando = false;
@@ -435,8 +443,8 @@ function textoAyudaModuloGrafo() {
     '1) CREA TU GRAFO\nCarga un ejemplo o usa «Crear mi primer punto». Un punto es un vértice; una conexión es una arista. Añade el nombre y pulsa «Añadir» o Enter. Para conectar, elige «Desde», «Hasta» y un peso; pulsa «Conectar» o Enter desde el campo de peso. Se admiten hasta ' + GRAFOS_MAX_NODOS + ' vértices, ' + GRAFOS_MAX_ARISTAS + ' aristas y nombres de hasta ' + MAX_LARGO_NOMBRE + ' caracteres. No se admiten conexiones de un punto consigo mismo ni aristas repetidas.\n' +
       (esDijkstraModulo ? 'Los pesos son enteros entre 0 y ' + MAX_PESO + '. Un peso cero es una conexión real; los negativos no se admiten.' : 'Los pesos son enteros entre −' + MAX_PESO + ' y ' + MAX_PESO + ', incluidos cero y negativos. Las conexiones funcionan en ambos sentidos.'),
     '2) CONFIGURA EL CÁLCULO\n' + (esDijkstraModulo
-      ? 'Pulsa «Continuar: elegir origen». El origen es el punto desde el que sales. El destino es opcional: siempre se calculan las distancias a todos los puntos. En modo dirigido se respetan las flechas; en no dirigido se puede recorrer una conexión en ambos sentidos. Cambiar de modo pide confirmación y resuelve los conflictos de pesos entre conexiones opuestas.'
-      : 'Pulsa «Continuar: elegir objetivo». Mínimo busca el menor peso total y Máximo, el mayor, conectando cada grupo sin formar ciclos. Kruskal usa un grafo no dirigido y no necesita un origen o destino. No calcula rutas mínimas desde un punto.'),
+      ? 'Pulsa «Continuar: elegir origen». El origen es el punto desde el que sales. El destino es opcional: siempre se calculan las distancias a todos los puntos. En modo dirigido A→B y B→A son aristas diferentes, cada una con su propio peso no negativo. En no dirigido A–B y B–A representan una sola arista, que se recorre en ambos sentidos. Cambiar de modo pide confirmación y resuelve los conflictos de pesos entre conexiones opuestas. Dijkstra solo busca caminos mínimos.'
+      : 'Pulsa «Continuar: elegir objetivo». Mínimo busca el menor peso total y Máximo, el mayor, conectando cada grupo sin formar ciclos. El grafo de entrada sí puede tener ciclos: el procedimiento explica qué aristas se descartan. Kruskal usa un grafo no dirigido y no necesita un origen o destino. No calcula rutas mínimas desde un punto.'),
     '3) SIGUE LOS PASOS\nDespués de calcular, usa «Anterior», «Siguiente» o «Reproducir/Pausar». La barra indica el avance real. «Velocidad y más controles» permite cambiar el ritmo, reiniciar o saltar al último paso. La velocidad regula la animación, no mide el rendimiento del algoritmo.\n' +
       (esDijkstraModulo ? 'Dijkstra comienza con distancia 0 en el origen y ∞ en los demás. Elige el pendiente con menor distancia y revisa si pasar por él mejora las distancias vecinas. La tabla muestra distancias, predecesores (el punto anterior del camino) y estados.' : 'Kruskal ordena las conexiones por peso y acepta una solo cuando une dos grupos separados. Una conexión entre puntos ya unidos se descarta porque formaría un ciclo. La tabla muestra cada decisión y el peso acumulado.') +
       '\nVerde: conexión elegida. Amarillo: elemento del paso actual. Contorno discontinuo: tu selección. La fila destacada corresponde al paso actual.',
@@ -445,7 +453,7 @@ function textoAyudaModuloGrafo() {
       : 'Verás el peso total, las conexiones elegidas y la cantidad de grupos. Si todos los puntos están conectados, se obtiene un árbol; si hay grupos separados, un bosque. Los puntos aislados se conservan y no se inventan conexiones entre grupos. Se eligen V − C aristas: cantidad de vértices menos cantidad de grupos. Sin aristas, el total es 0. Si hay pesos iguales, otras elecciones pueden dar el mismo total; se conserva el orden original para desempatar.'),
     '5) EDITA Y RECORRE EL GRAFO\nSelecciona un elemento en el dibujo o abre «Editar un punto existente» / «Editar una conexión existente». Puedes renombrar, cambiar pesos y eliminar; al borrar un punto se borran sus conexiones. Arrastra puntos con el ratón o usa «Ajustar posición con coordenadas» con teclado o pantalla táctil. «Ver todo» encuadra la red sin mover los puntos; «Ampliar» da más espacio y «Zoom y más» ofrece acercamiento y desplazamiento.\nCambiar conexiones, pesos, modo, origen u objetivo invalida el cálculo. Renombrar o mover puntos conserva el resultado. ' + (esDijkstraModulo ? 'Cambiar solo el destino también conserva el cálculo. ' : '') + 'Los botones «Deshacer» y «Rehacer» permiten recuperar hasta ' + MAX_ACCIONES_DESHACER + ' cambios.',
     '6) GUARDA Y COMPARTE\nEl ejercicio se guarda automáticamente en este navegador. «Guardar» conserva un trabajo con nombre; «Cargar» abre «Mis trabajos» para cargar, renombrar, eliminar, exportar o importar trabajos. Cargar reemplaza el ejercicio después de confirmar. Dijkstra y Kruskal tienen guardados independientes.\nEn «Más opciones», Exportar/Importar JSON lleva un ejercicio a otro equipo; el archivo se valida antes de reemplazar datos. «PNG», dentro de «Zoom y más», descarga la vista del grafo. Limpiar pide confirmación y se puede deshacer. Borrar los datos del navegador puede borrar tus trabajos: exporta JSON para conservar una copia. Si falla el autoguardado, sigue el aviso visible y exporta tu ejercicio.',
-    '7) TECLADO Y AYUDA\nTab recorre los controles. Enter o Espacio seleccionan puntos y conexiones enfocados en el dibujo. Las listas y los campos de posición permiten editar sin arrastrar. Escape cierra la ayuda o el diálogo y devuelve el foco. Los botones «Video» y «Ayuda» pausan la reproducción para conservar el paso que estabas revisando.'
+    '7) TECLADO Y AYUDA\nTab recorre los controles. Enter o Espacio seleccionan puntos y conexiones enfocados en el dibujo. Las listas y los campos de posición permiten editar sin arrastrar. Escape cierra la ayuda o el diálogo y devuelve el foco. Los botones «Video» y «Ayuda» pausan la reproducción para conservar el paso que estabas revisando. En el procedimiento, «Imprimir todos los pasos» (en «Velocidad y más controles») o Ctrl+P imprimen la ejecución completa en tema claro y conservan el paso que estabas revisando.'
   ].join('\n\n');
 }
 
@@ -532,6 +540,7 @@ function instalarAccionesModuloGrafo() {
   al('btnImportarGrafo', () => { elementoGrafo('archivoGrafo').value = ''; elementoGrafo('archivoGrafo').click(); });
   elementoGrafo('archivoGrafo').addEventListener('change', evento => {
     const archivo = evento.target.files[0]; if (!archivo) return;
+    if (archivo.size > 1024 * 1024) { notificar('El archivo supera 1 MB. Un ejercicio de hasta 24 vértices y 96 aristas debe ocupar menos. El trabajo actual se conserva.', 'error'); return; }
     const revision = moduloGrafo.revision;
     const lector = new FileReader();
     lector.onerror = () => notificar('No se pudo leer el archivo. El trabajo actual se conserva.', 'error');
@@ -554,6 +563,7 @@ function instalarAccionesModuloGrafo() {
   al('btnReiniciarGrafo', () => { detenerReproduccionGrafo(); moduloGrafo.paso = 0; actualizarModuloGrafo(); guardarModuloGrafo(); });
   al('btnUltimoGrafo', () => { detenerReproduccionGrafo(); if (moduloGrafo.resultado) { moduloGrafo.paso = Math.max(0, moduloGrafo.resultado.pasos.length - 1); actualizarModuloGrafo(); guardarModuloGrafo(); } });
   al('btnReproducirGrafo', reproducirModuloGrafo);
+  al('btnImprimirGrafo', () => { detenerReproduccionGrafo(); renderizarProcedimientoGrafo(); window.print(); });
   elementoGrafo('velocidadGrafo').addEventListener('change', () => { const activa = moduloGrafo.reproduciendo; detenerReproduccionGrafo(); if (activa) reproducirModuloGrafo(); });
   al('btnAmpliarGrafo', () => { const activo = elementoGrafo('distribucionGrafo').classList.toggle('gm-ampliado'); elementoGrafo('btnAmpliarGrafo').setAttribute('aria-pressed', String(activo)); });
   function vistaSvg() { actualizarVistaEditorGrafo(); }
@@ -565,14 +575,33 @@ function instalarAccionesModuloGrafo() {
   al('btnVideoModulo', () => { detenerReproduccionGrafo(); renderizarProcedimientoGrafo(); requestAnimationFrame(dibujarEditorGrafo); });
   al('btnAyuda', () => {
     detenerReproduccionGrafo(); renderizarProcedimientoGrafo();
-    dialogoInformar({ titulo: 'Ayuda: ' + (esDijkstraModulo ? 'Dijkstra' : 'Kruskal'), ancho: true, mensaje: textoAyudaModuloGrafo() });
+    dialogoInformar({ titulo: 'Ayuda: ' + (esDijkstraModulo ? 'Dijkstra' : 'Kruskal'), ancho: true, mensaje: textoAyudaModuloGrafo() + '\n\n' + TEXTO_AYUDA_RECUPERACION });
   });
 }
 
 construirInterfazModuloGrafo();
 instalarAccionesModuloGrafo();
+let originalGuardadoGrafo = null;
 try {
   const guardado = localStorage.getItem(esDijkstraModulo ? DIJKSTRA_STORAGE_KEY : KRUSKAL_STORAGE_KEY);
+  originalGuardadoGrafo = guardado;
   if (guardado) aplicarDocumentoModuloGrafo(JSON.parse(guardado)); else actualizarModuloGrafo();
-} catch (error) { actualizarModuloGrafo(); notificar('No se pudo restaurar el ejercicio: ' + error.message + '. Puedes importar una copia JSON.', 'aviso'); }
+} catch (error) {
+  if (originalGuardadoGrafo !== null && typeof protegerGuardadoIncompatible === 'function') {
+    protegerGuardadoIncompatible(esDijkstraModulo ? DIJKSTRA_STORAGE_KEY : KRUSKAL_STORAGE_KEY, originalGuardadoGrafo, error.message);
+  }
+  actualizarModuloGrafo(); notificar('No se pudo restaurar el ejercicio: ' + error.message + '. Conserva el original desde el aviso de recuperación.', 'aviso');
+}
 configurarVistaEditorGrafo();
+
+registrarImpresionPasos({
+  titulo: (esDijkstraModulo ? 'Dijkstra' : 'Kruskal') + ' · procedimiento real',
+  paneles: () => [elementoGrafo('svgModuloGrafo').parentElement, elementoGrafo('explicacionPasoGrafo'), elementoGrafo('detallePasoGrafo'), elementoGrafo('tablaEstadoGrafo')],
+  total: () => moduloGrafo.resultado ? moduloGrafo.resultado.pasos.length : 0,
+  actual: () => moduloGrafo.paso,
+  ir: i => {
+    detenerReproduccionGrafo(); moduloGrafo.paso = i;
+    dibujarEditorGrafo(); renderizarProcedimientoGrafo();
+  },
+  activo: () => moduloGrafo.vista === 'procedimiento'
+});

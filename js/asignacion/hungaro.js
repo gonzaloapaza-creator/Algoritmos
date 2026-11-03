@@ -91,10 +91,11 @@ function comprobarMatrizAsignacion(matriz) {
     throw new Error('La matriz debe tener al menos una fila y una columna.');
   }
   const columnas = matriz[0].length;
+  if (matriz.length > MAX_ASIGNACION_DIMENSION || columnas > MAX_ASIGNACION_DIMENSION) throw new Error('La matriz admite como máximo ' + MAX_ASIGNACION_DIMENSION + ' filas y columnas.');
   matriz.forEach(fila => {
     if (!Array.isArray(fila) || fila.length !== columnas) throw new Error('Todas las filas deben tener la misma cantidad de columnas.');
     fila.forEach(v => {
-      if (!Number.isInteger(v)) throw new Error('Hay valores pendientes o no enteros: completa la matriz antes de resolver.');
+      if (!Number.isSafeInteger(v) || Math.abs(v) > MAX_VALOR_ASIGNACION) throw new Error('Completa la matriz con enteros entre -' + MAX_VALOR_ASIGNACION + ' y ' + MAX_VALOR_ASIGNACION + '.');
     });
   });
 }
@@ -106,6 +107,7 @@ function comprobarMatrizAsignacion(matriz) {
  */
 function resolverHungaro(matriz, objetivo, opciones) {
   comprobarMatrizAsignacion(matriz);
+  if (objetivo !== 'min' && objetivo !== 'max') throw new Error('Selecciona minimizar costos o maximizar beneficios.');
   const filas = matriz.length;
   const columnas = matriz[0].length;
   const n = Math.max(filas, columnas);

@@ -1,10 +1,12 @@
 'use strict';
 
 function crearNodoArbol(valor) {
+  if (!Number.isSafeInteger(valor) || valor < MIN_VALOR_ARBOL || valor > MAX_VALOR_ARBOL) throw new Error('Cada nodo debe ser un entero entre ' + MIN_VALOR_ARBOL + ' y ' + MAX_VALOR_ARBOL + '.');
   return { valor, izquierdo: null, derecho: null };
 }
 
 function insertarNodoArbol(raiz, valor) {
+  crearNodoArbol(valor); // La regla también protege llamadas que evitan el formulario.
   if (!raiz) return { raiz: crearNodoArbol(valor), camino: [], nuevo: valor, duplicado: false };
   const camino = [];
   let actual = raiz;
@@ -13,6 +15,7 @@ function insertarNodoArbol(raiz, valor) {
     if (valor === actual.valor) return { raiz, camino, nuevo: null, duplicado: true };
     const lado = valor < actual.valor ? 'izquierdo' : 'derecho';
     if (!actual[lado]) {
+      if (recorridosArbol(raiz).inorden.length >= MAX_NODOS_ARBOL) throw new Error('El árbol admite como máximo ' + MAX_NODOS_ARBOL + ' nodos.');
       actual[lado] = crearNodoArbol(valor);
       return { raiz, camino, nuevo: valor, duplicado: false };
     }
@@ -21,6 +24,8 @@ function insertarNodoArbol(raiz, valor) {
 }
 
 function crearArbolBusqueda(valores) {
+  const validacion = validarSecuenciaInsercion(valores);
+  if (!validacion.ok) throw new Error(validacion.error);
   let raiz = null;
   for (const valor of valores) {
     const insercion = insertarNodoArbol(raiz, valor);
@@ -45,6 +50,8 @@ function recorridosArbol(raiz) {
 }
 
 function generarValoresArbol(cantidad, minimo, maximo, aleatorio) {
+  const validacion = validarParametrosGeneradorArbol(cantidad, minimo, maximo);
+  if (!validacion.ok) throw new Error(validacion.error);
   const random = aleatorio || Math.random;
   const rango = [];
   for (let valor = minimo; valor <= maximo; valor++) rango.push(valor);

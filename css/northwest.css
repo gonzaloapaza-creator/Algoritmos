@@ -86,6 +86,7 @@
 /* ---------------- Móvil ---------------- */
 @media (max-width: 640px) {
   .nw-lateral { flex-direction: column; }
+  .nw-lateral > * { flex: 0 1 auto; }
   .nw-pie .btn { width: 100%; }
   .nw-paso-cabecera .acciones { width: 100%; }
   .nw-paso-cabecera .acciones .btn { flex: 1 1 45%; }

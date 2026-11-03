@@ -19,6 +19,8 @@
  * }}
  */
 function balancearNorthwest(modelo) {
+  const validacion = validarModeloNorthwest(modelo);
+  if (!validacion.ok) throw new Error(validacion.errores[0]);
   const origenes = modelo.origenes.map(o => ({ id: o.id, nombre: o.nombre, ficticio: false }));
   const destinos = modelo.destinos.map(d => ({ id: d.id, nombre: d.nombre, ficticio: false }));
   const ofertas = modelo.origenes.map(o => o.oferta);

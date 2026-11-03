@@ -161,7 +161,7 @@ document.addEventListener('keydown', evento => {
   // Ignorar si estamos escribiendo o hay una ventana abierta
   const etiqueta = evento.target.tagName;
   if (etiqueta === 'INPUT' || etiqueta === 'TEXTAREA' || etiqueta === 'SELECT') return;
-  if (modalAbierto() || introVisible()) return;
+  if (modalAbierto() || introVisible() || hayDialogoVisible()) return;
 
   const ctrlOrCmd = evento.ctrlKey || evento.metaKey;
   const tecla = evento.key.toLowerCase();

@@ -42,7 +42,7 @@ prueba('Ejemplo de las capturas (max) coincide con fuerza bruta e incluye la con
   const m = [[12, 8, 9, 14], [7, 10, 11, 18], [15, 13, 6, 9], [10, 17, 12, 5]];
   const r = comprobarCoincidencia(m, 'max');
   cierto(r.pasos.some(p => p.tipo === 'conversion'));
-  igual(r.total, 14 + 7 + 13 + 12 <= r.total ? r.total : r.total); // sanity: se compara con fuerza bruta arriba
+  igual(r.total, 59); // A→3=9, B→4=18, C→1=15 y D→2=17.
 });
 
 prueba('Caso que exige iteraciones de cobertura y ajuste (no basta reducir filas y columnas)', () => {
@@ -290,6 +290,104 @@ prueba('Renombrar después de resolver: el texto del total se regenera con los n
   const nuevo = textoTotalAsignacion(total.detalleTotal, ['Ana', 'B'], ['T1', 'Tarea dos']);
   cierto(nuevo.includes('Ana → Tarea dos: 1') && nuevo.includes('B → T1: 2') && !nuevo.includes('A → T2'));
   igual(textoTotalAsignacion(total.detalleTotal, ['A', 'B'], ['T1', 'T2']), total.texto);
+});
+
+prueba('El modelo protege grupos, referencias, rangos y nombres también sin interfaz', () => {
+  const m = ejemploAsignacion();
+  const anterior = JSON.stringify(m);
+  const r = m.recursos[0].id, t = m.tareas[0].id;
+  [[r, r, 1], [t, r, 1], ['inexistente', t, 1], [r, t, 1000000]].forEach(args => {
+    lanza(() => fijarValorAsignacion(m, ...args));
+    igual(JSON.stringify(m), anterior);
+  });
+  igual(agregarRecurso(m, m.recursos[0].nombre.toLowerCase()), null);
+  igual(renombrarElementoAsignacion(m, r, m.recursos[1].nombre), false);
+  igual(JSON.stringify(m), anterior);
+  const cantidad = Object.keys(m.valores).length;
+  fijarValorAsignacion(m, r, t, 0);
+  igual(Object.keys(m.valores).length, cantidad, 'Editar una pareja no crea una conexión nueva');
+});
+
+prueba('Frontera y solución rechazan IDs ambiguos, dimensiones y números inseguros', () => {
+  ['r|t', '__proto__', 'constructor'].forEach(id => {
+    const m = ejemploAsignacion(); m.recursos[0].id = id;
+    cierto(!ctx.validarModeloAsignacionImportado(m).ok);
+  });
+  lanza(() => resolverHungaro([[Number.MAX_SAFE_INTEGER]], 'min'));
+  lanza(() => resolverHungaro([[1]], 'otro'));
+  lanza(() => resolverHungaro(Array.from({ length: 9 }, () => [1]), 'min'));
+  const m = Array.from({ length: 8 }, () => Array(8).fill(-999999));
+  igual(comprobarCoincidencia(m, 'min').total, -7999992);
+  igual(comprobarCoincidencia(m, 'max').total, -7999992);
+});
+
+prueba('La migración antigua conserva columnas y nunca trunca una matriz que excede 8×8', () => {
+  const m = migrarAsignacionV1({ values: [[1], [2, 3]], labelsRows: ['x'.repeat(24), 'x'.repeat(24)] });
+  igual(matrizDelModelo(m), [[1, null], [2, 3]]);
+  cierto(ctx.validarModeloAsignacionImportado(m).ok, 'Los nombres desambiguados también respetan el límite de 24');
+  igual(migrarAsignacionV1({ values: Array.from({ length: 9 }, () => [1]) }), null);
+  igual(migrarAsignacionV1({ values: [Array(9).fill(1)] }), null);
+});
+
+function contextoEstadoAsignacion() {
+  const contexto = crearContexto(), almacen = new Map(), bloqueadas = new Set(), avisos = [];
+  contexto.localStorage = { getItem: clave => almacen.get(clave) || null };
+  contexto.escribirAlmacenamientoLocal = (clave, texto) => { almacen.set(clave, texto); return true; };
+  contexto.permiteEscrituraGuardado = clave => !bloqueadas.has(clave);
+  contexto.protegerGuardadoIncompatible = (clave, texto, motivo) => { bloqueadas.add(clave); avisos.push({ clave, texto, motivo }); };
+  cargar(contexto, ['js/config.js', 'js/asignacion/validacion.js', 'js/asignacion/modelo.js', 'js/asignacion/hungaro.js', 'js/asignacion/estado.js']);
+  return { contexto, almacen, avisos };
+}
+
+prueba('Cambios rechazados no dejan mutaciones, historial ni resultados parciales', () => {
+  const { contexto: c } = contextoEstadoAsignacion();
+  const e = evaluar(c, 'estadoAsignacion'); e.modelo = c.ejemploAsignacion();
+  e.resultado = { firma: c.firmaActualAsignacion(), vigente: true };
+  const antes = JSON.stringify(e.modelo), resultado = e.resultado;
+  lanza(() => c.aplicarCambioAsignacion(m => { m.recursos[0].nombre = 'Parcial'; c.fijarValorAsignacion(m, 'no', m.tareas[0].id, 1); }));
+  igual(JSON.stringify(e.modelo), antes);
+  igual(e.historial, { pasado: [], futuro: [] });
+  cierto(e.resultado === resultado && e.resultado.vigente);
+  c.aplicarCambioAsignacion(m => c.fijarValorAsignacion(m, m.recursos[0].id, m.tareas[0].id, 0));
+  cierto(!e.resultado.vigente && e.historial.pasado.length === 1);
+  c.deshacerAsignacion(); cierto(e.resultado.vigente); igual(JSON.stringify(e.modelo), antes);
+  c.rehacerAsignacion(); cierto(!e.resultado.vigente);
+});
+
+prueba('Autoguardado incompatible conserva el original y nunca lo depura silenciosamente', () => {
+  [m => { m.recursos[0].nombre = 'x'.repeat(50); }, m => { m.valores['r_99|t_99'] = 4; }].forEach(romper => {
+    const { contexto: c, almacen, avisos } = contextoEstadoAsignacion();
+    const modelo = c.ejemploAsignacion(); romper(modelo);
+    const clave = evaluar(c, 'ASIGNACION_STORAGE_KEY_V2');
+    const crudo = JSON.stringify({ version: 2, objetivo: 'min', modelo }); almacen.set(clave, crudo);
+    igual(c.cargarAsignacion(), 'incompatible'); c.guardarAsignacion();
+    igual(almacen.get(clave), crudo); igual(avisos.length, 1); cierto(avisos[0].motivo.length > 0);
+  });
+  const { contexto: c, almacen } = contextoEstadoAsignacion();
+  const e = evaluar(c, 'estadoAsignacion'); e.modelo = c.ejemploAsignacion(); e.objetivo = 'max';
+  c.guardarAsignacion(); const original = JSON.stringify(e.modelo); e.modelo = c.crearModeloAsignacion();
+  igual(c.cargarAsignacion(), 'v2'); igual(JSON.stringify(e.modelo), original); igual(e.objetivo, 'max');
+  cierto(almacen.size === 1);
+});
+
+prueba('V1 incompatible protege también la escritura V2 y rechaza objetivos desconocidos', () => {
+  const casos = [
+    JSON.stringify({ version: 1, objective: 'otro', values: [[1]] }),
+    JSON.stringify({ version: 1, objective: 'min', values: [Array(9).fill(1)] }),
+    '{no es JSON'
+  ];
+  casos.forEach(crudo => {
+    const { contexto: c, almacen, avisos } = contextoEstadoAsignacion();
+    const antigua = evaluar(c, 'ASIGNACION_STORAGE_KEY'), actual = evaluar(c, 'ASIGNACION_STORAGE_KEY_V2');
+    almacen.set(antigua, crudo);
+    igual(c.cargarAsignacion(), 'incompatible');
+    c.aplicarCambioAsignacion(m => c.fijarValorAsignacion(m, m.recursos[0].id, m.tareas[0].id, 0));
+    c.guardarAsignacion();
+    igual(almacen.get(antigua), crudo);
+    cierto(!almacen.has(actual), 'No debe escribirse V2 hasta descargar y elegir el ejercicio actual');
+    igual(avisos.length, 1); igual(avisos[0].clave, actual); igual(avisos[0].texto, crudo);
+    cierto(avisos[0].motivo.includes(antigua), 'El aviso identifica la clave original V1');
+  });
 });
 
 process.exitCode = informe('Asignación') ? 0 : 1;

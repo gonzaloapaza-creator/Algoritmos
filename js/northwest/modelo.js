@@ -20,7 +20,10 @@ function claveNorthwest(origenId, destinoId) {
 }
 
 function nuevoIdNorthwest(modelo, prefijo) {
-  return prefijo + '_' + (modelo.siguienteId++);
+  if (!Number.isSafeInteger(modelo.siguienteId) || modelo.siguienteId < 1 || modelo.siguienteId >= Number.MAX_SAFE_INTEGER) modelo.siguienteId = 1;
+  let id;
+  do { id = prefijo + '_' + (modelo.siguienteId++); } while (buscarElementoNorthwest(modelo, id));
+  return id;
 }
 
 function nombreLibreNorthwest(lista, prefijo) {
@@ -32,9 +35,11 @@ function nombreLibreNorthwest(lista, prefijo) {
 
 function agregarOrigen(modelo, nombre, oferta) {
   if (modelo.origenes.length >= MAX_NORTHWEST_DIMENSION) return null;
+  const validacion = validarEtiquetaNorthwest(nombre == null ? nombreLibreNorthwest(modelo.origenes, 'Origen') : nombre, modelo.origenes);
+  if (!validacion.ok || (oferta != null && (!Number.isSafeInteger(oferta) || oferta < 0 || oferta > MAX_CANTIDAD_NORTHWEST))) return null;
   const origen = {
     id: nuevoIdNorthwest(modelo, 'o'),
-    nombre: nombre || nombreLibreNorthwest(modelo.origenes, 'Origen'),
+    nombre: validacion.valor,
     oferta: Number.isInteger(oferta) ? oferta : null
   };
   modelo.origenes.push(origen);
@@ -43,9 +48,11 @@ function agregarOrigen(modelo, nombre, oferta) {
 
 function agregarDestino(modelo, nombre, demanda) {
   if (modelo.destinos.length >= MAX_NORTHWEST_DIMENSION) return null;
+  const validacion = validarEtiquetaNorthwest(nombre == null ? nombreLibreNorthwest(modelo.destinos, 'Destino') : nombre, modelo.destinos);
+  if (!validacion.ok || (demanda != null && (!Number.isSafeInteger(demanda) || demanda < 0 || demanda > MAX_CANTIDAD_NORTHWEST))) return null;
   const destino = {
     id: nuevoIdNorthwest(modelo, 'd'),
-    nombre: nombre || nombreLibreNorthwest(modelo.destinos, 'Destino'),
+    nombre: validacion.valor,
     demanda: Number.isInteger(demanda) ? demanda : null
   };
   modelo.destinos.push(destino);
@@ -73,9 +80,12 @@ function eliminarElementoNorthwest(modelo, id) {
 }
 
 function fijarCostoNorthwest(modelo, origenId, destinoId, escalado) {
+  if (!modelo.origenes.some(o => o.id === origenId) || !modelo.destinos.some(d => d.id === destinoId)) {
+    throw new Error('El costo debe corresponder a un origen y un destino existentes.');
+  }
   const clave = claveNorthwest(origenId, destinoId);
   if (escalado === null || escalado === undefined) { delete modelo.costos[clave]; return; }
-  if (!Number.isInteger(escalado) || escalado < 0) throw new Error('El costo debe ser un entero escalado ≥ 0 o null.');
+  if (!Number.isSafeInteger(escalado) || escalado < 0 || escalado > MAX_COSTO_NORTHWEST * ESCALA_COSTO_NORTHWEST) throw new Error('El costo está fuera del rango permitido o no es un entero escalado ×' + ESCALA_COSTO_NORTHWEST + '.');
   modelo.costos[clave] = escalado;
 }
 
@@ -105,6 +115,8 @@ function totalesNorthwest(modelo) {
 
 /** Comprueba si el modelo se puede llevar al balanceo. */
 function validarModeloNorthwest(modelo) {
+  const estructura = validarModeloNorthwestImportado(modelo);
+  if (!estructura.ok) return { ok: false, errores: estructura.errores, totales: null, costosPendientes: 0 };
   const errores = [];
   const m = modelo.origenes.length, n = modelo.destinos.length;
   if (m < MIN_NORTHWEST_DIMENSION) errores.push('Agrega al menos ' + MIN_NORTHWEST_DIMENSION + ' origen.');
@@ -181,9 +193,9 @@ function depurarModeloNorthwest(datos) {
   let mayor = 0;
   origenes.concat(destinos).forEach(e => {
     const numero = Number(String(e.id).split('_')[1]);
-    if (Number.isInteger(numero) && numero > mayor) mayor = numero;
+    if (Number.isSafeInteger(numero) && numero < Number.MAX_SAFE_INTEGER - 1 && numero > mayor) mayor = numero;
   });
-  const siguienteId = Number.isInteger(datos.siguienteId) && datos.siguienteId > mayor ? datos.siguienteId : mayor + 1;
+  const siguienteId = Number.isSafeInteger(datos.siguienteId) && datos.siguienteId > mayor ? datos.siguienteId : mayor + 1;
   return { origenes, destinos, costos, siguienteId };
 }
 
@@ -199,6 +211,9 @@ function validarModeloNorthwestImportado(datos) {
   if (!datos || typeof datos !== 'object' || !Array.isArray(datos.origenes) || !Array.isArray(datos.destinos)) {
     return { ok: false, errores: ['El archivo no contiene las listas «origenes» y «destinos».'] };
   }
+  if (datos.origenes.length > MAX_NORTHWEST_DIMENSION || datos.destinos.length > MAX_NORTHWEST_DIMENSION) {
+    return { ok: false, errores: ['Como máximo ' + MAX_NORTHWEST_DIMENSION + ' orígenes y destinos reales en esta versión.'] };
+  }
   const errores = [];
   const maximoCosto = MAX_COSTO_NORTHWEST * ESCALA_COSTO_NORTHWEST;
   const revisarLista = (lista, etiqueta, campo, ids) => {
@@ -207,7 +222,7 @@ function validarModeloNorthwestImportado(datos) {
     const validos = [];
     lista.forEach((e, i) => {
       const ref = (etiqueta === 'orígenes' ? 'Origen ' : 'Destino ') + (i + 1);
-      if (!e || typeof e.id !== 'string' || e.id === '') { errores.push(ref + ': falta el identificador.'); return; }
+      if (!e || typeof e.id !== 'string' || !/^[A-Za-z0-9_-]{1,80}$/.test(e.id) || ['__proto__', 'constructor', 'prototype'].includes(e.id)) { errores.push(ref + ': el identificador debe contener de 1 a 80 letras, números, guiones o guiones bajos.'); return; }
       if (ids.has(e.id)) errores.push(ref + ': identificador «' + e.id + '» repetido.');
       ids.add(e.id);
       const nombre = typeof e.nombre === 'string' ? validarEtiquetaNorthwest(e.nombre, validos, e.id)
@@ -251,11 +266,20 @@ function validarModeloNorthwestImportado(datos) {
  * @param {number[][]} costos  sin escalar (unidades monetarias, hasta 2 decimales)
  */
 function modeloNorthwestDesdeMatrices(costos, ofertas, demandas, nombresOrigenes, nombresDestinos) {
+  if (!Array.isArray(ofertas) || !Array.isArray(demandas) || ofertas.length < 1 || demandas.length < 1 || ofertas.length > MAX_NORTHWEST_DIMENSION || demandas.length > MAX_NORTHWEST_DIMENSION) throw new Error('Indica entre 1 y ' + MAX_NORTHWEST_DIMENSION + ' orígenes y destinos reales.');
+  if (!Array.isArray(costos) || costos.length !== ofertas.length || costos.some(f => !Array.isArray(f) || f.length !== demandas.length)) throw new Error('Las dimensiones de costos, ofertas y demandas deben coincidir.');
+  if ([...ofertas, ...demandas].some(v => !Number.isSafeInteger(v) || v < 0 || v > MAX_CANTIDAD_NORTHWEST)) throw new Error('Las cantidades deben ser enteros entre 0 y ' + MAX_CANTIDAD_NORTHWEST + '.');
+  const escalados = costos.map(fila => fila.map(c => {
+    if (typeof c !== 'number' || !Number.isFinite(c)) throw new Error('Cada costo debe ser un número con hasta 2 decimales.');
+    const validacion = validarCostoNorthwest(String(c));
+    if (!validacion.ok || validacion.valor === null) throw new Error(validacion.error || 'Falta un costo unitario.');
+    return validacion.valor;
+  }));
   const modelo = crearModeloNorthwest();
-  ofertas.forEach((oferta, i) => agregarOrigen(modelo, nombresOrigenes ? nombresOrigenes[i] : null, oferta));
-  demandas.forEach((demanda, j) => agregarDestino(modelo, nombresDestinos ? nombresDestinos[j] : null, demanda));
-  costos.forEach((fila, i) => fila.forEach((c, j) => {
-    fijarCostoNorthwest(modelo, modelo.origenes[i].id, modelo.destinos[j].id, Math.round(c * ESCALA_COSTO_NORTHWEST));
+  ofertas.forEach((oferta, i) => { if (!agregarOrigen(modelo, nombresOrigenes ? nombresOrigenes[i] : null, oferta)) throw new Error('Revisa los nombres de los orígenes: deben ser válidos y diferentes.'); });
+  demandas.forEach((demanda, j) => { if (!agregarDestino(modelo, nombresDestinos ? nombresDestinos[j] : null, demanda)) throw new Error('Revisa los nombres de los destinos: deben ser válidos y diferentes.'); });
+  escalados.forEach((fila, i) => fila.forEach((c, j) => {
+    fijarCostoNorthwest(modelo, modelo.origenes[i].id, modelo.destinos[j].id, c);
   }));
   return modelo;
 }

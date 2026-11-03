@@ -202,4 +202,53 @@ prueba('Restaurar Árboles aplica estructura, recorrido y paso con la reproducci
   cierto(!estado.reproduciendo && estado.intervaloRecorrido === null);
 });
 
+prueba('Las APIs puras protegen valores, tamaño y rangos del generador antes de mutar', () => {
+  const raiz = crearArbolBusqueda([5, 3, 7]), antes = JSON.stringify(raiz);
+  [NaN, Infinity, 1.5, -1000, '8'].forEach(v => { lanza(() => insertarNodoArbol(raiz, v)); igual(JSON.stringify(raiz), antes); });
+  const lleno = crearArbolBusqueda(Array.from({ length: 31 }, (_, i) => i));
+  const completo = JSON.stringify(lleno);
+  lanza(() => insertarNodoArbol(lleno, 99)); igual(JSON.stringify(lleno), completo);
+  lanza(() => crearArbolBusqueda(Array.from({ length: 32 }, (_, i) => i)));
+  [[3, 0, Infinity], [2, -1000, 1], [2, 0.5, 9], [2, 9, 1]].forEach(args => lanza(() => generarValoresArbol(...args)));
+  cierto(!validarYReconstruirArbol(null, 'todos').ok);
+});
+
+prueba('Reconstrucción independiente de 200 árboles generales aleatorios, incluidos 31 niveles', () => {
+  let semilla = 9341;
+  const azar = () => { semilla = (semilla * 48271) % 2147483647; return semilla / 2147483647; };
+  for (let k = 0; k < 200; k++) {
+    const n = 1 + Math.floor(azar() * 31), valores = generarValoresArbol(n, -999, 999, azar);
+    const raiz = ctx.crearNodoArbol(valores[0]);
+    const huecos = [{ padre: raiz, lado: 'izquierdo' }, { padre: raiz, lado: 'derecho' }];
+    for (let i = 1; i < n; i++) {
+      const posicion = Math.floor(azar() * huecos.length), hueco = huecos.splice(posicion, 1)[0];
+      const nodo = ctx.crearNodoArbol(valores[i]); hueco.padre[hueco.lado] = nodo;
+      huecos.push({ padre: nodo, lado: 'izquierdo' }, { padre: nodo, lado: 'derecho' });
+    }
+    const recorridos = recorridosArbol(raiz);
+    ['pre_in', 'in_post', 'todos'].forEach(modo => {
+      const reconstruido = validarYReconstruirArbol(recorridos, modo);
+      cierto(reconstruido.ok, reconstruido.error); igual(reconstruido.raiz, raiz);
+    });
+  }
+  [-1, 1].forEach(signo => {
+    const raiz = crearArbolBusqueda(Array.from({ length: 31 }, (_, i) => signo * i));
+    const reconstruido = validarYReconstruirArbol(recorridosArbol(raiz), 'todos');
+    cierto(reconstruido.ok); igual(reconstruido.raiz, raiz);
+  });
+});
+
+prueba('Árboles conserva el autoguardado incompatible hasta recuperación explícita', () => {
+  const contexto = crearContexto(), avisos = [], almacen = new Map(), bloqueadas = new Set();
+  contexto.localStorage = { getItem: clave => almacen.get(clave) || null };
+  contexto.escribirAlmacenamientoLocal = (clave, texto) => { almacen.set(clave, texto); return true; };
+  contexto.protegerGuardadoIncompatible = (clave, texto, motivo) => { bloqueadas.add(clave); avisos.push({ texto, motivo }); };
+  contexto.permiteEscrituraGuardado = clave => !bloqueadas.has(clave);
+  cargar(contexto, ['js/config.js', 'js/arboles/modelo.js', 'js/arboles/validacion.js', 'js/arboles/reconstruccion.js', 'js/arboles/estado.js']);
+  const clave = evaluar(contexto, 'ARBOLES_STORAGE_KEY'), crudo = JSON.stringify({ version: 1, modo: 'busqueda', secuencia: [1, 1] });
+  almacen.set(clave, crudo);
+  igual(contexto.restaurarEstadoArboles(), null); contexto.guardarEstadoArboles();
+  igual(almacen.get(clave), crudo); igual(avisos.length, 1); cierto(avisos[0].motivo.length > 0);
+});
+
 process.exit(informe('Árboles') ? 0 : 1);

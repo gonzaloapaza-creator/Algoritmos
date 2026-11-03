@@ -35,13 +35,15 @@ El inicio es una ciudad SVG con siete zonas seleccionables y un panel con entrad
 npm start                    # servidor Node sin dependencias, solo 127.0.0.1:8123
 ```
 
-Abrir `http://localhost:8123`. El servidor también acepta `http://127.0.0.1:8123`; conserva la dirección que ya utilizabas para acceder a tus trabajos, pues cada origen tiene su propio almacenamiento. También funciona abriendo los `.html` directamente. Como alternativa, `python -m http.server 8123 --bind 127.0.0.1`.
+Conserva la dirección que ya utilizabas: `http://localhost:8123` y `http://127.0.0.1:8123` tienen almacenamientos separados, aunque abran el mismo proyecto. No se cambia el origen ni se migran datos entre ambos automáticamente. Si empiezas sin trabajos anteriores, las pruebas documentadas usan `http://127.0.0.1:8123/`. Como alternativa, `python -m http.server 8123 --bind 127.0.0.1`.
+
+Los HTML son estáticos, pero abrirlos mediante `file://` no se ha verificado para este cierre y el almacenamiento depende del navegador; para la presentación usa el servidor y tu dirección habitual.
 
 Páginas: `index.html`, `johnson.html`, `dijkstra.html`, `kruskal.html`, `asignacion.html`, `northwest.html`, `ordenamiento.html` y `arboles.html`.
 
 Parámetros útiles: `?intro=no` salta la presentación con video; `index.html?simular=10` muestra un catálogo simulado (entradas marcadas «Próximamente», nunca enlazadas) para revisar el diseño con muchas entradas.
 
-Navegadores: cualquiera moderno (Pointer Events, ResizeObserver, `dvh/svh`, `:has()`, `aspect-ratio`).
+Navegador comprobado: Microsoft Edge 156.0.4314.58 en Windows, en modo headless y con contextos aislados. Se prevé uso en navegadores modernos con Pointer Events, ResizeObserver, `dvh/svh`, `:has()` y `aspect-ratio`; otros motores y dispositivos requieren comprobación. No se certifican teléfono físico, teclado virtual ni proyector.
 
 ---
 
@@ -55,6 +57,7 @@ grafo/
 ├── johnson.html             Johnson: grafo → matriz → paso a paso → resultado
 ├── asignacion.html          Asignación: grafo → matriz → resultado → procedimiento
 ├── northwest.html           Esquina noroeste: datos → balanceo → resolución → resultado
+├── ordenamiento.html        Cinco métodos, entrada de valores y reproducción por pasos
 ├── arboles.html             Árboles: inserción, recorridos y reconstrucción
 ├── styles.css               Base compartida: tokens, botones, formularios, tablas, mensajes, modal, pasos
 ├── css/
@@ -78,10 +81,10 @@ grafo/
 │   │   ├── dialogo.js       Ventana modal compartida (confirmar / informar / pedir dato)
 │   │   ├── notificaciones.js  Toasts
 │   │   ├── guardados.js     «Mis trabajos»: guardar, cargar, renombrar, eliminar, exportar e importar por módulo
-│   │   ├── exportarImagen.js  SVG → PNG copiando los estilos calculados (Johnson, Asignación y Árboles)
+│   │   ├── exportarImagen.js  SVG → PNG con estilos calculados: Johnson, Dijkstra, Kruskal, Asignación y Árboles
 │   │   ├── tema.js          Tema claro/oscuro (ui.tema.v1 o preferencia del sistema); se carga en <head>
 │   │   ├── presentacion.js  Modo presentación para proyector (Alt+P, solo escritorio)
-│   │   ├── impresion.js     Al imprimir, vuelca todos los pasos del procedimiento en tema claro
+│   │   ├── impresion.js     Vuelca pasos de Johnson, Dijkstra, Kruskal, Asignación y Northwest; restaura paso/tema
 │   │   └── utilidades.js    limitar(), escaparHtml() (se carga en todas las páginas)
 │   ├── grafos/              Modelo, algoritmos puros, editor SVG y controlador Dijkstra/Kruskal
 │   ├── asignacion/
@@ -142,19 +145,21 @@ Ordenamiento conserva identificadores estables para pinos repetidos y limita las
 
 Árboles limita sus valores a −999…999 y 1…31 nodos. La sección de creación inserta valores únicos en un árbol binario de búsqueda sin balanceo; la sección de reconstrucción no supone orden BST. Preorden+inorden o inorden+postorden determinan la estructura; preorden+postorden requiere también inorden, y cuando se ingresan los tres recorridos se comprueba exactamente el tercero. Los recorridos aceptan enteros separados por comas, espacios o saltos de línea. Los datos se guardan bajo `arboles.v1`, se validan al restaurar y no reanudan una animación.
 
+Operaciones disponibles: insertar, seleccionar/consultar relaciones, **Quitar última inserción**, vaciar, generar ejemplos, recorrer y reconstruir. «Quitar última inserción» solo retira el último valor de la secuencia de un BST, independientemente del nodo seleccionado. No ofrece edición de valores, eliminación arbitraria de un nodo, rehacer ni balanceo automático. Ctrl+P imprime la vista actual del árbol.
+
 ### Capacidad de Ordenamiento
 
 El límite de esta implementación es 200 datos, manteniendo el rango 1–99 y los repetidos. A partir de 13 se usan barras con desplazamiento interno, selección por ID y consulta accesible de posición/valor; los arreglos pequeños conservan pinos cómodos. Se conservan todos los eventos, no un nodo DOM por evento: el mapa resume como máximo 120 marcas. La preparación cede cada 8 ms o 256 eventos y se cancela por token; editar el texto no lanza cálculos completos. El deslizador agrupa actualizaciones mediante `requestAnimationFrame`. La reproducción conserva cada paso y su velocidad es independiente del tiempo de preparación.
 
-Medición reproducible: `node --expose-gc tests/medir-ordenamiento.js`. Windows x64, Node v26.12.1, Intel i7-10510U @ 1.80 GHz; 45 casos (cinco métodos × ordenado/inverso/repetidos × 40/100/200). Máximos observados por columna:
+Medición reproducible: `node --expose-gc tests/medir-ordenamiento.js`. Repetida el 3 de noviembre de 2026: Windows x64, Node v26.12.1, Intel i7-10510U @ 1.80 GHz; 45 casos (cinco métodos × ordenado/inverso/repetidos × 40/100/200). Datos completos en [docs/cierre-medicion-ordenamiento.json](docs/cierre-medicion-ordenamiento.json). Máximos observados por columna:
 
 | Datos | Preparación síncrona | Eventos | Checkpoints | Memoria estructural estimada | Heap retenido medido tras GC |
 |---:|---:|---:|---:|---:|---:|
-| 40 | 15,25 ms | 1.640 | 13 | 0,95 MiB | 1,12 MiB |
-| 100 | 121,40 ms | 10.099 | 79 | 6,10 MiB | 6,88 MiB |
-| 200 | 655,20 ms | 40.093 | 314 | 25,95 MiB | 27,63 MiB |
+| 40 | 40,55 ms | 1.640 | 13 | 0,95 MiB | 1,12 MiB |
+| 100 | 108,85 ms | 10.099 | 79 | 6,10 MiB | 6,88 MiB |
+| 200 | 576,60 ms | 40.093 | 314 | 25,94 MiB | 27,63 MiB |
 
-Se eligió 200 para conservar este rango de memoria y dividir la preparación en tareas cortas, sin worker. No es un máximo universal. Los tiempos anteriores miden CPU síncrona de referencia; la preparación cooperativa incluye esperas. La estimación recorre las estructuras reales y sus referencias compartidas; el heap retenido es otra medida, tomada en procesos aislados. Persistencia v1 guarda únicamente valores, método, velocidad y paso; regenera el historial en pausa.
+Se eligió 200 para conservar este rango de memoria y dividir la preparación en tareas cortas, sin worker. No es un máximo universal. Los tiempos anteriores miden preparación síncrona de referencia, con otras comprobaciones de QA activas; la preparación cooperativa incluye esperas. La estimación recorre las estructuras reales y sus referencias compartidas; el heap retenido es otra medida, tomada en procesos aislados. Persistencia v1 guarda únicamente valores, método, velocidad y paso; regenera el historial en pausa.
 
 ### Dijkstra y Kruskal
 
@@ -166,7 +171,7 @@ La bienvenida permite cargar un ejemplo o enfocar la creación del primer punto.
 
 Johnson conserva las coordenadas al redimensionar, importar o recuperar un grafo: se adapta el encuadre, sin sobrescribir su distribución. El botón de porcentaje encuadra la red completa. Espacio selecciona un elemento SVG, Enter permite editarlo y las flechas conservan la selección y el foco. Los nombres automáticos respetan las mayúsculas/minúsculas y la importación rechaza conexiones repetidas con el mismo origen y destino.
 
-- **Dijkstra:** dirigido o no dirigido, enteros 0…999999. Calcula todas las distancias con lista de adyacencia y barrido lineal de pendientes: núcleo `O(V² + E)`, registro de estados `O((V + E)V)`. Los empates siguen el orden de vértices y aristas; una igualdad conserva el primer predecesor. Cambiar el destino reconstruye su ruta con pesos originales sin recalcular. Convertir a dirigido duplica cada arista; convertir a no dirigido fusiona las opuestas y solicita resolver cualquier peso diferente.
+- **Dijkstra:** dirigido o no dirigido, enteros 0…999999. En dirigido, A→B y B→A son aristas diferentes con su propio peso no negativo; en no dirigido, A–B y B–A son una sola arista. Calcula todas las distancias con lista de adyacencia y barrido lineal de pendientes: núcleo `O(V² + E)`, registro de estados `O((V + E)V)`. Los empates siguen el orden de vértices y aristas; una igualdad conserva el primer predecesor. Cambiar el destino reconstruye su ruta con pesos originales sin recalcular. Convertir a dirigido duplica cada arista; convertir a no dirigido fusiona las opuestas y solicita resolver cualquier peso diferente.
 - **Kruskal:** no dirigido, enteros −999999…999999. Ordena ascendente/descendente según mínimo/máximo y usa Union-Find con compresión y rango: núcleo `O(E log E + E α(V))`; registrar componentes añade estados de tamaño `O(EV)`. Los empates siguen el orden original de aristas. Un grafo desconectado entrega un bosque con `V−C` aristas, incluye aislados y no añade conexiones. No se afirma unicidad.
 
 Editar pesos, topología, modo, origen u objetivo invalida el cálculo correspondiente. Renombrar o mover vértices conserva los valores y actualiza las etiquetas. CRUD, deshacer/rehacer (50 acciones), generación acotada, ejemplos, JSON, autoguardado, trabajos nombrados y PNG comparten componentes pequeños; Johnson mantiene su propio estado y comportamiento.
@@ -191,7 +196,7 @@ En el ejemplo solicitado de Kruskal, el mínimo suma 6; el máximo correcto suma
 - **Ayuda de los siete módulos**: incluye entrada y límites, significado del resultado, controles, guardados con nombre, importación/exportación y recuperación en el navegador. En móvil, «Video del módulo» y «Ayuda del módulo» están en el menú lateral. Dijkstra y Kruskal pausan la reproducción al consultar el video o la ayuda, conservando el cálculo, el paso y los campos sin aplicar; Árboles, Ordenamiento y Northwest también pausan su reproducción al abrir la ayuda.
 - **Tema claro y oscuro**: `js/comun/tema.js` (en `<head>`, sin parpadeo) aplica la elección guardada en `ui.tema.v1` o, si no hay ninguna, la del sistema (`prefers-color-scheme`, con cambios en vivo). El conmutador está en la barra lateral (también en el cajón móvil). Las superficies, hovers, texto sobre tintes y colores de grafos son variables que `html[data-tema="claro"]` redefine; los acentos por módulo tienen su variante oscura para contraste sobre blanco.
 - **Modo presentación** (escritorio, botón de la cabecera o Alt+P): oculta barra lateral y pie, ensancha el contenido y agranda la tipografía; Escape lo cierra si no hay diálogos abiertos. Se recuerda en `ui.presentacion.v1`.
-- **Impresión / PDF**: `css/impresion.css` quita la interfaz y expande las tablas. En las vistas paso a paso de Johnson, Asignación y Northwest el botón «Imprimir» (o Ctrl+P) vuelca **todos** los pasos con su tabla y grafo en tema claro, y al terminar restaura el paso y el tema en pantalla.
+- **Impresión / PDF**: `css/impresion.css` quita la interfaz y expande las tablas. En las vistas de procedimiento de **Johnson, Dijkstra, Kruskal, Asignación y Northwest**, «Imprimir» o Ctrl+P vuelca todos los pasos con sus tablas y grafos cuando corresponden, en tema claro, y restaura el paso y el tema. **Ordenamiento y Árboles imprimen su vista actual**, sin volcar todo su historial animado. Desde otras vistas se imprime el contenido visible.
 - **Exportar PNG**: Johnson, Asignación, Árboles, Dijkstra y Kruskal comparten `js/comun/exportarImagen.js`, que copia los estilos calculados del SVG, así la imagen respeta el tema activo.
 - **Sistema visual** en `styles.css`: un solo bloque de tokens (`--bg-*`, `--texto*`, `--acento*`, semánticos, radios, espaciado, tipografía) con alias para las reglas históricas del editor de Johnson. Acento moderado por módulo (`body[data-modulo]`): azul Johnson, verde azulado Asignación, ámbar Northwest. Botones definidos una sola vez (`.btn` + `-primary`, `-secondary`, `-neutral`, `-peligro`, `-fantasma`, `-icono`, `-sm`). Un botón principal por vista; las acciones destructivas van separadas.
 - **Responsive**: sin desplazamiento horizontal de la página en ningún ancho probado; las tablas se desplazan dentro de su caja con cabecera y primera columna fijas; controles táctiles de 44 px; indicador «Paso X de Y» compacto en móvil; Dijkstra y Kruskal conservan el desplazamiento vertical de la página, ajustan el grafo al ancho disponible y permiten acercar/desplazar la vista con controles; sus tablas móviles ajustan el texto a cada celda. Modales con desplazamiento interno; `prefers-reduced-motion` respetado.
@@ -249,9 +254,11 @@ Recursos a la izquierda, tareas a la derecha, conexiones con etiqueta de valor c
 | Clave | Contenido |
 |---|---|
 | `asignacion.v2` | `{ version, objetivo, modelo, posiciones, vista }` |
-| `asignacion.v1` | Formato anterior (`rows/cols/labelsRows/labelsCols/values`). Solo se lee: si no hay v2 se **migra** (nombres repetidos se desambiguan, valores no enteros quedan pendientes) y se avisa. No se borra. |
+| `asignacion.v1` | Formato anterior (`rows/cols/labelsRows/labelsCols/values`). Solo se lee cuando no hay V2. Una estructura migrable conserva enteros en rango, incluido 0; valores ausentes, no numéricos, decimales o fuera de rango quedan pendientes. Se avisa y se conserva la clave V1. |
 
 Exportar/Importar JSON (panel «Edición») acepta ambos formatos. Deshacer/rehacer con Ctrl+Z / Ctrl+Y (hasta 50 acciones), incluidos arrastres y reordenaciones.
+
+La migración V1 es tolerante por decisión de compatibilidad: toma las dimensiones de `values` sin truncar filas/columnas, completa las ausencias como pendientes y normaliza etiquetas (recorta espacios y longitud, genera las que faltan y desambigua repetidas). Para resolver hay que revisar y completar todas las pendientes. Una matriz vacía, mayor de 8×8, con filas que no sean listas, una versión desconocida o un objetivo distinto de `min`/`max` se rechaza; al restaurar, el original V1 queda intacto y se bloquean escrituras V2 hasta descargarlo y elegir usar el ejercicio actual. En importación manual, rechazar o cancelar conserva el ejercicio abierto y no modifica el archivo de origen. V2 valida estrictamente: sus valores inválidos no se transforman en pendientes. «Mis trabajos» usa el modelo actual, no la migración V1.
 
 ---
 
@@ -295,18 +302,24 @@ Preparado para MODI / Vogel / costo mínimo: el resultado expone `basicas`, `asi
 
 Cuatro vistas, como en los otros módulos: **1 Grafo → 2 Matriz → 3 Paso a paso → 4 Resultado**.
 
-- **Grafo**: editor visual (Seleccionar / Nodo / Conectar, zoom, arrastre). «Ejemplos» abre la lista de grafos preparados (pesos negativos clásico, solo positivos, nodos sin camino, ceros y bucle, ciclo negativo); también está en el estado vacío. «Más» agrupa Deshacer/Rehacer, Guardar, Biblioteca, Dijkstra, Exportar/Importar y Limpiar. En móvil la vista del grafo funciona como aplicación (sin desplazamiento de página).
+- **Grafo**: editor visual (Seleccionar / Nodo / Conectar, zoom, arrastre). «Ejemplos» abre la lista de grafos preparados (pesos negativos clásico, solo positivos, nodos sin camino, ceros y pesos negativos, ciclo negativo); también está en el estado vacío. «Más» agrupa Deshacer/Rehacer, Guardar, Biblioteca, Dijkstra, Exportar/Importar y Limpiar. En móvil la vista del grafo funciona como aplicación (sin desplazamiento de página).
 - **Matriz**: matriz de adyacencia con sumas y una revisión de datos (nodos, conexiones, negativos, ceros, bucles, aislados) con avisos. «Calcular Johnson» requiere 2 nodos.
 - **Paso a paso**: cada fase real de la ejecución, con su tabla y el grafo resaltado: grafo original, nodo auxiliar q, cada pasada de Bellman-Ford (distancias antes/después y relajaciones), potenciales h(v) o el ciclo negativo detectado, reponderación `w' = w + h(u) − h(v)`, un Dijkstra por origen (orden de fijación, `d'`, `d = d' − h(u) + h(v)`, ruta) y la matriz final. Anterior / Siguiente / Reiniciar, lista de saltos y ← →.
 - **Resultado**: matriz de distancias; tocar una celda muestra la ruta en un grafo de solo lectura con la suma de sus pesos; «Ver en el editor» la resalta sobre el grafo. Con ciclo negativo se muestra el ciclo y su suma.
 
-El resultado guarda la firma del grafo (ids, nombres, conexiones y pesos; no posiciones): si el grafo cambia, el chip pasa a «Grafo modificado: recalcular», las vistas 3 y 4 lo piden y cualquier resaltado del editor se descarta solo.
+El editor admite hasta **40 nodos y 300 conexiones**, nombres únicos de hasta 12 caracteres y pesos enteros −999999…999999, incluido cero. Por regla de esta aplicación rechaza **A→A**, una segunda **A→B** y **B→A** cuando existe **A→B**. La comparación usa IDs estables y excluye la propia arista al editarla. Para cambiar un peso se selecciona la conexión y se usa Editar. Los rechazos conservan grafo, historial y resultado.
+
+Es una **restricción de producto**, no una limitación matemática universal de Johnson ni de los grafos dirigidos. Los ciclos de tres o más vértices y los pesos negativos siguen permitidos; un ciclo de suma negativa se detecta y se explica. La matriz de adyacencia es de consulta y distingue ausencia (—) de peso cero; su diagonal no contiene aristas. El núcleo matemático conserva su generalidad y también se contrasta con Floyd-Warshall en grafos con bucles y aristas opuestas, aunque el editor no los admite.
+
+El resultado guarda la firma matemática (IDs, conexiones y pesos). Cambiar esos datos exige recalcular y descarta resaltados anteriores. Mover o renombrar un nodo conserva distancias; al renombrar se regeneran etiquetas y pasos, también para impresión.
 
 Algoritmo (`js/johnson.js`, sin DOM): Bellman-Ford desde q con registro por pasada y parada temprana; la detección de ciclo fija el predecesor de la arista que aún mejora antes de retroceder, así el ciclo devuelto siempre es real y negativo. Dijkstra con desempate determinista. Verificado contra Floyd-Warshall en 300 grafos aleatorios.
 
 Los grafos de solo lectura se dibujan en su propio SVG (con marcadores propios) sobre una copia compactada de las posiciones: nunca mueven los nodos del editor. Los avisos son fijos a la ventana para verse desde cualquier vista.
 
-Persistencia sin cambios: `grafo.v1` (autoguardado) y `grafo.biblioteca.v1`. Cargar un ejemplo, un grafo guardado o un JSON se puede deshacer.
+Persistencia: `grafo.v1` (autoguardado) y `grafo.biblioteca.v1`. Cargar un ejemplo, un grafo guardado o un JSON válido se puede deshacer. Los archivos se limitan a 1 MiB. Importación, biblioteca, «Mis trabajos», restauración y deshacer/rehacer validan antes de modificar el ejercicio. No se eliminan aristas de archivos antiguos para hacerlos compatibles: la Biblioteca permite descargar su original y «Mis trabajos → Exportar» conserva los registros guardados.
+
+En los siete módulos, un autoguardado incompatible se conserva intacto: un aviso permite **Descargar original** y mantiene pausadas las escrituras. Tras descargarlo, **Usar ejercicio actual** habilita el próximo guardado. Hasta entonces los cambios de la sesión deben exportarse para conservarlos. Corrige los datos señalados en una copia del original; no se sobrescribe automáticamente con un ejemplo. Las bibliotecas dañadas o con IDs ambiguos reciben la misma protección. Un fallo de almacenamiento muestra un aviso; una escritura posterior exitosa lo retira.
 
 ---
 
@@ -320,6 +333,8 @@ node tests/grafos.test.js         # Dijkstra vs Floyd; Kruskal vs enumeración e
 node tests/usabilidad-grafos-navegador.js --capturas # cuatro etapas, teclado, encuadre y responsive de Dijkstra/Kruskal en ambos temas
 npm run test:ampliacion           # ciudad de siete zonas, CRUD, persistencia, archivos, PNG y Ordenamiento grande
 npm run test:mejoras              # distribución y teclado de Johnson, bienvenida, progreso y destinos interactivos
+npm run test:cierre               # recuperación real de originales, contratos, foco, cancelaciones e impresión
+npm run test:responsive           # ocho páginas, ambos temas, estados y tamaños del cierre
 npm run medir:ordenamiento        # 45 casos reproducibles: 40/100/200 × 3 entradas × 5 métodos
 node tests/asignacion.test.js     # húngaro vs fuerza bruta (incl. 300 aleatorias), validación, modelo, migración e importación
 node tests/northwest.test.js      # ejemplo 230, exceso oferta/demanda, degeneración, límites, 300 aleatorias e importación
@@ -334,7 +349,7 @@ node tests/navegador.js --capturas   # regresión de navegador, recorridos y tam
 
 Las suites de navegador necesitan el servidor local y `puppeteer-core` instalado en `%TEMP%/grafo-e2e` (fuera del proyecto). Usan `127.0.0.1:8123` por defecto; `URL_PRUEBAS` permite cambiarlo. Las pruebas cubren las presentaciones y ayudas de los siete módulos, acceso desde el menú móvil, lectura del texto completo, foco, controles, historiales y persistencia. `test:mejoras` comprueba además que abrir Video/Ayuda en Dijkstra y Kruskal pausa sin perder cálculo, paso o borradores. Ejecuta sin `--capturas` para validar; la suite de ciudad guarda solo sus vistas representativas con ese argumento. En PowerShell con scripts bloqueados, usa `npm.cmd`.
 
-Las comprobaciones de Johnson de `tests/navegador.js` se ampliaron con las vistas por pasos; vuelve a ejecutarlo para regenerar el recuento y las capturas. Capturas en `docs/capturas/` (`*-1440`, `*-768`, `*-390`, `*-375`, `*-320`, `*-horizontal`, `*-video-*`).
+Los resultados ejecutados para este cierre, sus límites y un guion de presentación están en [CIERRE_FINAL.md](CIERRE_FINAL.md). Las capturas nuevas llevan prefijo `cierre-` en `docs/capturas/`; las anteriores se conservan como antecedentes.
 
 ---
 
@@ -359,7 +374,7 @@ Las comprobaciones de Johnson de `tests/navegador.js` se ampliaron con las vista
 ## 9. Limitaciones pendientes
 
 - Northwest no incluye MODI, Vogel ni costo mínimo (fuera del alcance de esta entrega).
-- La verificación exhaustiva de Asignación se limita a `n ≤ 10` (aquí siempre se cumple: máximo 8×8).
-- El tema claro se revisó en Chrome headless a 1280 px; conviene una pasada en pantalla real con brillo de aula.
+- El verificador independiente de Asignación admite hasta 8×8, el mismo máximo que el editor.
+- La revisión del cierre usa Edge de escritorio en modo headless; los tamaños, temas y resultados concretos se detallan en `CIERRE_FINAL.md`. La legibilidad del proyector y el brillo del aula requieren comprobación presencial.
 - Las capturas de móvil se generan en un navegador de escritorio emulado (Edge headless): conviene una pasada final en un teléfono real, sobre todo con el teclado virtual abierto.
 - Los videos requieren conexión a internet; sin ella la presentación muestra el marco vacío y el botón «Ir al algoritmo» sigue disponible.

@@ -141,6 +141,9 @@ function actualizarCamposEditorGrafo() {
 }
 
 function dibujarEditorGrafo() {
+  const focoAnterior = document.activeElement;
+  const idEnfocado = focoAnterior && document.getElementById('svgModuloGrafo').contains(focoAnterior)
+    ? focoAnterior.closest('[data-id]')?.dataset.id : null;
   const svg = document.getElementById('svgModuloGrafo');
   // La presentación oculta el editor. Se dibuja al mostrarlo, cuando tiene medidas.
   if (!svg.getClientRects().length) return;
@@ -208,6 +211,7 @@ function dibujarEditorGrafo() {
     capa.appendChild(vacio);
   }
   svg.replaceChildren(capa);
+  if (idEnfocado) Array.from(svg.querySelectorAll('[data-id]')).find(n => n.dataset.id === idEnfocado)?.focus({ preventScroll: true });
   colocarPesosEditorGrafo(svg, etiquetas, separacionPeso, escalaVista);
   document.getElementById('bienvenidaGrafo').hidden = !!g.nodos.length;
   document.getElementById('resumenGrafo').textContent = g.nodos.length + ' puntos · ' + g.conexiones.length + ' conexiones · ' + (g.dirigido ? 'Con dirección →' : 'En ambos sentidos ↔');

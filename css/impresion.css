@@ -5,6 +5,29 @@
 
 @page { margin: 14mm; }
 
+/* También Ctrl+P en módulos sin volcado de pasos necesita texto oscuro sobre
+   papel. Cambiar solo el fondo dejaba explicaciones casi blancas en oscuro. */
+:root {
+  --bg: #fff !important;
+  --bg-2: #fff !important;
+  --bg-3: #eef2f7 !important;
+  --bg-4: #e2e8f0 !important;
+  --bg-input: #fff !important;
+  --texto: #111827 !important;
+  --texto-suave: #374151 !important;
+  --texto-apagado: #4b5563 !important;
+  --superficie: #fff !important;
+  --superficie-opaca: #fff !important;
+  --lienzo: #fff !important;
+  --borde: #a8b3c5 !important;
+  --borde-suave: #cbd5e1 !important;
+  color-scheme: light;
+}
+body {
+  --acento: var(--identidad-claro, #1d4ed8) !important;
+  --acento-fuerte: var(--identidad-claro, #1d4ed8) !important;
+}
+
 html, body {
   background: #fff !important;
   color: #111 !important;
@@ -32,7 +55,7 @@ input[type="range"], select, .leyenda-ayuda, .ayuda, [data-accion-trabajo] {
   border: 1px solid #c7d0e3 !important;
   break-inside: avoid;
 }
-.tabla-caja, .tabla-datos, .proc-tabla {
+.tabla-caja, .tabla-datos, .proc-tabla, .gm-tabla-caja {
   overflow: visible !important;
   max-height: none !important;
   max-width: none !important;
@@ -56,11 +79,51 @@ body.imprimiendo-pasos .vista { display: none !important; }
 body.imprimiendo-pasos .modulo-cabecera { display: block !important; }
 #impresionPasos { display: block; }
 #impresionPasos h2 { font-size: 16pt; margin: 0 0 6mm; }
+#impresionPasos h2 { break-after: avoid; }
 #impresionPasos h3 { font-size: 12pt; margin: 0 0 3mm; }
 .impresion-paso { margin: 0 0 7mm; padding: 4mm; page-break-inside: avoid; }
 .impresion-paso > div { border: 0 !important; padding: 0 !important; }
 .impresion-paso .jn-paso-cuerpo { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; align-items: start; }
 .impresion-paso .grafo-mini svg { width: 100%; height: auto; max-height: 70mm; }
+
+/* Los módulos de rutas comparten el volcado completo. El editor original no
+   debe repetirse antes de las copias, ni conservar el alto de una pantalla. */
+body.imprimiendo-pasos #editorModuloGrafo { display: none !important; }
+.grafo-modulo .gm-portada {
+  display: block !important;
+  padding: 0 !important;
+  margin: 0 0 5mm !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+.gm-portada-red, .gm-portada .gm-eyebrow, .gm-portada-nota { display: none !important; }
+.impresion-paso .gm-lienzo {
+  width: 100% !important;
+  height: 78mm !important;
+  min-height: 0 !important;
+  max-height: 78mm !important;
+  overflow: hidden !important;
+  background: #fff !important;
+}
+.impresion-paso .gm-lienzo svg {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+}
+.impresion-paso .gm-tabla-caja, .impresion-paso table {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  table-layout: fixed;
+}
+.impresion-paso th, .impresion-paso td {
+  min-width: 0 !important;
+  padding: 1.5mm !important;
+  overflow-wrap: anywhere;
+  white-space: normal !important;
+}
+.impresion-paso .gm-vacio, .impresion-paso .gm-lienzo-cab { display: none !important; }
 
 /* Colores de estado conservados al imprimir (los navegadores los quitan por defecto). */
 * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }

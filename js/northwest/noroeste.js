@@ -27,15 +27,17 @@
  * }}
  */
 function resolverEsquinaNoroeste(costos, ofertas, demandas) {
+  if (!Array.isArray(ofertas) || !Array.isArray(demandas)) throw new Error('Las ofertas y demandas deben ser listas de cantidades enteras.');
   const m = ofertas.length, n = demandas.length;
   if (m === 0 || n === 0) throw new Error('Se necesita al menos un origen y un destino.');
   if (!Array.isArray(costos) || costos.length !== m || costos.some(f => !Array.isArray(f) || f.length !== n)) {
     throw new Error('La matriz de costos no coincide con las dimensiones de oferta y demanda.');
   }
-  [...ofertas, ...demandas].forEach(v => { if (!Number.isInteger(v) || v < 0) throw new Error('Ofertas y demandas deben ser enteros ≥ 0.'); });
-  costos.forEach(f => f.forEach(c => { if (!Number.isInteger(c) || c < 0) throw new Error('Los costos deben ser enteros escalados ≥ 0.'); }));
+  [...ofertas, ...demandas].forEach(v => { if (!Number.isSafeInteger(v) || v < 0) throw new Error('Ofertas y demandas deben ser enteros seguros ≥ 0.'); });
+  costos.forEach(f => f.forEach(c => { if (!Number.isSafeInteger(c) || c < 0) throw new Error('Los costos deben ser enteros escalados seguros ≥ 0.'); }));
   const ofertaTotal = ofertas.reduce((s, v) => s + v, 0);
   const demandaTotal = demandas.reduce((s, v) => s + v, 0);
+  if (!Number.isSafeInteger(ofertaTotal) || !Number.isSafeInteger(demandaTotal)) throw new Error('La oferta o demanda total excede el rango seguro de enteros.');
   if (ofertaTotal !== demandaTotal) throw new Error('El problema debe estar balanceado: oferta total ' + ofertaTotal + ' ≠ demanda total ' + demandaTotal + '.');
 
   const restanteOferta = ofertas.slice();

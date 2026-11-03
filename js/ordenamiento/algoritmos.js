@@ -66,7 +66,7 @@ const PSEUDOCODIGO_ORDENAMIENTO = {
 
 const INFO_ALGORITMOS_ORDENAMIENTO = {
   selection: { nombre: 'Selection Sort', complejidad: 'O(n²)', estable: false, idea: 'Busca el menor del resto y lo coloca al frente.' },
-  insertion: { nombre: 'Insertion Sort', complejidad: 'O(n²) · O(n) si ya está ordenado', estable: true, idea: 'Toma un pino y lo inserta en su lugar dentro de la parte ordenada.' },
+  insertion: { nombre: 'Insertion Sort', complejidad: 'O(n²) · O(n) si ya está ordenado', estable: true, idea: 'Inserta cada pino en la parte ordenada. El prefijo verde está en orden, pero puede cambiar con nuevas inserciones.' },
   bubble: { nombre: 'Bubble Sort', complejidad: 'O(n²) · O(n) si ya está ordenado', estable: true, idea: 'Compara vecinos y «burbujea» el mayor hacia el final.' },
   shell: { nombre: 'Shell Sort', complejidad: 'Depende de la secuencia de saltos', estable: false, idea: 'Ordena grupos separados por saltos decrecientes hasta terminar con una pasada de inserción.' },
   merge: { nombre: 'Merge Sort', complejidad: 'O(n log n)', estable: true, idea: 'Divide el arreglo en mitades y las mezcla en orden; ante iguales, conserva primero el elemento izquierdo.' }
@@ -249,12 +249,12 @@ function* generarInsertionSort(valores) {
     while (j >= 0) {
       contadores.comparaciones++;
       const mayor = arr[j].valor > clave;
-      yield paso({ tipo: T.COMPARAR, pasada: i, linea: 3, comparando: [j], sostenido: j + 1, ordenados: rango(i),
+      yield paso({ tipo: T.COMPARAR, pasada: i, linea: 3, comparando: [j], sostenido: j + 1, ordenados: rango(j + 1),
         mensaje: `¿${arr[j].valor} > ${clave}? ${mayor ? 'Sí: se corre a la derecha.' : 'No: aquí va ' + clave + '.'}` });
       if (!mayor) break;
       contadores.intercambios++;
       intercambiar(j, j + 1);
-      yield paso({ tipo: T.MOVER, pasada: i, linea: 4, moviendo: [j + 1], sostenido: j, ordenados: rango(i),
+      yield paso({ tipo: T.MOVER, pasada: i, linea: 4, moviendo: [j + 1], sostenido: j, ordenados: rango(j),
         mensaje: `${arr[j + 1].valor} se desplaza a la posición ${j + 1}.` });
       j--;
     }

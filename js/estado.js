@@ -117,7 +117,13 @@ function buscarConexionEntre(desde, hacia) {
  * @returns {string} Un ID único en formato prefijo_número
  */
 function nuevoId(prefijo) {
-  return prefijo + '_' + (estado.siguienteId++);
+  let id;
+  do {
+    if (!Number.isSafeInteger(estado.siguienteId) || estado.siguienteId < 1 || estado.siguienteId >= Number.MAX_SAFE_INTEGER - 1) estado.siguienteId = 1;
+    id = prefijo + '_' + (estado.siguienteId++);
+  }
+  while (estado.nodos.some(n => n.id === id) || estado.conexiones.some(c => c.id === id));
+  return id;
 }
 
 /**

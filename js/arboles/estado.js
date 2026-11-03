@@ -25,6 +25,7 @@ function instantaneaArboles() {
 
 function guardarEstadoArboles() {
   if (typeof localStorage === 'undefined') return;
+  if (typeof permiteEscrituraGuardado === 'function' && !permiteEscrituraGuardado(ARBOLES_STORAGE_KEY)) return false;
   cancelarGuardadoDiferidoArboles();
   // Si falla, escribirAlmacenamientoLocal avisa una sola vez y la sesión continúa.
   escribirAlmacenamientoLocal(ARBOLES_STORAGE_KEY, JSON.stringify(instantaneaArboles()), { respaldo: 'guarda el trabajo con «Guardar» y expórtalo desde «Mis trabajos»' });
@@ -71,9 +72,11 @@ function restaurarEstadoArboles(datosDirectos) {
   }
   if (!texto) return null;
   try {
-    return depurarEstadoArboles(JSON.parse(texto));
+    const limpio = depurarEstadoArboles(JSON.parse(texto));
+    if (!limpio) throw new Error('La versión, los valores o los recorridos guardados no son compatibles.');
+    return limpio;
   } catch (error) {
-    console.warn('Se ignoró el estado guardado de Árboles porque no es válido.', error);
+    if (typeof protegerGuardadoIncompatible === 'function') protegerGuardadoIncompatible(ARBOLES_STORAGE_KEY, texto, error.message);
     return null;
   }
 }

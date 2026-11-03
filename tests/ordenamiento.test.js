@@ -77,6 +77,15 @@ prueba('Insertion Sort: arreglo ya ordenado hace n−1 comparaciones y 0 movimie
   igual(ultimo(h).intercambios, 0);
 });
 
+prueba('Insertion Sort: la parte marcada como prefijo ordenado sigue ordenada durante cada intercambio', () => {
+  for (const paso of ordenarInsertionSort([1, 5, 7, 3, 2])) {
+    const prefijo = paso.ordenados.map(i => paso.arreglo[i].valor);
+    igual(prefijo, ordenado(prefijo));
+    igual(paso.ordenados, Array.from({ length: paso.ordenados.length }, (_, i) => i));
+    if (paso.sostenido !== null) cierto(!paso.ordenados.includes(paso.sostenido), 'el elemento sostenido aún no forma parte del prefijo');
+  }
+});
+
 prueba('Bubble Sort: ejemplo fijo y parada temprana', () => {
   const h = ordenarBubbleSort([3, 1, 2]);
   verificarHistorial('bubble', h, [3, 1, 2]);
@@ -151,10 +160,12 @@ prueba('Estabilidad: Insertion, Bubble y Merge conservan el orden de iguales', (
   });
 });
 
-prueba('300 arreglos aleatorios: los cinco algoritmos ordenan y cumplen los invariantes', () => {
+prueba('300 arreglos con semilla 1703: los cinco algoritmos ordenan y cumplen los invariantes', () => {
+  let semilla = 1703;
+  const azar = () => ((semilla = (Math.imul(1664525, semilla) + 1013904223) >>> 0) / 4294967296);
   for (let k = 0; k < 300; k++) {
-    const n = LIMITES.cantidadMin + Math.floor(Math.random() * 10);
-    const valores = generarValoresOrdenamiento(n);
+    const n = LIMITES.cantidadMin + Math.floor(azar() * 10);
+    const valores = Array.from({ length: n }, () => 1 + Math.floor(azar() * 99));
     Object.entries(ALGORITMOS).forEach(([nombre, fn]) => verificarHistorial(nombre, fn(valores), valores));
   }
 });
@@ -199,6 +210,23 @@ prueba('Persistencia: rechaza datos inválidos y normaliza paso y velocidad', ()
   igual(depurarEstadoOrdenamiento({ algoritmo: 'bubble', valores: [1, '2', 3] }), null, 'tipos numéricos estrictos');
   const limpio = depurarEstadoOrdenamiento({ algoritmo: 'shell', valores: [3, 2, 1], pasoActual: -2, velocidad: 999 });
   igual(limpio, { algoritmo: 'shell', valores: [3, 2, 1], pasoActual: 0, velocidad: '650' });
+});
+
+prueba('Autoguardado incompatible: conserva el original y bloquea nuevas escrituras hasta recuperarlo', () => {
+  for (const crudo of ['{json incompleto', JSON.stringify({ version: 99, algoritmo: 'bubble', valores: [1, 2, 3] })]) {
+    let protegido = false, escrito = null, respaldo = null;
+    const sesion = crearContexto();
+    sesion.console = { warn() {} };
+    sesion.localStorage = { getItem: () => crudo };
+    sesion.protegerGuardadoIncompatible = (clave, texto) => { protegido = true; respaldo = texto; };
+    sesion.permiteEscrituraGuardado = () => !protegido;
+    sesion.escribirAlmacenamientoLocal = (clave, texto) => { escrito = texto; };
+    cargar(sesion, ['js/config.js', 'js/ordenamiento/estado.js', 'js/ordenamiento/algoritmos.js']);
+    igual(sesion.restaurarEstadoOrdenamiento(), null);
+    igual(respaldo, crudo);
+    sesion.guardarEstadoOrdenamiento('650');
+    igual(escrito, null, 'no sobrescribe el guardado incompatible');
+  }
 });
 
 prueba('Cinco métodos con 40, 100 y 200: ordenados, inversos y repetidos; resultado, IDs y conteos', () => {

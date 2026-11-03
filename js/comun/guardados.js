@@ -11,7 +11,7 @@ const MAX_LARGO_NOMBRE_TRABAJO = 60;
 /* ---------------- Lógica pura ---------------- */
 
 function esTrabajoValido(t) {
-  return !!t && typeof t === 'object' && typeof t.id === 'string' && typeof t.nombre === 'string' &&
+  return !!t && typeof t === 'object' && typeof t.id === 'string' && t.id.trim().length > 0 && t.id.length <= 160 && typeof t.nombre === 'string' && validarNombreTrabajo(t.nombre).ok &&
     MODULOS_TRABAJO.includes(t.modulo) && typeof t.fecha === 'string' && !!t.datos && typeof t.datos === 'object';
 }
 
@@ -119,16 +119,41 @@ function fusionarTrabajosImportados(trabajos, documento, modulo) {
   }
   const lista = documento && Array.isArray(documento.trabajos) ? documento.trabajos : (Array.isArray(documento) ? documento : null);
   if (!lista) return { ok: false, error: 'El archivo no contiene una lista de trabajos.' };
-  if (esModuloGrafoTrabajo(modulo) && !Array.isArray(documento) && documento.modulo !== undefined && documento.modulo !== modulo) {
+  if (!Array.isArray(documento) && documento.modulo !== undefined && documento.modulo !== modulo) {
     return { ok: false, error: 'El archivo pertenece a otro módulo.' };
   }
   let validos = depurarListaTrabajos(lista).filter(t => t.modulo === modulo);
+  if (lista.length > 1000 || lista.some(t => !esTrabajoValido(t))) return { ok: false, error: 'La lista contiene registros inválidos o supera 1000 trabajos. No se importó ningún registro.' };
   if (!validos.length) return { ok: false, error: 'El archivo no tiene trabajos de ' + (NOMBRES_MODULO_TRABAJO[modulo] || modulo) + '.' };
   // Validar toda la importación antes de añadir un solo trabajo, incluso si se alcanza el cupo.
   if (esModuloGrafoTrabajo(modulo)) {
     try {
       validos = validos.map(t => Object.assign({}, t, { datos: documentoTrabajoGrafo(t.datos, modulo) }));
     } catch (error) { return { ok: false, error: error.message }; }
+  }
+  if (modulo === 'johnson' && typeof validarGrafoImportado === 'function') {
+    for (const t of validos) {
+      const v = validarGrafoImportado(t.datos && t.datos.grafo);
+      if (!v.ok) return { ok: false, error: 'No se importó ningún trabajo. ' + resumirErroresImportacion(v.errores) + ' Conserva y corrige el archivo original.' };
+      if (t.datos.version !== undefined && t.datos.version !== '1.0') return { ok: false, error: 'Versión de Johnson no compatible; se admite 1.0.' };
+    }
+  }
+  for (const t of validos) {
+    let v = null;
+    if (modulo === 'asignacion' && typeof validarModeloAsignacionImportado === 'function') {
+      if (t.datos.objetivo !== undefined && !['min', 'max'].includes(t.datos.objetivo)) return { ok: false, error: 'El objetivo debe ser min o max.' };
+      if (t.datos.version !== undefined && t.datos.version !== 2) return { ok: false, error: 'Versión de asignación no compatible; se admite 2.' };
+      v = validarModeloAsignacionImportado(t.datos.modelo);
+      if (v.ok && t.datos.resultadoVigente) v = validarModeloAsignacion(v.modelo);
+    }
+    if (modulo === 'northwest' && typeof validarModeloNorthwestImportado === 'function') {
+      if (t.datos.version !== undefined && t.datos.version !== 1) return { ok: false, error: 'Versión de Northwest no compatible; se admite 1.' };
+      v = validarModeloNorthwestImportado(t.datos.modelo);
+      if (v.ok && t.datos.resultadoVigente) v = validarModeloNorthwest(v.modelo);
+    }
+    if (modulo === 'ordenamiento' && typeof depurarEstadoOrdenamiento === 'function' && !depurarEstadoOrdenamiento(t.datos)) return { ok: false, error: 'El trabajo de ordenamiento no es válido.' };
+    if (modulo === 'arboles' && typeof restaurarEstadoArboles === 'function' && !restaurarEstadoArboles(t.datos)) return { ok: false, error: 'El trabajo de árboles no es válido.' };
+    if (v && !v.ok) return { ok: false, error: 'No se importó ningún trabajo: ' + resumirErroresImportacion(v.errores) };
   }
   let salida = trabajos.slice();
   let agregados = 0;
@@ -171,14 +196,20 @@ function resumenTrabajo(t) {
 /* ---------------- Almacenamiento ---------------- */
 
 function leerTrabajos() {
+  let crudo;
   try {
-    return depurarListaTrabajos(JSON.parse(localStorage.getItem(CLAVE_TRABAJOS) || '[]'));
+    crudo = localStorage.getItem(CLAVE_TRABAJOS);
+    const datos = JSON.parse(crudo || '[]');
+    if (!Array.isArray(datos) || datos.length > 1000 || datos.some(t => !esTrabajoValido(t)) || new Set(datos.map(t => t.id)).size !== datos.length) throw new Error('La biblioteca contiene registros incompletos o identificadores repetidos.');
+    return datos;
   } catch (error) {
+    if (crudo && typeof protegerGuardadoIncompatible === 'function') protegerGuardadoIncompatible(CLAVE_TRABAJOS, crudo, error.message);
     return [];
   }
 }
 
 function escribirTrabajos(trabajos) {
+  if (typeof permiteEscrituraGuardado === 'function' && !permiteEscrituraGuardado(CLAVE_TRABAJOS)) throw new Error('La biblioteca original está protegida. Descárgala desde el aviso antes de reemplazarla.');
   localStorage.setItem(CLAVE_TRABAJOS, JSON.stringify(trabajos));
 }
 
@@ -226,7 +257,7 @@ function aplicarTrabajoNombrado(trabajo) {
   }
   if (trabajo.modulo === 'johnson') {
     const validacion = validarGrafoImportado(datos && datos.grafo);
-    if (!validacion.ok) throw new Error('El grafo guardado no es válido: ' + resumirErroresImportacion(validacion.errores));
+    if (!validacion.ok) throw new Error('El grafo guardado no es válido: ' + resumirErroresImportacion(validacion.errores) + ' Usa Exportar para conservar el original y corregirlo.');
     aplicarGrafo(validacion.grafo);
     estado.visualizacionJohnson = null;
     estadoJohnson.resultado = null;
@@ -241,6 +272,11 @@ function aplicarTrabajoNombrado(trabajo) {
     const validacion = validarModeloAsignacionImportado(datos && datos.modelo);
     if (!validacion.ok) throw new Error('La matriz guardada no es válida: ' + resumirErroresImportacion(validacion.errores));
     const modelo = validacion.modelo;
+    if (datos.objetivo !== undefined && !['min', 'max'].includes(datos.objetivo)) throw new Error('El objetivo debe ser min o max.');
+    if (datos.resultadoVigente) {
+      const calculable = validarModeloAsignacion(modelo);
+      if (!calculable.ok) throw new Error('El trabajo afirma tener resultado pero está incompleto: ' + resumirErroresImportacion(calculable.errores));
+    }
     estadoAsignacion.modelo = modelo;
     estadoAsignacion.objetivo = datos.objetivo === 'max' ? 'max' : 'min';
     estadoAsignacion.posiciones = depurarPosiciones(datos.posiciones, modelo);
@@ -266,6 +302,10 @@ function aplicarTrabajoNombrado(trabajo) {
     const validacion = validarModeloNorthwestImportado(datos && datos.modelo);
     if (!validacion.ok) throw new Error('Los datos de transporte guardados no son válidos: ' + resumirErroresImportacion(validacion.errores));
     const modelo = validacion.modelo;
+    if (datos.resultadoVigente) {
+      const calculable = validarModeloNorthwest(modelo);
+      if (!calculable.ok) throw new Error('El trabajo afirma tener resultado pero está incompleto: ' + resumirErroresImportacion(calculable.errores));
+    }
     estadoNorthwest.modelo = modelo;
     estadoNorthwest.vista = ['datos', 'balanceo', 'resolucion', 'resultado'].includes(datos.vista) ? datos.vista : 'datos';
     estadoNorthwest.resultado = null;
@@ -543,6 +583,7 @@ function crearPanelTrabajos(modulo) {
     input.onchange = evento => {
       const archivo = evento.target.files[0];
       if (!archivo) return;
+      if (archivo.size > 1024 * 1024) { avisarTrabajo('El archivo supera el límite de 1 MB.', 'error'); return; }
       const lector = new FileReader();
       lector.onload = e => {
         try {

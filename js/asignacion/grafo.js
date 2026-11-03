@@ -209,6 +209,8 @@ function nodoRelacionado(recursoId, tareaId) {
 /* ---------------- Dibujo ---------------- */
 
 function dibujarGrafoAsignacion() {
+  const activo = document.activeElement;
+  const foco = activo && grafoAsig.svg.contains(activo) ? { id: activo.dataset.id, recurso: activo.dataset.recurso, tarea: activo.dataset.tarea } : null;
   const m = estadoAsignacion.modelo;
   const G = GRAFO_ASIG;
   const disp = disposicionAsignacion();
@@ -312,6 +314,11 @@ function dibujarGrafoAsignacion() {
 
   aplicarVistaAsignacion(vistaActualAsignacion(disp));
   actualizarAyudaGrafo();
+  if (foco) {
+    const candidatos = Array.from(grafoAsig.svg.querySelectorAll('.nodo-b, .arista'));
+    const siguienteFoco = candidatos.find(nodo => foco.id ? nodo.dataset.id === foco.id : foco.recurso && nodo.dataset.recurso === foco.recurso && nodo.dataset.tarea === foco.tarea);
+    if (siguienteFoco) siguienteFoco.focus({ preventScroll: true });
+  }
 }
 
 function dibujarGrafoAsignacionPronto() {

@@ -60,16 +60,22 @@ function depurarEstadoOrdenamiento(datos) {
 
 function guardarEstadoOrdenamiento(velocidad) {
   if (typeof localStorage === 'undefined') return;
+  if (typeof permiteEscrituraGuardado === 'function' && !permiteEscrituraGuardado(ORDENAMIENTO_STORAGE_KEY)) return;
   // Si falla, escribirAlmacenamientoLocal avisa una sola vez y la sesión continúa.
   escribirAlmacenamientoLocal(ORDENAMIENTO_STORAGE_KEY, JSON.stringify(instantaneaOrdenamiento(estadoOrdenamiento, velocidad)), { respaldo: 'guarda el trabajo con «Guardar» y expórtalo desde «Mis trabajos»' });
 }
 
 function restaurarEstadoOrdenamiento() {
   if (typeof localStorage === 'undefined') return null;
+  let texto = null;
   try {
-    const texto = localStorage.getItem(ORDENAMIENTO_STORAGE_KEY);
-    return texto ? depurarEstadoOrdenamiento(JSON.parse(texto)) : null;
+    texto = localStorage.getItem(ORDENAMIENTO_STORAGE_KEY);
+    if (!texto) return null;
+    const limpio = depurarEstadoOrdenamiento(JSON.parse(texto));
+    if (!limpio) throw new Error('El guardado de Ordenamiento tiene una versión, un método o unos valores incompatibles.');
+    return limpio;
   } catch (error) {
+    if (texto !== null && typeof protegerGuardadoIncompatible === 'function') protegerGuardadoIncompatible(ORDENAMIENTO_STORAGE_KEY, texto, error.message);
     console.warn('Se ignoró el estado guardado de Ordenamiento porque no es válido.', error);
     return null;
   }

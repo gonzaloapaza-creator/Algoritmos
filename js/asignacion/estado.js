@@ -53,6 +53,7 @@ function serializarAsignacion() {
 }
 
 function guardarAsignacion() {
+  if (typeof permiteEscrituraGuardado === 'function' && !permiteEscrituraGuardado(ASIGNACION_STORAGE_KEY_V2)) return false;
   // Sin almacenamiento la aplicación sigue funcionando; el aviso se muestra una sola vez.
   escribirAlmacenamientoLocal(ASIGNACION_STORAGE_KEY_V2, JSON.stringify(serializarAsignacion()), { respaldo: 'usa «Exportar JSON» en el panel Edición' });
 }
@@ -62,11 +63,16 @@ function guardarAsignacion() {
  * @returns {'v2'|'v1'|'nuevo'}
  */
 function cargarAsignacion() {
+  let crudoV2;
   try {
-    const crudoV2 = localStorage.getItem(ASIGNACION_STORAGE_KEY_V2);
+    crudoV2 = localStorage.getItem(ASIGNACION_STORAGE_KEY_V2);
     if (crudoV2) {
       const datos = JSON.parse(crudoV2);
-      const modelo = depurarModeloAsignacion(datos.modelo);
+      if (!datos || datos.version !== 2) throw new Error('El autoguardado debe usar la versión 2.');
+      if (datos.objetivo !== undefined && !['min', 'max'].includes(datos.objetivo)) throw new Error('El objetivo guardado debe ser minimizar o maximizar.');
+      const validacion = validarModeloAsignacionImportado(datos.modelo);
+      if (!validacion.ok) throw new Error(validacion.errores.join(' '));
+      const modelo = validacion.modelo;
       if (modelo) {
         estadoAsignacion.modelo = modelo;
         estadoAsignacion.objetivo = datos.objetivo === 'max' ? 'max' : 'min';
@@ -75,12 +81,23 @@ function cargarAsignacion() {
         return 'v2';
       }
     }
-  } catch (e) { /* se intenta con el formato anterior */ }
+  } catch (e) {
+    if (crudoV2) {
+      if (typeof protegerGuardadoIncompatible === 'function') protegerGuardadoIncompatible(ASIGNACION_STORAGE_KEY_V2, crudoV2, e.message);
+      estadoAsignacion.modelo = ejemploAsignacion();
+      estadoAsignacion.objetivo = 'min';
+      return 'incompatible';
+    }
+  }
 
+  let crudoV1;
   try {
-    const crudoV1 = localStorage.getItem(ASIGNACION_STORAGE_KEY);
+    crudoV1 = localStorage.getItem(ASIGNACION_STORAGE_KEY);
     if (crudoV1) {
       const datos = JSON.parse(crudoV1);
+      if (!datos || typeof datos !== 'object') throw new Error('El autoguardado antiguo no contiene un problema de asignación válido.');
+      if (datos.version !== undefined && datos.version !== 1) throw new Error('La versión antigua no es compatible.');
+      if (datos.objective !== undefined && !['min', 'max'].includes(datos.objective)) throw new Error('El objetivo antiguo debe ser «min» o «max».');
       const modelo = migrarAsignacionV1(datos);
       if (modelo) {
         estadoAsignacion.modelo = modelo;
@@ -89,8 +106,17 @@ function cargarAsignacion() {
         // El formato antiguo se conserva por si se vuelve a una versión anterior.
         return 'v1';
       }
+      throw new Error('La matriz antigua no cabe en el límite de 8×8 o su estructura no es válida.');
     }
-  } catch (e) { /* nada recuperable */ }
+  } catch (e) {
+    if (crudoV1) {
+      if (typeof protegerGuardadoIncompatible === 'function') protegerGuardadoIncompatible(ASIGNACION_STORAGE_KEY_V2, crudoV1,
+        'El original antiguo «' + ASIGNACION_STORAGE_KEY + '» se conserva intacto. ' + e.message);
+      estadoAsignacion.modelo = ejemploAsignacion();
+      estadoAsignacion.objetivo = 'min';
+      return 'incompatible';
+    }
+  }
 
   estadoAsignacion.modelo = ejemploAsignacion();
   estadoAsignacion.objetivo = 'min';
@@ -166,11 +192,28 @@ function rehacerAsignacion() {
  */
 function aplicarCambioAsignacion(cambio, opciones) {
   const opts = opciones || {};
-  if (!opts.sinHistorial) guardarHistorialAsignacion();
-  cambio(estadoAsignacion.modelo, estadoAsignacion);
+  const anterior = instantaneaAsignacion();
+  const presentacion = { seleccion: estadoAsignacion.seleccion, origenConexion: estadoAsignacion.origenConexion, vista2d: estadoAsignacion.vista2d, vista: estadoAsignacion.vista };
+  try {
+    cambio(estadoAsignacion.modelo, estadoAsignacion);
+    const validacion = validarModeloAsignacionImportado(estadoAsignacion.modelo);
+    if (!validacion.ok) throw new Error(validacion.errores[0]);
+    if (!['min', 'max'].includes(estadoAsignacion.objetivo)) throw new Error('Selecciona minimizar costos o maximizar beneficios.');
+  } catch (error) {
+    restaurarInstantaneaAsignacion(anterior);
+    Object.assign(estadoAsignacion, presentacion);
+    throw error;
+  }
+  if (JSON.stringify(anterior) === JSON.stringify(instantaneaAsignacion())) return false;
+  if (!opts.sinHistorial) {
+    estadoAsignacion.historial.pasado.push(anterior);
+    if (estadoAsignacion.historial.pasado.length > MAX_ACCIONES_DESHACER) estadoAsignacion.historial.pasado.shift();
+    estadoAsignacion.historial.futuro = [];
+  }
   comprobarVigenciaResultado();
   guardarAsignacion();
   emitirCambioAsignacion(opts.motivo || 'modelo');
+  return true;
 }
 
 /** Cambios de presentación (posiciones, vista, selección) que no tocan el modelo. */

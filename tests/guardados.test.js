@@ -109,8 +109,7 @@ prueba('fusionarTrabajosImportados acepta solo el módulo actual, renueva ids y 
   const doc = { version: 1, tipo: 'trabajos', modulo: 'johnson', trabajos: [
     trabajo({ id: 'id1', nombre: 'Clase' }),
     trabajo({ id: 'id9', nombre: 'Examen', fecha: 'fecha rota' }),
-    trabajo({ id: 'id8', nombre: 'Ajeno', modulo: 'arboles' }),
-    { basura: true }
+    trabajo({ id: 'id8', nombre: 'Ajeno', modulo: 'arboles' })
   ] };
   const r = fusionarTrabajosImportados(actual, doc, 'johnson');
   cierto(r.ok);
@@ -126,6 +125,8 @@ prueba('fusionarTrabajosImportados acepta solo el módulo actual, renueva ids y 
 });
 
 prueba('fusionarTrabajosImportados: errores, lista cruda y límite por módulo', () => {
+  cierto(!fusionarTrabajosImportados([], [trabajo(), trabajo({ nombre: '' })], 'johnson').ok, 'Un nombre inválido rechaza la importación completa');
+  cierto(!fusionarTrabajosImportados([], [trabajo(), { basura: true }], 'johnson').ok, 'Los registros inválidos no se descartan silenciosamente');
   igual(fusionarTrabajosImportados([], { nada: 1 }, 'johnson').ok, false);
   igual(fusionarTrabajosImportados([], { trabajos: [trabajo({ modulo: 'arboles' })] }, 'johnson').ok, false, 'sin trabajos del módulo');
   cierto(fusionarTrabajosImportados([], [trabajo()], 'johnson').ok, 'acepta un arreglo directo');
@@ -251,9 +252,12 @@ prueba('leerTrabajos/escribirTrabajos usan la clave de config y toleran JSON cor
   igual(leerTrabajos(), []);
   escribirTrabajos([trabajo(), { malo: true }]);
   igual(JSON.parse(contexto.localStorage.getItem(CLAVE)).length, 2, 'escribe tal cual');
-  igual(leerTrabajos().length, 1, 'al leer se depura');
+  igual(leerTrabajos(), [], 'La biblioteca incompatible no se repara eliminando registros');
+  igual(JSON.parse(contexto.localStorage.getItem(CLAVE)).length, 2, 'Se conserva el original completo');
+  lanza(() => escribirTrabajos([]), 'No debe sobrescribir el original incompatible');
   contexto.localStorage.setItem(CLAVE, '{no es json');
   igual(leerTrabajos(), []);
+  igual(contexto.localStorage.getItem(CLAVE), '{no es json');
 });
 
 prueba('Autoguardado: un fallo de escritura avisa una sola vez, la sesión sigue y el estado se limpia al volver a escribir', () => {

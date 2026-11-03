@@ -40,6 +40,7 @@ function construirIntro() {
   s.innerHTML =
     '<div class="intro__video">' +
     '  <div class="intro__marco" id="introMarco"></div>' +
+    '  <p class="intro__aviso">El video necesita internet. Puedes continuar con «Ir al algoritmo» y consultar «Ayuda» en cualquier momento.</p>' +
     '</div>' +
     '<div class="intro__texto">' +
     '  <p class="eyebrow">Antes de empezar</p>' +

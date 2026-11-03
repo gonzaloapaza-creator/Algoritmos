@@ -52,13 +52,13 @@ const EJEMPLOS_JOHNSON = [
       { nombre: 'e', x: 0.90, y: 0.80 }
     ],
     conexiones: [
-      ['a', 'b', 3], ['b', 'c', -1], ['a', 'c', 4], ['c', 'a', 2], ['d', 'e', 2], ['e', 'd', 1], ['c', 'd', 5]
+      ['a', 'b', 3], ['b', 'c', -1], ['c', 'a', 2], ['d', 'e', 2]
     ]
   },
   {
     id: 'ceros',
-    nombre: 'Ceros y bucle',
-    descripcion: 'Conexiones de peso 0 (que sí existen), un bucle a → a y un peso negativo.',
+    nombre: 'Ceros y pesos negativos',
+    descripcion: 'Conexiones de peso 0 (que sí existen), pesos negativos y ciclos de tres o más vértices sin ciclo negativo.',
     nodos: [
       { nombre: 'a', x: 0.18, y: 0.62 },
       { nombre: 'b', x: 0.50, y: 0.22 },
@@ -66,7 +66,7 @@ const EJEMPLOS_JOHNSON = [
       { nombre: 'd', x: 0.50, y: 0.88 }
     ],
     conexiones: [
-      ['a', 'a', 2], ['a', 'b', 0], ['b', 'c', 0], ['c', 'a', 5], ['b', 'd', -2], ['d', 'c', 1]
+      ['a', 'b', 0], ['b', 'c', 0], ['c', 'a', 5], ['b', 'd', -2], ['d', 'c', 1]
     ]
   },
   {

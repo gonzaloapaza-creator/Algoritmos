@@ -281,4 +281,78 @@ prueba('Renombrar después de resolver: el balance muestra el nombre actual y el
   cierto(balance.destinos.some(d => d.ficticio && d.nombre === 'Destino ficticio'), 'El ficticio conserva su nombre');
 });
 
+prueba('Modelo y balanceo protegen referencias, cantidades, costos y límites sin interfaz', () => {
+  const m = ctx.ejemploNorthwest('balanceado'), antes = JSON.stringify(m);
+  const o = m.origenes[0].id, d = m.destinos[0].id;
+  [[o, o, 0], [d, o, 1], ['inexistente', d, 1], [o, d, 100000000]].forEach(args => {
+    lanza(() => ctx.fijarCostoNorthwest(m, ...args)); igual(JSON.stringify(m), antes);
+  });
+  igual(ctx.agregarOrigen(m, 'Otro', -1), null);
+  igual(ctx.agregarDestino(m, m.destinos[0].nombre, 1), null);
+  igual(JSON.stringify(m), antes);
+  const invalido = ctx.ejemploNorthwest('balanceado'); invalido.origenes[0].oferta = -1;
+  lanza(() => ctx.balancearNorthwest(invalido));
+  lanza(() => ctx.modeloNorthwestDesdeMatrices([[1.001]], [1], [1]));
+  lanza(() => ctx.modeloNorthwestDesdeMatrices([[1]], [1.5], [1]));
+  lanza(() => ctx.resolverEsquinaNoroeste([[0], [0]], [Number.MAX_SAFE_INTEGER, 1], [Number.MAX_SAFE_INTEGER + 1]));
+});
+
+prueba('Noroeste coincide con la referencia independiente de intervalos acumulados en 250 casos', () => {
+  let semilla = 811;
+  const azar = () => { semilla = (semilla * 48271) % 2147483647; return semilla / 2147483647; };
+  for (let k = 0; k < 250; k++) {
+    const m = 1 + Math.floor(azar() * 10), n = 1 + Math.floor(azar() * 10);
+    const costos = Array.from({ length: m }, () => Array.from({ length: n }, () => Math.floor(azar() * 999999) / 100));
+    const ofertas = Array.from({ length: m }, () => Math.floor(azar() * 5));
+    const demandas = Array.from({ length: n }, () => Math.floor(azar() * 5));
+    const modelo = ctx.modeloNorthwestDesdeMatrices(costos, ofertas, demandas);
+    const original = JSON.stringify(modelo), b = ctx.balancearNorthwest(modelo);
+    const r = ctx.resolverEsquinaNoroeste(b.costos, b.ofertas, b.demandas);
+    let inicioOferta = 0;
+    const referencia = b.ofertas.map(oferta => {
+      let inicioDemanda = 0;
+      const fila = b.demandas.map(demanda => {
+        const cruce = Math.max(0, Math.min(inicioOferta + oferta, inicioDemanda + demanda) - Math.max(inicioOferta, inicioDemanda));
+        inicioDemanda += demanda; return cruce;
+      });
+      inicioOferta += oferta; return fila;
+    });
+    igual(r.asignaciones, referencia); cierto(r.verificacion.ok);
+    igual(JSON.stringify(modelo), original, 'Balancear y resolver no acumula ficticios en el modelo');
+    const otrosCostos = b.costos.map(f => f.map(() => 0));
+    igual(ctx.resolverEsquinaNoroeste(otrosCostos, b.ofertas, b.demandas).asignaciones, referencia);
+  }
+});
+
+prueba('Transacciones de Northwest rechazan sin modificar historial o resultado y deshacen con coherencia', () => {
+  const c = cargar(crearContexto(), ['js/config.js', 'js/northwest/validacion.js', 'js/northwest/modelo.js', 'js/northwest/balanceo.js', 'js/northwest/noroeste.js', 'js/northwest/estado.js']);
+  c.escribirAlmacenamientoLocal = () => true;
+  const e = evaluar(c, 'estadoNorthwest'); e.modelo = c.ejemploNorthwest('balanceado'); c.resolverNorthwestCompleto();
+  const antes = JSON.stringify(e.modelo), resultado = e.resultado;
+  lanza(() => c.aplicarCambioNorthwest(m => { m.origenes[0].oferta = 30; m.costos['fantasma|otro'] = 1; }));
+  igual(JSON.stringify(e.modelo), antes); igual(e.historial, { pasado: [], futuro: [] });
+  cierto(e.resultado === resultado && resultado.vigente);
+  c.aplicarCambioNorthwest(m => { m.origenes[0].oferta = 30; }); cierto(!resultado.vigente);
+  c.deshacerNorthwest(); cierto(resultado.vigente); igual(JSON.stringify(e.modelo), antes);
+  c.rehacerNorthwest(); cierto(!resultado.vigente);
+});
+
+prueba('Northwest restaura estrictamente sin reemplazar autoguardados incompatibles', () => {
+  [1, 2, 3].forEach(caso => {
+    const almacen = new Map(), bloqueadas = new Set(), avisos = [];
+    const c = crearContexto();
+    c.localStorage = { getItem: clave => almacen.get(clave) || null };
+    c.escribirAlmacenamientoLocal = (clave, texto) => { almacen.set(clave, texto); return true; };
+    c.protegerGuardadoIncompatible = (clave, texto) => { bloqueadas.add(clave); avisos.push(texto); };
+    c.permiteEscrituraGuardado = clave => !bloqueadas.has(clave);
+    cargar(c, ['js/config.js', 'js/northwest/validacion.js', 'js/northwest/modelo.js', 'js/northwest/estado.js']);
+    const clave = evaluar(c, 'NORTHWEST_STORAGE_KEY'), modelo = c.ejemploNorthwest('balanceado');
+    if (caso === 1) modelo.origenes[0].oferta = -1;
+    if (caso === 2) modelo.costos['o_fantasma|d_fantasma'] = 0;
+    const crudo = JSON.stringify({ version: caso === 3 ? 9 : 1, modelo }); almacen.set(clave, crudo);
+    igual(c.cargarNorthwest(), 'incompatible'); c.guardarNorthwest();
+    igual(almacen.get(clave), crudo); igual(avisos, [crudo]);
+  });
+});
+
 process.exitCode = informe('Northwest') ? 0 : 1;

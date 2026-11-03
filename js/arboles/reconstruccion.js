@@ -43,6 +43,7 @@ function reconstruirDesdeInordenYPostorden(inorden, postorden) {
 }
 
 function validarYReconstruirArbol(entrada, modo) {
+  if (!entrada || typeof entrada !== 'object') return { ok: false, error: 'Completa los recorridos del árbol.' };
   const nombres = { preorden: 'preorden', inorden: 'inorden', postorden: 'postorden' };
   const modos = {
     pre_in: ['preorden', 'inorden'],

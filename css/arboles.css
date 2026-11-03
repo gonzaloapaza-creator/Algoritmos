@@ -7,7 +7,7 @@
 .arbol-forma h3 { margin-bottom: var(--esp-2); }
 .arbol-campos { display: flex; flex-wrap: wrap; align-items: end; gap: var(--esp-2); margin-top: var(--esp-3); }
 .arbol-campos .campo { flex: 1 1 110px; min-width: 0; }
-.arbol-campos button { min-height: 44px; }
+.arbol-campos button { min-height: 44px; white-space: normal; }
 .arbol-forma .arbol-campos button { flex: 1 1 145px; }
 .arbol-mensaje { min-height: 1.5em; margin-top: var(--esp-2); color: var(--peligro); font-weight: 650; }
 .arbol-secuencia { margin-top: var(--esp-3); overflow-wrap: anywhere; }

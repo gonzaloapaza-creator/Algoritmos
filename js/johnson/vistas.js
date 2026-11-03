@@ -50,7 +50,7 @@ const vj = {
 /** Resume lo que influye en el cálculo (no las posiciones de los nodos). */
 function firmaGrafoJohnson() {
   return JSON.stringify([
-    estado.nodos.map(n => [n.id, n.nombre]),
+    estado.nodos.map(n => n.id),
     estado.conexiones.map(c => [c.id, c.desde, c.hacia, c.valor])
   ]);
 }
@@ -78,6 +78,16 @@ function actualizarChipJohnson() {
 
 /** Lo llama dibujar() tras cada cambio del grafo. */
 function refrescarVistaJohnson() {
+  if (resultadoVigenteJohnson()) {
+    const r = estadoJohnson.resultado;
+    const nombres = r.ids.map(id => buscarNodo(id).nombre);
+    if (JSON.stringify(nombres) !== JSON.stringify(r.nombres)) {
+      r.nombres = nombres;
+      r.ciclo = r.cicloIndices.map(i => nombres[i]);
+      r.aristas.forEach(a => { a.desde = nombres[a.indiceDesde]; a.hacia = nombres[a.indiceHacia]; });
+      r.pasos = construirPasosJohnson(r);
+    }
+  }
   actualizarChipJohnson();
   if (estadoJohnson.vista !== 'grafo') dibujarVistaJohnson();
 }
@@ -127,6 +137,8 @@ function dibujarVistaJohnson() {
  * Un ciclo negativo también se resalta en el editor, para verlo al volver.
  */
 function calcularYMostrarJohnson(destino) {
+  const validacion = validarGrafoImportado(instantaneaGrafo());
+  if (!validacion.ok) { avisar(resumirErroresImportacion(validacion.errores), 'error'); return false; }
   if (estado.nodos.length < 2) {
     avisar('Crea al menos dos nodos para calcular las distancias mínimas.', 'error');
     return false;
@@ -872,6 +884,8 @@ function mostrarEjemplos() {
 }
 
 function aplicarEjemploJohnson(ejemplo) {
+  const comprobacion = validarGrafoImportado(grafoDeEjemploJohnson(ejemplo, 600, 400, RADIO_NODO));
+  if (!comprobacion.ok) { avisar(resumirErroresImportacion(comprobacion.errores), 'error'); return; }
   cerrarEjemplos();
   irAlEditorJohnson();
   guardarEstadoParaDeshacer();
@@ -889,6 +903,7 @@ function aplicarEjemploJohnson(ejemplo) {
 function cargarEjemploJohnson(id) {
   const ejemplo = ejemploJohnsonPorId(id);
   if (!ejemplo) return;
+  const firma = JSON.stringify(instantaneaGrafo());
   // Solo se pregunta si hay algo que perder.
   if (estado.nodos.length === 0) { aplicarEjemploJohnson(ejemplo); return; }
   cerrarEjemplos();
@@ -897,6 +912,7 @@ function cargarEjemploJohnson(id) {
     mensaje: 'Se reemplazará el grafo que tienes en pantalla por «' + ejemplo.nombre + '». Podrás recuperarlo con Deshacer.'
   }).then(aceptado => {
     if (!aceptado) { avisar('No se cargó nada.'); return; }
+    if (!comprobarEdicionJohnson(firma)) return;
     aplicarEjemploJohnson(ejemplo);
   });
 }
@@ -943,7 +959,7 @@ function inicializarVistasJohnson() {
 
   // ← → recorren los pasos de la resolución.
   document.addEventListener('keydown', evento => {
-    if (estadoJohnson.vista !== 'resolucion' || modalAbierto() || evento.ctrlKey || evento.metaKey || evento.altKey) return;
+    if (estadoJohnson.vista !== 'resolucion' || modalAbierto() || hayDialogoVisible() || evento.ctrlKey || evento.metaKey || evento.altKey) return;
     if (evento.target.closest && evento.target.closest('input, textarea, select')) return;
     if (evento.key === 'ArrowRight') { evento.preventDefault(); irAPasoJohnson(estadoJohnson.pasoActual + 1); }
     if (evento.key === 'ArrowLeft') { evento.preventDefault(); irAPasoJohnson(estadoJohnson.pasoActual - 1); }

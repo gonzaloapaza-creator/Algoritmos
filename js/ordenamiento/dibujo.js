@@ -69,7 +69,7 @@ function geometriaPista(n) {
 
 function estadoTextoPino(estado, indice) {
   const textos = [];
-  if ((estado.ordenados || []).includes(indice)) textos.push('en su lugar');
+  if ((estado.ordenados || []).includes(indice)) textos.push(estadoOrdenamiento.algoritmo === 'insertion' && estado.tipo !== 'fin' ? 'en el prefijo ordenado; puede cambiar al insertar' : 'en su lugar');
   if (estado.sostenido === indice) textos.push('clave sostenida');
   if ((estado.moviendo || []).includes(indice)) textos.push('moviendo');
   if ((estado.comparando || []).includes(indice)) textos.push('comparando');

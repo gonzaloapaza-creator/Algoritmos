@@ -23,6 +23,19 @@
  * @returns {{nombres:string[], ids:string[], aristas:Array<{id:string,desde:number,hacia:number,peso:number}>, cantidad:number}}
  */
 function prepararDatosJohnson(nodos, conexiones) {
+  if (!Array.isArray(nodos) || !Array.isArray(conexiones)) throw new Error('Se requieren listas de nodos y conexiones.');
+  const ids = new Set();
+  nodos.forEach(n => {
+    if (!n || typeof n.id !== 'string' || !n.id || ids.has(n.id) || typeof n.nombre !== 'string') throw new Error('Los nodos deben tener nombres e identificadores únicos.');
+    ids.add(n.id);
+  });
+  const idsArista = new Set();
+  conexiones.forEach(c => {
+    if (!c || typeof c.id !== 'string' || !c.id || idsArista.has(c.id) || ids.has(c.id)) throw new Error('Los identificadores de conexiones deben ser únicos.');
+    idsArista.add(c.id);
+    if (!ids.has(c.desde) || !ids.has(c.hacia)) throw new Error('Una conexión referencia un nodo que no existe.');
+    if (!Number.isSafeInteger(c.valor) || Math.abs(c.valor) > 999999) throw new Error('El peso debe ser un entero entre -999999 y 999999.');
+  });
   const posicion = new Map();
   nodos.forEach((nodo, i) => posicion.set(nodo.id, i));
 
@@ -30,8 +43,6 @@ function prepararDatosJohnson(nodos, conexiones) {
   conexiones.forEach(conexion => {
     const desde = posicion.get(conexion.desde);
     const hacia = posicion.get(conexion.hacia);
-    // Una conexión hacia un nodo inexistente se ignora en lugar de romper el cálculo.
-    if (desde === undefined || hacia === undefined) return;
     aristas.push({ id: conexion.id, desde: desde, hacia: hacia, peso: conexion.valor });
   });
 
@@ -45,6 +56,8 @@ function prepararDatosJohnson(nodos, conexiones) {
 
 /** Datos del grafo que está en pantalla. */
 function construirDatosJohnson() {
+  const validacion = validarGrafoImportado(instantaneaGrafo());
+  if (!validacion.ok) throw new Error(resumirErroresImportacion(validacion.errores));
   return prepararDatosJohnson(estado.nodos, estado.conexiones);
 }
 
@@ -423,7 +436,7 @@ function construirPasosJohnson(r) {
     texto: n + (n === 1 ? ' nodo' : ' nodos') + ' y ' + m + (m === 1 ? ' conexión dirigida' : ' conexiones dirigidas') + '. ' +
       (negativos > 0
         ? 'Hay ' + negativos + (negativos === 1 ? ' peso negativo' : ' pesos negativos') +
-          ': Dijkstra por sí solo daría resultados incorrectos, por eso Johnson primero reponderará las aristas.'
+          ': Dijkstra por sí solo no garantiza resultados correctos con pesos negativos, por eso Johnson primero reponderará las aristas.'
         : 'No hay pesos negativos: los potenciales saldrán 0 y la reponderación no cambiará ningún peso, pero el procedimiento es el mismo.')
   });
 

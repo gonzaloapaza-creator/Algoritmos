@@ -54,6 +54,7 @@ function crearBoton(texto, clases, alPulsar) {
 }
 
 function crearItemGrafo(grafo) {
+  const validacion = validarGrafoImportado(grafo);
   const item = document.createElement('li');
   item.className = 'biblio-item';
 
@@ -62,17 +63,19 @@ function crearItemGrafo(grafo) {
   datos.appendChild(crearTexto('span', grafo.nombre, 'biblio-nombre'));
 
   const partes = [
-    grafo.nodos.length + (grafo.nodos.length === 1 ? ' nodo' : ' nodos'),
-    grafo.conexiones.length + (grafo.conexiones.length === 1 ? ' conexión' : ' conexiones')
+    (Array.isArray(grafo.nodos) ? grafo.nodos.length : '?') + ' nodos',
+    (Array.isArray(grafo.conexiones) ? grafo.conexiones.length : '?') + ' conexiones'
   ];
   const fecha = fechaLegible(grafo.fecha);
   if (fecha) partes.push(fecha);
   datos.appendChild(crearTexto('span', partes.join(' · '), 'biblio-meta'));
+  if (!validacion.ok) datos.appendChild(crearTexto('span', 'Incompatible: ' + resumirErroresImportacion(validacion.errores) + ' Descarga el original y corrige el archivo; no se han eliminado conexiones.', 'biblio-meta'));
   item.appendChild(datos);
 
   const botones = document.createElement('div');
   botones.className = 'biblio-botones';
   botones.appendChild(crearBoton('Cargar', 'btn-neutral', () => cargarGrafoGuardado(grafo.id)));
+  botones.appendChild(crearBoton('Descargar original', 'btn-neutral', () => descargarOriginalGuardado(JSON.stringify(grafo, null, 2), 'grafo-original.json')));
   botones.appendChild(crearBoton('Eliminar', 'btn-peligro', () => eliminarGrafoGuardado(grafo.id)));
   item.appendChild(botones);
 
@@ -160,6 +163,8 @@ function guardarGrafoActual() {
 }
 
 function aplicarGuardado(grafo) {
+  const validacion = validarGrafoImportado(grafo);
+  if (!validacion.ok) { avisar('No se cargó el grafo. ' + resumirErroresImportacion(validacion.errores) + ' Descarga el original desde Biblioteca para corregirlo.', 'error'); return; }
   guardarEstadoParaDeshacer();
   irAlEditorJohnson();   // el área debe estar a la vista para medirla
   aplicarGrafo({ nodos: grafo.nodos, conexiones: grafo.conexiones, siguienteId: grafo.siguienteId });
@@ -172,8 +177,11 @@ function aplicarGuardado(grafo) {
 }
 
 function cargarGrafoGuardado(id) {
+  const firma = JSON.stringify(instantaneaGrafo());
   const grafo = leerBiblioteca().find(g => g.id === id);
   if (!grafo) { avisar('Ese grafo ya no está disponible.', 'error'); actualizarBiblioteca(); return; }
+  const validacion = validarGrafoImportado(grafo);
+  if (!validacion.ok) { aplicarGuardado(grafo); return; }
 
   // Solo se pregunta si hay algo que perder.
   if (estado.nodos.length === 0) { aplicarGuardado(grafo); return; }
@@ -184,6 +192,7 @@ function cargarGrafoGuardado(id) {
              'Si no lo has guardado, se perderá.'
   }).then(aceptado => {
     if (!aceptado) { avisar('No se cargó nada.'); return; }
+    if (!comprobarEdicionJohnson(firma)) return;
     aplicarGuardado(grafo);
   });
 }

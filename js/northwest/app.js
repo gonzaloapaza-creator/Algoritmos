@@ -384,6 +384,7 @@ function importarNorthwestJSON() {
   input.onchange = evento => {
     const archivo = evento.target.files[0];
     if (!archivo) return;
+    if (archivo.size > 1024 * 1024) { notificar('El archivo supera 1 MiB. Importa solo el JSON de un ejercicio de transporte.', 'error'); return; }
     const lector = new FileReader();
     lector.onload = e => {
       try {
@@ -455,7 +456,7 @@ function inicializarNorthwest() {
   document.getElementById('btnLimpiarNw').addEventListener('click', limpiarNorthwest);
   document.getElementById('btnExportarNw').addEventListener('click', exportarNorthwestJSON);
   document.getElementById('btnImportarNw').addEventListener('click', importarNorthwestJSON);
-  document.getElementById('btnAyudaNw').addEventListener('click', () => { detenerAutoplayNw(); dialogoInformar({ titulo: 'Cómo usar Esquina noroeste', mensaje: TEXTO_AYUDA_NORTHWEST, ancho: true }); });
+  document.getElementById('btnAyudaNw').addEventListener('click', () => { detenerAutoplayNw(); dialogoInformar({ titulo: 'Cómo usar Esquina noroeste', mensaje: TEXTO_AYUDA_NORTHWEST + '\n\n' + TEXTO_AYUDA_RECUPERACION, ancho: true }); });
   document.getElementById('btnNwAnterior').addEventListener('click', () => { detenerAutoplayNw(); irAPasoNw(estadoNorthwest.resultado.pasoActual - 1); });
   document.getElementById('btnNwSiguiente').addEventListener('click', () => { detenerAutoplayNw(); irAPasoNw(estadoNorthwest.resultado.pasoActual + 1); });
   document.getElementById('btnNwReiniciar').addEventListener('click', () => { detenerAutoplayNw(); irAPasoNw(0); });

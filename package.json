@@ -9,6 +9,8 @@
     "test": "node tests/verificar.js && node tests/johnson.test.js && node tests/asignacion.test.js && node tests/northwest.test.js && node tests/ordenamiento.test.js && node tests/arboles.test.js && node tests/guardados.test.js && node tests/foco.test.js && node tests/grafos.test.js",
     "test:ampliacion": "node tests/ampliacion-navegador.js",
     "test:mejoras": "node tests/mejoras-grafos-navegador.js",
+    "test:cierre": "node tests/cierre-johnson-navegador.js && node tests/cierre-datos-navegador.js && node tests/cierre-rutas-navegador.js",
+    "test:responsive": "node tests/cierre-navegador.js",
     "medir:ordenamiento": "node --expose-gc tests/medir-ordenamiento.js",
     "test:navegador": "node tests/navegador.js",
     "capturas": "node tests/navegador.js --capturas"

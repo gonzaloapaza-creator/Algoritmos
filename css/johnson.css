@@ -182,6 +182,7 @@
   pointer-events: none;
   user-select: none;
 }
+.nodo.seleccionado text, .nodo.origen text { fill: #fff; }
 
 /* Conexiones */
 #flecha path { fill: var(--arista); }
@@ -238,7 +239,7 @@
 .nodo-johnson-origen circle { stroke: var(--verde); fill: #0d3b33; filter: drop-shadow(0 0 8px rgba(0, 211, 167, .6)); }
 .nodo-johnson-destino circle { stroke: var(--naranja); fill: #45301a; filter: drop-shadow(0 0 8px rgba(255, 159, 67, .6)); }
 .nodo-johnson.ciclo-negativo-johnson circle { stroke: var(--rojo); fill: #451c22; filter: drop-shadow(0 0 8px rgba(255, 95, 109, .6)); }
-.nodo-johnson text { fill: var(--texto); }
+.nodo-johnson text { fill: #fff; }
 
 /* ---------------- Estado vacío ---------------- */
 .vacio { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; padding: 16px; }

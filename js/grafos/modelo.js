@@ -21,6 +21,13 @@ function copiarGrafoModulo(grafo) {
   };
 }
 
+/** Los nombres y las posiciones no cambian el problema matemático. */
+function firmaCalculoGrafo(grafo) {
+  return JSON.stringify({ dirigido: grafo.dirigido,
+    nodos: grafo.nodos.map(n => n.id),
+    conexiones: grafo.conexiones.map(c => [c.id, c.desde, c.hacia, c.valor]) });
+}
+
 function validarGrafoModulo(grafo, modulo) {
   const fallo = error => ({ ok: false, grafo: null, error });
   if (modulo !== 'dijkstra' && modulo !== 'kruskal') return fallo('Módulo de grafo desconocido.');
@@ -88,6 +95,7 @@ function validarDocumentoGrafo(datos, modulo) {
   if (origen !== null && (typeof origen !== 'string' || !ids.has(origen))) return fallo('El origen no corresponde a un nodo del grafo.');
   if (destino !== null && (typeof destino !== 'string' || !ids.has(destino))) return fallo('El destino no corresponde a un nodo del grafo.');
   if (objetivo !== 'min' && objetivo !== 'max') return fallo('El objetivo debe ser min o max.');
+  if (modulo === 'dijkstra' && objetivo !== 'min') return fallo('Dijkstra calcula caminos mínimos; no admite el objetivo máximo.');
   if (!['grafo', 'configuracion', 'procedimiento', 'resultado'].includes(vista)) return fallo('La vista guardada no es válida.');
   if (!Number.isSafeInteger(paso) || paso < 0) return fallo('El paso debe ser un entero seguro no negativo.');
   if (typeof resuelto !== 'boolean') return fallo('El estado resuelto debe ser verdadero o falso.');

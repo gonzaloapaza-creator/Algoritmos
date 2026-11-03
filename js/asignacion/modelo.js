@@ -19,7 +19,10 @@ function claveAsignacion(recursoId, tareaId) {
 }
 
 function nuevoIdAsignacion(modelo, prefijo) {
-  return prefijo + '_' + (modelo.siguienteId++);
+  if (!Number.isSafeInteger(modelo.siguienteId) || modelo.siguienteId < 1 || modelo.siguienteId >= Number.MAX_SAFE_INTEGER) modelo.siguienteId = 1;
+  let id;
+  do { id = prefijo + '_' + (modelo.siguienteId++); } while (buscarElementoAsignacion(modelo, id));
+  return id;
 }
 
 /** Primer «Prefijo N» que no esté en uso dentro del grupo. */
@@ -32,14 +35,18 @@ function nombreLibreAsignacion(lista, prefijo) {
 
 function agregarRecurso(modelo, nombre) {
   if (modelo.recursos.length >= MAX_ASIGNACION_DIMENSION) return null;
-  const recurso = { id: nuevoIdAsignacion(modelo, 'r'), nombre: nombre || nombreLibreAsignacion(modelo.recursos, 'Recurso') };
+  const validacion = validarNombreAsignacion(nombre == null ? nombreLibreAsignacion(modelo.recursos, 'Recurso') : nombre, modelo.recursos);
+  if (!validacion.ok) return null;
+  const recurso = { id: nuevoIdAsignacion(modelo, 'r'), nombre: validacion.valor };
   modelo.recursos.push(recurso);
   return recurso;
 }
 
 function agregarTarea(modelo, nombre) {
   if (modelo.tareas.length >= MAX_ASIGNACION_DIMENSION) return null;
-  const tarea = { id: nuevoIdAsignacion(modelo, 't'), nombre: nombre || nombreLibreAsignacion(modelo.tareas, 'Tarea') };
+  const validacion = validarNombreAsignacion(nombre == null ? nombreLibreAsignacion(modelo.tareas, 'Tarea') : nombre, modelo.tareas);
+  if (!validacion.ok) return null;
+  const tarea = { id: nuevoIdAsignacion(modelo, 't'), nombre: validacion.valor };
   modelo.tareas.push(tarea);
   return tarea;
 }
@@ -56,7 +63,10 @@ function buscarElementoAsignacion(modelo, id) {
 function renombrarElementoAsignacion(modelo, id, nombre) {
   const encontrado = buscarElementoAsignacion(modelo, id);
   if (!encontrado) return false;
-  encontrado.elemento.nombre = nombre;
+  const lista = encontrado.tipo === 'recurso' ? modelo.recursos : modelo.tareas;
+  const validacion = validarNombreAsignacion(nombre, lista, id);
+  if (!validacion.ok) return false;
+  encontrado.elemento.nombre = validacion.valor;
   return true;
 }
 
@@ -78,9 +88,12 @@ function eliminarElementoAsignacion(modelo, id) {
  * (equivale a eliminar la conexión en el grafo).
  */
 function fijarValorAsignacion(modelo, recursoId, tareaId, valor) {
+  if (!modelo.recursos.some(r => r.id === recursoId) || !modelo.tareas.some(t => t.id === tareaId)) {
+    throw new Error('Selecciona un recurso y una tarea existentes: las conexiones unen grupos diferentes.');
+  }
   const clave = claveAsignacion(recursoId, tareaId);
   if (valor === null || valor === undefined) { delete modelo.valores[clave]; return; }
-  if (!Number.isInteger(valor)) throw new Error('El valor debe ser un entero o null.');
+  if (!Number.isSafeInteger(valor) || Math.abs(valor) > MAX_VALOR_ASIGNACION) throw new Error('El valor debe ser un entero entre -' + MAX_VALOR_ASIGNACION + ' y ' + MAX_VALOR_ASIGNACION + ', o quedar pendiente.');
   modelo.valores[clave] = valor;
 }
 
@@ -121,6 +134,8 @@ function resumenModelo(modelo) {
  * @returns {{ok:boolean, errores:string[], avisos:string[]}}
  */
 function validarModeloAsignacion(modelo) {
+  const estructura = validarModeloAsignacionImportado(modelo);
+  if (!estructura.ok) return { ok: false, errores: estructura.errores, avisos: [] };
   const errores = [];
   const avisos = [];
   const r = modelo.recursos.length, t = modelo.tareas.length;
@@ -196,9 +211,9 @@ function depurarModeloAsignacion(datos) {
   let mayor = 0;
   recursos.concat(tareas).forEach(e => {
     const numero = Number(String(e.id).split('_')[1]);
-    if (Number.isInteger(numero) && numero > mayor) mayor = numero;
+    if (Number.isSafeInteger(numero) && numero < Number.MAX_SAFE_INTEGER - 1 && numero > mayor) mayor = numero;
   });
-  const siguienteId = Number.isInteger(datos.siguienteId) && datos.siguienteId > mayor ? datos.siguienteId : mayor + 1;
+  const siguienteId = Number.isSafeInteger(datos.siguienteId) && datos.siguienteId > mayor ? datos.siguienteId : mayor + 1;
 
   return { recursos, tareas, valores, siguienteId };
 }
@@ -213,6 +228,9 @@ function validarModeloAsignacionImportado(datos) {
   if (!datos || typeof datos !== 'object' || !Array.isArray(datos.recursos) || !Array.isArray(datos.tareas)) {
     return { ok: false, errores: ['El archivo no contiene las listas «recursos» y «tareas».'] };
   }
+  if (datos.recursos.length > MAX_ASIGNACION_DIMENSION || datos.tareas.length > MAX_ASIGNACION_DIMENSION) {
+    return { ok: false, errores: ['Como máximo ' + MAX_ASIGNACION_DIMENSION + ' recursos y tareas en esta versión.'] };
+  }
   const errores = [];
   const revisarLista = (lista, etiqueta, ids) => {
     // El mínimo se exige al resolver, no al importar: un estado con menos elementos es un dato pendiente válido.
@@ -220,7 +238,7 @@ function validarModeloAsignacionImportado(datos) {
     const validos = [];
     lista.forEach((e, i) => {
       const ref = etiqueta.charAt(0).toUpperCase() + etiqueta.slice(1, -1) + ' ' + (i + 1);
-      if (!e || typeof e.id !== 'string' || e.id === '') { errores.push(ref + ': falta el identificador.'); return; }
+      if (!e || typeof e.id !== 'string' || !/^[A-Za-z0-9_-]{1,80}$/.test(e.id) || ['__proto__', 'constructor', 'prototype'].includes(e.id)) { errores.push(ref + ': el identificador debe contener de 1 a 80 letras, números, guiones o guiones bajos.'); return; }
       if (ids.has(e.id)) errores.push(ref + ': identificador «' + e.id + '» repetido.');
       ids.add(e.id);
       const nombre = typeof e.nombre === 'string' ? validarNombreAsignacion(e.nombre, validos, e.id)
@@ -260,20 +278,32 @@ function validarModeloAsignacionImportado(datos) {
  */
 function migrarAsignacionV1(datos) {
   if (!datos || !Array.isArray(datos.values)) return null;
+  if (datos.values.length > MAX_ASIGNACION_DIMENSION) return null;
   const modelo = crearModeloAsignacion();
-  const filas = Math.min(MAX_ASIGNACION_DIMENSION, datos.values.length);
-  const columnas = Math.min(MAX_ASIGNACION_DIMENSION, Array.isArray(datos.values[0]) ? datos.values[0].length : 0);
-  if (filas === 0 || columnas === 0) return null;
+  if (datos.values.some(fila => !Array.isArray(fila))) return null;
+  const filas = datos.values.length;
+  const columnas = Math.max(0, ...datos.values.map(fila => fila.length));
+  // Una versión antigua más grande no se puede migrar perdiendo filas o columnas.
+  if (filas === 0 || columnas === 0 || filas > MAX_ASIGNACION_DIMENSION || columnas > MAX_ASIGNACION_DIMENSION) return null;
+  const nombreMigrado = (nombre, lista) => {
+    if (!nombre) return null;
+    let candidato = nombre, numero = 2;
+    while (lista.some(e => e.nombre.toLowerCase() === candidato.toLowerCase())) {
+      const sufijo = ' (' + (numero++) + ')';
+      candidato = nombre.slice(0, MAX_LARGO_ETIQUETA_ASIGNACION - sufijo.length) + sufijo;
+    }
+    return candidato;
+  };
 
   for (let i = 0; i < filas; i++) {
     const nombre = Array.isArray(datos.labelsRows) && typeof datos.labelsRows[i] === 'string' && datos.labelsRows[i].trim()
       ? datos.labelsRows[i].trim().slice(0, MAX_LARGO_ETIQUETA_ASIGNACION) : null;
-    agregarRecurso(modelo, nombre);
+    agregarRecurso(modelo, nombreMigrado(nombre, modelo.recursos));
   }
   for (let j = 0; j < columnas; j++) {
     const nombre = Array.isArray(datos.labelsCols) && typeof datos.labelsCols[j] === 'string' && datos.labelsCols[j].trim()
       ? datos.labelsCols[j].trim().slice(0, MAX_LARGO_ETIQUETA_ASIGNACION) : null;
-    agregarTarea(modelo, nombre);
+    agregarTarea(modelo, nombreMigrado(nombre, modelo.tareas));
   }
   // Nombres repetidos en el formato antiguo: se desambiguan para respetar la regla actual.
   [modelo.recursos, modelo.tareas].forEach(lista => {

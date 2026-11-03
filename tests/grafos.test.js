@@ -100,6 +100,26 @@ prueba('Dijkstra: grafo no dirigido recorre aristas inversas con sus pesos origi
   igual(ruta.conexiones, ['c4', 'c3', 'c2']);
 });
 
+prueba('Dijkstra: aristas opuestas y ciclos de peso cero conservan rutas sin ciclos de predecesores', () => {
+  const grafo = generarGrafoAleatorio('dijkstra', { cantidad: 3, aristas: 0, semilla: 11 });
+  grafo.conexiones = [
+    { id: 'a', desde: 'n1', hacia: 'n2', valor: 0 },
+    { id: 'b', desde: 'n2', hacia: 'n1', valor: 0 },
+    { id: 'c', desde: 'n2', hacia: 'n3', valor: 0 },
+    { id: 'd', desde: 'n3', hacia: 'n1', valor: 0 }
+  ];
+  cierto(validarDocumentoGrafo({ version: 1, modulo: 'dijkstra', grafo }, 'dijkstra').ok);
+  for (const origen of grafo.nodos) {
+    const resultado = resolverDijkstraGrafo(grafo, origen.id);
+    igual(resultado.predecesores[origen.id], null);
+    for (const destino of grafo.nodos) {
+      const ruta = reconstruirRutaGrafo(resultado, destino.id);
+      igual(ruta.distancia, 0);
+      igual(new Set(ruta.nodos).size, ruta.nodos.length);
+    }
+  }
+});
+
 prueba('Dijkstra: pasos conservan estados reales, finalizados y pendientes lineales', () => {
   const resultado = resolverDijkstraGrafo(crearEjemploGrafo('dijkstra'), 'n1');
   const pasos = resultado.pasos;
@@ -307,6 +327,7 @@ prueba('Validación de documento: versiones, módulo y opciones inválidas no al
     d => { d.origen = 1; }, d => { d.objetivo = null; }, d => { d.vista = 'otra'; },
     d => { d.paso = -1; }, d => { d.paso = 0.1; }, d => { d.paso = Number.MAX_SAFE_INTEGER + 1; },
     d => { d.resuelto = 1; }, d => { d.resuelto = true; },
+    d => { d.objetivo = 'max'; },
     d => { d.grafo.conexiones[0].valor = -1; }
   ];
   invalidos.forEach(modificar => {
@@ -318,6 +339,18 @@ prueba('Validación de documento: versiones, módulo y opciones inválidas no al
   });
   const resuelto = Object.assign(documento(), { origen: 'n1', destino: 'n4', resuelto: true, vista: 'resultado', paso: 3 });
   cierto(validarDocumentoGrafo(resuelto, 'dijkstra').ok);
+});
+
+prueba('Firma matemática: mover y renombrar conservan el cálculo; pesos, referencias, IDs y modo lo invalidan', () => {
+  const grafo = crearEjemploGrafo('dijkstra');
+  const firma = ctx.firmaCalculoGrafo(grafo);
+  grafo.nodos[0].nombre = 'Nuevo'; grafo.nodos[0].x += 1;
+  igual(ctx.firmaCalculoGrafo(grafo), firma);
+  [g => { g.dirigido = false; }, g => { g.nodos[0].id = 'otro'; }, g => { g.conexiones[0].valor++; },
+    g => { g.conexiones[0].hacia = 'n3'; }].forEach(cambiar => {
+    const otro = copiarGrafoModulo(grafo); cambiar(otro);
+    cierto(ctx.firmaCalculoGrafo(otro) !== firma);
+  });
 });
 
 prueba('Cálculos: entradas intactas, rechazos tempranos y reconstrucción desde copia original', () => {

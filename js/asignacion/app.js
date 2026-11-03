@@ -192,14 +192,16 @@ function importarAsignacionJSON() {
   input.onchange = evento => {
     const archivo = evento.target.files[0];
     if (!archivo) return;
+    if (archivo.size > 1024 * 1024) { notificar('El archivo supera 1 MiB. Importa solo el JSON de un ejercicio de asignación.', 'error'); return; }
     const lector = new FileReader();
     lector.onload = e => {
       try {
         const datos = JSON.parse(e.target.result);
-        let modelo = null, objetivo = 'min';
+        let modelo = null, objetivo = 'min', migrado = false;
         if (datos && datos.modelo) {
           // Formato v2: se valida todo antes de tocar el modelo abierto.
           if (datos.version !== undefined && datos.version !== 2) throw new Error('Versión de archivo no compatible (' + datos.version + '); se admite la versión 2.');
+          if (datos.objetivo !== undefined && !['min', 'max'].includes(datos.objetivo)) throw new Error('El objetivo debe ser «min» o «max».');
           const validacion = validarModeloAsignacionImportado(datos.modelo);
           if (!validacion.ok) throw new Error(resumirErroresImportacion(validacion.errores));
           modelo = validacion.modelo;
@@ -207,7 +209,9 @@ function importarAsignacionJSON() {
         } else if (datos && Array.isArray(datos.values)) {
           // Formato antiguo v1: migración tolerante (los valores no enteros quedan pendientes).
           if (datos.version !== undefined && datos.version !== 1) throw new Error('Versión de archivo no compatible (' + datos.version + '); el formato antiguo admite la versión 1.');
+          if (datos.objective !== undefined && !['min', 'max'].includes(datos.objective)) throw new Error('El objetivo debe ser «min» o «max».');
           modelo = migrarAsignacionV1(datos);
+          migrado = true;
           objetivo = datos.objective === 'max' ? 'max' : 'min';
         }
         if (!modelo) throw new Error('El archivo no contiene un problema de asignación válido (se esperaba { version: 2, modelo } o el formato antiguo con «values»).');
@@ -221,7 +225,7 @@ function importarAsignacionJSON() {
           estadoAsignacion.seleccion = null;
           matrizAsig.invalidas = {};
           cambiarVistaAsignacion('grafo');
-          notificar('Datos importados correctamente.', 'ok');
+          notificar(migrado ? 'Formato antiguo migrado. Revisa los nombres y las celdas pendientes; conserva el archivo original.' : 'Datos importados correctamente.', migrado ? 'aviso' : 'ok');
         };
         if (estadoAsignacion.modelo.recursos.length + estadoAsignacion.modelo.tareas.length > 0) {
           dialogoConfirmar({ titulo: 'Importar', mensaje: 'Se reemplazarán los datos actuales. Podrás deshacerlo con Ctrl+Z.' }).then(ok => { if (ok) aplicar(); });
@@ -262,7 +266,8 @@ const TEXTO_AYUDA_ASIGNACION =
   '· «Anterior», «Siguiente» y «Reiniciar» recorren los pasos. Puedes elegir una fase en la lista o usar «Ver todos». «Imprimir» prepara el procedimiento completo; desde el navegador también puedes guardarlo como PDF. La vista del grafo se puede exportar como PNG.\n\n' +
   '5) GUARDADO Y ATAJOS\n' +
   '· El ejercicio se guarda automáticamente en este navegador. «Guardar» conserva un trabajo con nombre y «Cargar» abre «Mis trabajos» para cargar, renombrar, eliminar y exportar/importar trabajos. Cargar un trabajo requiere confirmar el reemplazo del ejercicio.\n' +
-  '· Exportar/Importar JSON (panel «Edición») permite llevarte el problema. Un archivo inválido se rechaza antes de reemplazar los datos. Los trabajos no se sincronizan: exporta una copia antes de borrar los datos del navegador o si aparece un aviso de fallo de autoguardado.\n' +
+  '· Exportar/Importar JSON (panel «Edición») permite llevarte el problema. Un formato incompatible se rechaza antes de reemplazar los datos. Los trabajos no se sincronizan: exporta una copia antes de borrar los datos del navegador o si aparece un aviso de fallo de autoguardado.\n' +
+  '· El formato antiguo V1 tiene una migración tolerante: conserva los enteros en rango, incluido 0; valores ausentes, texto, decimales o fuera de rango quedan pendientes. Revisa esas celdas antes de resolver. Normaliza nombres; una estructura mayor de 8×8, versión u objetivo incompatibles se rechazan conservando el original. V2 se valida estrictamente y no transforma valores inválidos en pendientes.\n' +
   '· Ctrl+Z / Ctrl+Y deshacen y rehacen. 1 / 2 cambian de herramienta. Supr elimina la selección. Esc cierra el grafo ampliado o quita la selección; con un diálogo abierto, primero cierra el diálogo.\n' +
   '· En el video, «Ir al algoritmo» conserva el ejercicio y «No mostrar al entrar» recuerda tu preferencia. El video necesita internet y se puede volver a abrir desde «Video».';
 
@@ -320,7 +325,7 @@ function inicializarAsignacion() {
   document.getElementById('btnLimpiarAsig').addEventListener('click', limpiarAsignacion);
   document.getElementById('btnExportarAsignacion').addEventListener('click', exportarAsignacionJSON);
   document.getElementById('btnImportarAsignacion').addEventListener('click', importarAsignacionJSON);
-  document.getElementById('btnAyudaAsignacion').addEventListener('click', () => dialogoInformar({ titulo: 'Cómo usar Asignación', mensaje: TEXTO_AYUDA_ASIGNACION, ancho: true }));
+  document.getElementById('btnAyudaAsignacion').addEventListener('click', () => dialogoInformar({ titulo: 'Cómo usar Asignación', mensaje: TEXTO_AYUDA_ASIGNACION + '\n\n' + TEXTO_AYUDA_RECUPERACION, ancho: true }));
 
   document.addEventListener('keydown', evento => {
     if (dialogoAbierto()) return;

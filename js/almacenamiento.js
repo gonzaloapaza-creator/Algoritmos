@@ -18,30 +18,21 @@ function instantaneaGrafo() {
 }
 
 /**
- * Revisa y depura datos que vienen del almacenamiento.
- * Los datos pueden estar incompletos, ser de una versión anterior o haber sido modificados a mano.
- * Devuelve copias nuevas, así que el resultado se puede usar como estado.
+ * Valida datos del almacenamiento sin reparar ni eliminar registros.
+ * Conserva el nombre histórico por compatibilidad con los consumidores.
  * @param {Object} datos - Datos crudos del almacenamiento
  * @returns {{nodos:Array, conexiones:Array, siguienteId:number}|null}
- *          Grafo depurado o null si los datos son inválidos
+ *          Copia completa o null si los datos son incompatibles
  */
 function depurarGrafo(datos) {
-  if (!datos || !Array.isArray(datos.nodos) || !Array.isArray(datos.conexiones)) return null;
+  const validacion = validarGrafoImportado(datos);
+  return validacion.ok ? validacion.grafo : null;
+}
 
-  const nodos = datos.nodos
-    .filter(n => n && typeof n.id === 'string' && typeof n.nombre === 'string' &&
-                 Number.isFinite(n.x) && Number.isFinite(n.y))
-    .map(n => ({ id: n.id, nombre: n.nombre, x: n.x, y: n.y }));
-
-  const ids = new Set(nodos.map(n => n.id));
-  // Ids repetidos: las conexiones serían ambiguas; no se adivina cuál era el nodo real.
-  if (ids.size !== nodos.length) return null;
-  // El peso solo tiene que ser entero dentro del rango de la interfaz: el cero y los negativos son válidos.
-  const conexiones = datos.conexiones
-    .filter(c => c && typeof c.id === 'string' && ids.has(c.desde) && ids.has(c.hacia) &&
-                 Number.isInteger(c.valor) && Math.abs(c.valor) <= MAX_PESO)
-    .map(c => ({ id: c.id, desde: c.desde, hacia: c.hacia, valor: c.valor }));
-  if (new Set(conexiones.map(c => c.id)).size !== conexiones.length) return null;
+// Normaliza únicamente el contador de versiones antiguas; nunca elimina datos.
+function copiarGrafoValidado(datos) {
+  const nodos = datos.nodos.map(n => ({ id: n.id, nombre: n.nombre, x: n.x, y: n.y }));
+  const conexiones = datos.conexiones.map(c => ({ id: c.id, desde: c.desde, hacia: c.hacia, valor: c.valor }));
 
   // El contador debe quedar por encima del número más alto ya usado,
   // o los identificadores nuevos chocarían con los recuperados.
@@ -58,7 +49,7 @@ function depurarGrafo(datos) {
 
 /**
  * Validación estricta para importar un grafo (archivo JSON o «Mis trabajos»).
- * A diferencia de depurarGrafo(), no descarta nada en silencio: devuelve la lista
+ * No descarta nada en silencio: devuelve la lista
  * de problemas para que el usuario corrija el archivo y el grafo abierto quede intacto.
  * Aplica las mismas reglas que la interfaz (nombres únicos de hasta MAX_LARGO_NOMBRE
  * caracteres, pesos enteros entre -MAX_PESO y MAX_PESO).
@@ -70,27 +61,38 @@ function validarGrafoImportado(datos) {
   if (!datos || typeof datos !== 'object' || !Array.isArray(datos.nodos) || !Array.isArray(datos.conexiones)) {
     return { ok: false, errores: ['El archivo no contiene las listas «nodos» y «conexiones».'] };
   }
+  if (datos.nodos.length > 40 || datos.conexiones.length > 300) {
+    return { ok: false, errores: ['El editor admite hasta 40 nodos y 300 conexiones. Conserva el original y divide el ejercicio.'] };
+  }
+  if (datos.siguienteId !== undefined && (!Number.isSafeInteger(datos.siguienteId) || datos.siguienteId < 1 || datos.siguienteId >= Number.MAX_SAFE_INTEGER)) {
+    errores.push('El contador de identificadores debe ser un entero positivo seguro.');
+  }
   const ids = new Set(), nombres = new Set();
   datos.nodos.forEach((n, i) => {
     const ref = 'Nodo ' + (i + 1);
-    if (!n || typeof n.id !== 'string' || n.id === '') { errores.push(ref + ': falta el identificador.'); return; }
+    if (!n || typeof n.id !== 'string' || !n.id.trim()) { errores.push(ref + ': falta el identificador.'); return; }
+    if (n.id.length > 80) errores.push(ref + ': identificador demasiado largo (máximo 80).');
     if (ids.has(n.id)) errores.push(ref + ': identificador «' + n.id + '» repetido.');
     ids.add(n.id);
     const nombre = typeof n.nombre === 'string' ? n.nombre.trim() : '';
     if (nombre === '') errores.push(ref + ' (' + n.id + '): el nombre está vacío.');
-    else if (nombre.length > MAX_LARGO_NOMBRE) errores.push(ref + ' (' + n.id + '): nombre de más de ' + MAX_LARGO_NOMBRE + ' caracteres.');
+    else if (n.nombre.length > MAX_LARGO_NOMBRE) errores.push(ref + ' (' + n.id + '): nombre de más de ' + MAX_LARGO_NOMBRE + ' caracteres.');
     else if (nombres.has(nombre.toLowerCase())) errores.push(ref + ' (' + n.id + '): el nombre «' + nombre + '» está repetido.');
     nombres.add(nombre.toLowerCase());
     if (!Number.isFinite(n.x) || !Number.isFinite(n.y)) errores.push(ref + ' (' + n.id + '): posición no numérica.');
+    else if (Math.abs(n.x) > 1000000 || Math.abs(n.y) > 1000000) errores.push(ref + ': posición fuera del rango ±1000000.');
   });
   const idsConexion = new Set(), parejas = new Set();
   datos.conexiones.forEach((c, i) => {
     const ref = 'Conexión ' + (i + 1);
-    if (!c || typeof c.id !== 'string' || c.id === '') { errores.push(ref + ': falta el identificador.'); return; }
-    if (idsConexion.has(c.id)) errores.push(ref + ': identificador «' + c.id + '» repetido.');
+    if (!c || typeof c.id !== 'string' || !c.id.trim()) { errores.push(ref + ': falta el identificador.'); return; }
+    if (c.id.length > 80) errores.push(ref + ': identificador demasiado largo (máximo 80).');
+    if (idsConexion.has(c.id) || ids.has(c.id)) errores.push(ref + ': identificador «' + c.id + '» repetido.');
     idsConexion.add(c.id);
     const pareja = JSON.stringify([c.desde, c.hacia]);
-    if (parejas.has(pareja)) errores.push(ref + ': conexión repetida entre el mismo origen y destino.');
+    if (c.desde === c.hacia) errores.push(ref + ': Selecciona otro vértice: no se permiten conexiones consigo mismo.');
+    if (parejas.has(pareja)) errores.push(ref + ': conexión repetida. Esta conexión ya existe. Puedes editar su peso.');
+    if (parejas.has(JSON.stringify([c.hacia, c.desde]))) errores.push(ref + ': Ya existe una conexión entre estos vértices en el sentido contrario.');
     parejas.add(pareja);
     if (!ids.has(c.desde)) errores.push(ref + ' (' + c.id + '): el nodo de origen «' + c.desde + '» no existe.');
     if (!ids.has(c.hacia)) errores.push(ref + ' (' + c.id + '): el nodo de destino «' + c.hacia + '» no existe.');
@@ -98,11 +100,40 @@ function validarGrafoImportado(datos) {
     else if (Math.abs(c.valor) > MAX_PESO) errores.push(ref + ' (' + c.id + '): el peso debe estar entre -' + MAX_PESO + ' y ' + MAX_PESO + '.');
   });
   if (errores.length) return { ok: false, errores };
-  return { ok: true, grafo: depurarGrafo(datos) };
+  const grafo = copiarGrafoValidado(datos);
+  if (!Number.isSafeInteger(grafo.siguienteId) || grafo.siguienteId >= Number.MAX_SAFE_INTEGER) return { ok: false, errores: ['Los identificadores numéricos exceden el rango seguro.'] };
+  return { ok: true, grafo };
+}
+
+/** Regla del editor Johnson, independiente de los nombres y de su posición. */
+function validarConexionJohnson(grafo, desde, hacia, idExcluir) {
+  if (!grafo.nodos.some(n => n.id === desde) || !grafo.nodos.some(n => n.id === hacia)) return { ok: false, error: 'El vértice de origen o destino ya no existe.' };
+  if (desde === hacia) return { ok: false, error: 'Selecciona otro vértice: no se permiten conexiones consigo mismo.' };
+  const otras = grafo.conexiones.filter(c => c.id !== idExcluir);
+  if (otras.some(c => c.desde === desde && c.hacia === hacia)) return { ok: false, error: 'Esta conexión ya existe. Puedes editar su peso.' };
+  if (otras.some(c => c.desde === hacia && c.hacia === desde)) return { ok: false, error: 'Ya existe una conexión entre estos vértices en el sentido contrario.' };
+  return { ok: true };
+}
+
+/** Crear o editar extremos/peso de forma atómica; los rechazos no tocan estado ni historial. */
+function guardarConexionJohnson(desde, hacia, valor, idEditar) {
+  const validacion = validarConexionJohnson(estado, desde, hacia, idEditar);
+  if (!validacion.ok) return validacion;
+  if (idEditar && !buscarConexion(idEditar)) return { ok: false, error: 'La conexión ya no existe.' };
+  if (!Number.isInteger(valor) || Math.abs(valor) > MAX_PESO) return { ok: false, error: 'El peso debe ser un entero entre -' + MAX_PESO + ' y ' + MAX_PESO + '.' };
+  if (!idEditar && estado.conexiones.length >= 300) return { ok: false, error: 'El editor admite hasta 300 conexiones.' };
+  guardarEstadoParaDeshacer();
+  if (idEditar) Object.assign(buscarConexion(idEditar), { desde, hacia, valor });
+  else estado.conexiones.push({ id: nuevoId('c'), desde, hacia, valor });
+  guardar(); dibujar();
+  return { ok: true };
 }
 
 /** Reemplaza el grafo en pantalla por uno ya depurado. */
 function aplicarGrafo(limpio) {
+  const validacion = validarGrafoImportado(limpio);
+  if (!validacion.ok) throw new Error(resumirErroresImportacion(validacion.errores));
+  limpio = validacion.grafo;
   estado.nodos = limpio.nodos;
   estado.conexiones = limpio.conexiones;
   estado.siguienteId = limpio.siguienteId;
@@ -119,6 +150,7 @@ function aplicarGrafo(limpio) {
  * Si el navegador bloquea el almacenamiento, la aplicación sigue funcionando.
  */
 function guardar() {
+  if (!validarGrafoImportado(instantaneaGrafo()).ok) return false;
   // Si el navegador bloquea el almacenamiento, la aplicación sigue funcionando y se avisa una sola vez.
   escribirAlmacenamientoLocal(CLAVE_ALMACEN, JSON.stringify(instantaneaGrafo()), { respaldo: 'usa «Más → Exportar JSON»' });
 }
@@ -128,18 +160,20 @@ function guardar() {
  * Si los datos están corruptos o no existen, deja el grafo vacío.
  */
 function cargar() {
+  let crudo;
   try {
-    const crudo = localStorage.getItem(CLAVE_ALMACEN);
+    crudo = localStorage.getItem(CLAVE_ALMACEN);
     if (!crudo) return;
-    const limpio = depurarGrafo(JSON.parse(crudo));
-    if (limpio) aplicarGrafo(limpio);
+    const validacion = validarGrafoImportado(JSON.parse(crudo));
+    if (!validacion.ok) throw new Error(resumirErroresImportacion(validacion.errores));
+    aplicarGrafo(validacion.grafo);
   } catch (e) {
-    estado.nodos = [];
-    estado.conexiones = [];
+    if (crudo) protegerGuardadoIncompatible(CLAVE_ALMACEN, crudo, e.message);
   }
 }
 
 function borrarGuardado() {
+  if (!permiteEscrituraGuardado(CLAVE_ALMACEN)) return;
   try { localStorage.removeItem(CLAVE_ALMACEN); } catch (e) { /* sin almacenamiento */ }
 }
 
@@ -151,13 +185,15 @@ function leerBiblioteca() {
     const crudo = localStorage.getItem(CLAVE_BIBLIOTECA);
     if (!crudo) return [];
     const datos = JSON.parse(crudo);
-    if (!Array.isArray(datos)) return [];
+    if (!Array.isArray(datos)) throw new Error('La biblioteca no contiene una lista de grafos.');
+    if (new Set(datos.map(g => g && g.id)).size !== datos.length) throw new Error('La biblioteca contiene identificadores repetidos.');
 
     return datos
-      .filter(g => g && typeof g.id === 'string' && typeof g.nombre === 'string')
       .map(g => {
-        const limpio = depurarGrafo(g);
-        if (!limpio) return null;
+        const validacion = validarGrafoImportado(g);
+        if (!g || typeof g.id !== 'string' || typeof g.nombre !== 'string') throw new Error('Hay un registro sin nombre o identificador.');
+        if (!validacion.ok) return g; // Visible y exportable, se rechaza únicamente su carga.
+        const limpio = validacion.grafo;
         return {
           id: g.id,
           nombre: g.nombre,
@@ -166,15 +202,16 @@ function leerBiblioteca() {
           conexiones: limpio.conexiones,
           siguienteId: limpio.siguienteId
         };
-      })
-      .filter(g => g !== null);
+      });
   } catch (e) {
+    try { const crudo = localStorage.getItem(CLAVE_BIBLIOTECA); if (crudo) protegerGuardadoIncompatible(CLAVE_BIBLIOTECA, crudo, e.message); } catch (_) { /* almacenamiento no disponible */ }
     return [];
   }
 }
 
 /** @returns {boolean} false si el navegador no pudo guardar (por ejemplo, sin espacio). */
 function escribirBiblioteca(lista) {
+  if (!permiteEscrituraGuardado(CLAVE_BIBLIOTECA)) return false;
   try {
     localStorage.setItem(CLAVE_BIBLIOTECA, JSON.stringify(lista));
     return true;

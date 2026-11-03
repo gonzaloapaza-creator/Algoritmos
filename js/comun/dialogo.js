@@ -105,7 +105,7 @@ function construirDialogo() {
     '  <p id="dialogoMensaje" class="modal-scroll"></p>' +
     '  <div id="dialogoCampo" hidden>' +
     '    <label class="sr-only" for="dialogoInput">Valor</label>' +
-    '    <input type="text" id="dialogoInput" autocomplete="off" inputmode="text" />' +
+    '    <input type="text" id="dialogoInput" autocomplete="off" inputmode="text" aria-describedby="dialogoError" />' +
     '    <p class="modal-error" id="dialogoError" role="alert" hidden></p>' +
     '  </div>' +
     '  <div class="modal-botones">' +
@@ -163,6 +163,7 @@ function abrirDialogo(config) {
     dialogo.mensaje.textContent = config.mensaje || '';
     dialogo.mensaje.hidden = !config.mensaje;
     dialogo.error.hidden = true;
+    dialogo.input.removeAttribute('aria-invalid');
     dialogo.campo.hidden = !config.pedirTexto;
     dialogo.cancelar.hidden = !!config.soloAceptar;
     dialogo.aceptar.textContent = config.textoAceptar || 'Aceptar';
@@ -201,6 +202,7 @@ function abrirDialogo(config) {
       if (!resultado.ok) {
         dialogo.error.textContent = resultado.error;
         dialogo.error.hidden = false;
+        dialogo.input.setAttribute('aria-invalid', 'true');
         dialogo.input.focus();
         return;
       }

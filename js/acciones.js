@@ -8,6 +8,8 @@
  * @param {number} y - Coordenada Y para el nuevo nodo
  */
 function crearNodo(x, y) {
+  if (!Number.isFinite(x) || !Number.isFinite(y)) { avisar('La posición debe ser numérica.', 'error'); return; }
+  if (estado.nodos.length >= 40) { avisar('El editor admite hasta 40 nodos.', 'error'); return; }
   guardarEstadoParaDeshacer();
   
   const plano = limitesPlanoGrafo();
@@ -34,6 +36,7 @@ function crearNodo(x, y) {
  * @param {Object} nodo - El nodo seleccionado
  */
 function manejarConectar(nodo) {
+  if (!nodo || !buscarNodo(nodo.id)) return;
   if (!estado.origenConexion) {
     estado.origenConexion = nodo.id;
     ayudar('Origen: <strong>' + escaparHtml(nodo.nombre) + '</strong>. Ahora selecciona el nodo de destino.');
@@ -44,7 +47,6 @@ function manejarConectar(nodo) {
 
   const origen = buscarNodo(estado.origenConexion);
   const destino = nodo;
-  estado.origenConexion = null;
 
   // Si el origen ya no existe, se vuelve a empezar en lugar de fallar.
   if (!origen) {
@@ -54,30 +56,28 @@ function manejarConectar(nodo) {
     return;
   }
 
+  const validacion = validarConexionJohnson(estado, origen.id, destino.id);
+  if (!validacion.ok) {
+    avisar(validacion.error, 'error');
+    ayudar(escaparHtml(validacion.error + ' Elige otro destino; para editar o eliminar una conexión, cambia a Seleccionar y toca su línea.'));
+    return;
+  }
+  const firma = JSON.stringify(instantaneaGrafo());
+  estado.origenConexion = null;
   dibujar();
 
-  const existente = buscarConexionEntre(origen.id, destino.id);
-
   pedirTexto({
-    titulo: existente ? 'Actualizar valor de la conexión' : 'Valor de la conexión',
+    titulo: 'Valor de la conexión',
     mensaje: 'Conexión ' + origen.nombre + ' → ' + destino.nombre +
              '. Introduce el peso: un número entero, que puede ser negativo o cero.',
-    valor: existente ? String(existente.valor) : '1',
+    valor: '1',
     validar: validarValor
   }).then(resultado => {
     ayudar('<strong>Selecciona el nodo de origen</strong>.');
     if (resultado === null) { dibujar(); return; }
-
-    guardarEstadoParaDeshacer();
-
-    if (existente) {
-      existente.valor = resultado;
-      avisar('La conexión ya existía: se actualizó su valor a ' + resultado + '.', 'ok');
-    } else {
-      estado.conexiones.push({ id: nuevoId('c'), desde: origen.id, hacia: destino.id, valor: resultado });
-    }
-    guardar();
-    dibujar();
+    if (!comprobarEdicionJohnson(firma)) return;
+    const cambio = guardarConexionJohnson(origen.id, destino.id, resultado);
+    if (!cambio.ok) avisar(cambio.error, 'error');
   });
 }
 
@@ -87,6 +87,7 @@ function manejarConectar(nodo) {
  */
 function editarSeleccion() {
   if (!estado.seleccion) return;
+  const firma = JSON.stringify(instantaneaGrafo());
 
   if (estado.seleccion.tipo === 'nodo') {
     const nodo = buscarNodo(estado.seleccion.id);
@@ -98,6 +99,7 @@ function editarSeleccion() {
       validar: texto => validarNombre(texto, nodo.id)
     }).then(nuevo => {
       if (nuevo === null) return;
+      if (!comprobarEdicionJohnson(firma)) return;
       guardarEstadoParaDeshacer();
       nodo.nombre = nuevo;      // las conexiones usan el id
       guardar();
@@ -119,10 +121,9 @@ function editarSeleccion() {
     validar: validarValor
   }).then(nuevo => {
     if (nuevo === null) return;
-    guardarEstadoParaDeshacer();
-    conexion.valor = nuevo;
-    guardar();
-    dibujar();
+    if (!comprobarEdicionJohnson(firma)) return;
+    const cambio = guardarConexionJohnson(conexion.desde, conexion.hacia, nuevo, conexion.id);
+    if (!cambio.ok) { avisar(cambio.error, 'error'); return; }
     avisar('Valor actualizado correctamente.', 'ok');
   });
 }
@@ -134,6 +135,7 @@ function editarSeleccion() {
  */
 function eliminarSeleccion() {
   if (!estado.seleccion) return;
+  const firma = JSON.stringify(instantaneaGrafo());
 
   if (estado.seleccion.tipo === 'nodo') {
     const nodo = buscarNodo(estado.seleccion.id);
@@ -143,6 +145,7 @@ function eliminarSeleccion() {
       mensaje: '¿Seguro que deseas eliminar el nodo ' + nodo.nombre + ' y todas sus conexiones?'
     }).then(aceptado => {
       if (!aceptado) { avisar('No se eliminó nada.'); return; }
+      if (!comprobarEdicionJohnson(firma)) return;
       guardarEstadoParaDeshacer();
       estado.conexiones = estado.conexiones.filter(c => c.desde !== nodo.id && c.hacia !== nodo.id);
       estado.nodos = estado.nodos.filter(n => n.id !== nodo.id);
@@ -163,14 +166,21 @@ function eliminarSeleccion() {
     mensaje: '¿Seguro que deseas eliminar la conexión de ' + a.nombre + ' hacia ' + b.nombre + '?'
   }).then(aceptado => {
     if (!aceptado) { avisar('No se eliminó nada.'); return; }
+    if (!comprobarEdicionJohnson(firma)) return;
     guardarEstadoParaDeshacer();
-    // Solo se borra esta dirección; la conexión contraria se conserva.
+    // Los extremos se identifican por id, independientemente del nombre.
     estado.conexiones = estado.conexiones.filter(c => c.id !== conexion.id);
     estado.seleccion = null;
     guardar();
     dibujar();
     avisar('Conexión eliminada correctamente.', 'ok');
   });
+}
+
+function comprobarEdicionJohnson(firma) {
+  if (firma === JSON.stringify(instantaneaGrafo())) return true;
+  avisar('El grafo cambió mientras la ventana estaba abierta. Repite la operación sobre el ejercicio actual.', 'error');
+  return false;
 }
 
 const TEXTO_AYUDA =
@@ -193,7 +203,7 @@ const TEXTO_AYUDA =
   '   1. Toca el nodo de ORIGEN: queda marcado en verde.\n' +
   '   2. Toca el nodo de DESTINO y escribe el valor de la conexión.\n' +
   '   Para cancelar a medio camino, toca una zona vacía o cambia de herramienta.\n' +
-  '· Ejemplos: carga uno de los grafos preparados (pesos negativos, solo positivos, nodos sin camino, ceros y bucle, ciclo negativo).\n' +
+  '· Ejemplos: carga uno de los grafos preparados (pesos negativos, solo positivos, nodos sin camino, ceros y pesos negativos, ciclo negativo).\n' +
   '· Calcular Johnson: ejecuta el algoritmo y abre la resolución paso a paso. Necesita al menos dos nodos.\n' +
   '· Más: despliega el resto de opciones.\n' +
   '   – Deshacer / Rehacer: también con Ctrl+Z y Ctrl+Y.\n' +
@@ -210,25 +220,25 @@ const TEXTO_AYUDA =
   '· Los botones −, % y + de la esquina superior derecha controlan el zoom; el del centro encuadra el grafo completo sin mover los nodos.\n\n' +
 
   '1.c) LOS CUATRO PASOS\n' +
-  '· 2 Matriz: matriz de adyacencia con sus sumas y una revisión de los datos (nodos, conexiones, pesos negativos, bucles).\n' +
+  '· 2 Matriz: matriz de adyacencia con sus sumas y una revisión de los datos (nodos, conexiones y pesos negativos).\n' +
   '· 3 Paso a paso: cada fase real del algoritmo con su tabla y el grafo resaltado: nodo auxiliar q, cada pasada de Bellman-Ford, potenciales h(v), reponderación y un Dijkstra por cada origen. Anterior / Siguiente (o las flechas ← →) recorren los pasos.\n' +
   '· 4 Resultado: matriz de distancias mínimas. Toca una celda para ver su ruta y la suma de sus pesos; «Ver en el editor» la resalta sobre el grafo.\n' +
-  '· Si cambias el grafo después de calcular, el resultado se marca como desactualizado hasta que vuelvas a calcular.\n\n' +
+  '· Cambiar nodos, conexiones o pesos exige recalcular. Mover nodos o renombrarlos conserva las distancias y actualiza las etiquetas.\n\n' +
 
   '2) EDITAR Y ELIMINAR\n' +
   '· Selecciona el elemento y usa el panel que aparece en la parte inferior.\n' +
   '· En un nodo, el botón cambia su nombre; en una conexión, cambia su valor.\n' +
   '· Al eliminar un nodo se eliminan también todas las conexiones que entran o salen de él.\n' +
-  '· Al eliminar una conexión solo desaparece ese sentido: la contraria se conserva.\n' +
+  '· Al eliminar una conexión desaparece su relación y se invalida el cálculo anterior.\n' +
   '· El botón ✕ del panel cierra el panel sin modificar nada.\n\n' +
 
   '3) REGLAS DE LOS DATOS\n' +
   '· El peso de una conexión es un número ENTERO: admite positivos, negativos y cero, hasta 999999 en valor absoluto. No se aceptan decimales ni texto.\n' +
   '· Un peso de 0 es una conexión real que no cuesta nada recorrer; no es lo mismo que no tener conexión.\n' +
-  '· El grafo es DIRIGIDO: a → b y b → a son dos conexiones distintas y cada una puede tener su propio valor. Cuando existen las dos, se dibujan curvadas para que ninguna tape a la otra.\n' +
-  '· Si vuelves a conectar dos nodos en el mismo sentido, no se duplica la conexión: se actualiza el valor de la que ya existía.\n' +
-  '· Al importar JSON, las conexiones repetidas entre el mismo origen y destino se rechazan antes de reemplazar tu trabajo. Las conexiones inversas y los bucles sí son válidos.\n' +
-  '· Un nodo puede conectarse consigo mismo (bucle); se dibuja como un lazo.\n' +
+  '· El grafo es DIRIGIDO. Por regla de esta aplicación no se permiten bucles A → A, conexiones duplicadas A → B ni B → A si ya existe A → B. Para cambiar un peso, selecciona la conexión y pulsa Editar.\n' +
+  '· Esta restricción pertenece al editor; el algoritmo de Johnson y los grafos dirigidos en general pueden admitir aristas opuestas.\n' +
+  '· Sí se permiten ciclos de tres o más vértices, como A → B → C → A, y pesos negativos. Solo un ciclo de suma negativa impide calcular distancias mínimas.\n' +
+  '· Hasta 40 nodos, 300 conexiones y archivos de 1 MB. Las importaciones incompatibles se rechazan completas y conservan el ejercicio abierto.\n' +
   '· Los nombres de los nodos no se repiten y admiten hasta ' + MAX_LARGO_NOMBRE + ' caracteres.\n\n' +
 
   '4) LA MATRIZ DE ADYACENCIA\n' +
@@ -236,7 +246,7 @@ const TEXTO_AYUDA =
   '· La FILA indica el nodo de origen y la COLUMNA el nodo de destino.\n' +
   '· La celda contiene el peso de la conexión origen → destino, o una raya (—) si esa conexión no existe.\n' +
   '· Al ser un grafo dirigido, la matriz normalmente NO es simétrica.\n' +
-  '· La diagonal (a-a, b-b…) solo tiene valor cuando el nodo tiene un bucle.\n' +
+  '· La diagonal de adyacencia muestra — porque el editor no admite bucles. La diagonal de distancias mínimas vale 0 cuando no existe un ciclo negativo. La matriz es de consulta; edita desde el grafo.\n' +
   '· “Σ fila” suma los valores que salen de un nodo y “Σ col.” los que entran en él; junto a cada suma se indica también cuántos de esos valores son distintos de cero (un peso de 0 cuenta como conexión, pero no como “valor ≠ 0”).\n' +
   '· La última celda es la suma de todos los valores del grafo, con su propia cantidad de valores ≠ 0.\n' +
   '· La matriz siempre refleja el grafo actual.\n\n' +
@@ -249,6 +259,7 @@ const TEXTO_AYUDA =
   '· Cargar un grafo guardado reemplaza el que esté en pantalla, por eso se pide confirmación.\n' +
   '· Limpiar solo borra el grafo en pantalla; los grafos guardados no se tocan.\n' +
   '· Los ejercicios se guardan localmente y no se sincronizan entre dispositivos. Borrar los datos del navegador puede eliminarlos; exporta JSON para conservar una copia o llevarla a otro equipo. Si falla el autoguardado, usa la exportación indicada en el aviso.\n' +
+  '· Un autoguardado incompatible se conserva intacto y pausa nuevas escrituras: descarga el original desde el aviso y elige «Usar ejercicio actual» para habilitarlas. La Biblioteca permite descargar grafos antiguos sin cargarlos; «Mis trabajos → Exportar» conserva sus originales. Corrige bucles, duplicados o pares opuestos en una copia del archivo.\n' +
   '· Al cambiar el tamaño de la ventana, girar el teléfono o recuperar un grafo, se ajusta la vista y se conservan las posiciones de los nodos.\n' +
   '· «Exportar imagen» descarga el grafo visible como PNG. «Imprimir» en Paso a paso prepara el procedimiento completo para imprimir o guardar como PDF desde el navegador.\n\n' +
 
@@ -282,6 +293,7 @@ function mostrarAyuda() {
 }
 
 function limpiarTodo() {
+  const firma = JSON.stringify(instantaneaGrafo());
   if (estado.nodos.length === 0 && estado.conexiones.length === 0) {
     avisar('El grafo ya está vacío.');
     return;
@@ -291,6 +303,7 @@ function limpiarTodo() {
     mensaje: '¿Seguro que deseas eliminar todos los nodos y conexiones?'
   }).then(aceptado => {
     if (!aceptado) { avisar('No se eliminó nada.'); return; }
+    if (!comprobarEdicionJohnson(firma)) return;
     guardarEstadoParaDeshacer();
     estado.nodos = [];
     estado.conexiones = [];
@@ -360,6 +373,8 @@ function importarGrafoJSON() {
   input.onchange = function(evento) {
     const archivo = evento.target.files[0];
     if (!archivo) return;
+    if (archivo.size > 1024 * 1024) { avisar('El archivo supera el límite de 1 MB.', 'error'); return; }
+    const firma = JSON.stringify(instantaneaGrafo());
     
     const lector = new FileReader();
     lector.onload = function(e) {
@@ -379,6 +394,7 @@ function importarGrafoJSON() {
         const limpio = validacion.grafo;
 
         const importar = () => {
+          if (!comprobarEdicionJohnson(firma)) return;
           guardarEstadoParaDeshacer();
           irAlEditorJohnson();
           aplicarGrafo(limpio);

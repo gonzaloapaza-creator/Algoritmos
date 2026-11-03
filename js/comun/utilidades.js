@@ -2,9 +2,16 @@
 
 'use strict';
 
+const TEXTO_AYUDA_RECUPERACION = 'RECUPERACIÓN DE DATOS\nSi un guardado anterior es incompatible, su original se conserva intacto y el autoguardado queda pausado. Usa «Descargar original» en el aviso, conserva ese archivo y después elige «Usar ejercicio actual» para habilitar el próximo guardado. Mientras tanto puedes trabajar en esta sesión y exportarla. Corrige los problemas indicados en una copia del original; no se eliminan datos para repararlo automáticamente. Los archivos JSON de importación admiten hasta 1 MiB.';
+
 /** Mantiene un valor dentro de un rango. */
 function limitar(valor, minimo, maximo) {
   return Math.max(minimo, Math.min(maximo, valor));
+}
+
+/** Incluye paneles cuyo atributo hidden está en un ancestro. */
+function hayDialogoVisible() {
+  return Array.from(document.querySelectorAll('[role="dialog"]')).some(panel => panel.getClientRects().length > 0);
 }
 
 /**
@@ -42,6 +49,7 @@ const estadoAlmacenamientoLocal = { fallando: false, aviso: null };
  * @returns {boolean} true si se guardó
  */
 function escribirAlmacenamientoLocal(clave, valor, opciones) {
+  if (!permiteEscrituraGuardado(clave)) return false;
   try {
     localStorage.setItem(clave, valor);
   } catch (error) {
@@ -58,6 +66,53 @@ function escribirAlmacenamientoLocal(clave, valor, opciones) {
     else if (typeof avisar === 'function') avisar('El guardado local volvió a funcionar.', 'ok');
   }
   return true;
+}
+
+// Un original incompatible nunca se reemplaza por un ejemplo ni por una reparación parcial.
+const guardadosProtegidos = new Map();
+
+function permiteEscrituraGuardado(clave) {
+  return !guardadosProtegidos.has(clave);
+}
+
+function descargarOriginalGuardado(crudo, nombre) {
+  const url = URL.createObjectURL(new Blob([crudo], { type: 'application/json' }));
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = nombre || 'guardado-original.json';
+  enlace.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function protegerGuardadoIncompatible(clave, crudo, motivo) {
+  if (guardadosProtegidos.has(clave)) return;
+  const recuperacion = { crudo, descargado: false };
+  guardadosProtegidos.set(clave, recuperacion);
+  if (typeof document === 'undefined') return;
+  const aviso = document.createElement('div');
+  aviso.className = 'mensaje mensaje--aviso aviso-almacenamiento';
+  aviso.setAttribute('role', 'alert');
+  const texto = document.createElement('p');
+  texto.textContent = 'El guardado anterior es incompatible y se conserva intacto. ' + motivo +
+    ' Puedes trabajar en esta sesión; el autoguardado está pausado hasta descargar el original y elegir usar el ejercicio actual.';
+  const descargar = document.createElement('button');
+  descargar.type = 'button'; descargar.className = 'btn btn-neutral';
+  descargar.textContent = 'Descargar original';
+  const continuar = document.createElement('button');
+  continuar.type = 'button'; continuar.className = 'btn btn-primary';
+  continuar.textContent = 'Usar ejercicio actual'; continuar.disabled = true;
+  descargar.addEventListener('click', () => {
+    descargarOriginalGuardado(crudo, clave.replace(/[^a-z0-9.-]/gi, '-') + '-original.json');
+    recuperacion.descargado = true; continuar.disabled = false;
+  });
+  continuar.addEventListener('click', () => {
+    if (!recuperacion.descargado) return;
+    guardadosProtegidos.delete(clave); aviso.remove();
+    const informar = typeof notificar === 'function' ? notificar : typeof avisar === 'function' ? avisar : null;
+    if (informar) informar('El próximo cambio guardará el ejercicio actual. Conserva el archivo original descargado.', 'ok');
+  });
+  aviso.append(texto, descargar, continuar);
+  (document.getElementById('moduloContenido') || document.querySelector('.contenido') || document.body).prepend(aviso);
 }
 
 function mostrarAvisoAlmacenamiento(respaldo) {
