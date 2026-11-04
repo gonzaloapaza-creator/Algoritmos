@@ -1,0 +1,6 @@
+[build]
+  command = "node scripts/preparar-netlify.js --solo-publico"
+  publish = "public"
+
+[build.environment]
+  NODE_VERSION = "22"

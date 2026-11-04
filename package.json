@@ -4,8 +4,12 @@
   "private": true,
   "description": "Aplicación web educativa de algoritmos de optimización y estructuras de datos (HTML, CSS y JS planos, sin dependencias).",
   "scripts": {
+    "build": "node scripts/preparar-netlify.js --solo-publico",
+    "preparar:netlify": "node scripts/preparar-netlify.js",
     "start": "node tests/servidor-local.js",
     "lint": "node tests/verificar.js",
+    "test:asistente": "node tests/asistente-contexto.test.js && node tests/asistente-interfaz.test.js && node tests/asistente-servidor.test.js",
+    "test:asistente:navegador": "node tests/asistente-navegador.js",
     "test": "node tests/verificar.js && node tests/johnson.test.js && node tests/asignacion.test.js && node tests/northwest.test.js && node tests/ordenamiento.test.js && node tests/arboles.test.js && node tests/guardados.test.js && node tests/foco.test.js && node tests/grafos.test.js",
     "test:ampliacion": "node tests/ampliacion-navegador.js",
     "test:mejoras": "node tests/mejoras-grafos-navegador.js",

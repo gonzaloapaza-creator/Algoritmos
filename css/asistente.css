@@ -1,0 +1,88 @@
+/* El robot tiene una franja propia para no tapar los controles del ejercicio. */
+body.algo-disponible { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+body.algo-disponible .sidebar { bottom: calc(70px + env(safe-area-inset-bottom)); }
+body.algo-disponible .toast-stack { bottom: calc(84px + env(safe-area-inset-bottom)); }
+body.nav-abierta .algo-root, body.gd-abierto .algo-root, body.grafo-ampliado .algo-root { visibility: hidden; }
+.algo-root { --algo-vh: 100dvh; --algo-teclado: 0px; font-size: .875rem; color: var(--texto); }
+.algo-root [hidden] { display: none !important; }
+.algo-solo-lectores { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.algo-dock { position: fixed; z-index: 49; bottom: var(--algo-teclado); left: 0; right: 0; height: calc(70px + env(safe-area-inset-bottom)); padding: 6px max(14px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); display: flex; align-items: center; pointer-events: none; background: var(--bg); border-top: 1px solid var(--borde-suave); }
+.algo-abrir { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; position: relative; width: 56px; height: 56px; padding: 2px; background: var(--bg-2); color: var(--texto); border: 1px solid var(--acento-borde); border-radius: 18px; cursor: pointer; box-shadow: var(--sombra-suave); }
+.algo-abrir:hover { background: var(--bg-3); }
+.algo-root button:focus-visible, .algo-root textarea:focus-visible, .algo-cuerpo-panel:focus-visible { outline: 3px solid var(--acento-fuerte); outline-offset: 2px; }
+.algo-robot { width: 50px; height: 50px; flex: 0 0 auto; overflow: visible; }
+.algo-cuerpo { fill: var(--bg-3); stroke: var(--acento-fuerte); stroke-width: 2; }
+.algo-pantalla { fill: var(--bg-input); }
+.algo-antena, .algo-orejas, .algo-pies { fill: none; stroke: var(--acento-fuerte); stroke-width: 3; stroke-linecap: round; }
+.algo-luz, .algo-ojos, .algo-puntos { fill: var(--acento-fuerte); }
+.algo-boca, .algo-sonrisa, .algo-preocupacion { fill: none; stroke: var(--acento-fuerte); stroke-width: 1.8; stroke-linecap: round; }
+.algo-sonrisa, .algo-puntos, .algo-preocupacion { display: none; }
+.algo-ojos { transform-box: fill-box; transform-origin: center; }
+.algo-parpadeo .algo-ojos { transform: scaleY(.12); }
+.algo-root[data-estado="respuesta"] .algo-boca, .algo-root[data-estado="saludo"] .algo-boca, .algo-root[data-estado="error"] .algo-boca { display: none; }
+.algo-root[data-estado="respuesta"] .algo-sonrisa, .algo-root[data-estado="saludo"] .algo-sonrisa { display: initial; }
+.algo-root[data-estado="error"] .algo-preocupacion { display: initial; }
+.algo-root[data-estado="error"] .algo-luz { fill: var(--peligro); }
+.algo-root[data-estado="saludo"] .algo-robot { animation: algoSaludo .7s ease-in-out 1; }
+.algo-root[data-estado="respuesta"] .algo-luz { animation: algoRespuesta .5s ease-out 2; }
+@keyframes algoSaludo { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-8deg); } 65% { transform: rotate(6deg); } }
+@keyframes algoRespuesta { 50% { opacity: .4; } }
+.algo-fondo { position: fixed; z-index: 50; inset: 0; background: var(--velo); }
+.algo-panel { position: fixed; z-index: 51; left: max(14px, env(safe-area-inset-left)); bottom: calc(82px + var(--algo-teclado) + env(safe-area-inset-bottom)); width: min(390px, calc(100vw - 28px)); height: min(620px, calc(var(--algo-vh) - 100px)); max-height: calc(var(--algo-vh) - 100px); display: grid; grid-template-rows: auto auto minmax(40px, 1fr) auto auto; border: 1px solid var(--acento-borde); border-radius: var(--radio-lg); background: var(--bg-2); box-shadow: var(--sombra); overflow: hidden; }
+.algo-cabecera { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border-bottom: 1px solid var(--borde); background: var(--bg-3); }
+.algo-cabecera .algo-robot { width: 40px; height: 40px; }
+.algo-cabecera h2 { flex: 1; min-width: 0; margin: 0; font-size: 1rem; line-height: 1.2; }
+.algo-cabecera h2 span { display: block; font-size: .74rem; font-weight: 500; margin-top: 3px; }
+.algo-icono { flex: 0 0 40px; width: 40px; min-height: 44px; padding: 0 !important; font-size: 1.5rem; }
+.algo-herramientas { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; padding: 3px 10px; border-bottom: 1px solid var(--borde-suave); }
+.algo-modulo { min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--texto-suave); font-size: .7rem; }
+.algo-herramientas .btn { flex: 0 0 auto; padding: 5px 4px; min-height: 38px; font-size: .69rem; }
+.algo-cuerpo-panel { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px; scrollbar-gutter: stable; overflow-anchor: none; }
+.algo-sugeridas { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.algo-sugerida { background: var(--acento-tinte); color: var(--texto); border: 1px solid var(--acento-borde); padding: 7px 9px; min-height: 44px; font: inherit; font-size: .75rem; border-radius: var(--radio-sm); cursor: pointer; text-align: left; }
+.algo-sugerida:hover { background: var(--bg-4); }
+.algo-sugerida:disabled { opacity: .65; cursor: wait; }
+.algo-mensajes { display: flex; flex-direction: column; gap: 10px; }
+.algo-mensaje { padding: 10px 11px; border: 1px solid var(--borde); border-radius: 12px; background: var(--bg); overflow-wrap: anywhere; min-width: 0; margin-right: 12px; }
+.algo-mensaje--usuario { background: var(--acento-tinte); margin: 0 0 0 22px; border-color: var(--acento-borde); }
+.algo-mensaje--aviso { border-color: var(--aviso); }
+.algo-mensaje__autor { display: block; font-size: .75rem; margin-bottom: 4px; }
+.algo-referencia { display: block; font-size: .68rem; color: var(--texto-suave); margin-bottom: 5px; }
+.algo-mensaje p { margin: 0; white-space: pre-wrap; font-size: .84rem; line-height: 1.5; }
+.algo-nuevas { justify-self: center; max-width: calc(100% - 24px); border: 1px solid var(--acento-borde); border-radius: var(--radio-sm); background: var(--bg-3); color: var(--texto); font: inherit; font-size: .75rem; padding: 9px 12px; min-height: 38px; margin: 0 0 6px; cursor: pointer; }
+.algo-formulario { min-width: 0; padding: 10px 12px 9px; border-top: 1px solid var(--borde); background: var(--bg-2); }
+.algo-formulario label { display: block; font-weight: 650; font-size: .8rem; margin-bottom: 4px; }
+.algo-formulario label span { color: var(--texto-suave); font-weight: 400; font-size: .63rem; }
+.algo-formulario textarea { display: block; resize: vertical; width: 100%; min-width: 0; min-height: 58px; max-height: 110px; padding: 8px 10px; font-size: 1rem; line-height: 1.35; color: var(--texto); background: var(--bg-input); border: 1px solid var(--borde); border-radius: var(--radio-sm); }
+.algo-acciones { display: flex; gap: 7px; margin-top: 8px; }
+.algo-acciones .btn { flex: 1 1 0; padding: 8px; min-height: 44px; font-size: .8rem; white-space: normal; }
+.algo-estado { color: var(--texto-suave); font-size: .7rem; line-height: 1.35; margin: 7px 0 0; overflow-wrap: anywhere; }
+.algo-altura-corta .algo-cabecera { padding: 3px 8px; }
+.algo-altura-corta .algo-cabecera .algo-robot { width: 32px; height: 32px; }
+.algo-altura-corta .algo-formulario label span { display: none; }
+.algo-altura-corta .algo-panel { grid-template-rows: auto auto minmax(24px, 1fr) auto auto; overflow-y: auto; }
+.algo-altura-corta .algo-herramientas { padding-top: 0; padding-bottom: 0; }
+.algo-altura-corta .algo-herramientas .btn { min-height: 32px; }
+.algo-altura-corta .algo-formulario { padding-top: 6px; padding-bottom: 5px; }
+.algo-altura-corta .algo-formulario textarea { min-height: 42px; max-height: 60px; height: 42px; resize: none; }
+.algo-altura-corta .algo-acciones { margin-top: 5px; }
+.algo-altura-corta .algo-estado { font-size: .65rem; margin-bottom: 4px; }
+@media (max-width: 640px), (max-height: 480px) {
+  .algo-panel { left: max(8px, env(safe-area-inset-left)); right: max(8px, env(safe-area-inset-right)); width: auto; max-width: 600px; margin-inline: auto; bottom: calc(8px + var(--algo-teclado) + env(safe-area-inset-bottom)); height: min(680px, calc(var(--algo-vh) - 16px - env(safe-area-inset-bottom) - env(safe-area-inset-top))); max-height: calc(var(--algo-vh) - 16px - env(safe-area-inset-bottom) - env(safe-area-inset-top)); }
+  body.algo-abierto .algo-dock { visibility: hidden; }
+  .algo-cabecera { padding: 6px 8px; }
+  .algo-cabecera h2 span { font-size: .69rem; }
+  .algo-formulario label span { font-size: .61rem; }
+}
+@media (max-width: 767px) {
+  body.algo-disponible .ciudad-acceso-movil { bottom: calc(80px + env(safe-area-inset-bottom)); }
+  body.page-home.algo-disponible .toast-stack { bottom: calc(156px + env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .algo-root *, .algo-root *::before, .algo-root *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .algo-parpadeo .algo-ojos { transform: none; }
+}
+@media print {
+  .algo-root { display: none !important; }
+  body.algo-disponible { padding-bottom: 0 !important; overflow: visible !important; }
+}

@@ -12,7 +12,7 @@ Proyecto de la materia **Análisis de Algoritmos** del grupo **Los Fanáticos de
 | Ordenamiento | **Ordenamiento (Bowling)** | 3–200 enteros entre 1 y 99 | Selection, Insertion, Bubble, Shell y Merge Sort animados con pinos, pseudocódigo e historial |
 | Árboles | **Árboles binarios** | 1–31 enteros únicos entre −999 y 999, o recorridos | Árbol SVG, recorridos animados y reconstrucción validada |
 
-Sin compilación, dependencias, backend ni base de datos: HTML, CSS y JavaScript planos. Los siete módulos ofrecen ayuda textual y una presentación en video. Dijkstra usa `UnsRfl6xw2o` y Kruskal, `Wo-Pk0Iq3oU`.
+Sin compilación ni dependencias de aplicación: HTML, CSS y JavaScript planos, con servidor Node estático local y ayuda interactiva local de Algo. Sin base de datos. Los siete módulos ofrecen ayuda textual y una presentación en video. Dijkstra usa `UnsRfl6xw2o` y Kruskal, `Wo-Pk0Iq3oU`.
 
 El inicio es una ciudad SVG con siete zonas seleccionables y un panel con entrada, resultado y acceso a cada módulo. En móvil, las escenas se conectan en una columna y el acceso al módulo seleccionado permanece visible mientras recorres la ciudad. «Vista lista» ofrece el mismo catálogo por categorías. La vista y la pausa de demostraciones se recuerdan en `ui.inicio.vista.v1` y `ui.inicio.movimiento.v1`; se respeta el movimiento reducido del sistema. Los trabajos recientes usan la biblioteca local existente: abren «Cargar» sin reemplazar el ejercicio hasta confirmar. Fundamentos, videos y equipo continúan al final del inicio.
 
@@ -35,7 +35,7 @@ El inicio es una ciudad SVG con siete zonas seleccionables y un panel con entrad
 npm start                    # servidor Node sin dependencias, solo 127.0.0.1:8123
 ```
 
-Conserva la dirección que ya utilizabas: `http://localhost:8123` y `http://127.0.0.1:8123` tienen almacenamientos separados, aunque abran el mismo proyecto. No se cambia el origen ni se migran datos entre ambos automáticamente. Si empiezas sin trabajos anteriores, las pruebas documentadas usan `http://127.0.0.1:8123/`. Como alternativa, `python -m http.server 8123 --bind 127.0.0.1`.
+Conserva la dirección que ya utilizabas: `http://localhost:8123` y `http://127.0.0.1:8123` tienen almacenamientos separados, aunque abran el mismo proyecto. No se cambia el origen ni se migran datos entre ambos automáticamente. Si empiezas sin trabajos anteriores, las pruebas documentadas usan `http://127.0.0.1:8123/`. El servidor Node conserva ese puerto y sirve únicamente archivos estáticos. Para publicar, usa el paquete estático de Netlify Drop y los pasos de [PUBLICAR_NETLIFY.md](PUBLICAR_NETLIFY.md).
 
 Los HTML son estáticos, pero abrirlos mediante `file://` no se ha verificado para este cierre y el almacenamiento depende del navegador; para la presentación usa el servidor y tu dirección habitual.
 
@@ -44,6 +44,16 @@ Páginas: `index.html`, `johnson.html`, `dijkstra.html`, `kruskal.html`, `asigna
 Parámetros útiles: `?intro=no` salta la presentación con video; `index.html?simular=10` muestra un catálogo simulado (entradas marcadas «Próximamente», nunca enlazadas) para revisar el diseño con muchas entradas.
 
 Navegador comprobado: Microsoft Edge 156.0.4314.58 en Windows, en modo headless y con contextos aislados. Se prevé uso en navegadores modernos con Pointer Events, ResizeObserver, `dvh/svh`, `:has()` y `aspect-ratio`; otros motores y dispositivos requieren comprobación. No se certifican teléfono físico, teclado virtual ni proyector.
+
+### Asistente educativo Algo
+
+Algo ofrece **Ayuda interactiva** en una sola conversación local. Reconoce preguntas sobre uso, datos, límites, herramientas, pasos, resultados, errores y guardado de los siete módulos. También permite preguntar explícitamente por otro módulo y comparar algoritmos.
+
+Abre el robot, escribe una pregunta o elige una sugerencia y pulsa **Enviar**. Las explicaciones del ejercicio leen su estado en memoria y sus pasos ya calculados; no modifican los datos ni ejecutan otro motor matemático. Si el resultado quedó invalidado, pide recalcular. Las preguntas no cubiertas reciben una respuesta honesta y sugerencias.
+
+No utiliza proveedores externos, endpoints, claves, variables de entorno ni Netlify Functions. `.env` se conserva intacto y ya no se lee. El historial y el borrador permanecen en memoria mientras la página siga abierta; cerrar el panel los conserva y «Limpiar conversación» los elimina. Los videos existentes siguen requiriendo conexión.
+
+Pruebas específicas sin suites matemáticas: `npm.cmd run test:asistente`. Preparación estática: `npm.cmd run preparar:netlify` genera `public/`, `entrega-netlify/drop/` y `entrega-netlify/ciudad-algoritmos-netlify.zip`. Los paquetes antiguos de funciones se archivan en `entrega-netlify/OBSOLETO_GEMINI_NO_PUBLICAR/`. Consulta [PUBLICAR_NETLIFY.md](PUBLICAR_NETLIFY.md) y [ENTREGA_ASISTENTE.md](ENTREGA_ASISTENTE.md).
 
 ---
 
