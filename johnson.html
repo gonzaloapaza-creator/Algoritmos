@@ -113,6 +113,12 @@
               <marker id="flechaRuta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" />
               </marker>
+              <marker id="flechaMaximo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--jn-maximo)" />
+              </marker>
+              <marker id="flechaCompartido" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--jn-compartido)" />
+              </marker>
               <marker id="flechaCiclo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" />
               </marker>
@@ -156,6 +162,10 @@
             <button type="button" class="btn btn-zoom" id="btnZoomIn" aria-label="Aumentar zoom" title="Aumentar zoom (Ctrl++)">+</button>
           </div>
         </section>
+        <aside class="tarjeta jn-ruta-editor" id="jnRutaEditor" aria-label="Detalle de la ruta seleccionada" hidden>
+          <p class="etiqueta">Ruta seleccionada · pesos originales</p>
+          <div class="jn-ruta" id="jnRutaEditorDetalle"></div>
+        </aside>
       </div>
     </section>
 
@@ -240,27 +250,46 @@
       <div id="resultadoConJn" hidden>
         <div class="mensaje" id="johnsonEstado" aria-live="polite"></div>
         <div class="jn-layout jn-layout--resultado">
-          <div class="tarjeta jn-principal">
-            <div class="tarjeta__cabecera">
-              <div>
-                <h2 id="johnsonTitulo">Distancias mínimas</h2>
-                <p class="tarjeta__pista" id="johnsonPista">Toca una celda para ver su ruta. Fila = origen · columna = destino · ∞ = sin camino.</p>
-              </div>
-            </div>
-            <div class="tabla-datos" id="johnsonTabla"></div>
-          </div>
           <aside class="jn-lateral">
             <div class="tarjeta">
               <p class="etiqueta" id="jnRutaEtiqueta">Ruta seleccionada</p>
-              <div class="grafo-mini grafo-mini--compacto" id="grafoResultadoJn">
-                <svg id="svgResultadoJn" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ruta seleccionada sobre el grafo"></svg>
+              <form id="jnConsultaRuta" class="jn-consulta" aria-label="Consultar caminos">
+                <label for="jnOrigenRuta">Origen<select id="jnOrigenRuta" name="origen"></select></label>
+                <label for="jnDestinoRuta">Destino<select id="jnDestinoRuta" name="destino"></select></label>
+                <label for="jnObjetivoRuta">Objetivo<select id="jnObjetivoRuta" name="objetivo"><option value="minimo">Minimizar · Johnson</option><option value="maximo">Maximizar · grafo acíclico</option></select></label>
+                <button type="submit" class="btn btn-primary">Mostrar camino</button>
+                <label class="jn-consulta__comparar"><input type="checkbox" id="jnCompararRutas" /> Comparar mínimo y máximo</label>
+              </form>
+              <p class="jn-consulta__nota">Minimización: Johnson. Maximización en grafos acíclicos: recorrido topológico.</p>
+              <p class="jn-consulta__nota" id="jnAvisoMaximo" role="status"></p>
+              <p class="jn-consulta__nota">Arriba: nodo · Abajo izquierda: mínimo · Abajo derecha: máximo. ∞: sin camino · —: no calculable. Los valores se refieren al origen seleccionado.</p>
+              <div class="jn-leyenda-caminos" aria-label="Colores de los caminos">
+                <span class="jn-leyenda-minimo">━ Mínimo</span><span class="jn-leyenda-maximo">━ Máximo</span><span class="jn-leyenda-compartido">┄ Compartido en comparación</span><span>Origen: doble contorno · Destino: aro discontinuo</span>
               </div>
-              <div class="jn-ruta" id="jnRutaDetalle" aria-live="polite"></div>
+              <div class="jn-ruta-panel">
+                <div class="grafo-mini grafo-mini--compacto" id="grafoResultadoJn">
+                  <svg id="svgResultadoJn" xmlns="http://www.w3.org/2000/svg" role="group" aria-label="Ruta seleccionada sobre el grafo"></svg>
+                  <div class="jn-ruta__zoom" role="group" aria-label="Zoom de la ruta">
+                    <button type="button" class="btn btn-neutral btn-sm" data-zoom-ruta="menos" aria-label="Alejar la ruta">−</button>
+                    <button type="button" class="btn btn-neutral btn-sm" data-zoom-ruta="ajustar">Ajustar</button>
+                    <button type="button" class="btn btn-neutral btn-sm" data-zoom-ruta="mas" aria-label="Acercar la ruta">+</button>
+                    <button type="button" class="btn btn-neutral btn-sm" data-ampliar-grafo aria-pressed="false">Ampliar grafo</button>
+                  </div>
+                </div>
+                <div class="jn-ruta" id="jnRutaDetalle"></div>
+              </div>
               <div class="acciones jn-ruta__acciones">
                 <button type="button" class="btn btn-secondary btn-sm" id="btnVerEnEditor" disabled>Ver en el editor</button>
+                <button type="button" class="btn btn-neutral btn-sm" id="btnExportarRutaJn">Exportar PNG</button>
+                <button type="button" class="btn btn-neutral btn-sm" id="btnImprimirRutaJn">Imprimir resultado</button>
               </div>
             </div>
           </aside>
+          <details class="tarjeta jn-principal">
+            <summary id="johnsonTitulo">Matriz de distancias mínimas · Johnson</summary>
+            <p class="tarjeta__pista" id="johnsonPista">Fila = origen · columna = destino · ∞ = sin camino. Cada celda consulta el mínimo.</p>
+            <div class="tabla-datos" id="johnsonTabla"></div>
+          </details>
         </div>
       </div>
       <div class="acciones acciones--entre jn-pie">
@@ -341,6 +370,7 @@
   <script src="js/biblioteca.js"></script>
   <script src="js/johnson.js"></script>
   <script src="js/johnson/ejemplos.js"></script>
+  <script src="js/johnson/caminos.js"></script>
   <script src="js/dijkstra.js"></script>
   <script src="js/interaccion.js"></script>
   <script src="js/zoom.js"></script>

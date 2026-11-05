@@ -270,6 +270,14 @@ const TEXTO_AYUDA =
   '· Si el grafo tiene un ciclo cuyos pesos suman un valor negativo, no hay distancias mínimas: recorrerlo una y otra vez baja el costo sin límite. En ese caso se avisa y se indica el ciclo.\n' +
   '· El cálculo no modifica el grafo: trabaja sobre una copia.\n\n' +
 
+  'CONSULTA DE CAMINOS\n' +
+  '· En Resultado elige origen, destino y Minimizar/Maximizar. Las rutas se muestran completas, sin animación.\n' +
+  '· Minimización: Johnson. Maximización en grafos acíclicos: recorrido topológico; si hay ciclos, esta versión no ofrece máximos, pero conserva Johnson cuando es válido.\n' +
+  '· Cada nodo se divide en T: arriba su nombre, abajo izquierda el mínimo y abajo derecha el máximo desde el origen. ∞ significa sin camino y — significa no calculable. El nombre y los valores exactos se consultan al señalar el nodo.\n' +
+  '· Mínimo en cian, máximo en violeta y conexiones compartidas discontinuas en la comparación. El origen tiene doble contorno y el destino aro discontinuo. Se muestra una ruta representativa por objetivo, con desempate determinista.\n' +
+  '· El acumulado del detalle corresponde a la ruta elegida; los valores del nodo son distancias generales desde el origen. Los pesos y sumas siempre son los originales.\n' +
+  '· Toca un nodo del resultado para elegir destino; Mayús elige origen. También puedes usar los selectores y el teclado. Acerca, arrastra para desplazar, Ajustar para ver todo o Ampliar grafo. Exportar PNG e Imprimir resultado conservan los valores y la leyenda.\n\n' +
+
   '7) TECLADO\n' +
   '· Enter: confirma el dato escrito en una ventana.\n' +
   '· Escape: cierra la ventana o el panel abierto sin guardar cambios.\n' +

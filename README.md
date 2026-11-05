@@ -41,6 +41,14 @@ Los HTML son estáticos, pero abrirlos mediante `file://` no se ha verificado pa
 
 Páginas: `index.html`, `johnson.html`, `dijkstra.html`, `kruskal.html`, `asignacion.html`, `northwest.html`, `ordenamiento.html` y `arboles.html`.
 
+### Consulta de caminos en Johnson
+
+Resultado prioriza un grafo grande y estático con selectores de origen, destino y objetivo. **Minimizar** conserva Johnson y su diagnóstico de ciclos negativos. **Maximizar** usa orden topológico y programación dinámica solo si todo el grafo es acíclico; admite pesos negativos y cero. En grafos con ciclos los máximos quedan no disponibles en esta versión, sin cambiar el significado de la matriz de distancias mínimas.
+
+Los nodos se dividen en T: nombre arriba, mínimo abajo izquierda y máximo abajo derecha, siempre desde el origen elegido. `∞` significa sin camino y `—`, no calculable. Mínimo en cian, máximo en violeta y conexiones compartidas discontinuas en la comparación. Los nombres y valores extensos tienen consulta completa. Las tablas inferiores separan las distancias generales de cada nodo del acumulado de la ruta elegida, con pesos originales y una ruta representativa por objetivo en los empates. El procedimiento de máximos muestra sus operaciones topológicas reales.
+
+Zoom, desplazamiento, ajuste y ampliación conservan las posiciones del editor. PNG e impresión incluyen valores y leyenda; las tablas secundarias son plegables. Esta actualización no regenera el Drop ni el ZIP: para verla, usa el proyecto local.
+
 Parámetros útiles: `?intro=no` salta la presentación con video; `index.html?simular=10` muestra un catálogo simulado (entradas marcadas «Próximamente», nunca enlazadas) para revisar el diseño con muchas entradas.
 
 Navegador comprobado: Microsoft Edge 156.0.4314.58 en Windows, en modo headless y con contextos aislados. Se prevé uso en navegadores modernos con Pointer Events, ResizeObserver, `dvh/svh`, `:has()` y `aspect-ratio`; otros motores y dispositivos requieren comprobación. No se certifican teléfono físico, teclado virtual ni proyector.

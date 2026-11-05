@@ -5,6 +5,9 @@
    ============================================================================ */
 
 /* ---------------- Barra de herramientas ---------------- */
+.page-johnson { --jn-maximo: #c4a0ff; --jn-compartido: #fbbf24; }
+html[data-tema="claro"] .page-johnson { --jn-maximo: #7042bd; --jn-compartido: #9a6200; }
+
 .barra-herramientas {
   position: relative;
   z-index: 5;
@@ -188,14 +191,16 @@
 #flecha path { fill: var(--arista); }
 #flechaSel path { fill: var(--amarillo); }
 #flechaRuta path { fill: var(--ruta); }
+#flechaMaximo path { fill: var(--jn-maximo); }
+#flechaCompartido path { fill: var(--jn-compartido); }
 #flechaCiclo path { fill: var(--rojo); }
 .conexion-linea {
   fill: none;
   stroke: var(--arista);
   stroke-width: 2.5;
-  marker-end: url(#flecha);
   transition: stroke var(--transicion), stroke-width var(--transicion);
 }
+.conexion:where(:not(.jn-camino-minimo, .jn-camino-maximo, .jn-camino-compartido)) .conexion-linea { marker-end: url(#flecha); }
 .conexion:hover .conexion-linea { stroke: var(--arista-fuerte); }
 .conexion.seleccionada .conexion-linea {
   stroke: var(--amarillo);
@@ -218,14 +223,16 @@
   stroke-linejoin: round;
 }
 .conexion.seleccionada .conexion-valor { fill: var(--amarillo); }
+.jn-peso-fondo { fill: var(--lienzo); stroke: var(--borde-suave); stroke-width: 1; }
+.jn-peso-guia { fill: none; stroke: var(--arista); stroke-width: 1; stroke-dasharray: 3 4; opacity: .7; }
 
 /* Resaltado de Johnson */
 .conexion-johnson .conexion-linea {
   stroke: var(--ruta);
   stroke-width: 4.5;
-  marker-end: url(#flechaRuta);
   filter: drop-shadow(0 0 6px rgba(34, 211, 238, .5));
 }
+.conexion-johnson:where(:not(.jn-camino-minimo, .jn-camino-maximo, .jn-camino-compartido)) .conexion-linea { marker-end: url(#flechaRuta); }
 .conexion-johnson .conexion-valor { fill: var(--ruta-texto); }
 .conexion-johnson.ciclo-negativo-johnson .conexion-linea {
   stroke: var(--rojo);
@@ -233,13 +240,75 @@
   filter: drop-shadow(0 0 6px rgba(255, 95, 109, .5));
 }
 .conexion-johnson.ciclo-negativo-johnson .conexion-valor { fill: var(--peligro-texto); }
-.conexion-johnson-inactiva .conexion-linea { opacity: .28; }
-.conexion-johnson-inactiva .conexion-valor { opacity: .4; }
+.conexion-johnson-inactiva .conexion-linea { opacity: .48; }
+.conexion-johnson-inactiva .conexion-valor { opacity: .72; }
 .nodo-johnson circle { stroke: var(--ruta); stroke-width: 4; fill: #123a44; filter: drop-shadow(0 0 7px rgba(34, 211, 238, .5)); }
 .nodo-johnson-origen circle { stroke: var(--verde); fill: #0d3b33; filter: drop-shadow(0 0 8px rgba(0, 211, 167, .6)); }
 .nodo-johnson-destino circle { stroke: var(--naranja); fill: #45301a; filter: drop-shadow(0 0 8px rgba(255, 159, 67, .6)); }
 .nodo-johnson.ciclo-negativo-johnson circle { stroke: var(--rojo); fill: #451c22; filter: drop-shadow(0 0 8px rgba(255, 95, 109, .6)); }
 .nodo-johnson text { fill: #fff; }
+
+/* Las rutas consultadas se muestran completas, sin estados de reproduccion. */
+.nodo-johnson circle, .conexion-johnson .conexion-linea { transition: none; }
+.nodo .jn-ruta-aro {
+  fill: none !important;
+  stroke-width: 2;
+  filter: none;
+  pointer-events: none;
+}
+.nodo .jn-ruta-aro-origen { stroke: var(--verde); }
+.nodo .jn-ruta-aro-destino { stroke: var(--naranja); }
+.nodo text.jn-ruta-rol,
+.nodo text.jn-ruta-acumulada {
+  fill: var(--texto) !important;
+  font-size: 11px;
+  font-weight: 800;
+  paint-order: stroke;
+  stroke: var(--halo);
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+.nodo text.jn-ruta-acumulada { fill: var(--ruta-texto) !important; font-size: 11px; }
+
+/* Colores de consulta; cada flecha conserva el marcador de su tipo de camino. */
+.jn-camino-minimo { --jn-color-camino: var(--ruta); --jn-relleno-camino: #123a44; }
+.jn-camino-maximo { --jn-color-camino: var(--jn-maximo); --jn-relleno-camino: #302047; }
+.jn-camino-compartido { --jn-color-camino: var(--jn-compartido); --jn-relleno-camino: #423417; }
+.conexion-johnson:is(.jn-camino-minimo, .jn-camino-maximo, .jn-camino-compartido) .conexion-linea {
+  stroke: var(--jn-color-camino);
+  stroke-width: 5;
+  filter: none;
+}
+.conexion-johnson:is(.jn-camino-minimo, .jn-camino-maximo, .jn-camino-compartido) .conexion-valor { fill: var(--jn-color-camino); }
+.conexion-johnson.jn-camino-compartido .conexion-linea { stroke-dasharray: 11 5; }
+.nodo-johnson:is(.jn-camino-minimo, .jn-camino-maximo, .jn-camino-compartido) circle:not(.jn-ruta-aro),
+.grafo-mini .nodo-johnson:is(.jn-camino-minimo, .jn-camino-maximo, .jn-camino-compartido):hover circle:not(.jn-ruta-aro) {
+  stroke: var(--jn-color-camino);
+  fill: var(--jn-relleno-camino);
+  filter: none;
+}
+.nodo-johnson.jn-camino-compartido circle:not(.jn-ruta-aro) { stroke-dasharray: 10 4; }
+.nodo-johnson-origen circle:not(.jn-ruta-aro) { stroke-width: 5; }
+.nodo-johnson-destino circle:not(.jn-ruta-aro) { stroke-width: 5; stroke-dasharray: 3 2; }
+
+/* Nodo en T: nombre arriba y distancias de los dos objetivos debajo. */
+.nodo.jn-nodo-dividido .jn-nodo-division {
+  fill: none;
+  stroke: var(--borde);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+.nodo.jn-nodo-dividido text {
+  text-anchor: middle;
+  dominant-baseline: central;
+  letter-spacing: normal;
+}
+.nodo.jn-nodo-dividido .jn-nodo-nombre { font-size: 15px; font-weight: 800; }
+.nodo.jn-nodo-dividido .jn-nodo-valor { font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.nodo.jn-nodo-dividido .jn-nodo-leyenda { font-size: 12px; font-weight: 700; fill: var(--texto-suave); }
+.nodo.jn-nodo-dividido .jn-nodo-valor-minimo { fill: var(--ruta-texto); }
+.nodo.jn-nodo-dividido .jn-nodo-valor-maximo { fill: #d8baff; }
+.nodo.jn-nodo-dividido .jn-ruta-rol { font-size: 11px; }
 
 /* ---------------- Estado vacío ---------------- */
 .vacio { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; padding: 16px; }
@@ -455,7 +524,7 @@
   align-items: start;
 }
 .jn-layout--proc { grid-template-columns: minmax(0, 1fr) 280px; }
-.jn-layout--resultado { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+.jn-layout--resultado { grid-template-columns: minmax(0, 1fr); }
 .jn-layout > *, .jn-lateral > * { min-width: 0; }
 .jn-principal { display: flex; flex-direction: column; gap: var(--esp-3); min-width: 0; }
 .jn-principal > .tarjeta__cabecera { margin-bottom: 0; }
@@ -483,7 +552,7 @@
 .jn-tabla .tabla-caja { max-height: 340px; }
 .jn-tabla .tabla th, .jn-tabla .tabla td { min-width: 0; }
 .tabla td.cambio { color: var(--ruta-texto); font-weight: 700; background: rgba(34, 211, 238, .1); animation: paso-aparece .45s ease-out; }
-.tabla-datos td.celda-elegida { animation: paso-aparece .45s ease-out; }
+.tabla-datos td.celda-elegida { animation: none; }
 .tabla td.negativo, .tabla td.cambio.negativo { color: var(--peligro-texto); }
 .tabla td.jn-ruta-celda { text-align: left; }
 .tabla tr.jn-fila-total > * { border-top: 1px solid var(--borde); font-weight: 800; }
@@ -520,12 +589,147 @@
 .conexion-auxiliar.conexion-johnson .conexion-linea { stroke: var(--ruta); stroke-dasharray: none; stroke-width: 3; }
 
 /* Detalle de la ruta del resultado. */
-.jn-ruta { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
-.jn-ruta__recorrido { font-weight: 800; font-size: var(--t-lg); color: var(--ruta-texto); overflow-wrap: anywhere; }
+.jn-ruta-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--esp-4);
+  align-items: start;
+  min-width: 0;
+}
+.jn-ruta-panel > * { min-width: 0; }
+.jn-ruta-panel > .grafo-mini { height: clamp(550px, 65svh, 700px); display: flex; flex-direction: column; }
+.jn-ruta-panel .grafo-mini svg { flex: 1 1 auto; min-height: 0; }
+.jn-layout--resultado > .jn-lateral { display: block; }
+.jn-layout--resultado > .jn-lateral > * { width: 100%; }
+.jn-layout--resultado > .jn-principal { width: 100%; }
+.jn-layout--resultado details > summary { cursor: pointer; padding: 8px 0; color: var(--texto); font-weight: 700; }
+.jn-layout--resultado details > summary:focus-visible { outline: 3px solid var(--ruta); outline-offset: 3px; border-radius: var(--radio-chico); }
+#vistaResultadoJn #johnsonTabla { max-height: 360px; }
+.jn-consulta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
+  align-items: end;
+  gap: 12px;
+  margin: 12px 0 16px;
+  padding: 14px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--hundido);
+}
+.jn-consulta > label { display: grid; gap: 6px; min-width: 0; font-size: var(--t-sm); font-weight: 700; color: var(--texto); }
+.jn-consulta select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 9px 32px 9px 10px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  color: var(--texto);
+  background: var(--fondo-2);
+  font: inherit;
+  text-overflow: ellipsis;
+}
+.jn-consulta select:focus-visible, .jn-consulta .btn:focus-visible, .jn-consulta input:focus-visible { outline: 3px solid var(--ruta); outline-offset: 3px; }
+.jn-consulta > .btn { min-height: 44px; }
+.jn-consulta > .jn-consulta__comparar,
+.jn-consulta > label:has(input[type="checkbox"]) { display: flex; align-items: center; gap: 9px; grid-column: 1 / -1; font-weight: 600; }
+.jn-consulta input[type="checkbox"] { width: 18px; height: 18px; flex: 0 0 auto; accent-color: var(--ruta); }
+.jn-consulta__nota { grid-column: 1 / -1; margin: 0; color: var(--texto-suave); font-size: var(--t-sm); line-height: 1.5; }
+.jn-consulta__nota[hidden] { display: none; }
+.jn-leyenda-caminos { display: flex; flex-wrap: wrap; gap: 10px 20px; margin: 4px 0 12px; color: var(--texto-suave); font-size: var(--t-sm); line-height: 1.5; }
+.jn-leyenda-caminos > span { display: inline-flex; align-items: center; gap: 8px; }
+.jn-leyenda-caminos > :is(.jn-leyenda-minimo, .jn-leyenda-maximo, .jn-leyenda-compartido)::before { content: ""; width: 30px; height: 0; border-top: 4px solid currentColor; flex: 0 0 auto; }
+.jn-leyenda-minimo { color: var(--ruta-texto); }
+.jn-leyenda-maximo { color: var(--jn-maximo); }
+.jn-leyenda-compartido { color: var(--jn-compartido); }
+.jn-leyenda-caminos > .jn-leyenda-compartido::before { border-top-style: dashed; }
+.jn-leyenda-svg text, text.jn-leyenda-svg { fill: var(--texto); font-size: 12px; font-weight: 600; }
+#resultadoConJn.jn-grafo-ampliado .jn-ruta-panel > .grafo-mini { height: min(85svh, 1000px); }
+.jn-ruta { display: flex; flex-direction: column; gap: 10px; min-width: 0; margin-top: 10px; }
+.jn-ruta-panel > .jn-ruta { margin-top: 0; }
+.jn-ruta p { margin: 0; }
+.jn-ruta__cabecera { color: var(--texto-suave); font-size: var(--t-sm); line-height: 1.5; overflow-wrap: anywhere; }
+.jn-ruta__cabecera strong { color: var(--texto); }
+.jn-ruta__recorrido {
+  max-width: 100%;
+  padding: 8px 2px;
+  overflow-x: auto;
+  overscroll-behavior: contain;
+  white-space: nowrap;
+  font-weight: 800;
+  font-size: var(--t-lg);
+  color: var(--ruta-texto);
+  scrollbar-width: thin;
+}
 .jn-ruta__recorrido--ciclo { color: var(--peligro-texto); }
-.jn-ruta__suma { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; color: var(--texto-suave); overflow-wrap: anywhere; }
+.jn-ruta__suma {
+  padding: 9px 12px;
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio-chico);
+  background: var(--hundido);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color: var(--texto);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.jn-ruta__tabla {
+  max-width: 100%;
+  max-height: 300px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+.jn-ruta__tabla .tabla { font-size: var(--t-sm); }
+.jn-ruta__tabla thead th { position: sticky; top: 0; z-index: 1; background: var(--fondo-3); }
+.jn-ruta__tabla th, .jn-ruta__tabla td { padding: 8px 10px; }
+.jn-ruta__acciones .btn,
+.jn-ruta__zoom .btn { min-width: 44px; min-height: 44px; }
+.jn-ruta__acciones .btn:focus-visible,
+.jn-ruta__zoom .btn:focus-visible,
+.jn-ruta__recorrido:focus-visible,
+.jn-ruta__tabla:focus-visible { outline: 3px solid var(--ruta); outline-offset: 3px; }
+.jn-ruta__total { padding: 10px 12px; border-left: 4px solid var(--ruta); border-radius: 0 var(--radio-chico) var(--radio-chico) 0; background: rgba(34, 211, 238, .1); font-size: var(--t-md); font-weight: 800; color: var(--ruta-texto); overflow-wrap: anywhere; }
+.jn-ruta__zoom { order: -1; align-self: flex-end; flex: 0 0 auto; max-width: calc(100% - 12px); margin: 6px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; padding: 4px; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--flotante); box-shadow: var(--sombra-suave); }
 .jn-ruta__acciones { margin-top: 10px; }
 .jn-ruta__acciones .btn { flex: 1 1 auto; }
+.jn-detalle-comparacion { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: var(--esp-3); min-width: 0; }
+.jn-detalle-ruta { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.jn-detalle-comparacion > article { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--fondo-2); }
+.jn-detalle-comparacion > article h3 { margin: 0; font-size: var(--t-md); }
+.jn-camino-maximo .jn-ruta__recorrido,
+.jn-camino-maximo .jn-ruta__total { color: var(--jn-maximo); }
+.jn-camino-maximo .jn-ruta__total { border-left-color: var(--jn-maximo); background: rgba(147, 91, 224, .1); }
+.jn-procedimiento-maximo { padding: 12px 14px; border: 1px solid var(--borde-suave); border-radius: var(--radio); color: var(--texto-suave); font-size: var(--t-sm); }
+.jn-procedimiento-maximo > summary { cursor: pointer; color: var(--texto); font-weight: 700; }
+.jn-procedimiento-maximo p { margin: 10px 0 0; line-height: 1.55; }
+.jn-procedimiento-maximo .jn-ruta__tabla { margin-top: 10px; }
+.jn-ruta-editor { min-width: 0; margin-top: var(--esp-3); }
+.jn-ruta-editor[hidden] { display: none; }
+.jn-ruta-editor .jn-ruta__tabla { max-height: 260px; }
+.jn-ruta-editor .jn-ruta__recorrido { font-size: var(--t-md); }
+@media (min-width: 1000px) {
+  body.jn-ruta-en-editor .johnson-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); gap: var(--esp-3); align-items: start; }
+  body.jn-ruta-en-editor .grafo-workspace { min-width: 0; }
+  .jn-ruta-editor { margin-top: 0; }
+}
+
+html[data-tema="claro"] .nodo-johnson circle:not(.jn-ruta-aro),
+html[data-tema="claro"] .grafo-mini .nodo-johnson:hover circle:not(.jn-ruta-aro) { fill: #cffafe; }
+html[data-tema="claro"] .nodo-johnson-origen circle:not(.jn-ruta-aro),
+html[data-tema="claro"] .grafo-mini .nodo-johnson-origen:hover circle:not(.jn-ruta-aro) { fill: #d1fae5; }
+html[data-tema="claro"] .nodo-johnson-destino circle:not(.jn-ruta-aro),
+html[data-tema="claro"] .grafo-mini .nodo-johnson-destino:hover circle:not(.jn-ruta-aro) { fill: #ffedd5; }
+html[data-tema="claro"] .nodo-johnson.ciclo-negativo-johnson circle:not(.jn-ruta-aro),
+html[data-tema="claro"] .grafo-mini .nodo-johnson.ciclo-negativo-johnson:hover circle:not(.jn-ruta-aro) { fill: #fee2e2; }
+html[data-tema="claro"] .nodo-johnson text { fill: var(--texto); }
+html[data-tema="claro"] .jn-camino-minimo { --jn-relleno-camino: #cffafe; }
+html[data-tema="claro"] .jn-camino-maximo { --jn-relleno-camino: #ede5ff; }
+html[data-tema="claro"] .jn-camino-compartido { --jn-relleno-camino: #fff3cf; }
+html[data-tema="claro"] .nodo-johnson:is(.jn-camino-minimo, .jn-camino-maximo, .jn-camino-compartido) circle:not(.jn-ruta-aro),
+html[data-tema="claro"] .grafo-mini .nodo-johnson:is(.jn-camino-minimo, .jn-camino-maximo, .jn-camino-compartido):hover circle:not(.jn-ruta-aro) { fill: var(--jn-relleno-camino); }
+html[data-tema="claro"] .nodo.jn-nodo-dividido .jn-nodo-valor-minimo { fill: var(--ruta-texto); }
+html[data-tema="claro"] .nodo.jn-nodo-dividido .jn-nodo-valor-maximo { fill: var(--jn-maximo); }
 
 /* Muestras de la leyenda propias de Johnson. */
 .leyenda__muestra--ruta { color: var(--ruta); }
@@ -674,6 +878,58 @@
   .grupo-herramientas { flex: 1 1 100%; }
 }
 
+/* El detalle necesita desplazamiento de pagina al abrirse junto al editor movil. */
+@media (max-width: 760px) {
+  .jn-ruta-panel { grid-template-columns: minmax(0, 1fr); gap: var(--esp-3); }
+  .jn-ruta-panel > .grafo-mini { height: clamp(380px, 65svh, 560px); }
+  .jn-ruta__tabla { max-height: 260px; }
+  .jn-consulta { padding: 12px; gap: 10px; }
+  .jn-consulta > .btn { width: 100%; }
+  .jn-ruta__zoom { gap: 3px; }
+  .jn-ruta__zoom .btn { padding-left: 9px; padding-right: 9px; }
+}
+@media (max-width: 640px) {
+  body.page-johnson[data-vista="grafo"].jn-ruta-en-editor { height: auto; min-height: 100svh; overflow-x: hidden; overflow-y: auto; }
+  body.page-johnson[data-vista="grafo"].jn-ruta-en-editor .contenido,
+  body.page-johnson[data-vista="grafo"].jn-ruta-en-editor #moduloContenido,
+  body.page-johnson[data-vista="grafo"].jn-ruta-en-editor #vistaGrafoJn { display: block; flex: none; }
+  body.jn-ruta-en-editor .johnson-layout { display: flex; flex-direction: column; flex: none; gap: var(--esp-3); }
+  body.jn-ruta-en-editor .grafo-workspace { flex: none; width: 100%; height: clamp(300px, 50svh, 480px); min-height: 300px; }
+  .jn-ruta-editor { width: 100%; margin-top: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .menu-extra.abierto { animation: none; }
+  .nodo-johnson circle, .conexion-johnson .conexion-linea { transition: none; }
+  .tabla-datos td.celda-elegida { animation: none; }
+}
+
+@media print {
+  .page-johnson .jn-consulta,
+  .page-johnson .jn-ruta__zoom,
+  .page-johnson .jn-ruta__acciones { display: none !important; }
+  .page-johnson #resultadoConJn .jn-layout--resultado,
+  .page-johnson #resultadoConJn .jn-ruta-panel { display: block !important; }
+  .page-johnson #resultadoConJn .jn-lateral,
+  .page-johnson #resultadoConJn .jn-ruta,
+  .page-johnson #resultadoConJn .jn-leyenda-caminos { display: block !important; }
+  .page-johnson #grafoResultadoJn,
+  .page-johnson #resultadoConJn.jn-grafo-ampliado #grafoResultadoJn {
+    display: block !important;
+    width: 100% !important;
+    height: 140mm !important;
+    min-height: 140mm !important;
+    overflow: visible !important;
+    break-inside: avoid;
+  }
+  .page-johnson #svgResultadoJn { display: block !important; width: 100% !important; height: 140mm !important; }
+  .page-johnson .jn-ruta__tabla,
+  .page-johnson .jn-ruta__recorrido { max-height: none; overflow: visible; white-space: normal; }
+  .page-johnson .jn-ruta__tabla { break-inside: auto; }
+  .page-johnson .jn-ruta__recorrido,
+  .page-johnson .jn-ruta__total { margin-top: 8px; }
+  .page-johnson .jn-leyenda-caminos > span { margin-right: 18px; }
+  .page-johnson .jn-detalle-comparacion { display: block; }
+  .page-johnson .jn-detalle-comparacion > article { margin-top: 12px; }
+  .page-johnson #resultadoConJn { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }

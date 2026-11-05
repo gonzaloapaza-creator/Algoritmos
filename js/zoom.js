@@ -11,13 +11,49 @@
 
 // Las constantes ZOOM_MIN, ZOOM_MAX, ZOOM_STEP ahora vienen de config.js
 
+// Solo conserva límites del dibujo; los nodos guardados nunca se modifican.
+let limitesDibujoRutaJohnson = null;
+
+/** Incluye nombres, pesos y etiquetas de ruta al encuadrar el editor. */
+function actualizarLimitesRutaJohnson() {
+  const visual = estado.visualizacionJohnson;
+  limitesDibujoRutaJohnson = null;
+  if (!visual || (visual.tipo !== 'ruta' && !visual.valoresNodos)) return;
+  const cajas = [el.capaNodos, el.capaConexiones].map(capa => {
+    try { return capa.childElementCount ? capa.getBBox() : null; }
+    catch (_) { return null; }
+  }).filter(caja => caja && Number.isFinite(caja.x) && Number.isFinite(caja.y) && (caja.width || caja.height));
+  if (!cajas.length) return;
+  const margen = 30;
+  limitesDibujoRutaJohnson = {
+    visual,
+    izquierda: Math.min(...cajas.map(caja => caja.x)) - margen,
+    arriba: Math.min(...cajas.map(caja => caja.y)) - margen,
+    derecha: Math.max(...cajas.map(caja => caja.x + caja.width)) + margen,
+    abajo: Math.max(...cajas.map(caja => caja.y + caja.height)) + margen
+  };
+}
+
+function limitesVistaGrafo() {
+  return limitesDibujoRutaJohnson && limitesDibujoRutaJohnson.visual === estado.visualizacionJohnson
+    ? limitesDibujoRutaJohnson : limitesPlanoGrafo();
+}
+
+/** Ajuste de toda la ruta y del contexto del grafo, sin alterar sus posiciones. */
+function ajustarVistaRutaJohnson() {
+  const a = medirArea();
+  if (a.ancho < 50 || a.alto < 50) return;
+  actualizarLimitesRutaJohnson();
+  restablecerZoomSilencioso();
+}
+
 /**
  * Impide que el plano del grafo se salga de la vista: al acercar solo se puede
  * desplazar dentro de él y al alejar queda centrado, sin huecos a los lados.
  */
 function limitarPan() {
   const a = area();
-  const plano = limitesPlanoGrafo();
+  const plano = limitesVistaGrafo();
   const anchoEscalado = (plano.derecha - plano.izquierda) * estado.zoom.escala;
   const altoEscalado = (plano.abajo - plano.arriba) * estado.zoom.escala;
 
@@ -86,14 +122,14 @@ function zoomOut() {
 }
 
 function escalaAjustadaGrafo() {
-  const a = area(), plano = limitesPlanoGrafo();
+  const a = area(), plano = limitesVistaGrafo();
   return Math.min(1, a.ancho / Math.max(1, plano.derecha - plano.izquierda),
     a.alto / Math.max(1, plano.abajo - plano.arriba));
 }
 
 /** Encuadra el plano completo sin recolocar ni guardar ningún nodo. */
 function restablecerZoomSilencioso() {
-  const a = area(), plano = limitesPlanoGrafo();
+  const a = area(), plano = limitesVistaGrafo();
   estado.zoom.escala = escalaAjustadaGrafo();
   estado.zoom.offsetX = (a.ancho - (plano.derecha + plano.izquierda) * estado.zoom.escala) / 2;
   estado.zoom.offsetY = (a.alto - (plano.abajo + plano.arriba) * estado.zoom.escala) / 2;
@@ -129,7 +165,10 @@ el.svg.addEventListener('wheel', zoomRueda, { passive: false });
 // Con el editor oculto (otra vista) el lienzo mide 0: entonces no se toca nada.
 window.addEventListener('resize', () => {
   const a = medirArea();
-  if (a.ancho >= 50 && a.alto >= 50) aplicarZoom();
+  if (a.ancho >= 50 && a.alto >= 50) {
+    if (estado.visualizacionJohnson && (estado.visualizacionJohnson.tipo === 'ruta' || estado.visualizacionJohnson.valoresNodos)) ajustarVistaRutaJohnson();
+    else aplicarZoom();
+  }
 });
 
 actualizarEtiquetaZoom();

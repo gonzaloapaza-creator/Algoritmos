@@ -19,6 +19,9 @@ const estadoJohnson = {
   seleccion: null       // celda elegida en el resultado: { origen, destino }
 };
 
+// Consultas estáticas. Los máximos se conservan por origen mientras el grafo siga vigente.
+const consultaCaminosJohnson = { objetivo: 'minimo', comparar: false, minimo: null, maximo: null, maximos: null, cacheMaximos: new Map() };
+
 const vj = {
   contador: document.getElementById('pasosContadorJn'),
   chip: document.getElementById('estadoResultadoJn'),
@@ -78,18 +81,23 @@ function actualizarChipJohnson() {
 
 /** Lo llama dibujar() tras cada cambio del grafo. */
 function refrescarVistaJohnson() {
+  let renombrado = false;
   if (resultadoVigenteJohnson()) {
     const r = estadoJohnson.resultado;
     const nombres = r.ids.map(id => buscarNodo(id).nombre);
     if (JSON.stringify(nombres) !== JSON.stringify(r.nombres)) {
+      renombrado = true;
       r.nombres = nombres;
       r.ciclo = r.cicloIndices.map(i => nombres[i]);
       r.aristas.forEach(a => { a.desde = nombres[a.indiceDesde]; a.hacia = nombres[a.indiceHacia]; });
       r.pasos = construirPasosJohnson(r);
     }
+  } else if (consultaCaminosJohnson.minimo || estadoJohnson.seleccion) {
+    limpiarRutaSeleccionadaJohnson();
   }
   actualizarChipJohnson();
   if (estadoJohnson.vista !== 'grafo') dibujarVistaJohnson();
+  actualizarPanelRutaEditorJohnson(renombrado);
 }
 
 /* ---------------- Navegación entre vistas ---------------- */
@@ -117,11 +125,19 @@ function cambiarVistaJohnson(vista) {
   document.querySelectorAll('#moduloContenido .vista').forEach(s => { s.hidden = s.dataset.vista !== vista; });
 
   dibujarVistaJohnson();
+  actualizarPanelRutaEditorJohnson();
   actualizarChipJohnson();
 
   if (vista === 'grafo') {
     // El lienzo pasó de oculto a visible: se mide y se redibuja con su tamaño real.
-    requestAnimationFrame(() => { if (typeof adaptarAlArea === 'function') adaptarAlArea(); });
+    requestAnimationFrame(() => {
+      if (estadoJohnson.vista !== 'grafo') return;
+      if (typeof adaptarAlArea === 'function') adaptarAlArea();
+      if (estado.visualizacionJohnson && estado.visualizacionJohnson.valoresNodos) {
+        dibujarLienzo();
+        ajustarVistaRutaJohnson();
+      }
+    });
   }
   if (cambia) window.scrollTo({ top: 0 });
 }
@@ -144,6 +160,7 @@ function calcularYMostrarJohnson(destino) {
     return false;
   }
 
+  limpiarRutaSeleccionadaJohnson();
   const resultado = calcularJohnson();
   estadoJohnson.resultado = resultado;
   estadoJohnson.firma = firmaGrafoJohnson();
@@ -285,7 +302,7 @@ function dibujarGrafoMini(svg, op) {
   const originales = estado.nodos;
   const cajaOriginal = cajaSVG;
   try {
-    estado.nodos = nodosCompactadosMini(svg, originales);
+    estado.nodos = nodosCompactadosMini(svg, originales, op && op.visual);
     cajaSVG = { ancho: 1e6, alto: 1e6, izquierda: 0, arriba: 0 };
     dibujarGrafoMiniInterno(svg, op);
   } finally {
@@ -299,9 +316,9 @@ function dibujarGrafoMini(svg, op) {
  * dibujo a una caja pequeña, los nombres y los pesos se sigan leyendo. Nunca se
  * acercan tanto como para que dos nodos se toquen.
  */
-function nodosCompactadosMini(svg, nodos) {
+function nodosCompactadosMini(svg, nodos, visual) {
   if (nodos.length === 0) return nodos;
-  const r = RADIO_NODO;
+  const r = radioVisualNodoJohnson(visual);
   const margen = r * 4;
   const caja = svg.getBoundingClientRect();
   const anchoCaja = caja.width > 50 ? caja.width : 600;
@@ -317,8 +334,15 @@ function nodosCompactadosMini(svg, nodos) {
       menor = Math.min(menor, Math.hypot(nodos[i].x - nodos[j].x, nodos[i].y - nodos[j].y));
     }
   }
-  const kMinimo = menor === Infinity ? 0 : Math.min(1, (r * 3.6) / Math.max(menor, 1));
-  const k = limitar(Math.min((anchoCaja - margen * 2) / bw, (altoCaja - margen * 2) / bh), kMinimo, 1);
+  const consulta = visual && visual.valoresNodos;
+  if (consulta && (menor < 1 || Math.max(bw, bh) / menor > nodos.length * 6)) {
+    // Distribución visual estable: Resultado y Ampliar usan las mismas posiciones.
+    const columnas = Math.max(1, Math.ceil(Math.sqrt(nodos.length)));
+    return nodos.map((n, i) => ({ id: n.id, nombre: n.nombre, x: margen + (i % columnas) * r * 4, y: margen + Math.floor(i / columnas) * r * 4 }));
+  }
+  const kMinimo = menor === Infinity ? (consulta ? 1 : 0) : (r * (consulta ? 4 : 3.6)) / Math.max(menor, 1);
+  const ajuste = Math.max(.1, Math.min((anchoCaja - margen * 2) / bw, (altoCaja - margen * 2) / bh));
+  const k = consulta ? kMinimo : limitar(ajuste, Math.min(1, kMinimo), 1);
 
   return nodos.map(n => ({
     id: n.id,
@@ -335,13 +359,15 @@ function dibujarGrafoMiniInterno(svg, op) {
   const defs = crearSVG('defs', {});
   marcadorMini(defs, prefijo + 'normal', 'var(--arista)');
   marcadorMini(defs, prefijo + 'ruta', 'var(--ruta)');
+  marcadorMini(defs, prefijo + 'maximo', 'var(--jn-maximo)');
+  marcadorMini(defs, prefijo + 'compartido', 'var(--jn-compartido)');
   marcadorMini(defs, prefijo + 'ciclo', 'var(--rojo)');
   marcadorMini(defs, prefijo + 'aux', 'var(--texto-apagado)');
   svg.appendChild(defs);
 
   if (estado.nodos.length === 0) { svg.setAttribute('viewBox', '0 0 100 60'); return; }
 
-  const r = RADIO_NODO;
+  const r = radioVisualNodoJohnson(op.visual);
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   estado.nodos.forEach(n => {
     minX = Math.min(minX, n.x); maxX = Math.max(maxX, n.x);
@@ -382,12 +408,13 @@ function dibujarGrafoMiniInterno(svg, op) {
   }
 
   estado.conexiones.forEach(conexion => {
-    const geo = geometriaConexion(conexion);
+    const geo = geometriaConexion(conexion, r);
     if (!geo) return;
     const extras = op.claseConexion ? op.claseConexion(conexion) : [];
     const grupo = crearSVG('g', { class: ['conexion'].concat(extras).join(' ') });
+    grupo.dataset.id = conexion.id;
     const linea = crearSVG('path', { class: 'conexion-linea', d: geo.d });
-    const tipo = extras.includes('ciclo-negativo-johnson') ? 'ciclo' : extras.includes('conexion-johnson') ? 'ruta' : 'normal';
+    const tipo = extras.includes('ciclo-negativo-johnson') ? 'ciclo' : extras.includes('jn-camino-compartido') ? 'compartido' : extras.includes('jn-camino-maximo') ? 'maximo' : extras.includes('conexion-johnson') ? 'ruta' : 'normal';
     linea.style.markerEnd = 'url(#' + prefijo + tipo + ')';
     grupo.appendChild(linea);
     const texto = crearSVG('text', { class: 'conexion-valor', x: geo.etiquetaX, y: geo.etiquetaY });
@@ -401,10 +428,17 @@ function dibujarGrafoMiniInterno(svg, op) {
     const esQ = nodo === q;
     const extras = esQ ? ['nodo-auxiliar'] : (op.claseNodo ? op.claseNodo(nodo, i) : []);
     const grupo = crearSVG('g', { class: ['nodo'].concat(extras).join(' ') });
+    grupo.dataset.id = nodo.id;
     grupo.appendChild(crearSVG('circle', { cx: nodo.x, cy: nodo.y, r: r }));
     const texto = crearSVG('text', { x: nodo.x, y: nodo.y });
     texto.textContent = nodo.nombre;
     grupo.appendChild(texto);
+    if (op.visual) {
+      dibujarCompartimentosNodoJohnson(grupo, nodo, op.visual);
+      decorarNodoRutaJohnson(grupo, nodo, op.visual);
+      grupo.setAttribute('role', 'button');
+      grupo.setAttribute('tabindex', '0');
+    }
     const nota = !esQ && op.notaNodo ? op.notaNodo(nodo, i) : null;
     if (nota !== null && nota !== undefined) {
       const t = crearSVG('text', { class: 'nodo-nota', x: nodo.x, y: nodo.y - r - 12 });
@@ -416,6 +450,22 @@ function dibujarGrafoMiniInterno(svg, op) {
 
   svg.appendChild(capaConexiones);
   svg.appendChild(capaNodos);
+  if (op.visual) separarEtiquetasGrafoJohnson(capaConexiones, capaNodos, op.visual);
+  if (op.visual) agregarLeyendaConsultaJohnson(capaNodos, op.visual, capaConexiones);
+  // Incluye las cajas reales de nombres, pesos, flechas y etiquetas de rol.
+  // Se mide antes de añadir los controles HTML y sin tocar posiciones del editor.
+  if (svg.getBoundingClientRect().width > 0) {
+    const cajas = [capaConexiones, capaNodos].map(c => c.getBBox());
+    const izquierda = Math.min(...cajas.map(c => c.x));
+    const arriba = Math.min(...cajas.map(c => c.y));
+    const derecha = Math.max(...cajas.map(c => c.x + c.width));
+    const abajo = Math.max(...cajas.map(c => c.y + c.height));
+    const borde = 32;
+    svg.setAttribute('viewBox', [izquierda - borde, arriba - borde, Math.max(80, derecha - izquierda + borde * 2), Math.max(80, abajo - arriba + borde * 2)].join(' '));
+  }
+  if (svg === vj.svgResultado) {
+    svg.dataset.vistaCompleta = svg.getAttribute('viewBox');
+  }
 }
 
 /* ---------------- Vista 3: resolución paso a paso ---------------- */
@@ -694,94 +744,239 @@ function construirTablaDistancias(resultado, pulsable) {
   return tabla;
 }
 
-/** Elige una celda del resultado: se resalta su ruta aquí y en el editor. */
+/** Una celda de la matriz siempre consulta el mínimo de Johnson. */
 function seleccionarCeldaJohnson(origen, destino) {
-  if (!resultadoVigenteJohnson()) return;
-  estadoJohnson.seleccion = { origen: origen, destino: destino };
-  const r = estadoJohnson.resultado;
-  const ruta = reconstruirRutaJohnson(origen, destino, r);
-  estado.visualizacionJohnson = ruta ? {
-    origen: ruta.nodos[0],
-    destino: ruta.nodos[ruta.nodos.length - 1],
-    nodos: ruta.nodos,
-    conexiones: ruta.conexiones,
-    distancia: ruta.distancia,
-    tipo: 'ruta',
-    firma: estadoJohnson.firma
-  } : null;
-  dibujarLienzo();
-
-  el.johnsonTabla.querySelectorAll('td.celda-elegida').forEach(td => td.classList.remove('celda-elegida'));
-  const celda = el.johnsonTabla.querySelector('td[data-origen="' + origen + '"][data-destino="' + destino + '"]');
-  if (celda) celda.classList.add('celda-elegida');
-  dibujarRutaResultadoJohnson();
+  consultaCaminosJohnson.objetivo = 'minimo';
+  consultaCaminosJohnson.comparar = false;
+  mostrarConsultaRutaJohnson(origen, destino);
 }
 
 function textoRecorridoJohnson(r, ruta) {
   return ruta.indices.map(i => r.nombres[i]).join(' → ');
 }
 
-/** Panel lateral del resultado: grafo con la ruta (o el ciclo) y su detalle. */
+/** Explica y valida cada conexión por ID usando sus pesos originales. */
+function prepararRecorridoRutaJohnson(r, ruta) {
+  const originales = new Map(r.aristasOriginales.map(a => [a.id, a]));
+  const acumuladas = [0];
+  const pesos = ruta.conexiones.map((id, i) => {
+    const arista = originales.get(id);
+    if (!arista || arista.desde !== ruta.indices[i] || arista.hacia !== ruta.indices[i + 1]) throw new Error('La ruta contiene una conexión inconsistente.');
+    acumuladas.push(acumuladas[i] + arista.peso);
+    return arista.peso;
+  });
+  if (acumuladas[acumuladas.length - 1] !== ruta.distancia) throw new Error('La suma de los pesos originales no coincide con el resultado.');
+  return { ruta: ruta, pesos: pesos, acumuladas: acumuladas };
+}
+
+function numeroRutaJohnson(numero) {
+  if (numero === null || numero === undefined) return '—';
+  if (numero === Infinity || numero === -Infinity) return 'Sin camino';
+  return String(numero).replace(/^-/, '−');
+}
+
+function actualizarConsultaRutaJohnson(origen, destino) {
+  const r = estadoJohnson.resultado;
+  if (!resultadoVigenteJohnson() || !Number.isInteger(origen) || !Number.isInteger(destino) || !r.ids[origen] || !r.ids[destino]) return false;
+  const consulta = consultaCaminosJohnson;
+  estadoJohnson.seleccion = { origen: origen, destino: destino };
+  const idOrigen = r.ids[origen];
+  if (!consulta.cacheMaximos.has(idOrigen)) consulta.cacheMaximos.set(idOrigen, calcularMaximosDAGJohnson(estado.nodos, estado.conexiones, idOrigen));
+  consulta.maximos = consulta.cacheMaximos.get(idOrigen);
+  const minimo = reconstruirRutaJohnson(origen, destino, r);
+  const maximo = reconstruirMaximoDAGJohnson(r.ids[destino], consulta.maximos);
+  consulta.minimo = minimo ? prepararRecorridoRutaJohnson(r, minimo) : null;
+  consulta.maximo = maximo ? prepararRecorridoRutaJohnson(r, maximo) : null;
+  consulta.comparar = consulta.comparar && !!minimo && !!maximo;
+  const seleccionadas = consulta.comparar ? [minimo, maximo] : [(consulta.objetivo === 'maximo' ? maximo : minimo)];
+  const rutas = seleccionadas.filter(Boolean);
+  const mostrarMinimo = consulta.comparar || consulta.objetivo === 'minimo';
+  const mostrarMaximo = consulta.comparar || consulta.objetivo === 'maximo';
+  const valoresNodos = {};
+  r.ids.forEach((id, i) => {
+    valoresNodos[id] = { minimo: r.tieneCicloNegativo ? null : r.distancias[origen][i], maximo: consulta.maximos.aciclico ? consulta.maximos.distancias[i] : null };
+  });
+  estado.visualizacionJohnson = {
+    tipo: r.tieneCicloNegativo ? 'ciclo' : consulta.comparar ? 'comparacion' : rutas.length ? 'ruta' : 'consulta',
+    objetivo: consulta.comparar ? 'comparar' : consulta.objetivo,
+    origen: idOrigen, destino: r.ids[destino],
+    nodos: r.tieneCicloNegativo ? r.cicloNodos : Array.from(new Set(rutas.flatMap(ruta => ruta.nodos))),
+    conexiones: r.tieneCicloNegativo ? r.cicloConexiones : Array.from(new Set(rutas.flatMap(ruta => ruta.conexiones))),
+    minimoConexiones: mostrarMinimo && minimo ? minimo.conexiones : [],
+    maximoConexiones: mostrarMaximo && maximo ? maximo.conexiones : [],
+    nodosMinimos: mostrarMinimo && minimo ? minimo.nodos : [],
+    nodosMaximos: mostrarMaximo && maximo ? maximo.nodos : [],
+    valoresNodos: valoresNodos,
+    distancia: rutas.length === 1 ? rutas[0].distancia : null,
+    firma: estadoJohnson.firma
+  };
+  return true;
+}
+
+function mostrarConsultaRutaJohnson(origen, destino) {
+  if (!actualizarConsultaRutaJohnson(origen, destino)) return;
+  dibujarLienzo();
+  sincronizarSelectoresRutaJohnson();
+  el.johnsonTabla.querySelectorAll('td.celda-elegida').forEach(td => td.classList.remove('celda-elegida'));
+  const celda = el.johnsonTabla.querySelector('td[data-origen="' + origen + '"][data-destino="' + destino + '"]');
+  if (celda) celda.classList.add('celda-elegida');
+  dibujarRutaResultadoJohnson();
+  actualizarPanelRutaEditorJohnson(true);
+  if (estadoJohnson.vista === 'grafo') ajustarVistaRutaJohnson();
+}
+
+function sincronizarSelectoresRutaJohnson() {
+  const r = estadoJohnson.resultado;
+  const sel = estadoJohnson.seleccion;
+  if (!r || !sel) return;
+  ['jnOrigenRuta', 'jnDestinoRuta'].forEach((id, i) => {
+    const select = document.getElementById(id);
+    const firma = JSON.stringify([r.ids, r.nombres]);
+    if (select.dataset.nombres !== firma) {
+      select.replaceChildren();
+      r.nombres.forEach((nombre, indice) => {
+        const opcion = elemento('option', nombre); opcion.value = indice; select.appendChild(opcion);
+      });
+      select.dataset.nombres = firma;
+    }
+    select.value = i === 0 ? sel.origen : sel.destino;
+  });
+  const consulta = consultaCaminosJohnson;
+  const objetivo = document.getElementById('jnObjetivoRuta');
+  objetivo.value = consulta.objetivo;
+  objetivo.querySelector('[value="maximo"]').disabled = !consulta.maximos.aciclico;
+  const comparar = document.getElementById('jnCompararRutas');
+  comparar.disabled = !consulta.minimo || !consulta.maximo;
+  comparar.checked = consulta.comparar;
+  document.getElementById('jnAvisoMaximo').textContent = consulta.maximos.aciclico
+    ? 'Máximos disponibles. En caso de empate se muestra una ruta representativa según el orden de los datos.'
+    : 'La maximización de esta versión requiere un grafo dirigido sin ciclos.';
+}
+
+function construirDetalleRutaJohnson(contenedor, modelo, objetivo) {
+  const r = estadoJohnson.resultado;
+  const ruta = modelo.ruta;
+  const nombres = ruta.indices.map(i => r.nombres[i]);
+  const bloque = elemento('article', null, 'jn-detalle-ruta jn-detalle-ruta--' + objetivo + ' jn-camino-' + objetivo);
+  bloque.appendChild(elemento('h3', objetivo === 'maximo' ? 'Camino máximo · recorrido topológico' : 'Camino mínimo · Johnson'));
+  const secuencia = elemento('p', nombres.join(' → '), 'jn-ruta__recorrido');
+  secuencia.tabIndex = 0;
+  secuencia.setAttribute('aria-label', 'Secuencia completa: ' + nombres.join(' → '));
+  bloque.appendChild(secuencia);
+  const suma = modelo.pesos.length ? modelo.pesos.map(p => p < 0 ? '(' + numeroRutaJohnson(p) + ')' : String(p)).join(' + ') + ' = ' + numeroRutaJohnson(ruta.distancia) : 'Mismo nodo: 0 = 0';
+  bloque.appendChild(elemento('p', suma, 'jn-ruta__suma'));
+  bloque.appendChild(elemento('p', 'Distancia ' + (objetivo === 'maximo' ? 'máxima' : 'mínima') + ' total: ' + numeroRutaJohnson(ruta.distancia), 'jn-ruta__total'));
+  const caja = elemento('div', null, 'jn-ruta__tabla');
+  caja.tabIndex = 0;
+  caja.setAttribute('role', 'region');
+  caja.setAttribute('aria-label', 'Pesos originales y acumulado de la ruta elegida');
+  const tabla = elemento('table', null, 'tabla tabla-compacta');
+  const cabecera = elemento('thead');
+  const fila = elemento('tr');
+  ['Recorrido elegido', 'Peso original', 'Acumulado de esta ruta'].forEach(t => {
+    const th = elemento('th', t); th.scope = 'col'; fila.appendChild(th);
+  });
+  cabecera.appendChild(fila); tabla.appendChild(cabecera);
+  const cuerpo = elemento('tbody');
+  nombres.forEach((nombre, i) => {
+    const tr = elemento('tr');
+    const th = elemento('th', i === 0 ? '0 · ' + nombre + ' (origen)' : i + ' · ' + nombres[i - 1] + ' → ' + nombre);
+    th.scope = 'row'; tr.appendChild(th);
+    tr.appendChild(elemento('td', i === 0 ? '—' : numeroRutaJohnson(modelo.pesos[i - 1])));
+    tr.appendChild(elemento('td', numeroRutaJohnson(modelo.acumuladas[i])));
+    cuerpo.appendChild(tr);
+  });
+  tabla.appendChild(cuerpo); caja.appendChild(tabla); bloque.appendChild(caja);
+  contenedor.appendChild(bloque);
+}
+
+function construirProcedimientoMaximoJohnson(contenedor) {
+  const maximos = consultaCaminosJohnson.maximos;
+  if (!maximos || !maximos.aciclico) return;
+  const r = estadoJohnson.resultado;
+  const bloque = elemento('details', null, 'jn-procedimiento-maximo');
+  bloque.appendChild(elemento('summary', 'Operaciones reales de maximización · recorrido topológico'));
+  bloque.appendChild(elemento('p', 'Inicialización: origen = 0; los demás = −∞ (aún sin camino). Se recorren los nodos en orden topológico y se conserva el mayor candidato. En los empates se mantiene el primer predecesor.', 'tarjeta__pista'));
+  bloque.appendChild(elemento('p', 'Orden: ' + maximos.orden.map(i => r.nombres[i]).join(' → '), 'jn-ruta__recorrido'));
+  const filas = maximos.operaciones.map(op => ({
+    th: r.nombres[op.desde] + ' → ' + r.nombres[op.hacia],
+    celdas: [op.anterior === -Infinity ? '−∞' : numeroRutaJohnson(op.anterior), numeroRutaJohnson(op.candidato - op.peso) + ' + ' + (op.peso < 0 ? '(' + numeroRutaJohnson(op.peso) + ')' : op.peso) + ' = ' + numeroRutaJohnson(op.candidato), numeroRutaJohnson(op.actual), op.mejora ? 'Actualiza' : 'Conserva']
+  }));
+  bloque.appendChild(tablaJohnson(['Arista', 'Anterior', 'Candidato con peso original', 'Máximo', 'Decisión'], filas));
+  contenedor.appendChild(bloque);
+}
+
+/** Detalle compartido por resultado y editor; los acumulados se distinguen de las distancias de los nodos. */
+function construirConsultaDetalleJohnson(contenedor) {
+  contenedor.replaceChildren();
+  const r = estadoJohnson.resultado;
+  const sel = estadoJohnson.seleccion;
+  if (!r || !sel) return;
+  const consulta = consultaCaminosJohnson;
+  contenedor.appendChild(elemento('p', 'Objetivo: ' + (consulta.comparar ? 'Comparar mínimo y máximo' : consulta.objetivo === 'maximo' ? 'Maximizar' : 'Minimizar') + ' · Origen: ' + r.nombres[sel.origen] + ' · Destino: ' + r.nombres[sel.destino], 'jn-ruta__cabecera'));
+  if (r.tieneCicloNegativo) {
+    contenedor.appendChild(avisoCicloNegativo(r));
+    if (r.ciclo.length) contenedor.appendChild(elemento('p', r.ciclo.concat([r.ciclo[0]]).join(' → ') + ' · suma: ' + numeroRutaJohnson(r.cicloPeso), 'jn-ruta__recorrido jn-ruta__recorrido--ciclo'));
+  } else if (consulta.objetivo === 'maximo' && !consulta.maximos.aciclico) {
+    contenedor.appendChild(elemento('p', 'La maximización de esta versión requiere un grafo dirigido sin ciclos.', 'mensaje mensaje--aviso'));
+  } else if (consulta.comparar) {
+    const comparacion = elemento('div', null, 'jn-detalle-comparacion');
+    construirDetalleRutaJohnson(comparacion, consulta.minimo, 'minimo');
+    construirDetalleRutaJohnson(comparacion, consulta.maximo, 'maximo');
+    contenedor.appendChild(comparacion);
+    if (JSON.stringify(consulta.minimo.ruta.conexiones) === JSON.stringify(consulta.maximo.ruta.conexiones)) contenedor.appendChild(elemento('p', 'El mínimo y el máximo comparten el mismo recorrido.', 'mensaje mensaje--ok'));
+  } else {
+    const modelo = consulta.objetivo === 'maximo' ? consulta.maximo : consulta.minimo;
+    if (modelo) construirDetalleRutaJohnson(contenedor, modelo, consulta.objetivo);
+    else contenedor.appendChild(elemento('p', 'No existe un camino entre estos vértices', 'mensaje mensaje--aviso'));
+  }
+  contenedor.appendChild(elemento('p', 'En cada nodo se muestran sus distancias mínima y máxima generales desde el origen. La tabla de tramos indica el acumulado exclusivo de la ruta elegida. Se muestra una ruta representativa por objetivo; puede haber empates.', 'tarjeta__pista'));
+  const valores = elemento('details', null, 'jn-procedimiento-maximo');
+  valores.appendChild(elemento('summary', 'Distancias mínimas y máximas desde ' + r.nombres[sel.origen]));
+  valores.appendChild(tablaJohnson(['Nodo', 'Mínimo · Johnson', 'Máximo · acíclico'], r.ids.map((id, i) => ({ th: r.nombres[i], celdas: [numeroRutaJohnson(estado.visualizacionJohnson.valoresNodos[id].minimo), numeroRutaJohnson(estado.visualizacionJohnson.valoresNodos[id].maximo)] }))));
+  contenedor.appendChild(valores);
+  if (consulta.comparar || consulta.objetivo === 'maximo') construirProcedimientoMaximoJohnson(contenedor);
+}
+
+function actualizarPanelRutaEditorJohnson(forzar) {
+  const panel = document.getElementById('jnRutaEditor');
+  const visible = resultadoVigenteJohnson() && !!estadoJohnson.seleccion && !!estado.visualizacionJohnson && estadoJohnson.vista === 'grafo';
+  panel.hidden = !visible;
+  document.body.classList.toggle('jn-ruta-en-editor', visible);
+  if (!visible) return;
+  const detalle = document.getElementById('jnRutaEditorDetalle');
+  const clave = JSON.stringify([estadoJohnson.seleccion, consultaCaminosJohnson.objetivo, consultaCaminosJohnson.comparar, estadoJohnson.resultado.nombres]);
+  if (forzar || detalle.dataset.consulta !== clave) {
+    detalle.dataset.consulta = clave;
+    construirConsultaDetalleJohnson(detalle);
+  }
+}
+
+function limpiarRutaSeleccionadaJohnson() {
+  consultaCaminosJohnson.minimo = null;
+  consultaCaminosJohnson.maximo = null;
+  consultaCaminosJohnson.maximos = null;
+  consultaCaminosJohnson.comparar = false;
+  consultaCaminosJohnson.cacheMaximos.clear();
+  estadoJohnson.seleccion = null;
+  estado.visualizacionJohnson = null;
+  actualizarPanelRutaEditorJohnson();
+}
+
 function dibujarRutaResultadoJohnson() {
   const r = estadoJohnson.resultado;
-  const detalle = vj.rutaDetalle;
-  detalle.replaceChildren();
-
-  if (r.tieneCicloNegativo) {
-    vj.rutaEtiqueta.textContent = 'Ciclo negativo';
-    const nodosCiclo = new Set(r.cicloIndices);
-    const conexionesCiclo = new Set(r.cicloConexiones);
-    dibujarGrafoMini(vj.svgResultado, {
-      claseConexion: c => (conexionesCiclo.has(c.id) ? ['conexion-johnson', 'ciclo-negativo-johnson'] : ['conexion-johnson-inactiva']),
-      claseNodo: (nodo, i) => (nodosCiclo.has(i) ? ['nodo-johnson', 'ciclo-negativo-johnson'] : [])
-    });
-    if (r.ciclo.length) {
-      detalle.appendChild(elemento('p', r.ciclo.concat([r.ciclo[0]]).join(' → '), 'jn-ruta__recorrido jn-ruta__recorrido--ciclo'));
-      detalle.appendChild(elemento('p', 'Suma de pesos del ciclo: ' + r.cicloPeso, 'jn-ruta__suma'));
-    }
-    vj.btnVerEnEditor.textContent = 'Ver ciclo en el editor';
-    vj.btnVerEnEditor.disabled = r.cicloNodos.length === 0;
-    return;
-  }
-
-  vj.rutaEtiqueta.textContent = 'Ruta seleccionada';
-  vj.btnVerEnEditor.textContent = 'Ver en el editor';
-  const sel = estadoJohnson.seleccion;
-  const ruta = sel ? reconstruirRutaJohnson(sel.origen, sel.destino, r) : null;
-
-  if (!sel) {
-    dibujarGrafoMini(vj.svgResultado, {});
-    detalle.appendChild(elemento('p', 'Toca una celda de la tabla para ver aquí su ruta y cómo se suma la distancia.', 'tarjeta__pista'));
-    vj.btnVerEnEditor.disabled = true;
-    return;
-  }
-
-  if (!ruta) {
-    dibujarGrafoMini(vj.svgResultado, {
-      claseNodo: (nodo, i) => (i === sel.origen ? ['nodo-johnson', 'nodo-johnson-origen'] : i === sel.destino ? ['nodo-johnson', 'nodo-johnson-destino'] : []),
-      claseConexion: () => ['conexion-johnson-inactiva']
-    });
-    detalle.appendChild(elemento('div', 'No existe ningún camino de ' + r.nombres[sel.origen] + ' a ' + r.nombres[sel.destino] + ' (∞).', 'mensaje mensaje--aviso'));
-    vj.btnVerEnEditor.disabled = true;
-    return;
-  }
-
-  const enRuta = new Set(ruta.conexiones);
+  const visual = estado.visualizacionJohnson;
+  vj.rutaEtiqueta.textContent = r.tieneCicloNegativo ? 'Ciclo negativo · sin mínimos' : consultaCaminosJohnson.comparar ? 'Comparación de caminos' : consultaCaminosJohnson.objetivo === 'maximo' ? 'Camino máximo' : 'Camino mínimo';
+  vj.btnVerEnEditor.textContent = r.tieneCicloNegativo ? 'Ver ciclo en el editor' : 'Ver en el editor';
+  vj.btnVerEnEditor.disabled = !visual;
   dibujarGrafoMini(vj.svgResultado, {
-    claseConexion: c => (enRuta.has(c.id) ? ['conexion-johnson'] : ['conexion-johnson-inactiva']),
-    claseNodo: (nodo, i) => {
-      if (!ruta.indices.includes(i)) return [];
-      if (i === sel.origen) return ['nodo-johnson', 'nodo-johnson-origen'];
-      if (i === sel.destino) return ['nodo-johnson', 'nodo-johnson-destino'];
-      return ['nodo-johnson'];
-    }
+    visual: visual,
+    claseConexion: c => clasesJohnsonConexion(c, visual),
+    claseNodo: nodo => clasesJohnsonNodo(nodo, visual)
   });
-
-  detalle.appendChild(elemento('p', textoRecorridoJohnson(r, ruta), 'jn-ruta__recorrido'));
-  const pesos = pesosDeRutaJohnson(ruta, r);
-  const suma = pesos.length ? pesos.map((p, i) => (i === 0 ? String(p) : formatearSumando(p))).join(' + ') + ' = ' + ruta.distancia : 'Mismo nodo: distancia 0';
-  detalle.appendChild(elemento('p', suma, 'jn-ruta__suma'));
-  vj.btnVerEnEditor.disabled = false;
+  const sel = estadoJohnson.seleccion;
+  vj.svgResultado.setAttribute('aria-label', r.tieneCicloNegativo ? 'Ciclo negativo; no existen distancias mínimas' : 'Consulta ' + (consultaCaminosJohnson.comparar ? 'mínima y máxima' : consultaCaminosJohnson.objetivo) + ' desde ' + r.nombres[sel.origen] + ' hasta ' + r.nombres[sel.destino] + '. Nodos divididos: nombre, mínimo y máximo.');
+  construirConsultaDetalleJohnson(vj.rutaDetalle);
 }
 
 function dibujarResultadoJohnson() {
@@ -793,23 +988,21 @@ function dibujarResultadoJohnson() {
     document.querySelectorAll('[data-accion="calcular"]').forEach(b => { b.disabled = estado.nodos.length < 2; });
     return;
   }
-
   const r = estadoJohnson.resultado;
+  if (!estadoJohnson.seleccion) actualizarConsultaRutaJohnson(0, r.cantidad - 1);
+  sincronizarSelectoresRutaJohnson();
   el.johnsonTabla.replaceChildren();
-
   if (r.tieneCicloNegativo) {
     el.johnsonEstado.className = 'mensaje mensaje--error';
     el.johnsonEstado.textContent = 'El grafo contiene un ciclo de peso negativo: no existen distancias mínimas.';
-    vj.tituloResultado.textContent = 'Sin distancias mínimas';
+    vj.tituloResultado.textContent = 'Matriz mínima no disponible · ciclo negativo';
     vj.pista.textContent = 'Cada vuelta al ciclo reduce el costo, así que puede bajar sin límite.';
     el.johnsonTabla.appendChild(avisoCicloNegativo(r));
   } else {
-    const inalcanzables = r.distancias.reduce((t, fila) => t + fila.filter(v => v === Infinity).length, 0);
     el.johnsonEstado.className = 'mensaje mensaje--ok';
-    el.johnsonEstado.textContent = 'Cálculo completado: ' + r.cantidad + ' × ' + r.cantidad + ' distancias' +
-      (inalcanzables ? ' (' + inalcanzables + ' sin camino).' : '.');
-    vj.tituloResultado.textContent = 'Distancias mínimas';
-    vj.pista.textContent = 'Toca una celda para ver su ruta. Fila = origen · columna = destino · ∞ = sin camino.';
+    el.johnsonEstado.textContent = 'Johnson calculado: ' + r.cantidad + ' × ' + r.cantidad + ' distancias mínimas. Consulta las rutas en el grafo.';
+    vj.tituloResultado.textContent = 'Matriz de distancias mínimas · Johnson';
+    vj.pista.textContent = 'Fila = origen · columna = destino · ∞ = sin camino. Cada celda consulta el mínimo; esta matriz no representa máximos.';
     el.johnsonTabla.appendChild(construirTablaDistancias(r, true));
   }
   dibujarRutaResultadoJohnson();
@@ -827,19 +1020,11 @@ function avisoCicloNegativo(resultado) {
 }
 
 function verEnEditorJohnson() {
-  const r = estadoJohnson.resultado;
-  if (!resultadoVigenteJohnson()) return;
+  if (!resultadoVigenteJohnson() || !estado.visualizacionJohnson) return;
   cambiarVistaJohnson('grafo');
-  const visual = estado.visualizacionJohnson;
-  if (!visual) return;
-  if (visual.tipo === 'ciclo') {
-    ayudar('Ciclo negativo: <strong>' + r.ciclo.concat([r.ciclo[0]]).map(escaparHtml).join(' → ') + '</strong> · suma ' + r.cicloPeso);
-    return;
-  }
-  const sel = estadoJohnson.seleccion;
-  const ruta = reconstruirRutaJohnson(sel.origen, sel.destino, r);
-  ayudar('Ruta mínima: <strong>' + ruta.indices.map(i => escaparHtml(r.nombres[i])).join(' → ') + '</strong> · ' +
-         'Distancia total: <strong>' + ruta.distancia + '</strong>');
+  dibujarLienzo();
+  ajustarVistaRutaJohnson();
+  ayudar('Consulta estática: arriba nombre, abajo mínimo y máximo desde el origen seleccionado. Consulta los pesos y acumulados en el detalle.');
 }
 
 /* ---------------- Ejemplos ---------------- */
@@ -943,6 +1128,103 @@ function inicializarVistasJohnson() {
     activo: () => estadoJohnson.vista === 'resolucion'
   });
   vj.btnVerEnEditor.addEventListener('click', verEnEditorJohnson);
+
+  const formulario = document.getElementById('jnConsultaRuta');
+  const consultar = () => {
+    consultaCaminosJohnson.objetivo = document.getElementById('jnObjetivoRuta').value;
+    consultaCaminosJohnson.comparar = document.getElementById('jnCompararRutas').checked;
+    mostrarConsultaRutaJohnson(Number(document.getElementById('jnOrigenRuta').value), Number(document.getElementById('jnDestinoRuta').value));
+  };
+  formulario.addEventListener('submit', evento => { evento.preventDefault(); consultar(); });
+  formulario.addEventListener('change', consultar);
+  document.getElementById('btnExportarRutaJn').addEventListener('click', () => {
+    if (!resultadoVigenteJohnson()) return;
+    const vistaAnterior = vj.svgResultado.getAttribute('viewBox');
+    vj.svgResultado.setAttribute('viewBox', vj.svgResultado.dataset.vistaCompleta);
+    exportarSvgComoPng(vj.svgResultado, { nombre: 'johnson-caminos' })
+      .then(() => avisar('Grafo y leyenda exportados como PNG.', 'ok'))
+      .catch(() => avisar('No se pudo exportar el grafo.', 'error'));
+    vj.svgResultado.setAttribute('viewBox', vistaAnterior);
+  });
+  document.getElementById('btnImprimirRutaJn').addEventListener('click', imprimirProcedimiento);
+  let vistaAntesDeImprimir = null;
+  window.addEventListener('beforeprint', () => {
+    if (estadoJohnson.vista !== 'resultado' || !resultadoVigenteJohnson()) return;
+    vistaAntesDeImprimir = vj.svgResultado.getAttribute('viewBox');
+    vj.svgResultado.setAttribute('viewBox', vj.svgResultado.dataset.vistaCompleta);
+  });
+  window.addEventListener('afterprint', () => {
+    if (vistaAntesDeImprimir) vj.svgResultado.setAttribute('viewBox', vistaAntesDeImprimir);
+    vistaAntesDeImprimir = null;
+  });
+
+  document.getElementById('moduloContenido').addEventListener('click', evento => {
+    const ampliar = evento.target.closest('[data-ampliar-grafo]');
+    if (ampliar) {
+      const activo = vj.resultadoCon.classList.toggle('jn-grafo-ampliado');
+      ampliar.textContent = activo ? 'Restaurar vista' : 'Ampliar grafo';
+      ampliar.setAttribute('aria-pressed', String(activo));
+      dibujarRutaResultadoJohnson();
+      return;
+    }
+    const zoom = evento.target.closest('[data-zoom-ruta]');
+    if (!zoom) return;
+    const svg = vj.svgResultado;
+    if (!svg.dataset.vistaCompleta) return;
+    if (zoom.dataset.zoomRuta === 'ajustar') { svg.setAttribute('viewBox', svg.dataset.vistaCompleta); return; }
+    const actual = svg.viewBox.baseVal;
+    const completa = svg.dataset.vistaCompleta.split(' ').map(Number);
+    const factor = zoom.dataset.zoomRuta === 'mas' ? 0.8 : 1.25;
+    const ancho = limitar(actual.width * factor, completa[2] / 8, completa[2]);
+    const alto = ancho * completa[3] / completa[2];
+    const centroX = actual.x + actual.width / 2;
+    const centroY = actual.y + actual.height / 2;
+    svg.setAttribute('viewBox', [limitar(centroX - ancho / 2, completa[0], completa[0] + completa[2] - ancho), limitar(centroY - alto / 2, completa[1], completa[1] + completa[3] - alto), ancho, alto].join(' '));
+  });
+
+  // Desplazamiento directo del SVG ampliado, sin relojes ni animación.
+  let arrastreResultado = null;
+  let evitarSeleccionNodo = false;
+  vj.svgResultado.style.touchAction = 'none';
+  vj.svgResultado.addEventListener('pointerdown', evento => {
+    if (evento.button !== 0) return;
+    const vista = vj.svgResultado.viewBox.baseVal;
+    arrastreResultado = { x: evento.clientX, y: evento.clientY, vista: [vista.x, vista.y, vista.width, vista.height], movido: false };
+    evitarSeleccionNodo = false;
+  });
+  vj.svgResultado.addEventListener('pointermove', evento => {
+    if (!arrastreResultado) return;
+    const dx = evento.clientX - arrastreResultado.x, dy = evento.clientY - arrastreResultado.y;
+    if (Math.hypot(dx, dy) < 4 && !arrastreResultado.movido) return;
+    if (!arrastreResultado.movido) vj.svgResultado.setPointerCapture(evento.pointerId);
+    arrastreResultado.movido = true;
+    const caja = vj.svgResultado.getBoundingClientRect();
+    const vista = arrastreResultado.vista;
+    const factor = Math.max(vista[2] / caja.width, vista[3] / caja.height);
+    const completa = vj.svgResultado.dataset.vistaCompleta.split(' ').map(Number);
+    const x = limitar(vista[0] - dx * factor, completa[0], completa[0] + completa[2] - vista[2]);
+    const y = limitar(vista[1] - dy * factor, completa[1], completa[1] + completa[3] - vista[3]);
+    vj.svgResultado.setAttribute('viewBox', [x, y, vista[2], vista[3]].join(' '));
+  });
+  const terminarArrastre = () => {
+    evitarSeleccionNodo = !!arrastreResultado && arrastreResultado.movido;
+    arrastreResultado = null;
+  };
+  vj.svgResultado.addEventListener('pointerup', terminarArrastre);
+  vj.svgResultado.addEventListener('pointercancel', terminarArrastre);
+  const elegirNodoResultado = evento => {
+    if (evitarSeleccionNodo || !estadoJohnson.seleccion) return;
+    const grupo = evento.target.closest('.nodo[data-id]');
+    if (!grupo) return;
+    const indice = estadoJohnson.resultado.ids.indexOf(grupo.dataset.id);
+    const sel = estadoJohnson.seleccion;
+    mostrarConsultaRutaJohnson(evento.shiftKey ? indice : sel.origen, evento.shiftKey ? sel.destino : indice);
+  };
+  vj.svgResultado.addEventListener('click', elegirNodoResultado);
+  vj.svgResultado.addEventListener('keydown', evento => {
+    if (evento.key !== 'Enter' && evento.key !== ' ') return;
+    evento.preventDefault(); evitarSeleccionNodo = false; elegirNodoResultado(evento);
+  });
 
   // Delegación: la tabla se regenera, los manejadores no.
   el.johnsonTabla.addEventListener('click', evento => {

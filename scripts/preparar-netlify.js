@@ -30,7 +30,7 @@ const PUBLICOS = [
   'js/comun/intro.js', 'js/comun/navegacion.js', 'js/comun/notificaciones.js',
   'js/comun/presentacion.js', 'js/comun/tema.js', 'js/comun/utilidades.js',
   'js/grafos/algoritmos.js', 'js/grafos/app.js', 'js/grafos/editor.js', 'js/grafos/modelo.js',
-  'js/johnson/ejemplos.js', 'js/johnson/vistas.js',
+  'js/johnson/ejemplos.js', 'js/johnson/caminos.js', 'js/johnson/vistas.js',
   'js/northwest/app.js', 'js/northwest/balanceo.js', 'js/northwest/estado.js',
   'js/northwest/modelo.js', 'js/northwest/noroeste.js', 'js/northwest/tabla.js', 'js/northwest/validacion.js',
   'js/ordenamiento/algoritmos.js', 'js/ordenamiento/app.js',

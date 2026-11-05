@@ -61,7 +61,8 @@ function tolerancia(evento) {
  * el primer clic redibuja el grafo y sustituye el elemento original.
  */
 function nodoEnPunto(punto, margen) {
-  const alcance = RADIO_NODO + (margen || 0);
+  const radioVisible = typeof radioVisualNodoJohnson === 'function' ? radioVisualNodoJohnson(estado.visualizacionJohnson) : RADIO_NODO;
+  const alcance = radioVisible + (margen || 0);
   let elegido = null;
   let menor = Infinity;
 

@@ -41,6 +41,20 @@ const EJEMPLOS_JOHNSON = [
     ]
   },
   {
+    id: 'minimo-maximo',
+    nombre: 'Mínimo y máximo (grafo acíclico)',
+    descripcion: 'Desde A hasta D: el mínimo A → B → D vale 5 y el máximo A → C → D vale 9. Permite comparar ambos recorridos.',
+    nodos: [
+      { nombre: 'A', x: 0.12, y: 0.50 },
+      { nombre: 'B', x: 0.48, y: 0.18 },
+      { nombre: 'C', x: 0.48, y: 0.82 },
+      { nombre: 'D', x: 0.88, y: 0.50 }
+    ],
+    conexiones: [
+      ['A', 'B', 2], ['A', 'C', 5], ['B', 'D', 3], ['C', 'D', 4]
+    ]
+  },
+  {
     id: 'inalcanzables',
     nombre: 'Nodos sin camino (∞)',
     descripcion: 'Dos grupos de nodos sin conexión entre ellos: varias distancias quedan en ∞.',
