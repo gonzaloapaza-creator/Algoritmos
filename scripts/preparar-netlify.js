@@ -21,7 +21,10 @@ const PUBLICOS = [
   'js/asignacion/app.js', 'js/asignacion/estado.js', 'js/asignacion/grafo.js',
   'js/asignacion/hungaro.js', 'js/asignacion/matriz.js', 'js/asignacion/modelo.js',
   'js/asignacion/procedimiento.js', 'js/asignacion/resultado.js', 'js/asignacion/validacion.js',
-  'js/comun/asistente-contexto.js', 'js/comun/asistente.js', 'js/comun/catalogo.js',
+  'js/comun/asistente-contexto.js', 'js/comun/asistente-motor.js', 'js/comun/asistente.js', 'js/comun/catalogo.js',
+  'js/comun/conocimiento/base.js', 'js/comun/conocimiento/fundamentos.js', 'js/comun/conocimiento/algoritmos-grafos.js',
+  'js/comun/conocimiento/algoritmos-tablas.js', 'js/comun/conocimiento/algoritmos-datos.js', 'js/comun/conocimiento/aplicacion.js',
+  'js/comun/conocimiento/diagnostico.js', 'js/comun/conocimiento/ejercicio.js',
   'js/comun/ciudad.js', 'js/comun/dialogo.js', 'js/comun/exportarImagen.js',
   'js/comun/guardados.js', 'js/comun/impresion.js', 'js/comun/inicio.js',
   'js/comun/intro.js', 'js/comun/navegacion.js', 'js/comun/notificaciones.js',
@@ -66,8 +69,20 @@ function verificarPublico(base) {
     if (/AIza[0-9A-Za-z_-]{25,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/.test(texto)) {
       throw new Error('Posible credencial detectada en ' + nombre);
     }
+    if (/\/api\/(?:asistente|estado)|gemini|\.netlify\/functions|netlify\/functions/i.test(texto)) {
+      throw new Error('Dependencia de asistente remoto en ' + nombre);
+    }
     if (nombre.endsWith('.html')) {
       if ((texto.match(/src="js\/comun\/asistente\.js"/g) || []).length !== 1) throw new Error('Integración duplicada o ausente: ' + nombre);
+      const scripts = Array.from(texto.matchAll(/<script src="([^"]+)"/g), m => m[1]);
+      const dependencias = ['js/config.js', 'js/comun/utilidades.js', 'js/comun/asistente-contexto.js']
+        .concat(PUBLICOS.filter(n => n.startsWith('js/comun/conocimiento/')), 'js/comun/asistente-motor.js', 'js/comun/asistente.js');
+      let anterior = -1;
+      for (const dependencia of dependencias) {
+        const posicion = scripts.indexOf(dependencia);
+        if (scripts.filter(s => s === dependencia).length !== 1 || posicion <= anterior) throw new Error('Orden o duplicado de ' + dependencia + ' en ' + nombre);
+        anterior = posicion;
+      }
       for (const m of texto.matchAll(/(?:src|href)="([^"#?]+)(?:[?#][^"]*)?"/g)) {
         if (/^(?:[a-z]+:|\/\/)/i.test(m[1])) continue;
         const recurso = path.posix.normalize(path.posix.join(path.posix.dirname(nombre), m[1]));
@@ -135,8 +150,8 @@ function retirarPaquetesAntiguos(entrega) {
     fs.renameSync(origen, destino);
     console.log('Paquete anterior archivado como OBSOLETO: ' + nombre);
   }
-  escribir(archivo, 'NO_PUBLICAR.md', '# OBSOLETO: NO PUBLICAR\n\nEstos paquetes anteriores dependían de Gemini y no contienen la conversión local actual. Se conservan solo como respaldo. Publica únicamente ../drop o ../ciudad-algoritmos-netlify.zip. Cualquier vínculo CLI antiguo a proyecto-completo también está obsoleto.\n');
-  escribir(base, 'PUBLICAR_SOLO_DROP.md', '# Paquete vigente\n\nArrastra únicamente drop al apartado Deploys del proyecto existente. ciudad-algoritmos-netlify.zip contiene los mismos archivos y debe extraerse primero. No publiques OBSOLETO_GEMINI_NO_PUBLICAR, public, la raíz del proyecto ni vínculos CLI antiguos.\n');
+  escribir(archivo, 'NO_PUBLICAR.txt', 'OBSOLETO: NO PUBLICAR\n\nEstos paquetes anteriores dependían de Gemini y no contienen la conversión local actual. Se conservan solo como respaldo. Publica únicamente ../drop o ../ciudad-algoritmos-netlify.zip. Cualquier vínculo CLI antiguo a proyecto-completo también está obsoleto.\n');
+  escribir(base, 'PUBLICAR_SOLO_DROP.txt', 'Paquete vigente\n\nArrastra únicamente drop al apartado Deploys del proyecto existente. ciudad-algoritmos-netlify.zip contiene los mismos archivos y debe extraerse primero. No publiques OBSOLETO_GEMINI_NO_PUBLICAR, public, la raíz del proyecto ni vínculos CLI antiguos.\n');
 }
 
 function preparar() {

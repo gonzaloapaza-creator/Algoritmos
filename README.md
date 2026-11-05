@@ -35,7 +35,7 @@ El inicio es una ciudad SVG con siete zonas seleccionables y un panel con entrad
 npm start                    # servidor Node sin dependencias, solo 127.0.0.1:8123
 ```
 
-Conserva la dirección que ya utilizabas: `http://localhost:8123` y `http://127.0.0.1:8123` tienen almacenamientos separados, aunque abran el mismo proyecto. No se cambia el origen ni se migran datos entre ambos automáticamente. Si empiezas sin trabajos anteriores, las pruebas documentadas usan `http://127.0.0.1:8123/`. El servidor Node conserva ese puerto y sirve únicamente archivos estáticos. Para publicar, usa el paquete estático de Netlify Drop y los pasos de [PUBLICAR_NETLIFY.md](PUBLICAR_NETLIFY.md).
+Conserva la dirección que ya utilizabas: `http://localhost:8123` y `http://127.0.0.1:8123` tienen almacenamientos separados, aunque abran el mismo proyecto. No se cambia el origen ni se migran datos entre ambos automáticamente. Si empiezas sin trabajos anteriores, las pruebas documentadas usan `http://127.0.0.1:8123/`. El servidor Node conserva ese puerto y sirve únicamente archivos estáticos. Las instrucciones de Netlify Drop están más abajo en este README.
 
 Los HTML son estáticos, pero abrirlos mediante `file://` no se ha verificado para este cierre y el almacenamiento depende del navegador; para la presentación usa el servidor y tu dirección habitual.
 
@@ -47,13 +47,41 @@ Navegador comprobado: Microsoft Edge 156.0.4314.58 en Windows, en modo headless 
 
 ### Asistente educativo Algo
 
-Algo ofrece **Ayuda interactiva** en una sola conversación local. Reconoce preguntas sobre uso, datos, límites, herramientas, pasos, resultados, errores y guardado de los siete módulos. También permite preguntar explícitamente por otro módulo y comparar algoritmos.
+Algo ofrece **Ayuda interactiva** en una sola conversación local, con 195 entradas canónicas y 1.060 variantes declaradas. Cubre conceptos, matrices, grafos, los siete módulos, uso y problemas frecuentes. Incluye **Explorar temas**, buscador, ejemplos, comparaciones y botones para ampliar cada respuesta.
 
-Abre el robot, escribe una pregunta o elige una sugerencia y pulsa **Enviar**. Las explicaciones del ejercicio leen su estado en memoria y sus pasos ya calculados; no modifican los datos ni ejecutan otro motor matemático. Si el resultado quedó invalidado, pide recalcular. Las preguntas no cubiertas reciben una respuesta honesta y sugerencias.
+Abre el robot, escribe una pregunta o elige una sugerencia y pulsa **Enviar**. Usa «Más sencillo», «Ver un ejemplo», «Más detalle» y las preguntas relacionadas para continuar. Las acciones de paso y resultado aparecen cuando hay un cálculo vigente. Las explicaciones leen el estado y sus pasos ya calculados; no modifican datos ni ejecutan otro motor matemático. Si el resultado quedó invalidado, pide recalcular. Las preguntas no cubiertas reciben una respuesta honesta y sugerencias.
 
 No utiliza proveedores externos, endpoints, claves, variables de entorno ni Netlify Functions. `.env` se conserva intacto y ya no se lee. El historial y el borrador permanecen en memoria mientras la página siga abierta; cerrar el panel los conserva y «Limpiar conversación» los elimina. Los videos existentes siguen requiriendo conexión.
 
-Pruebas específicas sin suites matemáticas: `npm.cmd run test:asistente`. Preparación estática: `npm.cmd run preparar:netlify` genera `public/`, `entrega-netlify/drop/` y `entrega-netlify/ciudad-algoritmos-netlify.zip`. Los paquetes antiguos de funciones se archivan en `entrega-netlify/OBSOLETO_GEMINI_NO_PUBLICAR/`. Consulta [PUBLICAR_NETLIFY.md](PUBLICAR_NETLIFY.md) y [ENTREGA_ASISTENTE.md](ENTREGA_ASISTENTE.md).
+Algo usa conocimiento preparado: no verifica ejercicios nuevos escritos en el chat ni cubre cualquier formulación. Los adaptadores avisan si el contexto está recortado. El historial se pierde al recargar o abandonar la página.
+
+### Mantener el conocimiento de Algo
+
+Las entradas están en `js/comun/conocimiento/`. Edita la entrada existente y conserva su `id`; añade formulaciones equivalentes a `variantes`. Cada entrada declara `tema`, `modulos`, `pregunta`, `conceptos` y `breve`. Los campos opcionales `sencilla`, `ejemplo`, `detalle`, `relacionadas` y `comparar` habilitan sus acciones. Los límites configurables se obtienen mediante `AlgoConocimiento.limites()`.
+
+Las respuestas del ejercicio se construyen en `asistente-motor.js` con los campos explícitos de `asistente-contexto.js`, sin ejecutar algoritmos nuevos. Las ocho páginas cargan configuración/utilidades y el módulo, contexto, `base.js`, siete archivos temáticos, motor e interfaz, en ese orden. Si añades un archivo, inclúyelo también en `PUBLICOS` de `scripts/preparar-netlify.js`.
+
+Pruebas dirigidas, sin suites matemáticas generales:
+
+```powershell
+npm.cmd run lint
+npm.cmd run test:asistente
+npm.cmd run preparar:netlify
+npm.cmd run test:asistente:navegador
+node.exe tests/verificar-paquete-asistente.js
+```
+
+La prueba funcional del asistente usa Edge headless y no genera capturas. Comprueba las ocho páginas, explorador, seguimientos, limpieza, foco, resultados invalidados y ausencia de solicitudes del chat. La comprobación del paquete compara ZIP, `drop`, `public` y fuentes, incluyendo CRC y exclusiones.
+
+### Publicar en Netlify Drop
+
+`npm.cmd run preparar:netlify` genera `public/`, `entrega-netlify/drop/` y `entrega-netlify/ciudad-algoritmos-netlify.zip`. El paquete contiene 90 archivos públicos con `index.html` en la raíz, sin `.env`, claves, `.git`, pruebas, capturas, servidor ni Functions.
+
+1. Abre el proyecto existente **tranquil-palmier-b1959c** en Netlify.
+2. Entra en **Deploys** y arrastra la carpeta **`entrega-netlify/drop`** a la zona de carga manual. Si usas el ZIP, extráelo primero y arrastra la carpeta que contiene `index.html` directamente.
+3. Abre el sitio y prueba Algo, una pregunta y «Explorar temas».
+
+Algo no requiere claves, variables de entorno ni construcción en Netlify. No subas la raíz del proyecto ni `entrega-netlify` completa; los paquetes antiguos se conservan como respaldos obsoletos fuera de Drop. Los guardados de localhost, 127.0.0.1 y Netlify son independientes: usa exportación/importación JSON del mismo módulo para trasladarlos.
 
 ---
 
@@ -359,7 +387,7 @@ node tests/navegador.js --capturas   # regresión de navegador, recorridos y tam
 
 Las suites de navegador necesitan el servidor local y `puppeteer-core` instalado en `%TEMP%/grafo-e2e` (fuera del proyecto). Usan `127.0.0.1:8123` por defecto; `URL_PRUEBAS` permite cambiarlo. Las pruebas cubren las presentaciones y ayudas de los siete módulos, acceso desde el menú móvil, lectura del texto completo, foco, controles, historiales y persistencia. `test:mejoras` comprueba además que abrir Video/Ayuda en Dijkstra y Kruskal pausa sin perder cálculo, paso o borradores. Ejecuta sin `--capturas` para validar; la suite de ciudad guarda solo sus vistas representativas con ese argumento. En PowerShell con scripts bloqueados, usa `npm.cmd`.
 
-Los resultados ejecutados para este cierre, sus límites y un guion de presentación están en [CIERRE_FINAL.md](CIERRE_FINAL.md). Las capturas nuevas llevan prefijo `cierre-` en `docs/capturas/`; las anteriores se conservan como antecedentes.
+Las capturas históricas se conservan en `docs/capturas/`. Las pruebas dirigidas de Algo descritas en este README no generan capturas ni ejecutan las suites matemáticas generales.
 
 ---
 
@@ -385,6 +413,6 @@ Los resultados ejecutados para este cierre, sus límites y un guion de presentac
 
 - Northwest no incluye MODI, Vogel ni costo mínimo (fuera del alcance de esta entrega).
 - El verificador independiente de Asignación admite hasta 8×8, el mismo máximo que el editor.
-- La revisión del cierre usa Edge de escritorio en modo headless; los tamaños, temas y resultados concretos se detallan en `CIERRE_FINAL.md`. La legibilidad del proyector y el brillo del aula requieren comprobación presencial.
+- Las pruebas de navegador usan Edge de escritorio en modo headless. La legibilidad del proyector y el brillo del aula requieren comprobación presencial.
 - Las capturas de móvil se generan en un navegador de escritorio emulado (Edge headless): conviene una pasada final en un teléfono real, sobre todo con el teclado virtual abierto.
 - Los videos requieren conexión a internet; sin ella la presentación muestra el marco vacío y el botón «Ir al algoritmo» sigue disponible.

@@ -33,7 +33,12 @@ const grafo = { dirigido: true, nodos, conexiones };
 prueba('El script no lee el ejercicio al cargar; las sugerencias se calculan bajo demanda', () => {
   const c = entorno('johnson');
   Object.defineProperty(c, 'estadoJohnson', { get() { throw Error('Lectura antes de pedir ayuda'); } });
-  igual(Object.keys(c.AlgoContexto), ['obtener', 'ayudaLocal', 'sugeridas']);
+  igual(Object.keys(c.AlgoContexto), ['obtener', 'ayudaLocal', 'sugeridas', 'interno']);
+  cierto(Object.isFrozen(c.AlgoContexto.interno), 'El contrato compartido es de solo lectura');
+  ['normalizar', 'interpretar', 'explicarPaso', 'explicarResultado', 'pendientes', 'faltaResultado', 'nombreNodo', 'diferencias', 'valor'].forEach(k => cierto(typeof c.AlgoContexto.interno[k] === 'function', k));
+  igual(c.AlgoContexto.interno.normalizar('  MATRÍZ  '), 'matriz');
+  igual(c.AlgoContexto.interno.NOMBRES.dijkstra, 'Dijkstra');
+  cierto(!('resolver' in c.AlgoContexto.interno), 'El contexto no expone cálculos');
   const foto = { contexto: { paso: null, resultado: null, resultadoVigente: false } };
   igual(c.AlgoContexto.sugeridas(foto), ['¿Cómo empiezo?', '¿Cuáles son las reglas?', '¿Cómo ingreso datos?']);
   const preguntas = c.AlgoContexto.sugeridas(foto); preguntas.pop();

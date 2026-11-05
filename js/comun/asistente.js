@@ -3,7 +3,9 @@
 (function () {
   'use strict';
 
-  if (!window.AlgoContexto || document.getElementById('algoAbrir')) return;
+  if (!window.AlgoContexto || !window.AlgoMotor || document.getElementById('algoAbrir')) return;
+  const motor = window.AlgoMotor;
+  const BIENVENIDA = 'Puedes preguntarme por conceptos, cómo usar los módulos o el paso que estás viendo.';
 
   const ROBOT = '<svg class="algo-robot" viewBox="0 0 64 64" aria-hidden="true" focusable="false">'
     + '<path class="algo-antena" d="M32 15V8"/><circle class="algo-luz" cx="32" cy="7" r="3"/>'
@@ -29,6 +31,12 @@
     + '<button type="button" class="btn btn-fantasma btn-sm" id="algoLimpiar">Limpiar conversación</button></div>'
     + '<div class="algo-cuerpo-panel" id="algoCuerpo" tabindex="0" aria-label="Mensajes de la conversación">'
     + '<div class="algo-sugeridas" id="algoSugeridas" aria-label="Preguntas sugeridas"></div>'
+    + '<section class="algo-explorador" id="algoExplorador" aria-labelledby="algoExploradorTitulo" hidden>'
+    + '<div class="algo-explorador-nav"><button type="button" class="algo-sugerida" id="algoCategorias">Volver a categorías</button>'
+    + '<button type="button" class="algo-sugerida" id="algoExploradorCerrar">Cerrar explorador</button></div>'
+    + '<h3 id="algoExploradorTitulo" tabindex="-1">Explorar temas</h3>'
+    + '<label for="algoBuscar">Buscar un tema o una pregunta</label><input id="algoBuscar" type="search" maxlength="160" placeholder="Por ejemplo: matriz o ficticio">'
+    + '<p id="algoBusquedaEstado" role="status" aria-live="polite"></p><div id="algoResultados"></div></section>'
     + '<div class="algo-mensajes" id="algoMensajes" role="log" aria-label="Conversación con Algo" aria-live="polite" aria-relevant="additions"></div></div>'
     + '<button type="button" class="algo-nuevas" id="algoNuevas" hidden>Ver nuevas respuestas ↓</button>'
     + '<form class="algo-formulario" id="algoFormulario">'
@@ -50,6 +58,7 @@
   let iniciado = false, componiendo = false;
   let temporizadorGesto = null, ultimoEnvio = null;
   let bloqueoFondo = false, overflowAnterior = '', respuestasNuevas = 0;
+  let moduloAnterior = null, ultimaFirmaContexto = null;
 
   function gesto(nombre) {
     window.clearTimeout(temporizadorGesto);
@@ -131,24 +140,131 @@
     }));
   }).observe(document.body, { childList: true });
 
-  function refrescarContexto(foto, pregunta) {
+  function botonAccion(accion, destino) {
+    const boton = document.createElement('button');
+    boton.type = 'button'; boton.className = 'algo-sugerida'; boton.textContent = accion.etiqueta;
+    boton.addEventListener('click', () => ejecutarAccion(accion));
+    destino.appendChild(boton);
+    return boton;
+  }
+
+  function refrescarContexto(foto) {
+    ultimaFirmaContexto = foto.firma;
+    if (moduloAnterior && moduloAnterior !== foto.modulo) {
+      motor.reiniciar(); buscar('algoExplorador').hidden = true;
+    }
+    moduloAnterior = foto.modulo;
     buscar('algoModulo').textContent = foto.referencia;
     const sugeridas = buscar('algoSugeridas');
-    const preguntas = window.AlgoContexto.sugeridas(foto, pregunta).slice(0, 3);
+    const acciones = [
+      { etiqueta: 'Explorar temas', comando: { tipo: 'explorar' } },
+      { etiqueta: 'Ver ejemplos de preguntas', comando: { tipo: 'ejemplos' } }
+    ];
+    const c = foto.contexto;
+    if (c.resultadoVigente && c.paso) acciones.push({ etiqueta: 'Explicar este paso', comando: { tipo: 'paso' } });
+    if (c.resultadoVigente && c.resultado) acciones.push({ etiqueta: 'Interpretar resultado', comando: { tipo: 'resultado' } });
+    if (!c.resultadoVigente) acciones.push({ etiqueta: 'Ayúdame a empezar', comando: { tipo: 'empezar' } });
     const existentes = Array.from(sugeridas.querySelectorAll('button'));
-    if (existentes.length === preguntas.length && existentes.every((boton, i) => boton.textContent === preguntas[i])) {
+    if (existentes.length === acciones.length && existentes.every((boton, i) => boton.textContent === acciones[i].etiqueta)) {
       return;
     }
     sugeridas.replaceChildren();
-    preguntas.forEach(pregunta => {
-      const boton = document.createElement('button');
-      boton.type = 'button';
-      boton.className = 'algo-sugerida';
-      boton.textContent = pregunta;
-      boton.addEventListener('click', () => enviarPregunta(pregunta));
-      sugeridas.appendChild(boton);
-    });
+    acciones.forEach(a => botonAccion(a, sugeridas));
   }
+
+  function mostrarLista(acciones, destino) {
+    let cantidad = 0;
+    const ampliar = () => {
+      const hasta = Math.min(cantidad + 8, acciones.length);
+      for (; cantidad < hasta; cantidad++) botonAccion(acciones[cantidad], destino);
+      if (cantidad < acciones.length) {
+        const mas = document.createElement('button'); mas.type = 'button'; mas.className = 'algo-sugerida'; mas.textContent = 'Ver más preguntas';
+        mas.addEventListener('click', () => {
+          const anterior = cantidad;
+          mas.remove(); ampliar();
+          const botones = destino.querySelectorAll('button');
+          if (botones[anterior]) botones[anterior].focus({ preventScroll: true });
+        });
+        destino.appendChild(mas);
+      }
+    };
+    ampliar();
+  }
+
+  function explorar(respuesta, enfocar = true) {
+    const explorador = buscar('algoExplorador'), resultados = buscar('algoResultados');
+    explorador.hidden = false; resultados.replaceChildren();
+    buscar('algoBuscar').value = '';
+    buscar('algoBusquedaEstado').textContent = '';
+    buscar('algoExploradorTitulo').textContent = respuesta.tipo === 'explorador' ? 'Explorar temas' : respuesta.texto;
+    buscar('algoCategorias').hidden = respuesta.tipo === 'explorador';
+    if (respuesta.tipo === 'explorador') respuesta.explorador.forEach(grupo => {
+      const seccion = document.createElement('section'), titulo = document.createElement('h4');
+      titulo.textContent = grupo.titulo; seccion.appendChild(titulo);
+      grupo.temas.forEach(tema => {
+        const b = botonAccion({ etiqueta: tema.titulo + ' · ' + tema.cantidad, comando: { tipo: 'tema', clave: tema.clave } }, seccion);
+        b.title = tema.descripcion;
+      }); resultados.appendChild(seccion);
+    });
+    else mostrarLista(respuesta.acciones, resultados);
+    if (enfocar) buscar('algoExploradorTitulo').focus({ preventScroll: true });
+    cuerpo.scrollTop = 0;
+  }
+
+  function mostrarRespuesta(respuesta, foto) {
+    if (respuesta.tipo === 'explorador' || respuesta.tipo === 'lista') { explorar(respuesta); return; }
+    const seguir = alFinal(), posicion = cuerpo.scrollTop;
+    const articulo = agregar('Algo', respuesta.texto, 'local', foto.referencia);
+    if (respuesta.entrada) articulo.dataset.entrada = respuesta.entrada;
+    if (respuesta.acciones.length) {
+      const acciones = document.createElement('div'); acciones.className = 'algo-respuesta-acciones';
+      acciones.setAttribute('aria-label', 'Ampliar esta respuesta');
+      respuesta.acciones.forEach(a => botonAccion(a, acciones)); articulo.appendChild(acciones);
+    }
+    if (seguir) verUltimos(); else cuerpo.scrollTop = posicion;
+  }
+
+  function ejecutarAccion(accion) {
+    if (accion.pregunta) { buscar('algoExplorador').hidden = true; enviarPregunta(accion.pregunta); return; }
+    const foto = window.AlgoContexto.obtener();
+    refrescarContexto(foto);
+    const respuesta = motor.responder('', foto, accion.comando);
+    if (!['explorador', 'lista'].includes(respuesta.tipo)) {
+      buscar('algoExplorador').hidden = true;
+      agregar('Tú', accion.etiqueta, 'usuario', foto.referencia);
+    }
+    mostrarRespuesta(respuesta, foto);
+    estado.textContent = 'Puedes continuar con otra pregunta.';
+    if (!['explorador', 'lista'].includes(respuesta.tipo)) campo.focus({ preventScroll: true });
+  }
+
+  buscar('algoCategorias').addEventListener('click', () => ejecutarAccion({ comando: { tipo: 'explorar' } }));
+  buscar('algoExploradorCerrar').addEventListener('click', () => {
+    buscar('algoExplorador').hidden = true;
+    buscar('algoSugeridas').querySelector('button').focus({ preventScroll: true });
+  });
+  buscar('algoBuscar').addEventListener('input', () => {
+    const q = buscar('algoBuscar').value.trim(), resultados = buscar('algoResultados');
+    const foto = window.AlgoContexto.obtener();
+    if (!q) { explorar(motor.responder('', foto, { tipo: 'explorar' }), false); return; }
+    resultados.replaceChildren(); buscar('algoCategorias').hidden = false;
+    buscar('algoExploradorTitulo').textContent = 'Resultados de búsqueda';
+    const entradas = motor.buscar(q, foto.modulo);
+    buscar('algoBusquedaEstado').textContent = entradas.length ? entradas.length + ' preguntas relevantes.'
+      : q.length < 2 ? 'Escribe al menos dos caracteres.' : 'Sin coincidencias. Prueba con un concepto como «matriz», «guardar» o «camino», o vuelve a las categorías.';
+    mostrarLista(entradas.map(e => ({ etiqueta: e.pregunta, comando: { tipo: 'entrada', id: e.id } })), resultados);
+  });
+  // Los módulos actualizan su DOM al editar o cambiar de paso. Refrescamos solo
+  // las acciones del panel abierto; sin sondeos ni alterar el ejercicio.
+  new MutationObserver(cambios => {
+    if (!panel.hidden && cambios.some(cambio => !raiz.contains(cambio.target))) {
+      const foto = window.AlgoContexto.obtener();
+      if (foto.firma !== ultimaFirmaContexto) refrescarContexto(foto);
+    }
+  }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'data-modulo'] });
+  document.addEventListener('input', evento => {
+    if (!panel.hidden && !raiz.contains(evento.target)) refrescarContexto(window.AlgoContexto.obtener());
+  });
 
   function cerrarPanel() {
     panel.hidden = true;
@@ -166,7 +282,7 @@
     refrescarContexto(window.AlgoContexto.obtener());
     if (!iniciado) {
       iniciado = true;
-      agregar('Algo', '¡Hola! Puedo guiarte por el módulo y ayudarte a entender tu ejercicio. Escribe una pregunta o elige una sugerencia.', 'local');
+      agregar('Algo', BIENVENIDA, 'local');
     }
     gesto('saludo');
     buscar('algoTitulo').focus({ preventScroll: true });
@@ -182,11 +298,12 @@
     const ahora = Date.now();
     if (ultimoEnvio && ultimoEnvio.pregunta === pregunta && ultimoEnvio.firma === foto.firma && ahora - ultimoEnvio.tiempo < 400) return;
     ultimoEnvio = { pregunta, firma: foto.firma, tiempo: ahora };
+    refrescarContexto(foto);
+    buscar('algoExplorador').hidden = true;
     agregar('Tú', pregunta, 'usuario', foto.referencia);
     if (campo.value.trim() === pregunta) campo.value = '';
-    const respuesta = window.AlgoContexto.ayudaLocal(pregunta, foto);
-    agregar('Algo', respuesta, 'local', foto.referencia);
-    refrescarContexto(foto, pregunta);
+    const respuesta = motor.responder(pregunta, foto);
+    mostrarRespuesta(respuesta, foto);
     estado.textContent = 'Puedes continuar con otra pregunta.';
     gesto('respuesta');
     campo.focus({ preventScroll: true });
@@ -200,10 +317,13 @@
   cuerpo.addEventListener('scroll', () => { if (alFinal()) { respuestasNuevas = 0; nuevas.hidden = true; } }, { passive: true });
   buscar('algoLimpiar').addEventListener('click', () => {
     ultimoEnvio = null;
+    motor.reiniciar();
+    buscar('algoExplorador').hidden = true;
+    buscar('algoResultados').replaceChildren(); buscar('algoBuscar').value = '';
     mensajes.replaceChildren();
     campo.value = '';
     verUltimos();
-    agregar('Algo', 'Conversación borrada de esta página. Puedes empezar una nueva pregunta.', 'local');
+    agregar('Algo', BIENVENIDA, 'local');
     refrescarContexto(window.AlgoContexto.obtener());
     estado.textContent = 'Pregunta sobre este módulo o tu ejercicio.';
     gesto('reposo');
@@ -221,7 +341,7 @@
   panel.addEventListener('keydown', evento => {
     evento.stopPropagation(); // Los atajos del ejercicio no reciben las teclas del chat.
     if (evento.key === 'Tab' && bloqueoFondo) {
-      const focos = Array.from(panel.querySelectorAll('button:not([disabled]), textarea, [tabindex="0"]')).filter(e => !e.hidden && e.getClientRects().length);
+      const focos = Array.from(panel.querySelectorAll('button:not([disabled]), input, textarea, [tabindex="0"]')).filter(e => !e.closest('[hidden]') && e.getClientRects().length);
       const primero = focos[0], ultimo = focos[focos.length - 1];
       if (!primero) return;
       if (evento.shiftKey && (document.activeElement === primero || !focos.includes(document.activeElement))) {

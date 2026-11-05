@@ -41,6 +41,17 @@ const EDGE = process.env.NAVEGADOR || 'C:/Program Files (x86)/Microsoft/Edge/App
       await page.keyboard.press('Enter');
       assert.equal(await page.$eval('#algoPanel', e => e.hidden), false);
       assert.equal(await page.$eval('#algoTitulo span', e => e.textContent), 'Ayuda interactiva');
+      if (modulo === 'ordenamiento') {
+        const entrada = await page.$eval('#entradaValores', e => e.value);
+        assert.ok(await page.$$eval('#algoSugeridas button', botones => botones.some(b => b.textContent === 'Interpretar resultado')));
+        await page.$eval('#entradaValores', e => { e.value += ', 9'; e.dispatchEvent(new Event('input', { bubbles: true })); });
+        assert.equal(await page.$$eval('#algoSugeridas button', botones => botones.some(b => b.textContent === 'Interpretar resultado')), false);
+        assert.equal(await page.$$eval('#algoSugeridas button', botones => botones.some(b => b.textContent === 'Explicar este paso')), false);
+        await enviar('¿Qué significa este resultado?');
+        assert.ok((await page.$eval('#algoMensajes article:last-child p', e => e.textContent)).includes('Usar valores'));
+        await page.$eval('#entradaValores', (e, valor) => { e.value = valor; e.dispatchEvent(new Event('input', { bubbles: true })); }, entrada);
+        assert.ok(await page.$$eval('#algoSugeridas button', botones => botones.some(b => b.textContent === 'Interpretar resultado')));
+      }
       await enviar('¿Cómo empiezo?');
       assert.ok(!(await page.$eval('#algoMensajes article:last-child p', e => e.textContent)).startsWith('No tengo'));
       await enviar('¿Cuáles son las reglas?');
@@ -51,6 +62,31 @@ const EDGE = process.env.NAVEGADOR || 'C:/Program Files (x86)/Microsoft/Edge/App
       assert.ok((await page.$eval('#algoMensajes article:last-child p', e => e.textContent)).startsWith('No tengo una explicación local'));
       await enviar('¿Dónde estoy?');
       assert.ok((await page.$eval('#algoMensajes article:last-child p', e => e.textContent)).includes('Vista actual:'));
+      await enviar('¿Qué es una matriz?');
+      await page.$eval('#algoMensajes article:last-child', e => { e.dataset.pruebaConcepto = 'matriz'; });
+      await enviar('¿Qué es un grafo?');
+      await page.$$eval('[data-prueba-concepto="matriz"] button', botones => botones.find(b => b.textContent === 'Más sencillo').click());
+      assert.equal(await page.$eval('#algoMensajes article:last-child', e => e.dataset.entrada), 'matriz.que-es');
+      assert.ok((await page.$eval('#algoMensajes article:last-child p', e => e.textContent)).includes('hoja cuadriculada'));
+      await page.$$eval('#algoSugeridas button', botones => botones.find(b => b.textContent === 'Explorar temas').click());
+      assert.equal(await page.$eval('#algoExplorador', e => e.hidden), false);
+      assert.equal(await page.$$eval('#algoResultados h4', e => e.length), 6);
+      await page.$$eval('#algoResultados button', botones => botones.find(b => b.textContent.startsWith('Grafos ·')).click());
+      assert.equal(await page.$$eval('#algoResultados button', e => e.length), 9);
+      await page.$eval('#algoResultados button:last-child', b => b.click());
+      assert.ok(await page.$$eval('#algoResultados button', e => e.length > 9));
+      await page.$eval('#algoBuscar', e => { e.value = 'zzzz'; e.dispatchEvent(new Event('input', { bubbles: true })); });
+      assert.ok((await page.$eval('#algoBusquedaEstado', e => e.textContent)).includes('Sin coincidencias'));
+      await page.click('#algoCategorias');
+      assert.equal(await page.$$eval('#algoResultados h4', e => e.length), 6);
+      await page.$eval('#algoBuscar', e => { e.value = 'ficticio'; e.dispatchEvent(new Event('input', { bubbles: true })); });
+      await page.$eval('#algoResultados button', b => b.click());
+      assert.ok((await page.$eval('#algoMensajes article:last-child', e => e.dataset.entrada)).includes('ficticio'));
+      await page.click('#algoLimpiar');
+      assert.equal(await page.$$eval('#algoMensajes article', e => e.length), 1);
+      assert.equal(await page.evaluate(() => AlgoMotor.interno.memoria().entrada), null);
+      await enviar('¿qué es?');
+      assert.ok((await page.$eval('#algoMensajes article:last-child p', e => e.textContent)).includes('qué término'));
       assert.equal(await page.evaluate(() => AlgoContexto.obtener().firma), antes, modulo + ': estado intacto');
       const cantidad = await page.$$eval('#algoMensajes article', e => e.length);
       await page.keyboard.press('Escape');
@@ -60,7 +96,7 @@ const EDGE = process.env.NAVEGADOR || 'C:/Program Files (x86)/Microsoft/Edge/App
       assert.equal(await page.$$eval('#algoMensajes article', e => e.length), cantidad);
       await page.click('#algoCerrar');
       duranteChat = false;
-      console.log('✓ ' + modulo + ': abrir, respuestas locales, desconocida, contexto, historial y cierre.');
+      console.log('✓ ' + modulo + ': abrir, preguntar, ampliar chip anterior, explorar, buscar, limpiar, historial y cerrar; estado intacto.');
     }
     await page.setViewport({ width: 375, height: 667 });
     await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);

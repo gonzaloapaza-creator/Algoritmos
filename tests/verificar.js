@@ -47,9 +47,9 @@ prueba('Todos los .js tienen sintaxis válida (' + scripts.length + ' archivos)'
   igual(errores, [], 'Errores de sintaxis');
 });
 
-prueba('Ningún script usa console.log (solo warn/error para fallos de almacenamiento)', () => {
+prueba('Los scripts del navegador no usan console.log (las herramientas CLI sí informan por consola)', () => {
   const culpables = scripts
-    .filter(ruta => !relativa(ruta).startsWith('tests/'))
+    .filter(ruta => /(?:^|\/)(?:js\/|app\.js$)/.test(relativa(ruta)))
     .filter(ruta => /console\.log\(/.test(fs.readFileSync(ruta, 'utf8')))
     .map(relativa);
   igual(culpables, []);
