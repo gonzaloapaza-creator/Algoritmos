@@ -8,6 +8,20 @@
 
 const EJEMPLOS_JOHNSON = [
   {
+    id: 'tiempos-holguras',
+    nombre: 'Rutas y tiempos (19 / 58)',
+    descripcion: 'De A a B: mínimo A → E → D → B = 19 y máximo A → B = 58. En tiempos: B = 58 | 58; las actividades del camino de 19 tienen holgura 39.',
+    nodos: [
+      { nombre: 'A', x: 0.12, y: 0.50 },
+      { nombre: 'E', x: 0.37, y: 0.82 },
+      { nombre: 'D', x: 0.63, y: 0.82 },
+      { nombre: 'B', x: 0.88, y: 0.50 }
+    ],
+    conexiones: [
+      ['A', 'B', 58], ['A', 'E', 6], ['E', 'D', 5], ['D', 'B', 8]
+    ]
+  },
+  {
     id: 'negativos',
     nombre: 'Pesos negativos (clásico)',
     descripcion: 'El ejemplo de los libros de texto: 5 nodos y varios pesos negativos sin ciclo negativo. Ideal para ver la reponderación.',

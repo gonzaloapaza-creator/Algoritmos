@@ -31,7 +31,9 @@ function depurarGrafo(datos) {
 
 // Normaliza únicamente el contador de versiones antiguas; nunca elimina datos.
 function copiarGrafoValidado(datos) {
-  const nodos = datos.nodos.map(n => ({ id: n.id, nombre: n.nombre, x: n.x, y: n.y }));
+  // La validación compara nombres recortados; el modelo debe conservar esa misma
+  // forma para que un documento antiguo con espacios no permita un homónimo.
+  const nodos = datos.nodos.map(n => ({ id: n.id, nombre: n.nombre.trim(), x: n.x, y: n.y }));
   const conexiones = datos.conexiones.map(c => ({ id: c.id, desde: c.desde, hacia: c.hacia, valor: c.valor }));
 
   // El contador debe quedar por encima del número más alto ya usado,
@@ -141,6 +143,8 @@ function aplicarGrafo(limpio) {
   estado.origenConexion = null;
   // También al cargar un trabajo nombrado: ajustar la vista nunca altera el grafo.
   if (typeof restablecerZoomSilencioso === 'function' && area().ancho >= 50 && area().alto >= 50) {
+    // Primero medir las etiquetas del grafo nuevo, sin reutilizar cajas del anterior.
+    if (typeof dibujarLienzo === 'function') dibujarLienzo();
     restablecerZoomSilencioso();
   }
 }

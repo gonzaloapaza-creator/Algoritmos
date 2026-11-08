@@ -33,10 +33,10 @@
     },
     johnson: {
       datos: 'Usa «Nodo» para crear nodos y «Conectar» para elegir origen, destino y peso. En «Seleccionar», selecciona el elemento para editarlo; revisa también la matriz antes de «Calcular Johnson». Puedes comenzar con «Ejemplos».',
-      reglas: 'Pesos enteros entre −999999 y 999999; cero y negativos son válidos. El editor prohíbe bucles, duplicados y conexiones inversas; sí admite ciclos de tres o más vértices. Si existe un ciclo negativo no hay distancias mínimas finitas.',
+      reglas: 'Pesos enteros entre −999999 y 999999; cero y negativos son válidos. El editor prohíbe bucles, duplicados y conexiones inversas; son reglas del editor, no restricciones universales de Johnson. Un ciclo negativo detiene Johnson global; solo los pares que pueden atravesarlo carecen de mínimo finito. Máximos requieren DAG; tiempos y holguras también requieren duraciones no negativas y extremos distintos conectados.',
       herramientas: '«Seleccionar» permite elegir y mover elementos; «Nodo» añade nodos y «Conectar» une origen y destino. Usa los controles de zoom («−», «100%», «+») para explorar el grafo. Cambiar sus datos exige recalcular; «Deshacer» y «Rehacer» recuperan cambios.',
       pasos: 'Pasa por Grafo → Matriz → Paso a paso → Resultado. «Anterior», «Siguiente» y «Reiniciar» recorren el procedimiento calculado: Bellman-Ford, potenciales, reponderación, Dijkstra y recuperación de distancias originales.',
-      resultado: 'La matriz contiene distancias mínimas entre todos los pares: fila de origen y columna de destino. Cero en la diagonal es la distancia a sí mismo; ∞ significa que no hay camino. Selecciona una celda para consultar su ruta. Un ciclo negativo impide el resultado de distancias.',
+      resultado: 'Consulta de caminos: nombre arriba, mínimo desde el origen a la izquierda y máximo DAG a la derecha; no se fuerza su igualdad. Con una ruta activa, el destino muestra Acum. (suma de los pesos originales de sus tramos) y Total (costo de esa ruta), que deben coincidir; sin ruta única activa conserva mín | máx. El último paso del procedimiento reconstruye esa misma ruta. Tiempos y holguras es un análisis complementario con temprano/tardío y destino T | T; H=0 identifica actividades críticas. La matriz secundaria contiene únicamente mínimos originales de Johnson. ∞ significa sin camino y — significa máximo no calculable por ciclos.',
       errores: 'Revisa pesos enteros, conexiones repetidas o inversas y bucles. Si la aplicación informa un ciclo negativo, corrige sus conexiones y calcula de nuevo. Si editaste el grafo, recalcula antes de interpretar el resultado.'
     },
     dijkstra: {
@@ -194,12 +194,37 @@
           // Esta ruta ya fue calculada para la celda que ve el usuario. Solo se
           // copia si pertenece al mismo grafo y a los extremos seleccionados.
           const ruta = estado.visualizacionJohnson;
-          if (ruta && ruta.tipo === 'ruta' && typeof estadoJohnson.firma === 'string' && ruta.firma === estadoJohnson.firma
+          if (ruta && typeof estadoJohnson.firma === 'string' && ruta.firma === estadoJohnson.firma
               && ruta.origen === origenId && ruta.destino === destinoId) {
-            contexto.resultado.seleccion.ruta = {
-              nodos: tomar(ruta.nodos, 40, 'resultado.seleccion.ruta.nodos', id => texto(id)),
-              conexiones: tomar(ruta.conexiones, 50, 'resultado.seleccion.ruta.conexiones', id => texto(id)), distancia: numero(ruta.distancia)
+            contexto.resultado.consulta = { vista: ruta.vistaTemporal ? 'temporal' : 'caminos', objetivo: texto(ruta.objetivo),
+              minimo: numero(propio(propio(ruta.valoresNodos, destinoId), 'minimo')), maximo: numero(propio(propio(ruta.valoresNodos, destinoId), 'maximo')) };
+            // Lee la misma fuente que dibuja las casillas, sin consultar texto del
+            // SVG. El respaldo permite usar la ayuda local sin cargar el dibujo.
+            const valoresDestino = propio(ruta.valoresNodos, destinoId);
+            const casillaDestino = typeof casillasNodoJohnson === 'function'
+              ? casillasNodoJohnson({ id: destinoId }, ruta)
+              : propio(ruta.casillas, destinoId) || {
+                rotulos: ruta.vistaTemporal ? ['temprano', 'tardío'] : ['mín', 'máx'],
+                valores: [propio(valoresDestino, 'minimo'), propio(valoresDestino, 'maximo')]
+              };
+            if (casillaDestino && Array.isArray(casillaDestino.valores)) contexto.resultado.consulta.destino = {
+              rotulos: lista(casillaDestino.rotulos).slice(0, 2).map(v => texto(v)),
+              valores: lista(casillaDestino.valores).slice(0, 2).map(numero)
             };
+            if (typeof ruta.errorRuta === 'string' && ruta.errorRuta) contexto.resultado.consulta.error = texto(ruta.errorRuta, 400);
+            const elegida = ruta.rutaSeleccionada && typeof ruta.rutaSeleccionada === 'object' ? ruta.rutaSeleccionada : ruta.tipo === 'ruta' ? ruta : null;
+            if (!ruta.vistaTemporal && elegida) contexto.resultado.seleccion.ruta = {
+              id: texto(elegida.id || ruta.objetivo),
+              nodos: tomar(elegida.nodos, 40, 'resultado.seleccion.ruta.nodos', id => texto(id)),
+              conexiones: tomar(elegida.conexiones, 50, 'resultado.seleccion.ruta.conexiones', id => texto(id)), distancia: numero(elegida.distancia)
+            };
+            if (ruta.vistaTemporal && ruta.temporal) {
+              const t = ruta.temporal;
+              contexto.resultado.temporal = { valido: !!t.valido, mensaje: texto(t.mensaje), duracion: numero(t.duracion),
+                nodos: tomar(r.ids, 40, 'temporal.nodos', (id, i) => ({ id: texto(id), temprano: numero(propio(t.tempranos, i)), tardio: numero(propio(t.tardios, i)) })),
+                actividades: tomar(lista(estado.conexiones).filter(c => lista(t.conexionesActivas).includes(c.id)), 50, 'temporal.actividades', c => ({ id: texto(c.id), desde: texto(c.desde), hacia: texto(c.hacia), duracion: numero(c.valor), holgura: numero(propio(t.holguras, c.id)), critica: lista(t.criticas).includes(c.id) })),
+                excluidos: lista(estado.nodos).length - lista(t.idsActivos).length };
+            }
           }
         }
       } else if (estadoJohnson.resultado) contexto.error = 'El grafo cambió: el resultado anterior no está vigente. Recalcula.';
@@ -488,6 +513,7 @@
   }
   function explicarPaso(modulo, c) {
     if (!c.resultadoVigente) return faltaResultado(c);
+    if (modulo === 'johnson' && c.resultado && c.resultado.temporal && c.vista === 'resultado') return explicarResultado(modulo, c) + '\nTempranos: máximos de temprano(u) + duración en orden topológico. Tardíos: mínimos de tardío(v) − duración en orden inverso, comenzando con tardío(destino)=T. Consulta el procedimiento temporal desplegable para sus valores.';
     const p = c.paso;
     if (!p) return 'Aún no hay un paso calculado seleccionado. Avanza al procedimiento y selecciona el paso que quieres consultar.';
     const lineas = ['Paso ' + p.numero + ' · ' + (p.titulo || p.tipo || 'Procedimiento') + '.', p.texto];
@@ -512,9 +538,17 @@
     if (!c.resultadoVigente || !c.resultado) return faltaResultado(c);
     const r = c.resultado, d = c.datos || {};
     if (modulo === 'johnson') {
-      if (r.tieneCicloNegativo) return 'La aplicación detectó un ciclo negativo. No hay distancias mínimas finitas. Peso registrado del ciclo: ' + valor(r.cicloPeso) + '. Revisa las conexiones destacadas.';
+      const consulta = r.consulta, destino = consulta && consulta.destino;
+      const casillas = destino && lista(destino.rotulos).length === 2 && lista(destino.valores).length === 2
+        ? 'El destino muestra ' + destino.rotulos.map((rotulo, i) => rotulo + ' ' + valor(destino.valores[i])).join(' | ') + '.'
+        : 'No se copiaron las casillas del destino en este contexto.';
+      if (consulta && consulta.error) return 'Error de correspondencia de la ruta: ' + consulta.error + '\nLa ruta no puede presentarse como válida. Revisa sus tramos y vuelve a seleccionarla.';
+      if (r.temporal) return r.temporal.valido
+        ? 'Tiempos y holguras · análisis temporal complementario, distinto del costo del camino mínimo de Johnson. Duración T = ' + valor(r.temporal.duracion) + '. ' + casillas + ' Izquierda: tiempo temprano; derecha: tiempo tardío. Holgura de actividad = tardío(destino de la actividad) − temprano(origen de la actividad) − duración. Solo participa la subred entre los extremos elegidos; nodos excluidos: ' + valor(r.temporal.excluidos) + '. Actividades copiadas en este contexto: ' + lista(r.temporal.actividades).length + '. Consulta la tabla del módulo para la lista completa.'
+        : 'Tiempos y holguras no disponible: ' + r.temporal.mensaje;
+      if (r.tieneCicloNegativo) return 'Johnson global detenido por un ciclo negativo. Los pares que pueden atravesarlo no tienen mínimo finito; otros pares pueden conservar mínimos o no tener camino. Peso registrado del ciclo: ' + valor(r.cicloPeso) + '. Revisa las conexiones destacadas.';
       const s = r.seleccion;
-      if (s) return 'Celda seleccionada: ' + s.origenNombre + ' → ' + s.destinoNombre + '. Distancia calculada: ' + valor(s.distancia) + '.' + (s.distancia === '∞' ? ' No existe camino en esa dirección.' : '') + (s.ruta ? '\nRuta ya calculada: ' + s.ruta.nodos.map(id => nombreNodo(c, id)).join(' → ') + '.' : '\nNo hay una ruta visual vigente copiada para esa celda.');
+      if (s) return 'Consulta: ' + s.origenNombre + ' → ' + s.destinoNombre + '. Mínimo Johnson: ' + valor(s.distancia) + '.' + (consulta ? ' Máximo DAG: ' + (consulta.maximo === null ? 'no disponible por ciclos; no implica infinito' : valor(consulta.maximo)) + '.' : '') + (s.distancia === '∞' ? ' No existe camino en esa dirección.' : '') + '\n' + casillas + (s.ruta ? '\nRuta seleccionada ' + (s.ruta.id || '') + ': ' + s.ruta.nodos.map(id => nombreNodo(c, id)).join(' → ') + '. Costo de esta ruta: ' + valor(s.ruta.distancia) + '.' : '\nNo hay una ruta seleccionada vigente copiada.');
       return 'Hay una matriz vigente de distancias entre todos los pares. Selecciona una celda para consultar su distancia y la ruta que muestra la aplicación. ∞ significa que no hay camino; 0 en la diagonal corresponde al mismo vértice.';
     }
     if (modulo === 'dijkstra') return 'Distancias calculadas desde ' + nombreNodo(c, r.origen) + ':\n' + lista(r.distancias).map(v => nombreNodo(c, v.nodo) + ': ' + valor(v.distancia)).join('\n') + '\n∞ significa inalcanzable desde ese origen. Un predecesor es el punto anterior en el camino.';

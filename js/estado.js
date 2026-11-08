@@ -20,6 +20,8 @@ const estado = {
    * almacenamiento ni a la biblioteca de grafos.
    */
   visualizacionJohnson: null,
+  // Consulta rápida aislada; no contiene ni reemplaza los datos de Johnson.
+  resultadoDijkstraRapido: null,
   
   /**
    * Ventana de visualización: pantalla = logico * escala + offset.

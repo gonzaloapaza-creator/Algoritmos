@@ -125,7 +125,8 @@ el.svg.addEventListener('pointerdown', evento => {
 
   // Segundo dedo: empieza el pellizco y se cancela lo que hubiera en curso.
   if (punteros.size === 2) {
-    if (arrastre) { arrastre = null; dibujar(); }
+    // Si el primer dedo ya movió un nodo, conservar ese movimiento y su undo.
+    if (arrastre) terminarArrastre();
     pan = null;
     pinza = medidaPinza();
     return;
@@ -262,6 +263,12 @@ function tecladoSobreGrafo(evento) {
 document.addEventListener('keydown', evento => {
   if (evento.ctrlKey || evento.metaKey || evento.altKey) return;
   if (!tecladoSobreGrafo(evento)) return;
+
+  if (evento.key === 'Escape' && estado.origenConexion) {
+    evento.preventDefault();
+    cancelarConexionJohnson();
+    return;
+  }
 
   const grupo = evento.target.closest && evento.target.closest('#svg [data-id]');
   if (grupo && (evento.key === 'Enter' || evento.key === ' ')) {

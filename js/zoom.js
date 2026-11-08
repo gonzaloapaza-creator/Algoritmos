@@ -14,11 +14,15 @@
 // Solo conserva límites del dibujo; los nodos guardados nunca se modifican.
 let limitesDibujoRutaJohnson = null;
 
+function firmaDibujoVistaJohnson() {
+  return JSON.stringify([estado.nodos.map(nodo => [nodo.id, nodo.x, nodo.y, nodo.nombre]), estado.conexiones.map(conexion => [conexion.id, conexion.desde, conexion.hacia, conexion.valor])]);
+}
+
 /** Incluye nombres, pesos y etiquetas de ruta al encuadrar el editor. */
 function actualizarLimitesRutaJohnson() {
   const visual = estado.visualizacionJohnson;
   limitesDibujoRutaJohnson = null;
-  if (!visual || (visual.tipo !== 'ruta' && !visual.valoresNodos)) return;
+  if (!estado.nodos.length) return;
   const cajas = [el.capaNodos, el.capaConexiones].map(capa => {
     try { return capa.childElementCount ? capa.getBBox() : null; }
     catch (_) { return null; }
@@ -27,6 +31,7 @@ function actualizarLimitesRutaJohnson() {
   const margen = 30;
   limitesDibujoRutaJohnson = {
     visual,
+    firma: firmaDibujoVistaJohnson(),
     izquierda: Math.min(...cajas.map(caja => caja.x)) - margen,
     arriba: Math.min(...cajas.map(caja => caja.y)) - margen,
     derecha: Math.max(...cajas.map(caja => caja.x + caja.width)) + margen,
@@ -35,7 +40,7 @@ function actualizarLimitesRutaJohnson() {
 }
 
 function limitesVistaGrafo() {
-  return limitesDibujoRutaJohnson && limitesDibujoRutaJohnson.visual === estado.visualizacionJohnson
+  return limitesDibujoRutaJohnson && limitesDibujoRutaJohnson.visual === estado.visualizacionJohnson && limitesDibujoRutaJohnson.firma === firmaDibujoVistaJohnson()
     ? limitesDibujoRutaJohnson : limitesPlanoGrafo();
 }
 
@@ -137,6 +142,7 @@ function restablecerZoomSilencioso() {
 }
 
 function zoomReset() {
+  actualizarLimitesRutaJohnson();
   restablecerZoomSilencioso();
   avisar('Vista ajustada: se muestra el grafo completo.');
 }

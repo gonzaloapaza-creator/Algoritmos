@@ -308,6 +308,20 @@ html[data-tema="claro"] .page-johnson { --jn-maximo: #7042bd; --jn-compartido: #
 .nodo.jn-nodo-dividido .jn-nodo-leyenda { font-size: 12px; font-weight: 700; fill: var(--texto-suave); }
 .nodo.jn-nodo-dividido .jn-nodo-valor-minimo { fill: var(--ruta-texto); }
 .nodo.jn-nodo-dividido .jn-nodo-valor-maximo { fill: #d8baff; }
+/* Destino con ruta activa: acumulado y total con el color de esa ruta. */
+.nodo.jn-nodo-dividido .jn-nodo-valor-acumulado,
+.nodo.jn-nodo-dividido .jn-nodo-valor-total { fill: var(--jn-color-camino, var(--ruta-texto)); }
+.nodo.jn-nodo-dividido.jn-camino-maximo:not(.jn-camino-minimo) .jn-nodo-valor-acumulado,
+.nodo.jn-nodo-dividido.jn-camino-maximo:not(.jn-camino-minimo) .jn-nodo-valor-total { fill: #d8baff; }
+/* Casillas del procedimiento: datos de la etapa, no distancias de consulta. */
+.nodo.jn-nodo-dividido .jn-nodo-valor-provisional,
+.nodo.jn-nodo-dividido .jn-nodo-valor-antes,
+.nodo.jn-nodo-dividido .jn-nodo-valor-reponderada { fill: #fde68a; }
+.nodo.jn-nodo-dividido .jn-nodo-valor-despues,
+.nodo.jn-nodo-dividido .jn-nodo-valor-potencial,
+.nodo.jn-nodo-dividido .jn-nodo-valor-recuperada { fill: var(--ruta-texto); }
+.nodo.jn-nodo-dividido .jn-nodo-valor-cambio { fill: var(--ruta-texto); text-decoration: underline; }
+.nodo.jn-nodo-dividido .jn-nodo-valor-vacio { fill: var(--texto-apagado); }
 .nodo.jn-nodo-dividido .jn-ruta-rol { font-size: 11px; }
 
 /* ---------------- Estado vacío ---------------- */
@@ -545,8 +559,13 @@ html[data-tema="claro"] .page-johnson { --jn-maximo: #7042bd; --jn-compartido: #
 .jn-datos dt { color: var(--texto-suave); }
 .jn-datos dd { margin: 0; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
 
-/* Paso actual: grafo a la izquierda y tablas a la derecha si hay sitio. */
-.jn-paso-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--esp-3); align-items: start; }
+/* Paso actual: el grafo ocupa todo el ancho con el mismo tamaño que el resultado;
+   las tablas van debajo. */
+.jn-paso-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--esp-3); align-items: start; }
+.grafo-mini--paso { height: clamp(550px, 65svh, 700px); display: flex; flex-direction: column; }
+.grafo-mini--paso svg { flex: 1 1 auto; min-height: 0; }
+.grafo-mini.jn-grafo-ampliado { height: min(85svh, 1000px); }
+.jn-paso-tablas > .jn-ruta { margin-top: 0; }
 .jn-paso-tablas { display: flex; flex-direction: column; gap: var(--esp-3); min-width: 0; }
 .jn-tabla { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .jn-tabla .tabla-caja { max-height: 340px; }
@@ -589,6 +608,38 @@ html[data-tema="claro"] .page-johnson { --jn-maximo: #7042bd; --jn-compartido: #
 .conexion-auxiliar.conexion-johnson .conexion-linea { stroke: var(--ruta); stroke-dasharray: none; stroke-width: 3; }
 
 /* Detalle de la ruta del resultado. */
+.page-johnson {
+  --jn-alternativa-1: #ffb86b;
+  --jn-alternativa-2: #97d77b;
+  --jn-alternativa-3: #ff91bc;
+}
+html[data-tema="claro"] .page-johnson {
+  --jn-alternativa-1: #9b4700;
+  --jn-alternativa-2: #28621c;
+  --jn-alternativa-3: #9f245a;
+}
+.page-johnson .jn-formularios { padding: 8px 14px; margin-bottom: 10px; }
+.page-johnson .jn-formularios summary { cursor: pointer; min-height: 32px; }
+.page-johnson .jn-formularios__contenido { display: grid; gap: 14px; padding: 12px 0; }
+.page-johnson .jn-formularios form { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.page-johnson .jn-formularios label { display: grid; gap: 5px; min-width: 0; flex: 1 1 120px; }
+.page-johnson .jn-formularios :is(input, select) { width: 100%; min-width: 0; min-height: 44px; padding: 8px; color: var(--texto); background: var(--fondo-2); border: 1px solid var(--borde); border-radius: var(--radio-chico); font: inherit; }
+.page-johnson .jn-formularios p { margin: 0; color: var(--texto-suave); font-size: var(--t-sm); }
+.page-johnson .jn-lista-rutas { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 10px; }
+.page-johnson .jn-elegir-ruta { display: flex; flex-direction: column; align-items: start; text-align: left; gap: 6px; white-space: normal; overflow-wrap: anywhere; border-left: 6px solid var(--jn-color-lista); }
+.page-johnson .jn-elegir-ruta[aria-pressed="true"] { outline: 3px solid var(--jn-color-lista); outline-offset: 1px; }
+.page-johnson .jn-elegir-ruta span { font-weight: 400; }
+.page-johnson .nodo-johnson-inactivo { opacity: .6; }
+.page-johnson .jn-temporal-excluida { opacity: .48; }
+.page-johnson .conexion.jn-temporal-activa .conexion-linea { stroke: var(--arista); opacity: 1; }
+.page-johnson .conexion.jn-temporal-critica .conexion-linea { stroke: var(--ruta); stroke-width: 6; stroke-dasharray: none; filter: none; }
+.page-johnson .conexion.jn-temporal-critica .conexion-valor { fill: var(--ruta-texto); }
+.page-johnson .conexion.jn-ruta-seleccionada .conexion-linea { stroke-width: 7; filter: none; opacity: 1; }
+.page-johnson .conexion.jn-ruta-contexto .conexion-linea { stroke-width: 3.5; opacity: .7; }
+.page-johnson .jn-nodo-dividido .jn-nodo-valor { font-size: 16px; }
+.page-johnson .conexion .conexion-valor { font-variant-numeric: tabular-nums; }
+.page-johnson #resultadoConJn .conexion-linea,
+.page-johnson #resultadoConJn .nodo circle { animation: none; transition: none; }
 .jn-ruta-panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -644,8 +695,10 @@ html[data-tema="claro"] .page-johnson { --jn-maximo: #7042bd; --jn-compartido: #
 .jn-leyenda-compartido { color: var(--jn-compartido); }
 .jn-leyenda-caminos > .jn-leyenda-compartido::before { border-top-style: dashed; }
 .jn-leyenda-svg text, text.jn-leyenda-svg { fill: var(--texto); font-size: 12px; font-weight: 600; }
-#resultadoConJn.jn-grafo-ampliado .jn-ruta-panel > .grafo-mini { height: min(85svh, 1000px); }
+.jn-ruta-panel > .grafo-mini.jn-grafo-ampliado { height: min(85svh, 1000px); }
 .jn-ruta { display: flex; flex-direction: column; gap: 10px; min-width: 0; margin-top: 10px; }
+.jn-ruta__activa { padding: 8px 12px; border-left: 4px solid var(--ruta); border-radius: 0 var(--radio-chico) var(--radio-chico) 0; background: var(--hundido); color: var(--texto-suave); font-size: var(--t-sm); line-height: 1.5; overflow-wrap: anywhere; }
+.jn-ruta__activa strong { color: var(--texto); }
 .jn-ruta-panel > .jn-ruta { margin-top: 0; }
 .jn-ruta p { margin: 0; }
 .jn-ruta__cabecera { color: var(--texto-suave); font-size: var(--t-sm); line-height: 1.5; overflow-wrap: anywhere; }
@@ -730,6 +783,8 @@ html[data-tema="claro"] .nodo-johnson:is(.jn-camino-minimo, .jn-camino-maximo, .
 html[data-tema="claro"] .grafo-mini .nodo-johnson:is(.jn-camino-minimo, .jn-camino-maximo, .jn-camino-compartido):hover circle:not(.jn-ruta-aro) { fill: var(--jn-relleno-camino); }
 html[data-tema="claro"] .nodo.jn-nodo-dividido .jn-nodo-valor-minimo { fill: var(--ruta-texto); }
 html[data-tema="claro"] .nodo.jn-nodo-dividido .jn-nodo-valor-maximo { fill: var(--jn-maximo); }
+html[data-tema="claro"] .nodo.jn-nodo-dividido.jn-camino-maximo:not(.jn-camino-minimo) :is(.jn-nodo-valor-acumulado, .jn-nodo-valor-total) { fill: var(--jn-maximo); }
+html[data-tema="claro"] .nodo.jn-nodo-dividido :is(.jn-nodo-valor-provisional, .jn-nodo-valor-antes, .jn-nodo-valor-reponderada) { fill: #92400e; }
 
 /* Muestras de la leyenda propias de Johnson. */
 .leyenda__muestra--ruta { color: var(--ruta); }
@@ -914,7 +969,7 @@ html[data-tema="claro"] .nodo.jn-nodo-dividido .jn-nodo-valor-maximo { fill: var
   .page-johnson #resultadoConJn .jn-ruta,
   .page-johnson #resultadoConJn .jn-leyenda-caminos { display: block !important; }
   .page-johnson #grafoResultadoJn,
-  .page-johnson #resultadoConJn.jn-grafo-ampliado #grafoResultadoJn {
+  .page-johnson #grafoResultadoJn.jn-grafo-ampliado {
     display: block !important;
     width: 100% !important;
     height: 140mm !important;

@@ -7,9 +7,12 @@
  * @param {number} x - Coordenada X para el nuevo nodo
  * @param {number} y - Coordenada Y para el nuevo nodo
  */
-function crearNodo(x, y) {
-  if (!Number.isFinite(x) || !Number.isFinite(y)) { avisar('La posición debe ser numérica.', 'error'); return; }
-  if (estado.nodos.length >= 40) { avisar('El editor admite hasta 40 nodos.', 'error'); return; }
+function crearNodo(x, y, nombre) {
+  const rechazar = error => { avisar(error, 'error'); return { ok: false, error }; };
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return rechazar('La posición debe ser numérica.');
+  if (estado.nodos.length >= 40) return rechazar('El editor admite hasta 40 nodos.');
+  const validacion = validarNombre(nombre === undefined ? nombreAutomatico() : nombre);
+  if (!validacion.ok) return rechazar(validacion.error);
   guardarEstadoParaDeshacer();
   
   const plano = limitesPlanoGrafo();
@@ -20,7 +23,7 @@ function crearNodo(x, y) {
   
   const nodo = {
     id: nuevoId('n'),
-    nombre: nombreAutomatico(),
+    nombre: validacion.valor,
     x: limitar(x, minX, maxX),
     y: limitar(y, minY, maxY)
   };
@@ -28,6 +31,72 @@ function crearNodo(x, y) {
   estado.seleccion = null;
   guardar();
   dibujar();
+  return { ok: true, nodo };
+}
+
+/** Alternativa al clic: coloca el nodo del formulario en un espacio libre. */
+function crearNodoDesdeFormularioJohnson(nombre) {
+  const a = area(), radio = Math.max(RADIO_NODO, radioVisualNodoJohnson(estado.visualizacionJohnson));
+  const centro = { x: (a.ancho / 2 - estado.zoom.offsetX) / estado.zoom.escala, y: (a.alto / 2 - estado.zoom.offsetY) / estado.zoom.escala };
+  let punto = centro;
+  for (let i = 0; i <= estado.nodos.length; i++) {
+    const candidato = { x: radio + 24 + i % 6 * (radio * 2 + 50), y: radio + 24 + Math.floor(i / 6) * (radio * 2 + 58) };
+    if (estado.nodos.every(nodo => Math.hypot(candidato.x - nodo.x, candidato.y - nodo.y) >= radio * 2 + 30)) { punto = candidato; break; }
+  }
+  // El formulario puede extender el plano lógico, igual que «Organizar grafo».
+  const resultado = crearNodo(punto.x, punto.y, String(nombre || '').trim() || undefined);
+  if (resultado.ok) {
+    resultado.nodo.x = punto.x;
+    resultado.nodo.y = punto.y;
+    guardar(); dibujar(); zoomReset();
+    avisar('Nodo ' + resultado.nodo.nombre + ' creado.', 'ok');
+  }
+  return resultado;
+}
+
+/** Acción explícita: conserva datos matemáticos, selección y cálculos válidos. */
+function organizarGrafoJohnson() {
+  if (!estado.nodos.length) { avisar('Crea nodos para organizar el grafo.'); return { ok: false }; }
+  const nodos = estado.nodos, indices = new Map(nodos.map((nodo, i) => [nodo.id, i]));
+  const salientes = nodos.map(() => []), entradas = nodos.map(() => 0), niveles = nodos.map(() => 0);
+  estado.conexiones.forEach(conexion => {
+    const desde = indices.get(conexion.desde), hacia = indices.get(conexion.hacia);
+    if (desde === undefined || hacia === undefined) return;
+    salientes[desde].push(hacia); entradas[hacia]++;
+  });
+  const cola = [];
+  entradas.forEach((cantidad, indice) => { if (!cantidad) cola.push(indice); });
+  for (let i = 0; i < cola.length; i++) salientes[cola[i]].forEach(hacia => {
+    niveles[hacia] = Math.max(niveles[hacia], niveles[cola[i]] + 1);
+    if (--entradas[hacia] === 0) cola.push(hacia);
+  });
+  const dag = cola.length === nodos.length;
+  // Se reserva el espacio de la T aunque todavía no se haya calculado.
+  const radio = radioVisualNodoJohnson({ valoresNodos: {} }), margen = radio + 36;
+  const pasoX = radio * 2 + 140, pasoY = radio * 2 + 90;
+  guardarEstadoParaDeshacer();
+  if (dag) {
+    const columnas = new Map();
+    niveles.forEach((nivel, indice) => {
+      if (!columnas.has(nivel)) columnas.set(nivel, []);
+      columnas.get(nivel).push(indice);
+    });
+    const alto = Math.max(...Array.from(columnas.values(), columna => columna.length));
+    columnas.forEach((columna, nivel) => columna.forEach((indice, fila) => {
+      nodos[indice].x = margen + nivel * pasoX;
+      nodos[indice].y = margen + ((alto - columna.length) / 2 + fila) * pasoY;
+    }));
+  } else {
+    const radioCirculo = Math.max(pasoY, nodos.length * pasoY / (Math.PI * 2));
+    nodos.forEach((nodo, indice) => {
+      const angulo = indice / nodos.length * Math.PI * 2 - Math.PI / 2;
+      nodo.x = margen + radioCirculo * (1 + Math.cos(angulo));
+      nodo.y = margen + radioCirculo * (1 + Math.sin(angulo));
+    });
+  }
+  guardar(); dibujar(); zoomReset();
+  avisar(dag ? 'Grafo organizado por niveles. Puedes seguir moviendo sus nodos.' : 'Grafo organizado en círculo. Puedes seguir moviendo sus nodos.', 'ok');
+  return { ok: true, disposicion: dag ? 'niveles' : 'circular' };
 }
 
 /**
@@ -79,6 +148,15 @@ function manejarConectar(nodo) {
     const cambio = guardarConexionJohnson(origen.id, destino.id, resultado);
     if (!cambio.ok) avisar(cambio.error, 'error');
   });
+}
+
+/** Disponible también desde un control táctil o el teclado. */
+function cancelarConexionJohnson() {
+  if (!estado.origenConexion) return;
+  estado.origenConexion = null;
+  ayudar('<strong>Selecciona el nodo de origen</strong>.');
+  dibujar();
+  avisar('Conexión en curso cancelada.');
 }
 
 /**
@@ -203,6 +281,7 @@ const TEXTO_AYUDA =
   '   1. Toca el nodo de ORIGEN: queda marcado en verde.\n' +
   '   2. Toca el nodo de DESTINO y escribe el valor de la conexión.\n' +
   '   Para cancelar a medio camino, toca una zona vacía o cambia de herramienta.\n' +
+  '   También puedes cancelar con Escape o con «Cancelar conexión». Los formularios permiten crear nodos y conexiones usando el teclado.\n' +
   '· Ejemplos: carga uno de los grafos preparados (pesos negativos, solo positivos, nodos sin camino, ceros y pesos negativos, ciclo negativo).\n' +
   '· Calcular Johnson: ejecuta el algoritmo y abre la resolución paso a paso. Necesita al menos dos nodos.\n' +
   '· Más: despliega el resto de opciones.\n' +
@@ -218,11 +297,12 @@ const TEXTO_AYUDA =
   '· Dos dedos: pellizcar para acercar y arrastrar para desplazar la vista.\n' +
   '· Botón central del ratón, o arrastrar una zona vacía con la herramienta Seleccionar: desplaza la vista.\n' +
   '· Los botones −, % y + de la esquina superior derecha controlan el zoom; el del centro encuadra el grafo completo sin mover los nodos.\n\n' +
+  '· «Organizar grafo» distribuye por niveles una red acíclica y en círculo una red con ciclos. Solo cambia posiciones cuando lo solicitas; conserva los cálculos y permite deshacer y seguir arrastrando.\n\n' +
 
   '1.c) LOS CUATRO PASOS\n' +
   '· 2 Matriz: matriz de adyacencia con sus sumas y una revisión de los datos (nodos, conexiones y pesos negativos).\n' +
   '· 3 Paso a paso: cada fase real del algoritmo con su tabla y el grafo resaltado: nodo auxiliar q, cada pasada de Bellman-Ford, potenciales h(v), reponderación y un Dijkstra por cada origen. Anterior / Siguiente (o las flechas ← →) recorren los pasos.\n' +
-  '· 4 Resultado: matriz de distancias mínimas. Toca una celda para ver su ruta y la suma de sus pesos; «Ver en el editor» la resalta sobre el grafo.\n' +
+  '· 4 Resultado: el grafo muestra la consulta y el recorrido completo con pesos originales y costo total. «Ver matriz» y el procedimiento permiten consultar detalles bajo demanda; «Ver en el editor» conserva la consulta sobre el grafo editable.\n' +
   '· Cambiar nodos, conexiones o pesos exige recalcular. Mover nodos o renombrarlos conserva las distancias y actualiza las etiquetas.\n\n' +
 
   '2) EDITAR Y ELIMINAR\n' +
@@ -276,7 +356,17 @@ const TEXTO_AYUDA =
   '· Cada nodo se divide en T: arriba su nombre, abajo izquierda el mínimo y abajo derecha el máximo desde el origen. ∞ significa sin camino y — significa no calculable. El nombre y los valores exactos se consultan al señalar el nodo.\n' +
   '· Mínimo en cian, máximo en violeta y conexiones compartidas discontinuas en la comparación. El origen tiene doble contorno y el destino aro discontinuo. Se muestra una ruta representativa por objetivo, con desempate determinista.\n' +
   '· El acumulado del detalle corresponde a la ruta elegida; los valores del nodo son distancias generales desde el origen. Los pesos y sumas siempre son los originales.\n' +
+  '· El destino mantiene mínimo | máximo aunque elijas una sola ruta. Por ejemplo, A→B=58, A→E=6, E→D=5, D→B=8 muestra B=19 | 58. El objetivo elegido solo cambia el recorrido destacado y su resumen.\n' +
+  '· Los máximos sobre DAG son un cálculo adicional por orden topológico, no una inversión de comparaciones de Johnson. Con ciclos se muestra — y se explica por qué esta versión no ofrece máximos.\n' +
+  '· Las alternativas se buscan únicamente bajo petición: son caminos simples, con límites de rutas y exploración y opción de cancelar. Una lista truncada no representa todos los caminos ni garantiza un orden de mejores alternativas.\n' +
   '· Toca un nodo del resultado para elegir destino; Mayús elige origen. También puedes usar los selectores y el teclado. Acerca, arrastra para desplazar, Ajustar para ver todo o Ampliar grafo. Exportar PNG e Imprimir resultado conservan los valores y la leyenda.\n\n' +
+
+  'TIEMPOS Y HOLGURAS\n' +
+  '· Es un análisis temporal complementario, distinto del cálculo de mínimos de Johnson. Requiere una red dirigida acíclica, duraciones no negativas, origen y destino distintos y un camino entre ambos.\n' +
+  '· Solo analiza nodos y actividades que participan en algún camino del origen al destino; el resto queda visible y atenuado. La T cambia de significado: izquierda tiempo temprano, derecha tiempo tardío.\n' +
+  '· El temprano del origen es 0 y cada temprano es el máximo de temprano anterior + duración. El tardío del destino es la duración total T y los demás se calculan hacia atrás con el mínimo de tardío siguiente − duración.\n' +
+  '· El destino muestra T | T por esa condición de inicio hacia atrás. Una actividad tiene holgura H=tardío(destino de actividad)−temprano(origen de actividad)−duración; es crítica cuando H=0. No basta que sus dos nodos tengan valores iguales.\n' +
+  '· En el ejemplo A→B=58, A→E=6, E→D=5, D→B=8: A=0|0, E=6|45, D=11|50, B=58|58. A→B tiene holgura 0; las otras tres actividades tienen holgura 39.\n\n' +
 
   '7) TECLADO\n' +
   '· Enter: confirma el dato escrito en una ventana.\n' +
@@ -365,7 +455,21 @@ function exportarGrafoImagen() {
     avisar('El grafo está vacío: no hay nada que exportar.', 'error');
     return;
   }
-  exportarSvgComoPng(el.svg, { nombre: 'grafo' })
+  // El exportador clona el SVG de inmediato. Encuadrarlo durante esa copia
+  // incluye nombres, holguras y leyenda sin modificar la vista del usuario.
+  const zoomAnterior = { ...estado.zoom };
+  let exportacion;
+  try {
+    actualizarLimitesRutaJohnson();
+    restablecerZoomSilencioso();
+    exportacion = exportarSvgComoPng(el.svg, { nombre: 'grafo' });
+  } catch (_) {
+    exportacion = Promise.reject(new Error('No se pudo preparar el grafo.'));
+  } finally {
+    Object.assign(estado.zoom, zoomAnterior);
+    aplicarZoom();
+  }
+  exportacion
     .then(() => avisar('Grafo exportado como imagen correctamente.', 'ok'))
     .catch(() => avisar('Error al exportar la imagen.', 'error'));
 }

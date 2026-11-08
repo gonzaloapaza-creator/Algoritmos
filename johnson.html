@@ -40,14 +40,14 @@
     <section class="modulo-cabecera">
       <div class="modulo-cabecera__texto">
         <h1>Algoritmo de Johnson</h1>
-        <p>Rutas mínimas entre todos los pares de nodos, con pesos negativos permitidos: grafo → matriz → resolución paso a paso → resultado.</p>
+        <p>Construye el grafo, consulta caminos mínimos y máximos, o analiza tiempos y holguras. Matriz y procedimiento disponibles bajo demanda.</p>
       </div>
     </section>
 
     <nav class="jn-pasos" aria-label="Pasos del módulo">
       <ol class="pasos" id="pasosJohnson">
         <li><button type="button" class="paso" data-vista="grafo"><span class="paso__numero">1</span><span class="paso__texto">Grafo</span></button></li>
-        <li><button type="button" class="paso" data-vista="matriz"><span class="paso__numero">2</span><span class="paso__texto">Matriz</span></button></li>
+        <li><button type="button" class="paso" data-vista="matriz"><span class="paso__numero">2</span><span class="paso__texto">Ver matriz</span></button></li>
         <li><button type="button" class="paso" data-vista="resolucion"><span class="paso__numero">3</span><span class="paso__texto">Paso a paso</span></button></li>
         <li><button type="button" class="paso" data-vista="resultado"><span class="paso__numero">4</span><span class="paso__texto">Resultado</span></button></li>
       </ol>
@@ -64,6 +64,7 @@
           <button type="button" class="btn btn-herramienta activo" data-herramienta="seleccionar" aria-pressed="true">Seleccionar</button>
           <button type="button" class="btn btn-herramienta" data-herramienta="nodo" aria-pressed="false">Nodo</button>
           <button type="button" class="btn btn-herramienta" data-herramienta="conectar" aria-pressed="false">Conectar</button>
+          <button type="button" class="btn btn-neutral" id="jnCancelarConexion">Cancelar conexión</button>
         </div>
         <div class="grupo-herramientas grupo-acciones" role="group" aria-label="Acciones del grafo">
           <button type="button" class="btn btn-secondary" id="btnEjemplos">Ejemplos</button>
@@ -84,6 +85,7 @@
             <div class="menu-extra" id="menuExtra" role="group" aria-label="Más acciones del grafo">
               <button type="button" class="btn btn-neutral" id="btnDeshacer" title="Deshacer (Ctrl+Z)">Deshacer</button>
               <button type="button" class="btn btn-neutral" id="btnRehacer" title="Rehacer (Ctrl+Y)">Rehacer</button>
+              <button type="button" class="btn btn-neutral" id="jnOrganizarGrafo">Organizar grafo</button>
               <button type="button" class="btn btn-neutral" id="btnGuardar">Guardar grafo</button>
               <button type="button" class="btn btn-neutral" id="btnBiblioteca">Biblioteca</button>
               <button type="button" class="btn btn-neutral" id="btnDijkstra">Dijkstra</button>
@@ -99,6 +101,15 @@
       <p class="ayuda" id="ayuda" aria-live="polite">
         Selecciona <strong>Nodo</strong> y toca el área para comenzar.
       </p>
+      <details class="jn-formularios tarjeta">
+        <summary>Controles de formulario · crear y seleccionar</summary>
+        <div class="jn-formularios__contenido">
+          <form id="jnCrearNodoForm"><label>Nombre del nodo<input id="jnCrearNodoNombre" maxlength="12" required autocomplete="off" /></label><button type="submit" class="btn btn-secondary">Crear nodo</button></form>
+          <form id="jnCrearConexionForm"><label>Desde<select id="jnConexionDesde" required></select></label><label>Hacia<select id="jnConexionHacia" required></select></label><label>Peso entero<input id="jnConexionPeso" type="number" min="-999999" max="999999" step="1" value="0" required /></label><button type="submit" class="btn btn-secondary">Crear conexión</button></form>
+          <label>Seleccionar para editar o eliminar<select id="jnElementoEditor"><option value="">Elige un elemento</option></select></label>
+          <p>El editor dirigido admite pesos negativos, cero y positivos. Por reglas del editor, se rechazan bucles, duplicados y conexiones inversas. No son restricciones universales de Johnson.</p>
+        </div>
+      </details>
 
       <div class="johnson-layout">
         <section class="grafo-workspace" id="lienzo" aria-label="Editor del grafo">
@@ -216,8 +227,14 @@
             <h3 id="jnPasoTitulo"></h3>
             <p class="proc-texto" id="jnPasoTexto"></p>
             <div class="jn-paso-cuerpo">
-              <div class="grafo-mini" id="grafoPasoJn">
-                <svg id="svgPasoJn" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Grafo del paso actual"></svg>
+              <div class="grafo-mini grafo-mini--paso" id="grafoPasoJn">
+                <svg id="svgPasoJn" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Grafo del paso actual con la misma estructura que el resultado: nombre arriba y dos casillas con los datos de la etapa"></svg>
+                <div class="jn-ruta__zoom" role="group" aria-label="Zoom del grafo del paso">
+                  <button type="button" class="btn btn-neutral btn-sm" data-zoom-ruta="menos" aria-label="Alejar el grafo del paso">−</button>
+                  <button type="button" class="btn btn-neutral btn-sm" data-zoom-ruta="ajustar">Ajustar</button>
+                  <button type="button" class="btn btn-neutral btn-sm" data-zoom-ruta="mas" aria-label="Acercar el grafo del paso">+</button>
+                  <button type="button" class="btn btn-neutral btn-sm" data-ampliar-grafo aria-pressed="false">Ampliar grafo</button>
+                </div>
               </div>
               <div class="jn-paso-tablas" id="jnPasoTablas"></div>
             </div>
@@ -254,16 +271,17 @@
             <div class="tarjeta">
               <p class="etiqueta" id="jnRutaEtiqueta">Ruta seleccionada</p>
               <form id="jnConsultaRuta" class="jn-consulta" aria-label="Consultar caminos">
+                <label for="jnVistaAnalisis">Vista<select id="jnVistaAnalisis"><option value="caminos">Consulta de caminos</option><option value="temporal">Tiempos y holguras</option></select></label>
                 <label for="jnOrigenRuta">Origen<select id="jnOrigenRuta" name="origen"></select></label>
                 <label for="jnDestinoRuta">Destino<select id="jnDestinoRuta" name="destino"></select></label>
                 <label for="jnObjetivoRuta">Objetivo<select id="jnObjetivoRuta" name="objetivo"><option value="minimo">Minimizar · Johnson</option><option value="maximo">Maximizar · grafo acíclico</option></select></label>
                 <button type="submit" class="btn btn-primary">Mostrar camino</button>
                 <label class="jn-consulta__comparar"><input type="checkbox" id="jnCompararRutas" /> Comparar mínimo y máximo</label>
               </form>
-              <p class="jn-consulta__nota">Minimización: Johnson. Maximización en grafos acíclicos: recorrido topológico.</p>
+              <p class="jn-consulta__nota">Mínimos: Johnson. Máximos: cálculo adicional sobre DAG mediante orden topológico; no se obtiene invirtiendo las comparaciones de Johnson.</p>
               <p class="jn-consulta__nota" id="jnAvisoMaximo" role="status"></p>
-              <p class="jn-consulta__nota">Arriba: nodo · Abajo izquierda: mínimo · Abajo derecha: máximo. ∞: sin camino · —: no calculable. Los valores se refieren al origen seleccionado.</p>
-              <div class="jn-leyenda-caminos" aria-label="Colores de los caminos">
+              <p class="jn-consulta__nota" id="jnLeyendaValores">Arriba: nodo · Abajo izquierda: mínimo · Abajo derecha: máximo desde el origen seleccionado. Destino con ruta activa: Acum. | Total de esa ruta.</p>
+              <div class="jn-leyenda-caminos" id="jnLeyendaCaminos" aria-label="Colores de los caminos">
                 <span class="jn-leyenda-minimo">━ Mínimo</span><span class="jn-leyenda-maximo">━ Máximo</span><span class="jn-leyenda-compartido">┄ Compartido en comparación</span><span>Origen: doble contorno · Destino: aro discontinuo</span>
               </div>
               <div class="jn-ruta-panel">
@@ -279,10 +297,13 @@
                 <div class="jn-ruta" id="jnRutaDetalle"></div>
               </div>
               <div class="acciones jn-ruta__acciones">
+                <button type="button" class="btn btn-secondary btn-sm" id="jnBuscarAlternativas">Buscar alternativas · hasta 30</button>
+                <button type="button" class="btn btn-neutral btn-sm" id="jnCancelarAlternativas" hidden>Cancelar búsqueda</button>
                 <button type="button" class="btn btn-secondary btn-sm" id="btnVerEnEditor" disabled>Ver en el editor</button>
                 <button type="button" class="btn btn-neutral btn-sm" id="btnExportarRutaJn">Exportar PNG</button>
                 <button type="button" class="btn btn-neutral btn-sm" id="btnImprimirRutaJn">Imprimir resultado</button>
               </div>
+              <p id="jnEstadoAlternativas" role="status" aria-live="polite" class="jn-consulta__nota"></p>
             </div>
           </aside>
           <details class="tarjeta jn-principal">

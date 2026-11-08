@@ -293,6 +293,7 @@
   }
   function dinamicaCambio(modulo, c) {
     if (!c.resultadoVigente) return I.faltaResultado(c);
+    if (modulo === 'johnson' && c.resultado && c.resultado.temporal && c.vista === 'resultado') return I.explicarPaso(modulo, c);
     const p = c.paso;
     if (!p) return 'Aún no hay un paso seleccionado. Avanza al procedimiento.';
     const lineas = ['Paso ' + p.numero + ' de ' + p.total + ' · ' + (p.titulo || p.tipo || '') + '.'];
@@ -321,6 +322,7 @@
   }
   function dinamicaTotal(modulo, c) {
     if (!c.resultadoVigente || !c.resultado) return I.faltaResultado(c);
+    if (modulo === 'johnson') return I.explicarResultado(modulo, c);
     const r = c.resultado, d = c.datos || {};
     if (modulo === 'kruskal') {
       const conexiones = lista(d.conexiones);
@@ -543,6 +545,13 @@
       return { tipo: 'conocimiento', entrada: memoria.entrada ? memoria.entrada.id : null, texto: 'De nada. Si quieres, sigue preguntando sobre este tema o sobre tu ejercicio.', acciones: memoria.entrada ? accionesDe(memoria.entrada) : [] };
     }
     const lectura = I.interpretar(pregunta, f.modulo);
+    // En Johnson una consulta del resultado actual debe conservar su significado
+    // de caminos/temporal. Una entrada estática de transporte no puede apropiarse
+    // de «costo total» por coincidencia léxica. La prioridad se acota a este módulo.
+    if (f.modulo === 'johnson' && !lectura.modulos.length && lectura.intencion === 'resultado') {
+      const contextual = respuestaIntencion(lectura, pregunta, f);
+      if (contextual) return contextual;
+    }
     const seguimiento = SEGUIMIENTOS.find(s => s.patron.test(plano));
     if (seguimiento && !lectura.modulos.length && (memoria.entrada || seguimiento.nivel !== 'comparaciones')) {
       if (seguimiento.nivel === 'detalle' && plano === 'mas' && !memoria.entrada) return sinCobertura(f, pregunta);

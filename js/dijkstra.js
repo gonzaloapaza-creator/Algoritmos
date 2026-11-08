@@ -188,20 +188,13 @@ function ejecutarDijkstra(origenId) {
     lineas.push(`${nombre}: ${distancia}   (${recorrido})`);
   });
 
-  estado.visualizacionJohnson = {
-    origen: origenId,
-    destino: null,
-    nodos: nodosAlcanzados,
-    conexiones: conexionesArbol,
-    distancia: null,
-    tipo: 'ruta',
-    firma: firmaGrafoJohnson()
-  };
-  dibujar();
+  // Consulta rápida independiente: nunca reemplaza el contrato de una consulta
+  // Johnson (valoresNodos, par elegido, mínimos/máximos y vista temporal).
+  estado.resultadoDijkstraRapido = { resultado, origen: origenId, arbol: conexionesArbol, firma: firmaGrafoJohnson() };
 
   const alcanzados = nodosAlcanzados.length - 1;
   ayudar('Árbol de caminos mínimos desde <strong>' + escaparHtml(origenNodo.nombre) + '</strong>: ' +
-         alcanzados + (alcanzados === 1 ? ' nodo alcanzable' : ' nodos alcanzables') + '.');
+         alcanzados + (alcanzados === 1 ? ' nodo alcanzable' : ' nodos alcanzables') + '. Consulta rápida en el diálogo; la consulta de Johnson se conserva.');
 
   abrirModal({
     titulo: 'Dijkstra desde ' + origenNodo.nombre,
