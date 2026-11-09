@@ -1,0 +1,149 @@
+.page-difusa { --difusa-baja: #80b6ff; --difusa-media: #f1c96a; --difusa-alta: #cc9eff; --difusa-area: #5ee1c2; }
+:root[data-tema="claro"] .page-difusa { --difusa-baja: #235dbe; --difusa-media: #886000; --difusa-alta: #8336ac; --difusa-area: #087b66; }
+.page-difusa .contenido { min-width: 0; }
+.difusa-seccion { margin-top: var(--esp-5); min-width: 0; scroll-margin-top: 80px; }
+.difusa-seccion > * + * { margin-top: var(--esp-4); }
+.difusa-seccion p { line-height: 1.65; }
+.difusa-pista, .difusa-extremos { color: var(--texto-suave); font-size: var(--t-sm); }
+.difusa-aviso { padding: var(--esp-4); border: 1px solid var(--acento-borde); border-left: 4px solid var(--acento); border-radius: var(--radio-sm); background: var(--acento-tinte); }
+.difusa-etapas { display: flex; flex-wrap: wrap; gap: var(--esp-2); margin-top: var(--esp-5); }
+.difusa-etapas a { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 16px; border: 1px solid var(--borde); border-radius: var(--radio-sm); background: var(--bg-2); color: var(--texto); text-decoration: none; }
+.difusa-etapas a:hover { background: var(--bg-3); }
+.difusa-dos-columnas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--esp-5); }
+.difusa-entrada { padding: var(--esp-4); background: var(--bg-input); border: 1px solid var(--borde-suave); border-radius: var(--radio); min-width: 0; }
+.difusa-entrada .entrada { width: 100%; margin-top: var(--esp-2); font-size: var(--t-lg); }
+.difusa-entrada input[type="range"] { display: block; width: 100%; min-height: 44px; margin-top: 8px; accent-color: var(--acento); cursor: pointer; }
+.difusa-extremos { display: flex; justify-content: space-between; gap: 12px; }
+.difusa-extremos span:last-child { text-align: right; }
+.difusa-error { color: var(--peligro); min-height: 1.65em; font-size: var(--t-sm); }
+.difusa-acciones, .difusa-ejemplos { display: flex; flex-wrap: wrap; gap: var(--esp-3); align-items: center; margin-top: var(--esp-4); }
+.difusa-ejemplos > span { flex-basis: 100%; color: var(--texto-suave); font-size: var(--t-sm); }
+.difusa-ejemplos button { white-space: normal; }
+.difusa-estado { border-left: 3px solid var(--acento); padding-left: var(--esp-3); font-weight: 600; }
+.difusa-figura { margin: 0; min-width: 0; }
+.difusa-figura figcaption { font-weight: 650; margin-bottom: var(--esp-2); }
+.difusa-grafica { display: block; width: 100%; height: auto; background: var(--bg-input); border: 1px solid var(--borde-suave); border-radius: var(--radio-sm); overflow: visible; }
+.difusa-grafica text { fill: var(--texto-suave); font: 13px var(--fuente); }
+.difusa-grafica .difusa-eje { stroke: var(--texto-suave); stroke-width: 1; }
+.difusa-grafica .difusa-rejilla { stroke: var(--borde); stroke-width: 1; stroke-dasharray: 3 5; }
+.difusa-grafica .difusa-curva { fill: none; stroke-width: 2.5; stroke-linejoin: round; }
+.difusa-grafica .difusa-curva--0 { stroke: var(--difusa-baja); }
+.difusa-grafica .difusa-curva--1 { stroke: var(--difusa-media); stroke-dasharray: 9 5; }
+.difusa-grafica .difusa-curva--2 { stroke: var(--difusa-alta); stroke-dasharray: 2 4; }
+.difusa-grafica .difusa-agregada-area { fill: var(--difusa-area); fill-opacity: .16; }
+.difusa-grafica .difusa-agregada-linea { stroke: var(--difusa-area); stroke-width: 4; fill: none; }
+.difusa-grafica .difusa-marcador { stroke: var(--texto); stroke-width: 2; stroke-dasharray: 6 3; }
+.difusa-grafica .difusa-marca-texto { fill: var(--texto); font-weight: 700; }
+.difusa-leyenda { display: flex; gap: 10px 20px; flex-wrap: wrap; font-size: var(--t-sm); }
+.difusa-clave::before { content: ""; display: inline-block; width: 22px; border-top: 3px solid; margin: 0 6px 3px 0; }
+.difusa-clave--baja::before { border-color: var(--difusa-baja); }
+.difusa-clave--media::before { border-color: var(--difusa-media); border-top-style: dashed; }
+.difusa-clave--alta::before { border-color: var(--difusa-alta); border-top-style: dotted; }
+.difusa-clave--valor::before { border-color: var(--texto); border-top-style: dashed; }
+.difusa-clave--agregada::before { border-color: var(--difusa-area); border-top-width: 5px; }
+.difusa-tabla-contenedor { max-width: 100%; overflow-x: auto; border: 1px solid var(--borde); border-radius: var(--radio-sm); }
+.difusa-tabla { width: 100%; border-collapse: collapse; text-align: left; font-size: var(--t-sm); }
+.difusa-tabla caption { padding: 12px; text-align: left; color: var(--texto-suave); background: var(--bg-input); }
+.difusa-tabla td, .difusa-tabla th { padding: 12px; border-bottom: 1px solid var(--borde-suave); vertical-align: top; }
+.difusa-tabla thead { background: var(--bg-3); }
+.difusa-tabla--reglas { min-width: 760px; }
+.difusa-tabla small { display: block; color: var(--texto-suave); margin-top: 4px; }
+.difusa-tabla tr[data-activa="true"] { background: var(--acento-tinte); }
+.difusa-tabla tr[data-activa="true"] th { border-left: 4px solid var(--acento); }
+.difusa-etiqueta { display: inline-block; font-weight: 650; }
+.difusa-resultado { border: 1px solid var(--acento-borde); border-radius: var(--radio); background: var(--acento-tinte); padding: var(--esp-5); }
+.difusa-valor { display: block; font-size: clamp(2.4rem, 6vw, 3.8rem); line-height: 1.2; font-weight: 750; font-variant-numeric: tabular-nums; }
+.difusa-valor small { font-size: 1rem; font-weight: 400; color: var(--texto-suave); }
+.difusa-calculo { border-left: 3px solid var(--difusa-area); padding: var(--esp-3) var(--esp-4); background: var(--bg-input); overflow-wrap: anywhere; }
+.difusa-calculo > * + * { margin-top: 8px; }
+.difusa-seccion details { border-top: 1px solid var(--borde-suave); padding-top: var(--esp-3); }
+.difusa-seccion summary { cursor: pointer; min-height: 44px; font-weight: 650; padding: 8px 0; }
+.difusa-seccion details > p, .difusa-seccion details > button { margin-top: var(--esp-3); }
+.difusa-seccion code { overflow-wrap: anywhere; }
+#pasosDifusa { padding-left: 24px; }
+#pasosDifusa li { margin-top: 12px; line-height: 1.65; }
+.difusa-solo-lector { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 700px) {
+  .difusa-dos-columnas { grid-template-columns: minmax(0, 1fr); gap: var(--esp-4); }
+  .difusa-etapas a { flex: 1 1 40%; justify-content: center; padding-inline: 8px; }
+  .difusa-ejemplos button { flex: 1 1 100%; }
+  .difusa-seccion { padding: var(--esp-4); }
+  .difusa-tabla td, .difusa-tabla th { padding: 10px; }
+  .difusa-resultado { padding: var(--esp-4); }
+  .difusa-grafica text { font-size: 22px; }
+}
+/* Editor configurable: vistas reales y controles que conservan su espacio. */
+.difusa-vista { min-width: 0; margin-top: 16px; scroll-margin-top: 76px; }
+.difusa-vista > * + * { margin-top: 16px; }
+.difusa-vista p { line-height: 1.65; overflow-wrap: anywhere; }
+.difusa-vista h2 { margin: 0; }
+.difusa-barra-trabajo, .difusa-cabecera-seccion { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; justify-content: space-between; }
+.difusa-barra-trabajo { justify-content: flex-start; margin-top: 16px; }
+.difusa-barra-trabajo .btn { white-space: normal; }
+.difusa-etapas { gap: 8px; margin-top: 16px; }
+.difusa-etapas button { flex: 1 1 140px; min-height: 48px; padding: 10px 12px; font: inherit; font-size: var(--t-sm); background: var(--bg-2); color: var(--texto-suave); border: 1px solid var(--borde); border-radius: var(--radio-sm); cursor: pointer; text-align: left; }
+.difusa-etapas button[aria-current="step"] { background: var(--acento-tinte); border-color: var(--acento); color: var(--texto); font-weight: 700; }
+.difusa-preparacion { margin-top: 12px; padding: 12px 16px; border: 1px solid var(--borde-suave); border-radius: var(--radio-sm); color: var(--texto-suave); font-size: var(--t-sm); overflow-wrap: anywhere; }
+.difusa-estado { margin-top: 16px; min-height: 1.65em; }
+.difusa-ejemplos-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.difusa-ejemplo, .difusa-conjunto-editor, .difusa-regla-editor, .difusa-trabajo { min-width: 0; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--bg-input); padding: 16px; }
+.difusa-ejemplo { display: flex; flex-direction: column; gap: 12px; }
+.difusa-ejemplo .btn { margin-top: auto; white-space: normal; }
+.difusa-editor-layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(280px, 1fr); gap: 24px; align-items: start; }
+.difusa-preview { min-width: 0; padding-top: 12px; }
+.difusa-preview > * + * { margin-top: 12px; }
+.difusa-aplicar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 12px; margin-bottom: 16px; background: var(--acento-tinte); border-radius: var(--radio-sm); }
+.difusa-aplicar > span { flex: 1 1 100%; }
+.difusa-aplicar button { white-space: normal; }
+.difusa-campos-variable, .difusa-parametros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+#editorVariablesDifusa > * + * { margin-top: 16px; }
+.difusa-conjunto-editor > * + * { margin-top: 12px; }
+.difusa-conjunto-editor .difusa-error { min-height: 0; }
+.difusa-conjunto-editor .difusa-error:empty { display: none; }
+.difusa-parametros { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.difusa-reglas-editor { display: grid; gap: 16px; }
+.difusa-regla-campos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.difusa-regla-campos .entrada { width: 100%; min-width: 0; }
+.difusa-checkbox { display: flex; gap: 6px; align-items: center; min-height: 44px; }
+.difusa-checkbox input { width: 20px; height: 20px; accent-color: var(--acento); }
+.difusa-controles-fila { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; }
+.difusa-controles-fila .campo { flex: 1 1 230px; min-width: 0; }
+.difusa-controles-fila input, .difusa-controles-fila select { width: 100%; min-height: 44px; }
+.difusa-controles-fila output { display: block; min-height: 24px; }
+.difusa-vista .campo .entrada { width: 100%; min-width: 0; }
+.difusa-vista details { border-top: 1px solid var(--borde-suave); padding-top: 12px; }
+.difusa-vista summary { cursor: pointer; font-weight: 650; min-height: 44px; padding: 10px 0; }
+.difusa-vista details > * + * { margin-top: 12px; }
+#procedimientoVigenteDifusa > * + * { margin-top: 20px; }
+.difusa-trabajo + .difusa-trabajo { margin-top: 12px; }
+.difusa-grafica .difusa-curva--3 { stroke: var(--info); stroke-dasharray: 12 3 2 3; }
+.difusa-grafica .difusa-curva--4 { stroke: var(--aviso); stroke-dasharray: 6 3 6 7; }
+.difusa-grafica .difusa-recorte-linea { fill: none; stroke: var(--ficticio); stroke-width: 3; stroke-dasharray: 7 3; }
+.difusa-grafica .difusa-consulta-linea { stroke: var(--aviso); stroke-width: 2; stroke-dasharray: 2 4; }
+.difusa-grafica .difusa-sin-salida { fill: none; stroke: var(--texto); stroke-width: 1.5; }
+.difusa-clave--0::before { border-color: var(--difusa-baja); }
+.difusa-clave--1::before { border-color: var(--difusa-media); border-top-style: dashed; }
+.difusa-clave--2::before { border-color: var(--difusa-alta); border-top-style: dotted; }
+.difusa-clave--3::before { border-color: var(--info); border-top-style: dashed; }
+.difusa-clave--4::before { border-color: var(--aviso); border-top-style: dotted; }
+.difusa-clave--recorte::before { border-color: var(--ficticio); border-top-style: dashed; }
+.difusa-clave--consulta::before { border-color: var(--aviso); border-top-style: dotted; }
+.modal-scroll { overflow-wrap: anywhere; }
+@media (max-width: 1050px) {
+  .difusa-ejemplos-grid { grid-template-columns: minmax(0, 1fr); }
+  .difusa-editor-layout { grid-template-columns: minmax(0, 1fr); }
+  .difusa-preview { grid-row: 1; }
+}
+@media (max-width: 700px) {
+  .difusa-vista { padding: 16px; }
+  .difusa-etapas button { flex: 1 1 40%; }
+  .difusa-etapas button:last-child { flex-basis: 100%; }
+  .difusa-regla-campos { grid-template-columns: minmax(0, 1fr); }
+  .difusa-parametros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .difusa-barra-trabajo .btn { flex: 1 1 40%; }
+  .difusa-campos-variable { grid-template-columns: minmax(0, 1fr); }
+  .difusa-aplicar button { flex: 1 1 100%; }
+  .difusa-cabecera-seccion .difusa-acciones { margin-top: 0; }
+  .difusa-grafica text { font-size: 20px; }
+}
+@media (prefers-reduced-motion: reduce) { .page-difusa * { scroll-behavior: auto; } }

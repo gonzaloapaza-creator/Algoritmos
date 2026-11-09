@@ -24,6 +24,22 @@ function generarValoresOrdenamiento(cantidad) {
   return nuevo;
 }
 
+/** Duración teórica de los intervalos entre eventos, independiente de la preparación. */
+function estimarDuracionOrdenamiento(eventos, velocidad, pasoActual = 0) {
+  const transiciones = Math.max(0, Number.isSafeInteger(eventos) ? eventos - 1 : 0);
+  const intervalo = VELOCIDADES_ORDENAMIENTO.includes(String(velocidad)) ? Number(velocidad) : Number(VELOCIDADES_ORDENAMIENTO[1]);
+  const actual = Math.max(0, Math.min(transiciones, Number.isSafeInteger(pasoActual) ? pasoActual : 0));
+  return { totalMs: transiciones * intervalo, restanteMs: (transiciones - actual) * intervalo };
+}
+
+function formatearDuracionOrdenamiento(milisegundos) {
+  const segundos = Math.max(0, Math.ceil(milisegundos / 1000));
+  if (segundos < 60) return segundos + ' s';
+  const minutos = Math.floor(segundos / 60), resto = segundos % 60;
+  if (minutos < 60) return minutos + ' min' + (resto ? ' ' + resto + ' s' : '');
+  return Math.floor(minutos / 60) + ' h' + (minutos % 60 ? ' ' + minutos % 60 + ' min' : '');
+}
+
 /* ---------------- Persistencia (lógica pura, sin DOM) ---------------- */
 
 /** Instantánea serializable del estado visible. `velocidad` es el valor del selector. */

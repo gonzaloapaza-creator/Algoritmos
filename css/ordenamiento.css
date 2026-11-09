@@ -355,3 +355,5 @@
 /* Reproducir / pausar: un solo botón, el icono cambia con aria-pressed. */
 #btnAuto .icono-pausar, #btnAuto[aria-pressed="true"] .icono-reproducir { display: none; }
 #btnAuto[aria-pressed="true"] .icono-pausar { display: block; }
+.orden-duracion { margin: 8px 0 12px; color: var(--texto-suave); font-size: .78rem; line-height: 1.6; overflow-wrap: anywhere; }
+#btnFinalOrdenamiento { min-height: 44px; white-space: normal; }

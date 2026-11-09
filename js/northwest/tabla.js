@@ -4,8 +4,24 @@
 'use strict';
 
 const tablaNw = {
-  invalidas: {}     // 'costo:o|d' | 'oferta:o' | 'demanda:d' -> texto no válido (solo presentación)
+  get invalidas() { return estadoNorthwest.invalidas; },
+  set invalidas(valor) { estadoNorthwest.invalidas = depurarInvalidasNorthwest(valor); }
 };
+
+function instalarNavegacionEntradaNw(input) {
+  input.addEventListener('keydown', evento => {
+    if (!['Tab', 'Enter'].includes(evento.key) || evento.ctrlKey || evento.metaKey || evento.altKey) return;
+    const campos = Array.from(document.querySelectorAll('input, select, button, a[href], summary, [tabindex]'))
+      .filter(e => !e.disabled && e.tabIndex >= 0 && e.getClientRects().length > 0);
+    const siguiente = campos[campos.indexOf(input) + (evento.shiftKey && evento.key === 'Tab' ? -1 : 1)];
+    if (!siguiente) return;
+    const clave = siguiente.dataset.claveNw;
+    evento.preventDefault();
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    const destino = clave ? Array.from(document.querySelectorAll('[data-clave-nw]')).find(e => e.dataset.claveNw === clave) : siguiente;
+    if (destino && destino.isConnected) destino.focus({ preventScroll: true });
+  });
+}
 
 function celdaNw(etiqueta, texto, clases) {
   const c = document.createElement(etiqueta);
@@ -20,9 +36,11 @@ function entradaNw(config) {
   input.inputMode = config.inputmode || 'decimal';
   input.autocomplete = 'off';
   input.placeholder = config.placeholder || '—';
+  input.maxLength = 200;
   input.setAttribute('aria-label', config.etiqueta);
   Object.keys(config.datos || {}).forEach(k => { input.dataset[k] = config.datos[k]; });
   const clave = config.clave;
+  input.dataset.claveNw = clave;
   const invalida = tablaNw.invalidas[clave];
   if (invalida !== undefined) {
     input.value = invalida;
@@ -36,23 +54,22 @@ function entradaNw(config) {
     const v = config.validar(input.value);
     input.toggleAttribute('aria-invalid', !v.ok);
     input.title = v.ok ? '' : v.error;
+    registrarBorradorNorthwest(clave, input.value, v.ok);
   });
   input.addEventListener('change', () => {
     const v = config.validar(input.value);
     if (!v.ok) {
-      tablaNw.invalidas[clave] = input.value;
+      registrarBorradorNorthwest(clave, input.value, false);
       input.setAttribute('aria-invalid', 'true');
       notificar(v.error, 'error');
       dibujarResumenDatosNorthwest();
       return;
     }
     delete tablaNw.invalidas[clave];
-    if (v.valor === config.valor) { dibujarResumenDatosNorthwest(); return; }
+    if (v.valor === config.valor) { registrarBorradorNorthwest(clave, input.value, true); return; }
     config.alCambiar(v.valor);
   });
-  input.addEventListener('keydown', evento => {
-    if (evento.key === 'Enter') { evento.preventDefault(); input.blur(); }
-  });
+  instalarNavegacionEntradaNw(input);
   return input;
 }
 
@@ -61,6 +78,7 @@ function entradaNombreNw(elemento, tipo) {
   input.type = 'text';
   input.value = elemento.nombre;
   input.maxLength = MAX_LARGO_ETIQUETA_NORTHWEST;
+  input.dataset.claveNw = 'nombre:' + elemento.id;
   input.setAttribute('aria-label', (tipo === 'origen' ? 'Nombre del origen ' : 'Nombre del destino ') + elemento.nombre);
   input.addEventListener('change', () => {
     const lista = tipo === 'origen' ? estadoNorthwest.modelo.origenes : estadoNorthwest.modelo.destinos;
@@ -69,6 +87,7 @@ function entradaNombreNw(elemento, tipo) {
     if (v.valor === elemento.nombre) return;
     aplicarCambioNorthwest(() => { elemento.nombre = v.valor; }, { motivo: 'nombre' });
   });
+  instalarNavegacionEntradaNw(input);
   return input;
 }
 

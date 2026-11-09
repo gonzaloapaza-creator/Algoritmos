@@ -7,10 +7,11 @@
   if (window.AlgoContexto) return;
   const NOMBRES = {
     inicio: 'Inicio', johnson: 'Johnson', dijkstra: 'Dijkstra', kruskal: 'Kruskal',
-    asignacion: 'Asignación', northwest: 'Esquina noroeste', ordenamiento: 'Ordenamiento', arboles: 'Árboles'
+    asignacion: 'Asignación', northwest: 'Esquina noroeste', ordenamiento: 'Ordenamiento', arboles: 'Árboles', difusa: 'Lógica difusa'
   };
   const GUIAS = {
-    inicio: 'Elige una tarjeta de la ciudad: Johnson, Dijkstra, Kruskal, Asignación, Esquina noroeste, Ordenamiento o Árboles. Dentro de cada módulo puedes cargar un ejemplo y consultar su ayuda.',
+    inicio: 'Elige una tarjeta de la ciudad: Johnson, Dijkstra, Kruskal, Asignación, Esquina noroeste, Ordenamiento, Árboles o Lógica difusa. Dentro de cada módulo puedes cargar un ejemplo y consultar su ayuda.',
+    difusa: 'Carga un ejemplo o elige «Crear mi sistema». Revisa Variables y pertenencias, configura Reglas y pasa a Evaluar para introducir valores. Procedimiento y resultado muestra la ejecución real. Puedes usar de una a tres entradas, una salida, conjuntos triangulares o trapezoidales y reglas AND/OR con peso. Los ejemplos son didácticos, sin calibración para decisiones reales.',
     johnson: 'Crea los vértices y las conexiones, revisa la matriz y calcula para seguir los pasos y ver las distancias entre todos los pares. Esta aplicación prohíbe bucles, duplicados y conexiones inversas; es una decisión del editor, no una limitación matemática de Johnson. Sí permite pesos negativos y ciclos de tres o más vértices. Un ciclo negativo impide obtener distancias mínimas.',
     dijkstra: 'Crea un grafo o carga un ejemplo; elige origen y, si quieres, destino. Usa pesos enteros no negativos y calcula. Se obtienen distancias desde el origen a todos los vértices. En modo dirigido se permiten A→B y B→A como conexiones diferentes. No se admiten bucles ni duplicados.',
     kruskal: 'Crea un grafo no dirigido o carga un ejemplo, elige peso mínimo o máximo y calcula. Los pasos aceptan una conexión cuando une componentes distintas; rechazan la que cerraría un ciclo. Un grafo conectado produce un árbol de expansión y uno desconectado, un bosque. Los pesos pueden ser negativos o cero.',
@@ -25,11 +26,19 @@
   const TEMAS = {
     inicio: {
       datos: 'Selecciona un edificio y entra en su módulo. «Vista lista» ofrece el mismo catálogo por categorías. Los datos del ejercicio se ingresan dentro de cada módulo.',
-      reglas: 'Hay siete módulos independientes. Los trabajos pertenecen al navegador y al origen: localhost, 127.0.0.1 y el sitio publicado tienen almacenes separados.',
+      reglas: 'Hay ocho módulos independientes. Los trabajos pertenecen al navegador y al origen: localhost, 127.0.0.1 y el sitio publicado tienen almacenes separados.',
       herramientas: 'Selecciona un edificio para ver su descripción y acceso. Puedes cambiar entre ciudad y lista, y pausar las demostraciones. Las demostraciones del inicio ilustran ideas; no calculan tus ejercicios.',
       pasos: 'Entra en un módulo y prepara un ejercicio para ver su procedimiento. Las escenas del inicio no son pasos calculados.',
       resultado: 'El inicio presenta el catálogo y los trabajos recientes. Abre el módulo correspondiente para consultar un resultado calculado.',
       errores: 'Si no encuentras un módulo en la ciudad, usa «Vista lista». Los videos requieren conexión; puedes trabajar sin reproducirlos.'
+    },
+    difusa: {
+      datos: 'Configura nombres, unidades, dominios y conjuntos en Variables y pertenencias. Los valores de una evaluación se introducen por separado en Evaluar mediante campo o deslizador. Se admite punto o coma decimal sin separadores ambiguos. Editar datos matemáticos invalida la ejecución anterior.',
+      reglas: 'De 1 a 3 entradas, una salida, entre 2 y 5 conjuntos por variable y de 1 a 125 reglas. AND usa mínimo y OR máximo. El peso de 0 a 1 multiplica la activación. Implicación mínimo, agregación máximo y centroide continuo de la envolvente lineal con nudos, recortes e intersecciones. Una regla necesita alguna entrada y un consecuente válido.',
+      herramientas: 'Navega por Inicio, Variables y pertenencias, Reglas, Evaluar y Procedimiento y resultado. Selecciona una regla y un punto de salida para consultar su recorte. Genera el mapa bajo petición; puedes cancelarlo. Los cambios de ejemplo y las eliminaciones con reglas afectadas requieren una decisión explícita.',
+      pasos: 'La ejecución registra datos, fuzzificación, activación AND/OR, peso, recortes, envolvente e integral del centroide continuo. La gráfica usa los tramos de esa integral. Los 1001 puntos uniformes son consultas auxiliares y no determinan el resultado. Un punto muestreado con pertenencia cero no demuestra que toda la salida tenga masa cero.',
+      resultado: 'El centroide es el resultado numérico principal, dentro del dominio de salida configurado. Las etiquetas adicionales usan los nombres de sus conjuntos y la mayor pertenencia del centroide, conservando empates. Si ninguna categoría contiene ese punto, se conserva el número sin inventar una etiqueta.',
+      errores: 'Revisa nombres únicos, dominios válidos, parámetros ordenados dentro del rango, reglas completas y entradas finitas dentro de sus dominios. Una zona sin pertenencia y una zona sin reglas activas son problemas distintos. Si no se activa salida, revisa valores, antecedentes, reglas desactivadas y pesos cero.'
     },
     johnson: {
       datos: 'Usa «Nodo» para crear nodos y «Conectar» para elegir origen, destino y peso. En «Seleccionar», selecciona el elemento para editarlo; revisa también la matriz antes de «Calcular Johnson». Puedes comenzar con «Ejemplos».',
@@ -159,13 +168,33 @@
     if (modulo === 'johnson' && typeof estadoJohnson !== 'undefined' && typeof estado !== 'undefined') {
       contexto.vista = texto(estadoJohnson.vista);
       contexto.datos = grafo(estado);
+      contexto.datos.tipoMatriz = contexto.vista === 'matriz' ? 'adyacencia' : 'distancias';
       contexto.seleccion = seleccionGrafo(estado.seleccion, estado);
+      // La selección del editor solo identifica un elemento en el grafo principal.
+      if (contexto.vista !== 'grafo') contexto.seleccion = null;
       revision = revisionGrafo(estado);
       contexto.resultadoVigente = typeof resultadoVigenteJohnson === 'function' && !!resultadoVigenteJohnson();
       if (contexto.resultadoVigente) {
         const r = estadoJohnson.resultado;
-        const p = lista(r.pasos)[indice(estadoJohnson.pasoActual)];
-        contexto.paso = marcaPaso(p, estadoJohnson.pasoActual, lista(r.pasos).length);
+        // Este getter solo agrega el paso descriptivo de reconstrucción existente.
+        const pasos = typeof pasosResolucionJohnson === 'function' ? pasosResolucionJohnson(r) : lista(r.pasos);
+        const p = lista(pasos)[indice(estadoJohnson.pasoActual)];
+        contexto.paso = marcaPaso(p, estadoJohnson.pasoActual, pasos.length);
+        if (contexto.paso) contexto.paso.etapa = texto(p.tipo);
+        const extremosPaso = estadoJohnson.seleccion || { origen: 0, destino: r.cantidad - 1 };
+        const rotulosEtapa = {
+          original: [['d', 'h'], ['Distancia desde q pendiente', 'Potencial pendiente']],
+          auxiliar: [['d', 'h'], ['Distancia inicial desde q', 'Potencial pendiente']],
+          bellman: [['antes', 'después'], ['Distancia desde q antes de esta pasada', 'Distancia desde q después de esta pasada']],
+          ciclo: [['d', 'h'], ['Última distancia provisional desde q', 'Potencial no disponible por ciclo negativo']],
+          verificacion: [['d(q,v)', 'h'], ['Distancia final desde q', 'Potencial h(v), igual a d(q,v)']],
+          reponderacion: [['h', '—'], ['Potencial h(v)', 'Sin dato en esta etapa']],
+          dijkstra: [["d'", 'd'], ['Distancia reponderada desde el origen de este paso', 'Distancia recuperada con pesos originales']],
+          final: [['desde ' + texto(propio(r.nombres, extremosPaso.origen)), 'hasta ' + texto(propio(r.nombres, extremosPaso.destino))], ['Mínimo desde el origen de la consulta hasta cada nodo', 'Mínimo desde cada nodo hasta el destino de la consulta']]
+        };
+        if (contexto.vista === 'resolucion' && p && rotulosEtapa[p.tipo]) contexto.casillasJohnson = {
+          rotulos: rotulosEtapa[p.tipo][0], etiquetas: rotulosEtapa[p.tipo][1], etapa: texto(p.titulo, 160)
+        };
         if (contexto.paso && p.pasada) {
           contexto.paso.pasada = {
             numero: numero(p.pasada.numero), antes: tomar(p.pasada.antes, 40, 'paso.antes'),
@@ -211,6 +240,19 @@
               rotulos: lista(casillaDestino.rotulos).slice(0, 2).map(v => texto(v)),
               valores: lista(casillaDestino.valores).slice(0, 2).map(numero)
             };
+            if (contexto.vista !== 'resolucion' || p && p.tipo === 'ruta') {
+              const seleccionada = contexto.seleccion && contexto.seleccion.tipo === 'nodo' ? contexto.seleccion : null;
+              const id = seleccionada ? seleccionada.id : destinoId;
+              const casilla = typeof casillasNodoJohnson === 'function' ? casillasNodoJohnson({ id }, ruta) :
+                propio(ruta.casillas, id) || { rotulos: ruta.vistaTemporal ? ['temprano', 'tardío'] : ['mín', 'máx'],
+                  valores: [propio(propio(ruta.valoresNodos, id), 'minimo'), propio(propio(ruta.valoresNodos, id), 'maximo')] };
+              contexto.casillasJohnson = { rotulos: lista(casilla.rotulos).slice(0, 2).map(v => texto(v)),
+                etiquetas: lista(casilla.etiquetas || casilla.rotulos).slice(0, 2).map(v => texto(v, 160)),
+                temporal: !!ruta.vistaTemporal, etapa: contexto.vista === 'resolucion' && p ? texto(p.titulo, 160) : 'Consulta actual' };
+              // Un par de consulta puede ser el predeterminado; no equivale a seleccionar un nodo.
+              if (seleccionada) Object.assign(contexto.casillasJohnson, { nodo: seleccionada,
+                valores: lista(casilla.valores).slice(0, 2).map(numero) });
+            }
             if (typeof ruta.errorRuta === 'string' && ruta.errorRuta) contexto.resultado.consulta.error = texto(ruta.errorRuta, 400);
             const elegida = ruta.rutaSeleccionada && typeof ruta.rutaSeleccionada === 'object' ? ruta.rutaSeleccionada : ruta.tipo === 'ruta' ? ruta : null;
             if (!ruta.vistaTemporal && elegida) contexto.resultado.seleccion.ruta = {
@@ -228,6 +270,7 @@
           }
         }
       } else if (estadoJohnson.resultado) contexto.error = 'El grafo cambió: el resultado anterior no está vigente. Recalcula.';
+      contexto.datos.resultadoInvalidado = !!estadoJohnson.resultado && !contexto.resultadoVigente;
       contexto.error = errorVisible(['validacionJohnson']) || contexto.error;
     } else if ((modulo === 'dijkstra' || modulo === 'kruskal') && typeof moduloGrafo !== 'undefined') {
       const e = moduloGrafo, r = e.resultado;
@@ -249,7 +292,8 @@
               const anterior = propio(valores, n.id);
               return { nodo: texto(n.id), anterior: anterior ? texto(anterior.nodo) : null, conexion: anterior ? texto(anterior.conexion) : null };
             });
-          contexto.resultado = { origen: texto(r.origen), distancias: distancias(r.distancias), predecesores: predecesores(r.predecesores) };
+          contexto.resultado = { origen: texto(r.origen), destino: texto(e.destino) || null,
+            distancias: distancias(r.distancias), predecesores: predecesores(r.predecesores) };
           if (contexto.paso) Object.assign(contexto.paso, {
             actual: texto(p.actual) || null, desde: texto(p.desde) || null, hacia: texto(p.hacia) || null,
             arista: texto(p.arista) || null, anterior: numero(p.anterior), candidata: numero(p.candidata), mejora: !!p.mejora,
@@ -257,7 +301,8 @@
           });
         } else {
           const componentes = (v, ruta) => tomar(v, 40, ruta, (g, i) => tomar(g, 40, ruta + '[' + i + ']', id => texto(id)));
-          contexto.resultado = { objetivo: texto(r.objetivo), total: numero(r.total), elegidas: tomar(r.elegidas, 40, 'resultado.elegidas', v => texto(v)), componentes: componentes(r.componentes, 'resultado.componentes') };
+          contexto.resultado = { objetivo: texto(r.objetivo), total: numero(r.total), cantidadElegidas: lista(r.elegidas).length,
+            cantidadComponentes: lista(r.componentes).length, elegidas: tomar(r.elegidas, 40, 'resultado.elegidas', v => texto(v)), componentes: componentes(r.componentes, 'resultado.componentes') };
           if (contexto.paso) Object.assign(contexto.paso, { arista: texto(p.arista), aceptada: !!p.aceptada, pesoAcumulado: numero(p.total),
             componentesAntes: componentes(p.componentesAntes, 'paso.componentesAntes'), componentesDespues: componentes(p.componentesDespues, 'paso.componentesDespues') });
         }
@@ -302,9 +347,13 @@
         destinos: tomar(m.destinos, 10, 'datos.destinos', d => Object.assign(entidad(d), { demanda: numero(d.demanda) })),
         costos: origenes.map(o => destinos.map(d => numero(propio(m.costos, o.id + '|' + d.id)))) };
       revision = [m.origenes.map(o => [o.id, o.nombre, o.oferta]), m.destinos.map(d => [d.id, d.nombre, d.demanda]), m.origenes.map(o => m.destinos.map(d => propio(m.costos, o.id + '|' + d.id)))];
-      const invalidas = typeof tablaNw !== 'undefined' && Object.keys(tablaNw.invalidas || {}).length > 0;
-      contexto.resultadoVigente = !invalidas && typeof resultadoVigenteNorthwest === 'function' && !!resultadoVigenteNorthwest()
-        && (typeof firmaModeloNorthwest !== 'function' || e.resultado.firma === firmaModeloNorthwest(m));
+      const invalidas = typeof hayPendientesNorthwest === 'function' ? hayPendientesNorthwest() : typeof tablaNw !== 'undefined' && Object.keys(tablaNw.invalidas || {}).length > 0;
+      const consultable = typeof resultadoConsultableNorthwest === 'function' && resultadoConsultableNorthwest();
+      contexto.datos.pendientesDeCorregir = invalidas;
+      contexto.datos.resultadoInvalidado = !!e.resultado && !consultable;
+      if (invalidas && consultable) contexto.ultimoCalculoValido = { costoTotal: numero(e.resultado.datos.costoTotal), escalaCostos, consultable: true };
+      revision.push(invalidas ? Object.entries(e.invalidas || (typeof tablaNw !== 'undefined' ? tablaNw.invalidas : {})) : []);
+      contexto.resultadoVigente = consultable && !invalidas;
       if (contexto.resultadoVigente) {
         const r = e.resultado.datos, b = e.resultado.balance, p = lista(r.pasos)[indice(e.resultado.pasoActual)];
         contexto.paso = marcaPaso(p, e.resultado.pasoActual, lista(r.pasos).length);
@@ -314,8 +363,7 @@
           asignaciones: matriz(p.asignaciones, 11, 'paso.asignaciones') });
         contexto.resultado = { escalaCostos, costoTotal: numero(r.costoTotal), asignaciones: matriz(r.asignaciones, 11, 'resultado.asignaciones'), degenerado: !!r.degenerado,
           ficticio: b && b.ficticio ? { tipo: texto(b.ficticio.tipo), cantidad: numero(b.ficticio.cantidad), indice: numero(b.ficticio.indice) } : null };
-      } else if (e.resultado) contexto.error = 'Los datos cambiaron: la solución anterior no está vigente. Resuelve de nuevo.';
-      if (invalidas) contexto.error = 'Hay casillas con texto no válido. Corrígelas antes de resolver.';
+      } else contexto.error = explicarEstadoResultadoNorthwest();
     } else if (modulo === 'ordenamiento' && typeof estadoOrdenamiento !== 'undefined') {
       const e = estadoOrdenamiento;
       contexto.vista = e.preparando ? 'preparando' : 'procedimiento';
@@ -373,6 +421,77 @@
       contexto.resultado = contexto.resultadoVigente ? { recorrido: texto(e.recorridoSeleccionado),
         salidaParcial: tomar(eventos.slice(0, actual).filter(ev => ev.tipo === 'emitir'), 31, 'resultado.salidaParcial', ev => numero(ev.valor)), completo: actual === eventos.length } : null;
       contexto.error = errorVisible(['errorInsercion', 'errorReconstruccion', 'errorAleatorio']);
+    } else if (modulo === 'difusa') {
+      const e = typeof DifusaEstado !== 'undefined' ? DifusaEstado.estado : null;
+      const m = e && e.modelo;
+      contexto.vista = texto(e && e.vista) || 'inicio';
+      if (m) {
+        const resumenVariable = v => ({ id: texto(v.id), nombre: texto(v.nombre, 40), unidad: texto(v.unidad, 40),
+          minimo: numero(v.min), maximo: numero(v.max), conjuntos: tomar(v.conjuntos, 5, 'datos.conjuntos', c => ({
+            id: texto(c.id), nombre: texto(c.nombre, 40), tipo: texto(c.tipo), parametros: tomar(c.parametros, 4, 'datos.parametros') })) });
+        const entradas = lista(m.entradas).slice(0, 3);
+        const resumenRegla = regla => ({ id: texto(regla.id), conector: texto(regla.conector), peso: numero(regla.peso),
+          habilitada: regla.activa !== false, consecuente: texto(regla.consecuente) || null,
+          antecedentes: entradas.map(v => ({ variableId: texto(v.id), conjuntoId: texto(propio(regla.antecedentes, v.id)) || null })) });
+        contexto.datos = { modelo: { id: texto(m.id), nombre: texto(m.nombre, 40), entradas: entradas.map(resumenVariable),
+          salida: m.salida ? resumenVariable(m.salida) : null, cantidadReglas: lista(m.reglas).length,
+          reglasHabilitadas: lista(m.reglas).filter(regla => regla.activa !== false && regla.peso > 0).length,
+          reglas: tomar(m.reglas, 8, 'datos.modelo.reglas', resumenRegla) },
+        valores: entradas.map(v => ({ id: texto(v.id), nombre: texto(v.nombre, 40), valor: numero(propio(e.valores, v.id)), unidad: texto(v.unidad, 40) })),
+        pendiente: !!e.pendiente, resultadoInvalidado: !!e.pendiente };
+        // Huella de configuración/valores; nunca de muestras, tramos o recortes.
+        revision = [m, e.valores];
+        contexto.resultadoVigente = !!e.resultado && !e.pendiente && entradas.every(v =>
+          propio(e.resultado.entradas, v.id) === propio(e.valores, v.id));
+        if (contexto.resultadoVigente && typeof DifusaModelo !== 'undefined' && typeof DifusaModelo.firmaMatematica === 'function' && e.resultado.firmaModelo) {
+          contexto.resultadoVigente = e.resultado.firmaModelo === DifusaModelo.firmaMatematica(m);
+        }
+        const r = contexto.resultadoVigente ? e.resultado : null;
+        if (r) {
+          const centroide = r.centroide || {};
+          contexto.resultado = { estado: texto(centroide.estado), valor: numero(centroide.valor),
+            diagnostico: texto(centroide.mensaje, 500), metodo: texto(centroide.metodo, 80), tramos: lista(r.tramos).length,
+            numerador: numero(centroide.numerador), denominador: numero(centroide.denominador),
+            puntos: lista(r.puntos).length, minimo: numero(m.salida.min), maximo: numero(m.salida.max),
+            etiquetas: tomar(r.etiquetas, 5, 'resultado.etiquetas', id => {
+              const conjunto = lista(m.salida.conjuntos).find(c => c.id === id);
+              return conjunto ? texto(conjunto.nombre, 40) : texto(id, 40);
+            }), reglasActivas: lista(r.reglas).filter(regla => regla.activacion > 0).length };
+          const s = e.seleccion || {};
+          const seleccionada = lista(r.reglas).find(regla => regla.id === s.reglaId);
+          const configurada = lista(m.reglas).find(regla => regla.id === s.reglaId);
+          const punto = Number.isInteger(s.puntoIndice) && s.puntoIndice >= 0 && s.puntoIndice < lista(r.puntos).length ? s.puntoIndice : null;
+          if (seleccionada) {
+            contexto.seleccion = { tipo: 'regla-difusa', id: texto(seleccionada.id),
+              conector: texto(seleccionada.conector), peso: numero(seleccionada.peso),
+              habilitada: seleccionada.habilitada !== false, activacionAntecedente: numero(seleccionada.activacionAntecedente),
+              activacion: numero(seleccionada.activacion),
+              antecedentes: entradas.map(v => {
+                const conjuntoId = configurada && propio(configurada.antecedentes, v.id);
+                const conjunto = lista(v.conjuntos).find(c => c.id === conjuntoId);
+                return { variable: texto(v.nombre, 40), conjunto: conjunto ? texto(conjunto.nombre, 40) : 'No importa',
+                  grado: conjuntoId ? numero(propio(propio(r.pertenencias, v.id), conjuntoId)) : null };
+              }), consecuente: texto((lista(m.salida.conjuntos).find(c => c.id === seleccionada.consecuente) || {}).nombre, 40) };
+          }
+          if (punto !== null) {
+            const detallePunto = { indice: punto, y: numero(r.puntos[punto]), agregada: numero(propio(r.agregada, punto)),
+              recorte: seleccionada ? numero(propio(seleccionada.recortada, punto)) : null };
+            if (contexto.seleccion) contexto.seleccion.punto = detallePunto;
+            else contexto.seleccion = { tipo: 'punto-difuso', punto: detallePunto };
+          }
+          const pasoIndice = Number.isInteger(e.pasoActual) ? e.pasoActual : Number.isInteger(e.paso) ? e.paso :
+            seleccionada ? 2 : punto !== null ? 4 : 5;
+          contexto.paso = marcaPaso(lista(r.pasos)[pasoIndice], pasoIndice, lista(r.pasos).length);
+          if (contexto.paso) {
+            // Las descripciones del registro son breves; nunca copiar sus arrays.
+            contexto.paso.texto = texto(lista(r.pasos)[pasoIndice].descripcion || contexto.paso.texto, 1200);
+          }
+        } else if (e.pendiente || e.resultado) contexto.error = 'Los datos matemáticos cambiaron: pulsa Evaluar para obtener un resultado vigente.';
+        contexto.error = errorVisible(['difusaError', 'errorDifusa', 'errorFamiliaridad', 'errorDificultad']) || contexto.error;
+        if (typeof e.error === 'string' && e.error) contexto.error = texto(e.error, 1200);
+        const errores = tomar(e.errores, 5, 'datos.errores', error => texto(typeof error === 'string' ? error : error && error.mensaje, 240)).filter(Boolean);
+        if (errores.length) { contexto.datos.errores = errores; contexto.error = errores[0]; }
+      } else contexto.datos = { modelo: null, valores: [] };
     } else {
       contexto.datos = { catalogo: Object.keys(NOMBRES).filter(n => n !== 'inicio').map(n => NOMBRES[n]) };
     }
@@ -403,6 +522,7 @@
       omitir(mayor.ruta + ': muestra reducida para limitar el contexto.');
       contexto.omitidos = omitidos;
     }
+    if (modulo !== 'asignacion') contexto.estadoAyuda = estadoContexto({ modulo, contexto });
     const referencia = NOMBRES[modulo] + ' · ' + contexto.vista + (contexto.paso ? ' · paso ' + contexto.paso.numero : '');
     return { modulo, contexto, referencia, firma: JSON.stringify(contexto) + '|' + huella(revision) };
   }
@@ -412,7 +532,8 @@
     inicio: ['inicio', 'ciudad', 'catalogo'], johnson: ['johnson'], dijkstra: ['dijkstra'], kruskal: ['kruskal'],
     asignacion: ['asignacion', 'hungaro', 'hungara'], northwest: ['northwest', 'esquina noroeste', 'noroeste', 'transporte'],
     ordenamiento: ['ordenamiento', 'selection', 'insertion', 'bubble', 'shell', 'merge'],
-    arboles: ['arboles', 'arbol binario', 'arboles binarios', 'bst']
+    arboles: ['arboles', 'arbol binario', 'arboles binarios', 'bst'],
+    difusa: ['logica difusa', 'difusa', 'mamdani']
   };
   const INTENCIONES = {
     empezar: /^(?:como (?:empiezo|empezar|comienzo|comenzar|inicio|iniciar)(?: ejercicio)?|como (?:uso|usar|funciona)|que es|para que sirve|que hace|por donde empiezo|primeros pasos|ayuda|hola|buenas)$/,
@@ -461,6 +582,19 @@
     const f = foto || obtener(), c = f.contexto;
     const lectura = interpretar(pregunta, f.modulo);
     const nombre = NOMBRES[lectura.modulo] || NOMBRES.inicio;
+    // El módulo excluido conserva sus sugerencias anteriores, sin clasificar su estado.
+    if (f.modulo !== 'asignacion' && !lectura.modulos.includes('asignacion')) {
+      if (lectura.modulos.length === 1 && lectura.modulo !== f.modulo) return ['¿Qué es ' + nombre + '?', '¿Cuáles son las reglas de ' + nombre + '?', '¿Cómo empiezo en ' + nombre + '?'];
+      const situacion = estadoContexto(f);
+      if (situacion === 'inicio') return ['¿Qué es un algoritmo?', '¿Qué algoritmo elijo?', '¿Cómo guardo mi trabajo?'];
+      if (situacion === 'historico-consultable') return ['¿Qué dato me falta?', '¿Qué significa este resultado?', '¿Por qué no me deja continuar?'];
+      if (situacion === 'invalidado' || situacion === 'entrada-invalida') return ['¿Por qué no me deja continuar?', '¿Qué dato me falta?', '¿Cuáles son las reglas?'];
+      if (situacion === 'sin-datos') return ['¿Cómo empiezo?', '¿Qué datos necesito?', '¿Cuáles son las reglas?'];
+      if (situacion === 'sin-resolver' || situacion === 'preparando') return ['¿Qué me falta?', '¿Qué restricciones hay?', '¿Cómo calculo?'];
+      if (situacion === 'sin-solucion') return f.modulo === 'johnson' ? ['¿Qué es un ciclo negativo?', 'Explícame el resultado', '¿Qué hago ahora?'] : ['Explícame el resultado', '¿Qué dato me falta?', '¿Cómo funcionan las reglas difusas?'];
+      if (situacion === 'vigente') return ['Explícame el resultado', c.paso ? 'Explicar este paso' : '¿Qué hago ahora?', '¿Qué significan estos valores?'];
+    }
+    if (f.modulo === 'difusa' && !c.resultadoVigente && !c.error && (!lectura.modulos.length || lectura.modulo === 'difusa')) return ['¿Qué es lógica difusa?', '¿Cómo configuro las variables?', '¿Cómo funcionan AND y OR?'];
     if (pregunta && (!lectura.intencion || lectura.modulos.length > 1)) {
       return ['¿Cómo empiezo en ' + nombre + '?', '¿Cuáles son las reglas de ' + nombre + '?', '¿Cómo veo los pasos de ' + nombre + '?'];
     }
@@ -474,6 +608,56 @@
     if (preguntas.length < 3) preguntas.push('¿Cómo ingreso datos?');
     return preguntas.slice(0, 3);
   }
+  function estadoContexto(foto) {
+    const f = foto || obtener(), c = f.contexto || {}, d = c.datos || {};
+    if (f.modulo === 'asignacion') return 'legado';
+    if (f.modulo === 'inicio') return 'inicio';
+    if (d.preparando) return 'preparando';
+    if (c.ultimoCalculoValido && c.ultimoCalculoValido.consultable) return 'historico-consultable';
+    if (d.resultadoInvalidado || d.pendiente && !c.resultadoVigente) return 'invalidado';
+    const informativoNorthwest = f.modulo === 'northwest' && !d.pendientesDeCorregir && !d.resultadoInvalidado &&
+      /^el resultado y (?:el )?procedimiento aparecen despues de confirmar (?:el )?balanceo y resolver$/.test(normalizar(c.error));
+    if (c.error && !informativoNorthwest || d.pendientesDeCorregir || lista(d.errores).length) return 'entrada-invalida';
+    if (c.resultadoVigente && c.resultado) return c.resultado.tieneCicloNegativo || f.modulo === 'difusa' && c.resultado.valor === null ? 'sin-solucion' : 'vigente';
+    const vacio = ['johnson', 'dijkstra', 'kruskal'].includes(f.modulo) ? !(d.cantidadVertices >= (f.modulo === 'johnson' ? 2 : 1)) :
+      f.modulo === 'ordenamiento' ? !d.cantidad : f.modulo === 'arboles' ? !d.raiz :
+        f.modulo === 'difusa' ? !d.modelo : f.modulo === 'northwest' ? !lista(d.origenes).length || !lista(d.destinos).length : true;
+    return vacio ? 'sin-datos' : 'sin-resolver';
+  }
+  function explicarCasillasJohnson(c) {
+    const casillas = c.casillasJohnson;
+    if (!c.resultadoVigente) return faltaResultado(c) + ' Las dos casillas dependen de la vista y la etapa; no uses números de un cálculo anterior.';
+    if (!casillas || lista(casillas.rotulos).length !== 2) return 'Las dos casillas cambian con la vista: una ruta activa usa Acum. y Total; la comparación usa mínimo y máximo; la vista temporal usa temprano y tardío. En el procedimiento representan los datos de su etapa. Selecciona un nodo del grafo principal o identifica el paso para precisar sus valores.';
+    const etiquetas = casillas.etiquetas || casillas.rotulos;
+    let respuesta = (casillas.etapa ? 'Vista actual · ' + casillas.etapa + '. ' : '') + 'Izquierda: ' + etiquetas[0] + '; derecha: ' + etiquetas[1] + '.';
+    if (casillas.nodo && lista(casillas.valores).length === 2) respuesta += ' Nodo seleccionado «' + (casillas.nodo.nombre || casillas.nodo.id) + '»: ' + casillas.rotulos.map((r, i) => r + ' ' + valor(casillas.valores[i])).join(' | ') + '.';
+    else respuesta += ' No hay un nodo seleccionado inequívocamente; identifica el nodo para dar sus valores.';
+    if (casillas.rotulos[0] === 'Acum.') respuesta += ' Acum. suma los pesos originales de la ruta hasta el destino y Total es el costo de esa ruta.';
+    else if (casillas.temporal) respuesta += ' Son tiempos de la red; la holgura de una actividad usa tardío(destino) − temprano(origen) − duración.';
+    return respuesta;
+  }
+  function explicarMatrizJohnson(c, tipo) {
+    const adyacencia = tipo === 'adyacencia' || !tipo && c.vista === 'matriz';
+    return adyacencia
+      ? 'La matriz de adyacencia describe conexiones directas: fila = origen, columna = destino y cada valor es el peso original de esa conexión. No suma recorridos ni contiene los mínimos de Johnson. Cero puede ser un peso válido; la ausencia de conexión se distingue de ese cero.'
+      : 'La matriz de distancias contiene mínimos calculados con los pesos originales: fila = origen y columna = destino. Cada celda puede resumir varias conexiones; ∞ significa que no hay camino y la diagonal es 0 cuando el cálculo global es válido. Los máximos sobre DAG y los tiempos temprano/tardío se consultan por separado.' + (!c.resultadoVigente ? ' Todavía no hay una matriz de distancias vigente para el ejercicio actual.' : '');
+  }
+  function explicarNumero(modulo, c) {
+    const s = c.seleccion;
+    if (!s) return 'No hay una selección que identifique un único número. Indica la celda, el nodo o el valor que quieres explicar.' + (modulo === 'johnson' ? '\n' + explicarCasillasJohnson(c) : '');
+    if (s.tipo === 'conexion') return 'La conexión seleccionada ' + nombreNodo(c, s.desde) + (c.datos && c.datos.dirigido === false ? ' — ' : ' → ') + nombreNodo(c, s.hacia) + ' tiene peso original ' + valor(s.valor) + '. Ese peso corresponde a una conexión directa; el costo total de un recorrido o árbol es otra magnitud.';
+    if (modulo === 'johnson' && s.tipo === 'nodo') return explicarCasillasJohnson(c);
+    if (modulo === 'dijkstra' && s.tipo === 'nodo') {
+      if (!c.resultadoVigente || !c.resultado) return faltaResultado(c);
+      const origen = c.resultado.origen, distancias = c.vista === 'resolucion' && c.paso ? c.paso.distancias : c.resultado.distancias;
+      const distancia = lista(distancias).find(x => x.nodo === s.id);
+      return distancia ? 'La distancia registrada desde ' + nombreNodo(c, origen) + ' hasta el nodo seleccionado ' + nombreNodo(c, s.id) + ' es ' + valor(distancia.distancia) + '. ' + (distancia.distancia === '∞' ? 'No hay camino desde ese origen; no equivale a cero.' : 'Suma pesos del camino mínimo, no solo la última conexión.') : 'La muestra de contexto no incluye la distancia de ese nodo; consulta su fila en el módulo.';
+    }
+    if (s.tipo === 'pino') return 'En la posición ' + (s.indice + 1) + ' está el elemento seleccionado de valor ' + valor(s.valor) + '. La posición y el valor son datos distintos; otro elemento puede tener el mismo valor.';
+    if (s.tipo === 'valor' && modulo === 'arboles') return 'El nodo seleccionado guarda el valor ' + valor(s.valor) + '. Ese valor identifica al nodo; el orden de emisión depende del recorrido elegido.';
+    if (modulo === 'difusa') return 'Indica qué cifra quieres explicar: activación de la regla, recorte en el punto consultado o centroide. Una misma regla muestra varias magnitudes; no elegiré una por suposición.';
+    return 'La selección contiene varias magnitudes. Indica el valor o la operación que quieres explicar.';
+  }
   function sinCobertura(foto, pregunta) {
     return SIN_EXPLICACION + '\n\nPuedes preguntar:\n' + sugeridas(foto, pregunta).map(p => '• ' + p).join('\n');
   }
@@ -486,6 +670,19 @@
     return 'Todavía no hay un resultado vigente. ' + (c.error || 'Completa los datos y calcula o recalcula en el módulo.');
   }
   function pendientes(modulo, c) {
+    if (modulo === 'northwest' && c.datos && c.datos.pendientesDeCorregir) {
+      const anterior = c.ultimoCalculoValido;
+      return (c.error || 'Hay datos pendientes de corregir.') + (anterior && anterior.consultable ? '\nCosto del último cálculo válido: ' + valor(anterior.costoTotal / anterior.escalaCostos) + '. Es una solución inicial factible del modelo anterior, sin garantía de costo mínimo.' : '') + '\nCorrige las entradas marcadas en Datos antes de balancear o resolver.';
+    }
+    if (modulo === 'difusa') {
+      const d = c.datos || {}, modelo = d.modelo;
+      return [c.error ? 'Aviso actual: ' + c.error : '', !modelo ? 'Carga un ejemplo o crea tu sistema.' :
+        'Modelo «' + modelo.nombre + '»: ' + lista(modelo.entradas).length + ' entradas, ' + modelo.cantidadReglas + ' reglas y ' + modelo.reglasHabilitadas + ' habilitadas con peso mayor que cero.',
+      lista(d.valores).filter(v => v.valor === null).map(v => 'Falta un valor válido para ' + v.nombre + '.').join(' '),
+      !c.resultadoVigente ? 'Revisa Variables, Reglas y los valores de Evaluar antes de calcular.' :
+        c.resultado && c.resultado.valor === null ? c.resultado.diagnostico || 'No hay salida numérica; consulta el diagnóstico del resultado.' : 'Hay una evaluación vigente. Consulta su procedimiento.',
+      modelo && lista(modelo.reglas).length < modelo.cantidadReglas ? 'La ayuda recibe una muestra de ' + lista(modelo.reglas).length + ' reglas de ' + modelo.cantidadReglas + '; no describe todas las decisiones del sistema.' : ''].filter(Boolean).join('\n');
+    }
     const d = c.datos || {}, avisos = [];
     if (c.error) avisos.push('Aviso actual: ' + c.error);
     if (d.entradaPendiente !== undefined) avisos.push('La entrada escrita no corresponde al procedimiento: pulsa «Usar valores».');
@@ -512,10 +709,27 @@
     return avisos.join('\n');
   }
   function explicarPaso(modulo, c) {
+    if (modulo === 'northwest' && c.datos && c.datos.pendientesDeCorregir) return pendientes(modulo, c);
     if (!c.resultadoVigente) return faltaResultado(c);
     if (modulo === 'johnson' && c.resultado && c.resultado.temporal && c.vista === 'resultado') return explicarResultado(modulo, c) + '\nTempranos: máximos de temprano(u) + duración en orden topológico. Tardíos: mínimos de tardío(v) − duración en orden inverso, comenzando con tardío(destino)=T. Consulta el procedimiento temporal desplegable para sus valores.';
+    if (modulo === 'difusa') {
+      const s = c.seleccion, lineas = [];
+      if (c.paso) lineas.push('Registro · ' + (c.paso.titulo || c.paso.tipo) + '. ' + c.paso.texto);
+      if (s && s.tipo === 'regla-difusa') {
+        const grados = lista(s.antecedentes).filter(a => a.grado !== null).map(a => a.grado);
+        lineas.push('Regla ' + s.id + ': ' + lista(s.antecedentes).map(a => a.variable + ' es ' + a.conjunto + (a.grado === null ? '' : ' (grado ' + valor(a.grado) + ')')).join(s.conector === 'OR' ? ' O ' : ' Y ') + '.');
+        lineas.push((s.conector === 'OR' ? 'máximo' : 'mínimo') + '(' + grados.map(valor).join(', ') + ') = ' + valor(s.activacionAntecedente) + '; peso ' + valor(s.peso) + '; activación final registrada = ' + valor(s.activacion) + (s.habilitada ? '.' : ' (regla desactivada).'));
+        lineas.push('El consecuente ' + s.consecuente + ' se recorta con mínimo(activación final, pertenencia de salida).');
+      }
+      if (s && s.punto) lineas.push('Punto consultado y = ' + valor(s.punto.y) + ': ' +
+        (s.tipo === 'regla-difusa' ? 'recorte de la regla seleccionada = ' + valor(s.punto.recorte) + '; ' : '') +
+        'agregación por máximo = ' + valor(s.punto.agregada) + '.');
+      if (!lineas.length) lineas.push('Selecciona una regla o un punto de salida en Procedimiento y resultado para consultar los valores del registro.');
+      return lineas.join('\n');
+    }
     const p = c.paso;
     if (!p) return 'Aún no hay un paso calculado seleccionado. Avanza al procedimiento y selecciona el paso que quieres consultar.';
+    if (modulo === 'johnson' && p.tipo === 'ruta') return 'Paso ' + p.numero + ' · ' + p.titulo + '. ' + p.texto + '\n' + explicarResultado(modulo, c);
     const lineas = ['Paso ' + p.numero + ' · ' + (p.titulo || p.tipo || 'Procedimiento') + '.', p.texto];
     if (modulo === 'johnson' && p.pasada) lineas.push('Pasada ' + p.pasada.numero + ': antes [' + p.pasada.antes.map(valor).join(', ') + ']; después [' + p.pasada.despues.map(valor).join(', ') + ']. Mejoras registradas: ' + p.pasada.mejoras + '.');
     if (modulo === 'dijkstra' && p.desde && p.hacia && p.candidata !== null) {
@@ -535,8 +749,12 @@
     return lineas.filter(Boolean).join('\n');
   }
   function explicarResultado(modulo, c) {
+    if (modulo === 'northwest' && c.datos && c.datos.pendientesDeCorregir) return pendientes(modulo, c);
     if (!c.resultadoVigente || !c.resultado) return faltaResultado(c);
     const r = c.resultado, d = c.datos || {};
+    if (modulo === 'difusa') return r.valor === null ? r.diagnostico || 'No hay salida numérica; consulta el diagnóstico del resultado, las activaciones y los consecuentes.' :
+      'Resultado vigente de «' + (d.modelo && d.modelo.nombre || 'Sistema difuso') + '»: ' + valor(r.valor) + '. Centroide continuo = primer momento ' + valor(r.numerador) + ' / área ' + valor(r.denominador) + ', integrado sobre ' + r.tramos + ' tramos con nudos, recortes e intersecciones. Los ' + r.puntos + ' puntos de consulta no determinan la integral. ' +
+      (lista(r.etiquetas).length ? 'Mayor pertenencia de salida: ' + r.etiquetas.join(' / ') + '.' : 'Ninguna categoría de salida contiene el centroide; se mantiene el número sin etiqueta.') + ' El número es el resultado principal; los grados de pertenencia no son probabilidades.';
     if (modulo === 'johnson') {
       const consulta = r.consulta, destino = consulta && consulta.destino;
       const casillas = destino && lista(destino.rotulos).length === 2 && lista(destino.valores).length === 2
@@ -548,13 +766,47 @@
         : 'Tiempos y holguras no disponible: ' + r.temporal.mensaje;
       if (r.tieneCicloNegativo) return 'Johnson global detenido por un ciclo negativo. Los pares que pueden atravesarlo no tienen mínimo finito; otros pares pueden conservar mínimos o no tener camino. Peso registrado del ciclo: ' + valor(r.cicloPeso) + '. Revisa las conexiones destacadas.';
       const s = r.seleccion;
-      if (s) return 'Consulta: ' + s.origenNombre + ' → ' + s.destinoNombre + '. Mínimo Johnson: ' + valor(s.distancia) + '.' + (consulta ? ' Máximo DAG: ' + (consulta.maximo === null ? 'no disponible por ciclos; no implica infinito' : valor(consulta.maximo)) + '.' : '') + (s.distancia === '∞' ? ' No existe camino en esa dirección.' : '') + '\n' + casillas + (s.ruta ? '\nRuta seleccionada ' + (s.ruta.id || '') + ': ' + s.ruta.nodos.map(id => nombreNodo(c, id)).join(' → ') + '. Costo de esta ruta: ' + valor(s.ruta.distancia) + '.' : '\nNo hay una ruta seleccionada vigente copiada.');
+      if (s) {
+        let operacion = '';
+        if (s.ruta) {
+          const ids = lista(s.ruta.conexiones), conexiones = ids.map(id => lista(d.conexiones).find(a => a.id === id));
+          const rutaParcial = lista(c.omitidos).some(aviso => /resultado\.seleccion\.ruta\.conexiones/.test(aviso));
+          if (ids.length && !rutaParcial && conexiones.every(a => a && typeof a.valor === 'number' && Number.isFinite(a.valor))) {
+            operacion = '\nPesos originales: ' + conexiones.map(a => a.valor < 0 ? '(' + valor(a.valor) + ')' : valor(a.valor)).join(' + ') + ' = ' + valor(s.ruta.distancia) + '.';
+          } else if (ids.length || rutaParcial) operacion = '\nEl detalle de conexiones es parcial: no se muestran todos los pesos para desarrollar la suma; se conserva el costo registrado.';
+        }
+        return 'Consulta: ' + s.origenNombre + ' → ' + s.destinoNombre + '. Mínimo Johnson: ' + valor(s.distancia) + '.' + (consulta ? ' Máximo DAG: ' + (consulta.maximo === null ? 'no disponible por ciclos; no implica infinito' : valor(consulta.maximo)) + '.' : '') + (s.distancia === '∞' ? ' No existe camino en esa dirección.' : '') + '\n' + casillas + (s.ruta ? '\nRuta seleccionada ' + (s.ruta.id || '') + ': ' + s.ruta.nodos.map(id => nombreNodo(c, id)).join(' → ') + '. Costo de esta ruta: ' + valor(s.ruta.distancia) + '.' : '\nNo hay una ruta seleccionada vigente copiada.') + operacion;
+      }
       return 'Hay una matriz vigente de distancias entre todos los pares. Selecciona una celda para consultar su distancia y la ruta que muestra la aplicación. ∞ significa que no hay camino; 0 en la diagonal corresponde al mismo vértice.';
     }
-    if (modulo === 'dijkstra') return 'Distancias calculadas desde ' + nombreNodo(c, r.origen) + ':\n' + lista(r.distancias).map(v => nombreNodo(c, v.nodo) + ': ' + valor(v.distancia)).join('\n') + '\n∞ significa inalcanzable desde ese origen. Un predecesor es el punto anterior en el camino.';
-    if (modulo === 'kruskal') return 'Objetivo: ' + (r.objetivo === 'max' ? 'máximo' : 'mínimo') + '. Peso total calculado: ' + valor(r.total) + '. Conexiones elegidas: ' + lista(r.elegidas).length + '; componentes: ' + lista(r.componentes).length + '. ' + (lista(r.componentes).length === 1 ? 'El resultado es un árbol de expansión.' : 'El resultado es un bosque con grupos separados.');
+    if (modulo === 'dijkstra') {
+      const destino = r.destino && lista(r.distancias).find(v => v.nodo === r.destino);
+      if (destino) return 'Desde ' + nombreNodo(c, r.origen) + ' hasta ' + nombreNodo(c, r.destino) + ', la distancia mínima registrada es ' + valor(destino.distancia) + '. ' + (destino.distancia === '∞' ? 'Ese destino es inalcanzable; ∞ no equivale a cero.' : 'La ruta seleccionada corresponde solo a ese destino.') + ' El árbol de predecesores reúne caminos desde el origen a los nodos alcanzables; no es una única ruta.';
+      return 'Distancias calculadas desde ' + nombreNodo(c, r.origen) + ':\n' + lista(r.distancias).map(v => nombreNodo(c, v.nodo) + ': ' + valor(v.distancia)).join('\n') + '\n∞ significa inalcanzable desde ese origen. Un predecesor es el punto anterior en el camino; el árbol reúne caminos y la ruta seleccionada corresponde a un destino.';
+    }
+    if (modulo === 'kruskal') {
+      const parcial = lista(c.omitidos).length > 0, elegidas = Number.isInteger(r.cantidadElegidas) ? r.cantidadElegidas : parcial ? null : lista(r.elegidas).length;
+      const componentes = Number.isInteger(r.cantidadComponentes) ? r.cantidadComponentes : parcial ? null : lista(r.componentes).length;
+      return 'Objetivo: expansión de peso ' + (r.objetivo === 'max' ? 'máximo' : 'mínimo') + '. Peso total calculado: ' + valor(r.total) + '. Conexiones elegidas: ' + (elegidas === null ? 'recuento no copiado' : elegidas) + '; componentes: ' + (componentes === null ? 'recuento no copiado' : componentes) + '. ' + (componentes === null ? 'La muestra parcial no permite clasificar toda la expansión.' : componentes === 1 ? 'El resultado es un árbol de expansión.' : 'El resultado es un bosque con grupos separados.') + ' No representa una ruta entre origen y destino.';
+    }
     if (modulo === 'asignacion') return 'Objetivo: ' + (r.objetivo === 'max' ? 'maximizar' : 'minimizar') + '. Total calculado con valores originales: ' + valor(r.total) + '.\n' + lista(r.asignaciones).map(a => valor(lista(d.recursos)[a.fila] && d.recursos[a.fila].nombre) + ' → ' + valor(lista(d.tareas)[a.col] && d.tareas[a.col].nombre) + ': ' + valor(a.valor)).join('\n') + '\nSin asignar: ' + lista(r.sinAsignarFilas).length + ' recursos y ' + lista(r.sinAsignarColumnas).length + ' tareas.';
-    if (modulo === 'northwest') return 'Costo total calculado: ' + valor(typeof r.costoTotal === 'number' ? r.costoTotal / r.escalaCostos : r.costoTotal) + '. Es una solución inicial factible; no garantiza el costo mínimo.' + (r.ficticio ? '\nFicticio registrado: ' + r.ficticio.tipo + ', cantidad ' + valor(r.ficticio.cantidad) + '.' : '\nNo se registró un ficticio.') + (r.degenerado ? '\nLa base es degenerada: puede incluir un 0 básico sin envío.' : '');
+    if (modulo === 'northwest') {
+      const total = typeof r.costoTotal === 'number' ? r.costoTotal / r.escalaCostos : r.costoTotal;
+      const asignaciones = lista(r.asignaciones), costos = lista(d.costos), columnas = lista(d.destinos).length;
+      const completa = Number.isFinite(r.escalaCostos) && r.escalaCostos > 0 && asignaciones.length > 0 && asignaciones.length === lista(d.origenes).length && costos.length === asignaciones.length && columnas > 0 &&
+        asignaciones.every((fila, i) => lista(fila).length === columnas && lista(costos[i]).length === columnas && fila.every((cantidad, j) =>
+          typeof cantidad === 'number' && Number.isFinite(cantidad) && cantidad >= 0 && typeof costos[i][j] === 'number' && Number.isFinite(costos[i][j]))) &&
+        !lista(c.omitidos).some(aviso => /(?:resultado\.asignaciones|datos\.(?:costos|origenes|destinos))/.test(aviso));
+      let operacion = '';
+      if (completa) {
+        const terminos = [];
+        asignaciones.forEach((fila, i) => fila.forEach((cantidad, j) => {
+          if (cantidad > 0) terminos.push(valor(cantidad) + ' × ' + valor(costos[i][j] / r.escalaCostos));
+        }));
+        operacion = '\nCantidad × costo unitario: ' + (terminos.length ? terminos.join(' + ') : '0') + ' = ' + valor(total) + '.';
+      } else if (asignaciones.length) operacion = '\nEl contexto no incluye todas las asignaciones y costos para desarrollar la suma completa; se conserva el total registrado.';
+      return 'Costo total calculado: ' + valor(total) + '. Es una solución inicial factible; no garantiza el costo mínimo.' + operacion + (r.ficticio ? '\nFicticio registrado: ' + r.ficticio.tipo + ', cantidad ' + valor(r.ficticio.cantidad) + '.' : '\nNo se registró un ficticio.') + (r.degenerado ? '\nLa base es degenerada: puede incluir un 0 básico sin envío.' : '');
+    }
     if (modulo === 'ordenamiento') return 'Procedimiento preparado para ' + d.algoritmo + '. Totales registrados: ' + valor(r.comparaciones) + ' comparaciones y ' + valor(r.intercambios) + ' movimientos.' + (r.arregloFinal ? '\nLista final: [' + r.arregloFinal.join(', ') + '].' : '\nLa vista actual corresponde al paso seleccionado. Avanza al último evento para consultar la lista final.') + '\nLa velocidad de animación no mide el tiempo de cálculo.';
     if (modulo === 'arboles') return 'Recorrido: ' + valor(r.recorrido) + '. Salida emitida hasta el paso elegido: [' + lista(r.salidaParcial).join(', ') + ']. ' + (r.completo ? 'El recorrido está completo.' : 'Es una salida parcial; avanza para completarla.') + '\nInorden ordena valores solo si el árbol es BST.';
     return TEMAS.inicio.resultado;
@@ -568,7 +820,8 @@
       asignacion: 'Asignación usa el método húngaro para elegir parejas recurso–tarea de costo mínimo o beneficio máximo.',
       northwest: 'Esquina noroeste obtiene una solución inicial factible de transporte; no garantiza costo mínimo.',
       ordenamiento: 'Ordenamiento transforma una lista en orden ascendente; Selection busca mínimos, Insertion inserta, Bubble compara vecinos, Shell usa saltos y Merge divide y mezcla. Insertion, Bubble y Merge son estables; Selection y Shell no lo garantizan.',
-      arboles: 'Árboles permite crear un BST por inserciones o reconstruir un árbol binario general y seguir sus recorridos. Un árbol binario general no necesariamente cumple el orden de un BST.'
+      arboles: 'Árboles permite crear un BST por inserciones o reconstruir un árbol binario general y seguir sus recorridos. Un árbol binario general no necesariamente cumple el orden de un BST.',
+      difusa: 'Lógica difusa permite configurar un sistema Mamdani de una a tres entradas, pertenencias y reglas AND/OR con peso. Incluye ejemplos didácticos de ayuda, propina y ventilación; no son modelos calibrados.'
     };
     return (lectura.modulos.length ? lectura.modulos : Object.keys(descripciones).filter(m => m !== 'inicio')).map(m => descripciones[m]).join('\n\n');
   }
@@ -587,6 +840,17 @@
     if (/^(?:que diferencia hay entre|diferencia entre) (?:preorden y inorden|bst y arbol binario)$/.test(normalizar(pregunta)) && modulo === 'arboles') return prefijo + temas.pasos + '\n' + temas.resultado;
     const intencion = l.intencion;
     if (!intencion) return sinCobertura(f, pregunta);
+    if (modulo === 'difusa') {
+      if (intencion === 'guardar') return prefijo + 'El autoguardado conserva el modelo y los valores de entrada bajo una clave propia y versionada. Puedes guardar y recuperar trabajos del módulo. Los puntos, los recortes y los mapas se recalculan; no se guardan miles de muestras. El almacenamiento pertenece a este navegador y origen.';
+      if (intencion === 'traslado') return prefijo + 'El JSON de trabajo restaura modelo y valores tras validarlos; una importación inválida conserva el ejercicio actual. El JSON de comparación numérica contiene casos y resultados para contrastarlos: cumple otra función. No hay importación general de archivos MATLAB .fis.';
+      if (intencion === 'imprimir') return prefijo + 'Ctrl+P imprime la vista actual; desde el navegador puedes guardarla como PDF.';
+      if (intencion === 'imagen') return prefijo + 'Las gráficas se consultan como SVG adaptables en la página. La entrega incluye exportación JSON de referencia para la comparación numérica.';
+      if (intencion === 'pendientes') return prefijo + pendientes(modulo, c);
+      if (intencion === 'vista') return prefijo + 'Vista actual: Lógica difusa, «' + c.vista + '». ' + temas.herramientas;
+      if (['paso', 'ejercicio', 'resaltado'].includes(intencion)) return prefijo + explicarPaso(modulo, c);
+      if (intencion === 'resultado') return prefijo + explicarResultado(modulo, c);
+      if (intencion === 'errores') return prefijo + temas.errores;
+    }
     if (intencion === 'empezar') return prefijo + GUIAS[modulo];
     if (['datos', 'reglas', 'herramientas', 'pasos'].includes(intencion)) return prefijo + temas[intencion];
     if (intencion === 'guardar') return modulo === 'inicio'
@@ -618,6 +882,7 @@
 
   // El motor de conocimiento (asistente-motor.js) reutiliza estas piezas de solo
   // lectura para construir explicaciones del ejercicio sin duplicar la lógica.
-  const interno = Object.freeze({ NOMBRES, GUIAS, TEMAS, SIN_EXPLICACION, normalizar, interpretar, explicarPaso, explicarResultado, pendientes, faltaResultado, nombreNodo, diferencias, valor });
+  const interno = Object.freeze({ NOMBRES, GUIAS, TEMAS, SIN_EXPLICACION, normalizar, interpretar, explicarPaso, explicarResultado, pendientes, faltaResultado, nombreNodo, diferencias, valor,
+    estadoContexto, explicarNumero, explicarCasillasJohnson, explicarMatrizJohnson });
   window.AlgoContexto = Object.freeze({ obtener, ayudaLocal, sugeridas, interno });
 })();

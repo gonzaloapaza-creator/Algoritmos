@@ -1,4 +1,4 @@
-/* Conocimiento de los módulos de estructuras de datos: Ordenamiento y Árboles.
+/* Conocimiento de Ordenamiento, Árboles y Lógica difusa.
  * Los límites se leen de la configuración mediante la función L. */
 'use strict';
 
@@ -7,6 +7,139 @@
   if (!K) return;
 
   K.registrar([
+    /* ---------------- Lógica difusa: conceptos y uso del editor local ---------------- */
+    {
+      id: 'difusa.que-es', tema: 'difusa', modulos: ['difusa'],
+      pregunta: '¿Qué es lógica difusa?',
+      variantes: ['que es la logica difusa', 'para que sirve la logica difusa', 'que significa difusa', 'que es mamdani', 'como empiezo con logica difusa'],
+      conceptos: ['logica difusa', 'difusa', 'mamdani', 'gradual'],
+      breve: 'La lógica difusa representa categorías graduales mediante grados de pertenencia entre 0 y 1. Este editor Mamdani tipo 1 permite de una a tres entradas, una salida y reglas AND/OR con peso. Los ejemplos son didácticos con parámetros escogidos; no son modelos calibrados ni recomendaciones de control real.',
+      sencilla: 'Un valor puede encajar parcialmente en «Baja» y «Media». Las reglas combinan esos grados para recomendar cuánto detalle mostrar.',
+      ejemplo: 'Carga familiaridad 5 y dificultad 5 y pulsa «Evaluar»: ambas entradas son Media con grado 1 y la regla correspondiente aporta Intermedia.',
+      relacionadas: ['difusa.pertenencia', 'difusa.ejemplo', 'difusa.centroide'],
+      referencia: 'Lógica difusa · Inicio, Variables y pertenencias, Reglas, Evaluar y Procedimiento y resultado'
+    },
+    {
+      id: 'difusa.pertenencia', tema: 'difusa', modulos: ['difusa'],
+      pregunta: '¿Qué significa pertenencia en lógica difusa?',
+      variantes: ['que es una funcion de pertenencia', 'que es un grado de pertenencia', 'pertenencia significa probabilidad', 'que significa pertenencia', 'como interpreto baja media y alta'],
+      variantesAutorizadas: ['que es un conjunto difuso', 'que significan estos valores de pertenencia'],
+      conceptos: ['pertenencia', 'funcion de pertenencia', 'grado de pertenencia'],
+      breve: 'Una función de pertenencia indica cuánto encaja un valor en un conjunto, de 0 a 1. El usuario elige su nombre, forma triangular o trapezoidal y parámetros. Pertenencia no significa probabilidad ni confianza del alumno: es el grado definido por la función configurada.',
+      breveAutorizado: 'Un conjunto difuso es una categoría, como Alta, que admite grados de pertenencia entre 0 y 1. La función de pertenencia indica cuánto encaja cada valor en esa categoría, según la curva configurada. Un grado 0.6 no significa 60 % de probabilidad: expresa ese grado de encaje.',
+      sencilla: 'Un grado 0.6 dice «encaja en esta categoría con grado 0.6», según el triángulo o trapecio mostrado.',
+      ejemplo: 'En familiaridad 3.5: Baja = (5 − 3.5) / 2.5 = 0.6, Media = (3.5 − 2.5) / 2.5 = 0.4 y Alta = 0. En el extremo 0, Baja = 1; en 10, Alta = 1.',
+      relacionadas: ['difusa.que-es', 'difusa.ejemplo', 'difusa.centroide']
+    },
+    {
+      id: 'difusa.ejemplo', tema: 'difusa', modulos: ['difusa'],
+      pregunta: '¿Cómo funciona el ejemplo Nivel de ayuda recomendado?',
+      variantes: ['como funciona este ejemplo de logica difusa', 'como funciona nivel de ayuda recomendado', 'como se calcula la recomendacion difusa', 'cuales son las reglas de logica difusa', 'como evaluar logica difusa'],
+      conceptos: ['nivel de ayuda recomendado', 'familiaridad', 'dificultad', 'reglas difusas', 'and', 'implicacion', 'agregacion'],
+      breve: 'En el ejemplo original Nivel de ayuda recomendado, familiaridad y dificultad van de 0 a 10 y las nueve reglas tienen AND mínimo y peso 1. Sus consecuentes se recortan por mínimo y se unen por máximo. El centroide produce un detalle de 0 a 100. Puedes consultar o editar las reglas antes de evaluar; otros ejemplos tienen sus propias variables y dominios.',
+      ejemplo: 'Familiaridad 3.5 y dificultad 6.5 tienen grados Baja 0.6 / Media 0.4 y Media 0.4 / Alta 0.6. La regla Baja y Alta → Detallada se activa con mínimo(0.6, 0.6) = 0.6. Este es un ejemplo conceptual fijo; el cálculo actual aparece en la página.',
+      detalle: 'Todas las reglas tienen peso 1 y usan AND. Las entradas las elige el usuario: la aplicación no las deduce de su actividad. Este ejemplo ofrece una recomendación didáctica basada en reglas configuradas. No mide ni califica el aprendizaje.',
+      relacionadas: ['difusa.pertenencia', 'difusa.centroide', 'difusa.que-es']
+    },
+    {
+      id: 'difusa.centroide', tema: 'difusa', modulos: ['difusa'],
+      pregunta: '¿Cómo interpreto el centroide en lógica difusa?',
+      variantes: ['que es defuzzificar', 'que es el centroide', 'por que se usa centroide', 'como se calcula el centroide', 'como interpretar centroide', 'por que breve no da cero', 'por que detallada no da cien'],
+      conceptos: ['centroide', 'defuzzificar', 'defuzzificacion', 'numerador', 'denominador'],
+      breve: 'Defuzzificar convierte la salida agregada en un número. El centroide continuo es su centro de equilibrio: integral(y × μ(y)) / integral(μ(y)). Se integra la envolvente lineal de triángulos y trapecios recortados, incluidos nudos e intersecciones. Las 1001 muestras son solo consultas auxiliares. El número es el resultado principal; las etiquetas conservan las mayores pertenencias y sus empates.',
+      sencilla: 'Piensa en equilibrar la figura agregada sobre un punto: su posición horizontal es el centroide.',
+      ejemplo: 'Con familiaridad 5 y dificultad 5, solo se activa Media y Media → Intermedia. Como el triángulo Intermedia es simétrico alrededor de 50, el centroide es cercano a 50.',
+      detalle: 'Un triángulo de salida [0.01,0.02,0.03] activado a 1, dentro de [0,100], da centroide 0.02 aunque ninguna muestra uniforme lo alcance. Se distingue ausencia de activaciones, activación positiva sin masa y limitación numérica. Si el número cae fuera de todos los conjuntos, sigue siendo válido y se conserva sin etiqueta. La integral continua puede diferir ligeramente de los antiguos resultados discretos. MATLAB sigue pendiente de ejecución; 1001 puntos de evalfis no garantizan igualdad con esta integral.',
+      relacionadas: ['difusa.ejemplo', 'difusa.pertenencia', 'difusa.que-es']
+    },
+    {
+      id: 'difusa.variables', tema: 'difusa', modulos: ['difusa'],
+      pregunta: '¿Cómo configuro las variables de lógica difusa?',
+      variantes: ['que es una variable linguistica', 'como configuro las variables', 'que son los dominios y unidades', 'como cambio el rango de una variable', 'como crear mi sistema difuso'],
+      variantesAutorizadas: ['que es una variable de entrada', 'que es una variable de salida'],
+      conceptos: ['variable linguistica', 'dominio', 'unidad', 'rango', 'variables difusas'],
+      breve: 'Una variable lingüística tiene nombre, dominio numérico y conjuntos como Baja o Alta. La unidad opcional indica qué representan sus números. Configura de una a tres entradas y una salida; cada variable admite de dos a cinco conjuntos. Los nombres deben ser únicos y el mínimo del dominio menor que el máximo.',
+      breveAutorizado: 'Una variable representa una magnitud con nombre, intervalo de valores y conjuntos como Baja o Alta. Las variables de entrada reciben los valores que tú introduces; la variable de salida representa el resultado que producen las reglas y el centroide. Este editor admite de una a tres entradas y una salida, con dos a cinco conjuntos por variable.',
+      detalle: 'Los nombres tienen de 1 a 40 caracteres tras quitar espacios exteriores. Rangos y parámetros admiten números finitos entre −1000000 y 1000000. Si cambias un dominio y dejas curvas fuera, debes cancelar o reajustarlas explícitamente: no se recortan en silencio.',
+      relacionadas: ['difusa.formas', 'difusa.controles', 'difusa.cobertura']
+    },
+    {
+      id: 'difusa.formas', tema: 'difusa', modulos: ['difusa'],
+      pregunta: '¿Cómo funcionan triangular, trapezoidal y hombros?',
+      variantes: ['que es un hombro difuso', 'como configuro una funcion triangular', 'como configuro una funcion trapezoidal', 'parametros repetidos de pertenencia', 'diferencia entre triangular y trapezoidal'],
+      conceptos: ['triangular', 'trapezoidal', 'hombro', 'parametros'],
+      breve: 'Una triangular usa [a,b,c] con a ≤ b ≤ c y a < c. Una trapezoidal usa [a,b,c,d] con a ≤ b ≤ c ≤ d y a < d. Los parámetros quedan dentro del dominio. Repetir parámetros permite hombros que mantienen pertenencia 1 en un extremo sin dividir por cero.',
+      ejemplo: 'En el ejemplo original, Baja = [0,0,2.5,5] vale 1 en x=0 y Alta = [5,7.5,10,10] vale 1 en x=10. Media = [2.5,5,7.5] alcanza 1 en x=5.',
+      relacionadas: ['difusa.variables', 'difusa.pertenencia', 'difusa.cobertura']
+    },
+    {
+      id: 'difusa.operadores', tema: 'difusa', modulos: ['difusa'],
+      pregunta: '¿Cómo funcionan AND y OR en una regla difusa?',
+      variantes: ['como funcionan and y or', 'diferencia entre and y or en logica difusa', 'como se activan las reglas difusas', 'que significa no importa en una regla'],
+      conceptos: ['and', 'or', 'no importa', 'activacion del antecedente'],
+      breve: 'AND combina los grados usados mediante mínimo; OR mediante máximo. «No importa» excluye esa entrada de la operación. Cada regla usa un solo conector, sin expresiones anidadas, y debe utilizar al menos una entrada. Después se multiplica por el peso para obtener la activación final.',
+      ejemplo: 'Con grados 0.6 y 0.4: AND = mínimo(0.6,0.4)=0.4; OR = máximo(0.6,0.4)=0.6. Si el peso es 0.5, sus activaciones finales son 0.2 y 0.3 respectivamente.',
+      relacionadas: ['difusa.peso', 'difusa.implicacion', 'difusa.cobertura']
+    },
+    {
+      id: 'difusa.peso', tema: 'difusa', modulos: ['difusa'],
+      pregunta: '¿Qué hace el peso de una regla difusa?',
+      variantes: ['que hace el peso de una regla', 'que significa peso cero', 'como desactivo una regla', 'por que una regla no aporta salida'],
+      conceptos: ['peso de regla', 'peso cero', 'desactivada'],
+      breve: 'El peso es un número entre 0 y 1 que multiplica la activación AND/OR del antecedente. Una regla de peso 0 o desactivada no aporta salida. El peso expresa una decisión configurada del sistema; no es una probabilidad ni una medida validada sobre una persona.',
+      relacionadas: ['difusa.operadores', 'difusa.implicacion', 'difusa.cobertura']
+    },
+    {
+      id: 'difusa.fuzzificacion', tema: 'difusa', modulos: ['difusa'],
+      pregunta: '¿Qué es la fuzzificación?',
+      variantes: ['que significa fuzzificar', 'que es fuzzificacion', 'como se obtienen los grados de entrada'],
+      conceptos: ['fuzzificacion', 'fuzzificar', 'grados de entrada'],
+      breve: 'Fuzzificar consiste en evaluar cada función de pertenencia en el valor numérico introducido. El resultado son grados entre 0 y 1 para cada conjunto. Es la primera operación antes de combinar antecedentes de las reglas; no altera ni deduce el valor elegido por el usuario.',
+      relacionadas: ['difusa.pertenencia', 'difusa.operadores', 'difusa.formas']
+    },
+    {
+      id: 'difusa.implicacion', tema: 'difusa', modulos: ['difusa'],
+      pregunta: '¿Qué es la implicación y el recorte de una regla?',
+      variantes: ['que es la implicacion', 'como se recorta un consecuente', 'que muestra el recorte de la regla seleccionada'],
+      conceptos: ['implicacion', 'recorte', 'consecuente'],
+      breve: 'La implicación toma mínimo(activación final, pertenencia del consecuente) en cada punto de salida. Así recorta la curva del conjunto elegido a la altura de la regla, después de aplicar su peso. Selecciona una regla y un punto en Procedimiento y resultado para ver el recorte real de esa ejecución.',
+      relacionadas: ['difusa.operadores', 'difusa.peso', 'difusa.agregacion']
+    },
+    {
+      id: 'difusa.agregacion', tema: 'difusa', modulos: ['difusa'],
+      pregunta: '¿Qué es la agregación por máximo?',
+      variantes: ['que es la agregacion', 'como se combinan los recortes', 'por que se toma el maximo de las salidas'],
+      conceptos: ['agregacion', 'maximo de recortes', 'salida agregada'],
+      breve: 'La agregación toma el máximo de los consecuentes recortados en cada coordenada de salida. Produce una envolvente lineal cuya gráfica e integral incluyen nudos, recortes e intersecciones; no se limita a 1001 muestras. El máximo de agregación combina reglas; el OR máximo combina antecedentes dentro de una regla.',
+      relacionadas: ['difusa.implicacion', 'difusa.centroide', 'difusa.operadores']
+    },
+    {
+      id: 'difusa.cobertura', tema: 'difusa', modulos: ['difusa'],
+      pregunta: '¿Qué reviso si no hay reglas activas?',
+      variantes: ['sin reglas activas para estas entradas', 'que es la cobertura difusa', 'hay zonas sin pertenencia', 'por que no hay salida difusa', 'diferencia entre cobertura de curvas y reglas'],
+      conceptos: ['cobertura', 'sin reglas activas', 'zonas sin pertenencia', 'masa cero'],
+      breve: 'La cobertura de curvas indica si un valor pertenece a algún conjunto de su variable; se analiza por tramos. La cobertura de reglas comprueba si las combinaciones de entradas producen activación. Tener curvas cubiertas no demuestra cobertura total de reglas. Revisa antecedentes, consecuentes, pesos y reglas desactivadas.',
+      detalle: 'Un sistema estructuralmente válido puede tener cobertura parcial. «Sin reglas activas» significa ninguna activación final positiva. Activación positiva sin masa y limitación numérica tienen diagnósticos distintos; no se inventa un centroide. Un resultado numérico sin etiqueta lingüística sigue siendo válido. El mapa muestrea las entradas, calcula cada salida con integración continua y conserva su diagnóstico; no demuestra cobertura de todo el dominio.',
+      relacionadas: ['difusa.operadores', 'difusa.peso', 'difusa.mapa']
+    },
+    {
+      id: 'difusa.controles', tema: 'difusa', modulos: ['difusa'],
+      pregunta: '¿Cómo uso el editor de lógica difusa?',
+      variantes: ['como uso los nuevos controles de logica difusa', 'como anado una regla difusa', 'como genero combinaciones', 'como guardar un sistema difuso', 'como importar un modelo difuso'],
+      conceptos: ['editor difuso', 'generar combinaciones', 'json de trabajo', 'crear mi sistema'],
+      breve: 'Inicio ofrece ejemplos y «Crear mi sistema». Variables y pertenencias configura dominios y curvas; Reglas permite añadir, editar, duplicar, activar y eliminar. «Generar combinaciones» deja consecuentes pendientes para que tú decidas. Evaluar separa los valores de entrada de la configuración. Procedimiento y resultado coordina la ejecución real.',
+      detalle: 'Antes de generar combinaciones se validan variables y conjuntos, con errores junto a los campos y sin reemplazar el modelo aplicado; cancelar o fallar conserva los datos. Los consecuentes requieren elección explícita. Los trabajos y el autoguardado conservan modelo y valores. Un JSON de trabajo restaura el sistema tras validarlo; el de comparación contrasta resultados. Importar un archivo inválido conserva el ejercicio. No se importan archivos .fis en general.',
+      relacionadas: ['difusa.variables', 'difusa.operadores', 'difusa.mapa']
+    },
+    {
+      id: 'difusa.mapa', tema: 'difusa', modulos: ['difusa'],
+      pregunta: '¿Qué muestra el mapa de respuesta?',
+      variantes: ['como genero el mapa de respuesta', 'como cancelo el mapa difuso', 'que significa una zona sin salida en el mapa', 'como veo la curva entrada salida'],
+      conceptos: ['mapa de respuesta', 'mapa de calor', 'curva entrada salida'],
+      breve: 'El mapa usa el motor real bajo petición. Con dos entradas varía ambas; con tres eliges dos e indicas el valor fijo de la restante. Con una entrada muestra una curva entrada–salida. Los puntos sin centroide se señalan como zonas sin salida. La resolución es moderada y el cálculo se hace por lotes cancelables.',
+      detalle: 'Cambiar el modelo invalida el mapa calculado. Su cuadrícula es un muestreo, no una demostración de cobertura total. No se genera automáticamente al abrir la página ni sustituye la evaluación de tus valores actuales.',
+      relacionadas: ['difusa.cobertura', 'difusa.centroide', 'difusa.controles']
+    },
     /* ---------------- Ordenamiento ---------------- */
     {
       id: 'ordenamiento.que-es', tema: 'ordenamiento', modulos: ['ordenamiento'],
@@ -102,10 +235,10 @@
       pregunta: '¿Cómo funciona Shell Sort y qué son los saltos?',
       variantes: ['que es shell sort', 'que hace shell sort', 'explicame shell sort', 'que son los saltos de shell', 'que es el gap en shell sort', 'que es la secuencia de saltos', 'por que shell compara elementos lejanos'],
       conceptos: ['shell', 'salto', 'saltos', 'gap', 'brecha', 'intervalo', 'lejanos'],
-      breve: 'Shell Sort es una mejora de Insertion Sort: primero ordena elementos separados por un salto grande (por ejemplo, posiciones 1, 5, 9…), luego reduce el salto y repite, hasta terminar con salto 1, que es un Insertion Sort normal sobre una lista ya casi ordenada. Los saltos permiten mover elementos lejanos con pocos pasos.',
+      breve: 'Shell Sort es una mejora de Insertion Sort: primero ordena elementos separados por un salto grande (por ejemplo, índices 0, 4, 8…), luego reduce el salto y repite, hasta terminar con salto 1, que es un Insertion Sort normal sobre una lista ya casi ordenada. Los saltos permiten mover elementos lejanos con pocos pasos.',
       sencilla: 'En vez de comparar vecinos, compara elementos a varias casillas de distancia. Así los valores muy desubicados viajan rápido. Al final, un repaso fino con salto 1 termina el trabajo.',
-      ejemplo: 'Con 8 valores, los saltos son 4, 2, 1. Con salto 4 se comparan las posiciones 1–5, 2–6, 3–7, 4–8; con salto 2, 1–3, 3–5…; con salto 1, vecinos.',
-      detalle: 'Este módulo usa la secuencia salto = n/2, n/4, …, 1 (parte entera). La complejidad depende de la secuencia; con esta es O(n²) en el peor caso pero mucho mejor en la práctica. No es estable. Los movimientos se cuentan como intercambios entre posiciones separadas por el salto.',
+      ejemplo: 'Los índices de la interfaz comienzan en 0. Con 8 valores, los saltos son 4, 2, 1 y el primer grupo de salto 4 es [0,4]. Con 9 valores, ese grupo es [0,4,8]: el panel auxiliar muestra esas posiciones reales, también en sus etiquetas accesibles.',
+      detalle: 'Este módulo usa salto = n/2, n/4, …, 1 (parte entera), con peor caso O(n²). No es estable. Los movimientos cuentan intercambios entre posiciones separadas por el salto. Admite hasta 200 valores; «Ir al final» y el deslizador consultan directamente cualquier evento sin reproducir los anteriores. Puedes pausar la reproducción y cancelar la preparación. La duración estimada usa la cantidad de intervalos pendientes y la velocidad actual; no es tiempo de cálculo.',
       relacionadas: ['ordenamiento.insertion', 'ordenamiento.comparar', 'ordenamiento.estabilidad']
     },
     {
@@ -198,6 +331,7 @@
       id: 'arboles.terminos', tema: 'arboles', modulos: ['arboles'],
       pregunta: '¿Qué son raíz, nodo, enlace, padre, hijo, hermano, hoja y subárbol?',
       variantes: ['que es la raiz', 'que es una hoja', 'que es un nodo padre', 'que es un nodo hijo', 'que son nodos hermanos', 'que es un subarbol', 'partes de un arbol', 'que es un enlace en un arbol', 'terminos de arboles'],
+      variantesAutorizadas: ['que significa la raiz de un arbol'],
       conceptos: ['raiz', 'hoja', 'hojas', 'padre', 'hijo', 'hijos', 'hermano', 'hermanos', 'subarbol', 'enlace', 'nodo'],
       breve: 'La raíz es el nodo superior, sin padre. Cada nodo guarda un valor y se une a otros mediante enlaces. El padre es el nodo inmediatamente arriba; los hijos, los inmediatamente abajo; los hermanos comparten padre. Una hoja no tiene hijos. Un subárbol es un nodo junto con todos sus descendientes.',
       sencilla: 'Es un árbol genealógico al revés: arriba el ancestro (raíz), abajo los descendientes. Los que no tienen descendientes son hojas.',

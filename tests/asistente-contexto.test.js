@@ -49,10 +49,72 @@ prueba('El inicio y módulos desconocidos envían únicamente el catálogo', () 
   ['inicio', '', 'desconocido', '__proto__'].forEach(modulo => {
     const r = entorno(modulo, { estado: { secreto: 'NO_ENVIAR' } }).AlgoContexto.obtener();
     igual(r.modulo, 'inicio'); igual(r.contexto.vista, 'catalogo');
-    igual(r.contexto.datos.catalogo.length, 7);
+    igual(r.contexto.datos.catalogo.length, 8);
     cierto(!r.firma.includes('NO_ENVIAR'));
     igual(r.contexto.resultado, null);
   });
+});
+
+function estadoDifusaPrueba() {
+  const variable = (id, nombre) => ({ id, nombre, unidad: 'u', min: 0, max: 10, conjuntos: [
+    { id: id + '_baja', nombre: 'Baja', tipo: 'trapezoidal', parametros: [0, 0, 2.5, 5] },
+    { id: id + '_alta', nombre: 'Alta', tipo: 'trapezoidal', parametros: [5, 7.5, 10, 10] }
+  ] });
+  const regla = { id: 'r1', antecedentes: { x: 'x_baja', t: 't_alta' }, conector: 'OR', consecuente: 'z_alta', peso: 0.5, activa: true };
+  return { modelo: { version: 2, id: 'm1', nombre: 'Sistema de prueba', entradas: [variable('x', 'Entrada X'), variable('t', 'Entrada T')],
+    salida: variable('z', 'Salida Z'), reglas: [regla], notas: 'NO_ENVIAR' },
+  valores: { x: 3.5, t: 6.5 }, vista: 'resultado', pendiente: false, pasoActual: 2, seleccion: { reglaId: 'r1', puntoIndice: 200 },
+  resultado: { entradas: { x: 3.5, t: 6.5 }, pertenencias: { x: { x_baja: 0.6, x_alta: 0 }, t: { t_baja: 0, t_alta: 0.6 } },
+    reglas: [{ ...regla, habilitada: true, activacionAntecedente: 0.6, activacion: 0.3, recortada: Array(1001).fill(0.3) }],
+    puntos: Array.from({ length: 1001 }, (_, i) => i / 100), agregada: Array(1001).fill(0.3),
+    centroide: { estado: 'ok', valor: 5, numerador: 1501.5, denominador: 300.3 }, etiquetas: ['z_alta'],
+    pasos: Array.from({ length: 7 }, (_, i) => ({ tipo: 'etapa' + i, titulo: 'Etapa ' + i, descripcion: 'Operación del registro.' })) } };
+}
+
+prueba('Lógica difusa copia el modelo resumido y la selección real sin las 1001 muestras', () => {
+  const estado = estadoDifusaPrueba(), antes = JSON.stringify(estado);
+  const c = entorno('difusa', { DifusaEstado: { estado } });
+  const foto = c.AlgoContexto.obtener(), contexto = foto.contexto;
+  igual(foto.modulo, 'difusa'); igual(contexto.vista, 'resultado');
+  igual(contexto.resultadoVigente, true); igual(contexto.resultado.valor, 5);
+  igual(contexto.resultado.etiquetas, ['Alta']);
+  igual(contexto.datos.valores[0].valor, 3.5);
+  igual(contexto.seleccion.conector, 'OR'); igual(contexto.seleccion.peso, 0.5);
+  igual(contexto.seleccion.punto, { indice: 200, y: 2, agregada: 0.3, recorte: 0.3 });
+  igual(contexto.paso.numero, 3);
+  cierto(!foto.firma.includes('NO_ENVIAR') && !foto.firma.includes('recortada') && !foto.firma.includes('"agregada":['));
+  cierto(JSON.stringify(contexto).length < 10000);
+  const paso = c.AlgoContexto.ayudaLocal('Explícame este paso', foto);
+  cierto(paso.includes('máximo(0.6, 0.6) = 0.6') && paso.includes('peso 0.5') && paso.includes('y = 2'));
+  cierto(c.AlgoContexto.ayudaLocal('¿Qué significa este resultado?', foto).includes('1501.5 / 300.3'));
+  cierto(c.AlgoContexto.ayudaLocal('¿Cómo guardo mi trabajo?', foto).includes('modelo y los valores'));
+  igual(JSON.stringify(estado), antes, 'La ayuda no modifica el ejercicio');
+});
+
+prueba('Lógica difusa descarta resultados anteriores e incluye errores sin leer otros módulos', () => {
+  const pendiente = estadoDifusaPrueba(); pendiente.pendiente = true;
+  const cambiado = estadoDifusaPrueba(); cambiado.valores.x = 1;
+  const error = estadoDifusaPrueba(); error.resultado = null; error.errores = [{ ruta: 'valores.x', mensaje: 'Introduce un valor finito.' }];
+  [pendiente, cambiado, error].forEach(estado => {
+    const c = entorno('difusa', { DifusaEstado: { estado }, estadoJohnson: { secreto: 'NO_ENVIAR' } });
+    const foto = c.AlgoContexto.obtener();
+    igual(foto.contexto.resultadoVigente, false); igual(foto.contexto.resultado, null); igual(foto.contexto.paso, null);
+    cierto(!foto.firma.includes('NO_ENVIAR'));
+    cierto(c.AlgoContexto.ayudaLocal('¿Qué significa este resultado?', foto).includes('no hay un resultado vigente'));
+  });
+  igual(entorno('difusa', { DifusaEstado: { estado: error } }).AlgoContexto.obtener().contexto.error, 'Introduce un valor finito.');
+});
+
+prueba('Lógica difusa mantiene contexto acotado con 125 reglas y no inventa centroide sin masa', () => {
+  const estado = estadoDifusaPrueba();
+  estado.modelo.reglas = Array.from({ length: 125 }, (_, i) => ({ ...estado.modelo.reglas[0], id: 'r' + i }));
+  estado.resultado.centroide = { estado: 'sin-reglas', valor: null, numerador: 0, denominador: 0 };
+  estado.resultado.etiquetas = [];
+  const c = entorno('difusa', { DifusaEstado: { estado } }), foto = c.AlgoContexto.obtener();
+  igual(foto.contexto.datos.modelo.cantidadReglas, 125);
+  cierto(foto.contexto.datos.modelo.reglas.length <= 8);
+  cierto(JSON.stringify(foto.contexto).length < 10000);
+  cierto(c.AlgoContexto.ayudaLocal('¿Qué significa este resultado?', foto).includes('no hay centroide numérico'));
 });
 
 prueba('Johnson conserva el cero y ∞ explícito; usa el paso seleccionado sin mutar el estado', () => {

@@ -15,6 +15,14 @@ function esTrabajoValido(t) {
     MODULOS_TRABAJO.includes(t.modulo) && typeof t.fecha === 'string' && !!t.datos && typeof t.datos === 'object';
 }
 
+/** Solo valida el contenedor común; cada módulo conserva su propio validador. */
+function validarContenedorTrabajos(trabajos) {
+  if (!Array.isArray(trabajos) || trabajos.length > 1000 || trabajos.some(t => !esTrabajoValido(t)) || new Set(trabajos.map(t => t.id)).size !== trabajos.length) {
+    return { ok: false, error: 'La biblioteca contiene registros incompletos o identificadores repetidos.' };
+  }
+  return { ok: true };
+}
+
 function depurarListaTrabajos(datos) {
   return Array.isArray(datos) ? datos.filter(esTrabajoValido) : [];
 }
@@ -52,11 +60,16 @@ function documentoTrabajoGrafo(datos, modulo) {
 
 /** Primer nombre libre de la forma «base», «base (2)», «base (3)»… dentro de un módulo. */
 function nombreLibreTrabajo(trabajos, modulo, base) {
+  const validacion = validarNombreTrabajo(base);
+  if (!validacion.ok) throw new Error(validacion.error);
+  base = validacion.valor;
   const usados = trabajos.filter(t => t.modulo === modulo).map(t => t.nombre);
   if (!usados.some(u => mismoNombreTrabajo(u, base))) return base;
-  let n = 2;
-  while (usados.some(u => mismoNombreTrabajo(u, base + ' (' + n + ')'))) n++;
-  return base + ' (' + n + ')';
+  for (let n = 2; ; n++) {
+    const sufijo = ' (' + n + ')';
+    const nombre = base.slice(0, MAX_LARGO_NOMBRE_TRABAJO - sufijo.length).trimEnd() + sufijo;
+    if (!usados.some(u => mismoNombreTrabajo(u, nombre))) return nombre;
+  }
 }
 
 /**
@@ -64,6 +77,10 @@ function nombreLibreTrabajo(trabajos, modulo, base) {
  * Devuelve { ok, trabajos, id } o { ok:false, error }.
  */
 function insertarTrabajo(trabajos, modulo, nombre, datos, ahora) {
+  const contenedor = validarContenedorTrabajos(trabajos), validacion = validarNombreTrabajo(nombre);
+  if (!contenedor.ok) return contenedor;
+  if (!validacion.ok) return validacion;
+  nombre = validacion.valor;
   const existente = trabajos.find(t => t.modulo === modulo && mismoNombreTrabajo(t.nombre, nombre));
   if (!existente && trabajos.filter(t => t.modulo === modulo).length >= MAX_TRABAJOS_POR_MODULO) {
     return { ok: false, error: 'Ya tienes ' + MAX_TRABAJOS_POR_MODULO + ' trabajos guardados en este módulo. Elimina alguno para guardar otro.' };
@@ -75,16 +92,24 @@ function insertarTrabajo(trabajos, modulo, nombre, datos, ahora) {
     fecha: (ahora || new Date()).toISOString(),
     datos: copiarTrabajo(datos)
   };
+  if (!esTrabajoValido(trabajo)) return { ok: false, error: 'El trabajo no es válido; la biblioteca anterior se conserva.' };
+  const salida = existente ? trabajos.map(t => t.id === existente.id ? trabajo : t) : trabajos.concat(trabajo);
+  const comprobacion = validarContenedorTrabajos(salida);
+  if (!comprobacion.ok) return comprobacion;
   return {
     ok: true,
     id: trabajo.id,
     reemplazo: !!existente,
-    trabajos: existente ? trabajos.map(t => t.id === existente.id ? trabajo : t) : trabajos.concat(trabajo)
+    trabajos: salida
   };
 }
 
 /** Cambia el nombre de un trabajo. Falla si otro trabajo del mismo módulo ya usa ese nombre. */
 function renombrarTrabajo(trabajos, id, nombre) {
+  const contenedor = validarContenedorTrabajos(trabajos), validacion = validarNombreTrabajo(nombre);
+  if (!contenedor.ok) return contenedor;
+  if (!validacion.ok) return validacion;
+  nombre = validacion.valor;
   const actual = trabajos.find(t => t.id === id);
   if (!actual) return { ok: false, error: 'El trabajo ya no existe.' };
   const choque = trabajos.find(t => t.id !== id && t.modulo === actual.modulo && mismoNombreTrabajo(t.nombre, nombre));
@@ -114,6 +139,8 @@ function exportarTrabajos(trabajos, modulo, ahora) {
  * Devuelve { ok, trabajos, agregados, omitidos } o { ok:false, error }.
  */
 function fusionarTrabajosImportados(trabajos, documento, modulo) {
+  const contenedor = validarContenedorTrabajos(trabajos);
+  if (!contenedor.ok) return contenedor;
   if (documento && !Array.isArray(documento) && documento.version !== undefined && documento.version !== 1) {
     return { ok: false, error: 'Versión de trabajos no compatible; se admite la versión 1.' };
   }
@@ -161,15 +188,19 @@ function fusionarTrabajosImportados(trabajos, documento, modulo) {
     if (salida.filter(x => x.modulo === modulo).length >= MAX_TRABAJOS_POR_MODULO) break;
     const nombre = validarNombreTrabajo(t.nombre);
     if (!nombre.ok) continue;
-    salida.push({
+    const registro = {
       id: nuevoIdTrabajo(),
       nombre: nombreLibreTrabajo(salida, modulo, nombre.valor),
       modulo,
       fecha: Number.isNaN(new Date(t.fecha).getTime()) ? new Date().toISOString() : t.fecha,
       datos: copiarTrabajo(t.datos)
-    });
+    };
+    if (!esTrabajoValido(registro)) return { ok: false, error: 'El nombre o registro importado no es válido. La biblioteca anterior se conserva.' };
+    salida.push(registro);
     agregados++;
   }
+  const comprobacion = validarContenedorTrabajos(salida);
+  if (!comprobacion.ok) return comprobacion;
   return { ok: true, trabajos: salida, agregados, omitidos: validos.length - agregados };
 }
 
@@ -200,7 +231,8 @@ function leerTrabajos() {
   try {
     crudo = localStorage.getItem(CLAVE_TRABAJOS);
     const datos = JSON.parse(crudo || '[]');
-    if (!Array.isArray(datos) || datos.length > 1000 || datos.some(t => !esTrabajoValido(t)) || new Set(datos.map(t => t.id)).size !== datos.length) throw new Error('La biblioteca contiene registros incompletos o identificadores repetidos.');
+    const validacion = validarContenedorTrabajos(datos);
+    if (!validacion.ok) throw new Error(validacion.error);
     return datos;
   } catch (error) {
     if (crudo && typeof protegerGuardadoIncompatible === 'function') protegerGuardadoIncompatible(CLAVE_TRABAJOS, crudo, error.message);
@@ -209,8 +241,13 @@ function leerTrabajos() {
 }
 
 function escribirTrabajos(trabajos) {
+  const validacion = validarContenedorTrabajos(trabajos);
+  if (!validacion.ok) throw new Error(validacion.error);
+  const serializado = JSON.stringify(trabajos);
+  const documento = validarContenedorTrabajos(JSON.parse(serializado));
+  if (!documento.ok) throw new Error(documento.error);
   if (typeof permiteEscrituraGuardado === 'function' && !permiteEscrituraGuardado(CLAVE_TRABAJOS)) throw new Error('La biblioteca original está protegida. Descárgala desde el aviso antes de reemplazarla.');
-  localStorage.setItem(CLAVE_TRABAJOS, JSON.stringify(trabajos));
+  localStorage.setItem(CLAVE_TRABAJOS, serializado);
 }
 
 /* ---------------- Puente con cada módulo (depende del DOM y del estado de la página) ---------------- */

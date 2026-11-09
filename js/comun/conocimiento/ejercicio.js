@@ -9,7 +9,7 @@
   const K = window.AlgoConocimiento;
   if (!K) return;
 
-  const MODULOS = ['johnson', 'dijkstra', 'kruskal', 'asignacion', 'northwest', 'ordenamiento', 'arboles'];
+  const MODULOS = ['johnson', 'dijkstra', 'kruskal', 'asignacion', 'northwest', 'ordenamiento', 'arboles', 'difusa'];
   const GRAFOS = ['johnson', 'dijkstra', 'kruskal'];
 
   K.registrar([
@@ -30,7 +30,7 @@
       relacionadas: ['matriz.leer-posicion', 'johnson.interpretar-matriz']
     },
     {
-      id: 'ejercicio.seleccion', tema: 'ejercicio', modulos: GRAFOS.concat('asignacion', 'ordenamiento', 'arboles'), dinamica: 'seleccion',
+      id: 'ejercicio.seleccion', tema: 'ejercicio', modulos: GRAFOS.concat('asignacion', 'ordenamiento', 'arboles', 'difusa'), dinamica: 'seleccion',
       pregunta: '¿Qué nodo o elemento está seleccionado?',
       variantes: ['que nodo esta seleccionado', 'que tengo seleccionado', 'que elemento esta seleccionado', 'cual es la seleccion actual', 'que vertice seleccione', 'que conexion esta seleccionada'],
       conceptos: ['seleccionado', 'seleccion', 'seleccione', 'elemento'],
@@ -57,6 +57,7 @@
       id: 'ejercicio.paso', tema: 'ejercicio', modulos: MODULOS, dinamica: 'paso',
       pregunta: 'Explícame este paso',
       variantes: ['explica este paso', 'explicame este paso', 'explicame el paso actual', 'describe el paso actual', 'que significa este paso', 'que esta haciendo ahora', 'resume la operacion actual'],
+      variantesAutorizadas: ['que esta pasando en este paso', 'como se hizo este paso'],
       conceptos: ['explica', 'paso', 'este', 'actual', 'operacion'],
       breve: 'Explica el paso seleccionado del procedimiento con sus datos reales.',
       relacionadas: ['ejercicio.cambio', 'ejercicio.resultado']
@@ -65,6 +66,7 @@
       id: 'ejercicio.resultado', tema: 'ejercicio', modulos: MODULOS, dinamica: 'resultado',
       pregunta: '¿Qué significa este resultado?',
       variantes: ['que significa este resultado', 'interpreta el resultado', 'explica el resultado', 'que dice el resultado', 'como leo este resultado', 'resume la solucion'],
+      variantesAutorizadas: ['como salio ese resultado', 'explicame el resultado', 'que quiere decir este resultado'],
       conceptos: ['resultado', 'solucion', 'interpreta', 'este'],
       breve: 'Interpreta el resultado vigente: distancias, árbol, asignaciones, costo total, lista ordenada o recorrido.',
       relacionadas: ['ejercicio.total', 'ejercicio.paso']
@@ -81,6 +83,7 @@
       id: 'ejercicio.sin-camino', tema: 'ejercicio', modulos: ['dijkstra', 'johnson'], dinamica: 'sin-camino',
       pregunta: '¿Por qué este nodo no tiene camino?',
       variantes: ['por que este nodo no tiene camino', 'por que este nodo esta en infinito', 'que nodos no tienen camino', 'cuales son inalcanzables', 'por que no llega a este nodo'],
+      variantesAutorizadas: ['por que no hay camino'],
       conceptos: ['sin camino', 'infinito', 'inalcanzable', 'inalcanzables', 'nodo', 'este'],
       breve: 'Lista los vértices sin camino en el resultado vigente y las causas posibles en tu grafo.',
       relacionadas: ['dijkstra.inalcanzables', 'johnson.sin-camino']
@@ -89,6 +92,7 @@
       id: 'ejercicio.pendientes', tema: 'ejercicio', modulos: MODULOS, dinamica: 'pendientes',
       pregunta: '¿Qué dato me falta?',
       variantes: ['que dato me falta', 'que me falta completar', 'que falta para resolver', 'que falta para calcular', 'que datos faltan', 'que tengo pendiente', 'hay datos pendientes', 'que debo corregir'],
+      variantesAutorizadas: ['por que no me deja continuar', 'que me impide seguir'],
       conceptos: ['falta', 'faltan', 'pendiente', 'pendientes', 'completar', 'corregir'],
       breve: 'Revisa el estado actual y señala datos pendientes o avisos de validación.',
       relacionadas: ['problema.faltan-datos', 'ejercicio.siguiente']
@@ -97,6 +101,7 @@
       id: 'ejercicio.siguiente', tema: 'ejercicio', modulos: MODULOS, dinamica: 'siguiente',
       pregunta: '¿Qué tengo que hacer ahora?',
       variantes: ['que tengo que hacer ahora', 'cual es el siguiente paso que debo dar', 'que hago ahora', 'que sigue', 'como continuo', 'y ahora que'],
+      variantesAutorizadas: ['que debo hacer ahora'],
       conceptos: ['ahora', 'sigue', 'continuo', 'hacer', 'siguiente'],
       breve: 'Sugiere la próxima acción según la etapa, los datos y el resultado actuales.',
       relacionadas: ['ejercicio.pendientes', 'ejercicio.vista']

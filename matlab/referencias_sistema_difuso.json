@@ -1,0 +1,381 @@
+{
+  "tipo": "ciudad-logica-difusa-comparacion",
+  "version": 2,
+  "modelo": {
+    "version": 2,
+    "id": "ayuda",
+    "nombre": "Nivel de ayuda recomendado",
+    "descripcion": "Demostración didáctica basada en reglas configuradas. No mide ni califica el aprendizaje.",
+    "entradas": [
+      {
+        "id": "familiaridad",
+        "nombre": "Familiaridad con el tema",
+        "unidad": "",
+        "min": 0,
+        "max": 10,
+        "conjuntos": [
+          {
+            "id": "baja",
+            "nombre": "Baja",
+            "tipo": "trapezoidal",
+            "parametros": [
+              0,
+              0,
+              2.5,
+              5
+            ]
+          },
+          {
+            "id": "media",
+            "nombre": "Media",
+            "tipo": "triangular",
+            "parametros": [
+              2.5,
+              5,
+              7.5
+            ]
+          },
+          {
+            "id": "alta",
+            "nombre": "Alta",
+            "tipo": "trapezoidal",
+            "parametros": [
+              5,
+              7.5,
+              10,
+              10
+            ]
+          }
+        ]
+      },
+      {
+        "id": "dificultad",
+        "nombre": "Dificultad percibida del ejercicio",
+        "unidad": "",
+        "min": 0,
+        "max": 10,
+        "conjuntos": [
+          {
+            "id": "baja",
+            "nombre": "Baja",
+            "tipo": "trapezoidal",
+            "parametros": [
+              0,
+              0,
+              2.5,
+              5
+            ]
+          },
+          {
+            "id": "media",
+            "nombre": "Media",
+            "tipo": "triangular",
+            "parametros": [
+              2.5,
+              5,
+              7.5
+            ]
+          },
+          {
+            "id": "alta",
+            "nombre": "Alta",
+            "tipo": "trapezoidal",
+            "parametros": [
+              5,
+              7.5,
+              10,
+              10
+            ]
+          }
+        ]
+      }
+    ],
+    "salida": {
+      "id": "detalle",
+      "nombre": "Detalle recomendado",
+      "unidad": "",
+      "min": 0,
+      "max": 100,
+      "conjuntos": [
+        {
+          "id": "breve",
+          "nombre": "Breve",
+          "tipo": "trapezoidal",
+          "parametros": [
+            0,
+            0,
+            20,
+            40
+          ]
+        },
+        {
+          "id": "intermedia",
+          "nombre": "Intermedia",
+          "tipo": "triangular",
+          "parametros": [
+            20,
+            50,
+            80
+          ]
+        },
+        {
+          "id": "detallada",
+          "nombre": "Detallada",
+          "tipo": "trapezoidal",
+          "parametros": [
+            60,
+            80,
+            100,
+            100
+          ]
+        }
+      ]
+    },
+    "reglas": [
+      {
+        "id": "r1",
+        "antecedentes": {
+          "familiaridad": "baja",
+          "dificultad": "baja"
+        },
+        "conector": "AND",
+        "consecuente": "intermedia",
+        "peso": 1,
+        "activa": true
+      },
+      {
+        "id": "r2",
+        "antecedentes": {
+          "familiaridad": "baja",
+          "dificultad": "media"
+        },
+        "conector": "AND",
+        "consecuente": "detallada",
+        "peso": 1,
+        "activa": true
+      },
+      {
+        "id": "r3",
+        "antecedentes": {
+          "familiaridad": "baja",
+          "dificultad": "alta"
+        },
+        "conector": "AND",
+        "consecuente": "detallada",
+        "peso": 1,
+        "activa": true
+      },
+      {
+        "id": "r4",
+        "antecedentes": {
+          "familiaridad": "media",
+          "dificultad": "baja"
+        },
+        "conector": "AND",
+        "consecuente": "breve",
+        "peso": 1,
+        "activa": true
+      },
+      {
+        "id": "r5",
+        "antecedentes": {
+          "familiaridad": "media",
+          "dificultad": "media"
+        },
+        "conector": "AND",
+        "consecuente": "intermedia",
+        "peso": 1,
+        "activa": true
+      },
+      {
+        "id": "r6",
+        "antecedentes": {
+          "familiaridad": "media",
+          "dificultad": "alta"
+        },
+        "conector": "AND",
+        "consecuente": "detallada",
+        "peso": 1,
+        "activa": true
+      },
+      {
+        "id": "r7",
+        "antecedentes": {
+          "familiaridad": "alta",
+          "dificultad": "baja"
+        },
+        "conector": "AND",
+        "consecuente": "breve",
+        "peso": 1,
+        "activa": true
+      },
+      {
+        "id": "r8",
+        "antecedentes": {
+          "familiaridad": "alta",
+          "dificultad": "media"
+        },
+        "conector": "AND",
+        "consecuente": "breve",
+        "peso": 1,
+        "activa": true
+      },
+      {
+        "id": "r9",
+        "antecedentes": {
+          "familiaridad": "alta",
+          "dificultad": "alta"
+        },
+        "conector": "AND",
+        "consecuente": "intermedia",
+        "peso": 1,
+        "activa": true
+      }
+    ],
+    "valoresIniciales": {
+      "familiaridad": 5,
+      "dificultad": 5
+    }
+  },
+  "integracion": {
+    "metodo": "continua-por-tramos-lineales",
+    "formula": "integral(y * mu(y)) / integral(mu(y))"
+  },
+  "muestreo": {
+    "puntos": 1001,
+    "minimo": 0,
+    "maximo": 100,
+    "uso": "consulta auxiliar; no determina el centroide"
+  },
+  "reglasNumericas": [
+    [
+      1,
+      1,
+      2,
+      1,
+      1
+    ],
+    [
+      1,
+      2,
+      3,
+      1,
+      1
+    ],
+    [
+      1,
+      3,
+      3,
+      1,
+      1
+    ],
+    [
+      2,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      2,
+      2,
+      2,
+      1,
+      1
+    ],
+    [
+      2,
+      3,
+      3,
+      1,
+      1
+    ],
+    [
+      3,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      3,
+      2,
+      1,
+      1,
+      1
+    ],
+    [
+      3,
+      3,
+      2,
+      1,
+      1
+    ]
+  ],
+  "casos": [
+    {
+      "valores": [
+        0,
+        0
+      ],
+      "resultado": 50
+    },
+    {
+      "valores": [
+        0,
+        10
+      ],
+      "resultado": 84.44444444444444
+    },
+    {
+      "valores": [
+        10,
+        0
+      ],
+      "resultado": 15.555555555555555
+    },
+    {
+      "valores": [
+        10,
+        10
+      ],
+      "resultado": 50
+    },
+    {
+      "valores": [
+        5,
+        5
+      ],
+      "resultado": 50
+    },
+    {
+      "valores": [
+        2,
+        8
+      ],
+      "resultado": 84.44444444444444
+    },
+    {
+      "valores": [
+        8,
+        2
+      ],
+      "resultado": 15.555555555555555
+    },
+    {
+      "valores": [
+        3.5,
+        6.5
+      ],
+      "resultado": 66.63670411985018
+    },
+    {
+      "valores": [
+        6.2,
+        4.1
+      ],
+      "resultado": 36.98716466577738
+    }
+  ],
+  "toleranciaAbs": 1e-8
+}

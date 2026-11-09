@@ -10,6 +10,7 @@
     "lint": "node tests/verificar.js",
     "test:asistente": "node tests/asistente-contexto.test.js && node tests/asistente-conocimiento.test.js && node tests/asistente-interfaz.test.js && node tests/asistente-servidor.test.js",
     "test:asistente:navegador": "node tests/asistente-navegador.js",
+    "test:difusa": "node tests/logica-difusa.test.js && node tests/logica-difusa-modelo.test.js && node tests/logica-difusa-estado.test.js && node tests/logica-difusa-mapa.test.js",
     "test": "node tests/verificar.js && node tests/johnson.test.js && node tests/asignacion.test.js && node tests/northwest.test.js && node tests/ordenamiento.test.js && node tests/arboles.test.js && node tests/guardados.test.js && node tests/foco.test.js && node tests/grafos.test.js",
     "test:ampliacion": "node tests/ampliacion-navegador.js",
     "test:mejoras": "node tests/mejoras-grafos-navegador.js",

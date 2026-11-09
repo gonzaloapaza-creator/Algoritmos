@@ -15,6 +15,7 @@
   --ciudad-tinta: #213e4d;
   --ciudad-titulo-acento: #b3cbb8;
   background: var(--bg);
+  overflow-x: visible;
 }
 html[data-tema="claro"] .page-home {
   --bg: #f6f5f0;
@@ -34,7 +35,8 @@ html[data-tema="claro"] .page-home {
   --cabecera-fondo: rgba(246, 245, 240, .96);
   --lateral-fondo: #eeeee7;
 }
-.page-home .contenido { max-width: 1680px; padding-top: 32px; }
+.page-home .contenido { max-width: 1680px; min-width: 0; padding-top: 32px; }
+.page-home .topbar { height: auto; min-height: 56px; flex-wrap: wrap; }
 .page-home .topbar__modulo { font-size: .8rem; font-weight: 500; color: var(--texto-suave); }
 .marca-ciudad { font-weight: 450; color: var(--texto-suave); }
 .ciudad-intro { margin-bottom: 30px; max-width: 780px; }
@@ -43,23 +45,26 @@ html[data-tema="claro"] .page-home {
 .ciudad-intro h1 { font-size: clamp(1.85rem, 3.1vw, 3.1rem); line-height: 1.16; letter-spacing: -.045em; font-weight: 700; }
 .ciudad-intro em { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; color: var(--ciudad-titulo-acento); }
 .ciudad-intro > p:last-child { margin-top: 14px; max-width: 68ch; font-size: .94rem; line-height: 1.7; color: var(--texto-suave); }
-.ciudad-explorar { scroll-margin-top: 76px; }
-.ciudad-herramientas { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+.page-home .ciudad-explorar { scroll-margin-top: 76px; container: ciudad-inicio / inline-size; min-width: 0; }
+.page-home .ciudad-herramientas { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; }
+.page-home .ciudad-herramientas > div { min-width: 0; max-width: 100%; }
 .ciudad-herramientas h2 { font-size: 1.03rem; letter-spacing: -.02em; }
 .ciudad-herramientas p { margin-top: 3px; font-size: .76rem; color: var(--texto-suave); }
-.ciudad-controles { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.page-home .ciudad-controles { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
 .ciudad-vistas { display: flex; border: 1px solid var(--borde); padding: 3px; border-radius: 9px; background: var(--bg-2); }
-.ciudad-vistas button { color: var(--texto-suave); padding: 8px 12px; font: inherit; font-size: .76rem; background: transparent; border: 0; border-radius: 6px; cursor: pointer; min-height: 38px; }
+.page-home .ciudad-vistas button { color: var(--texto-suave); padding: 8px 12px; font: inherit; font-size: .76rem; background: transparent; border: 0; border-radius: 6px; cursor: pointer; min-width: 44px; min-height: 44px; }
 .ciudad-vistas button[aria-pressed="true"] { background: var(--bg-3); color: var(--texto); box-shadow: 0 1px 3px #0001; font-weight: 700; }
 .ciudad-movimiento { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font: inherit; font-size: .72rem; background: transparent; color: var(--texto-suave); border: 0; cursor: pointer; padding: 6px; }
 .ciudad-movimiento svg { width: 14px; height: 14px; flex: 0 0 auto; }
 .ciudad-movimiento .icono-reproducir, .ciudad-movimiento[aria-pressed="true"] .icono-pausar { display: none; }
 .ciudad-movimiento[aria-pressed="true"] .icono-reproducir { display: block; }
 .ciudad-movimiento:disabled { opacity: .75; cursor: default; }
-.ciudad-distribucion { display: grid; grid-template-columns: minmax(0, 1fr) 260px; border: 1px solid var(--borde); border-radius: 16px; overflow: hidden; background: var(--bg-2); }
+.page-home .ciudad-distribucion { --ciudad-compacta: 0; display: grid; grid-template-columns: minmax(0, 1fr); border: 1px solid var(--borde); border-radius: 16px; background: var(--bg-2); }
 .ciudad-distribucion.es-lista { display: block; background: transparent; border: 0; overflow: visible; }
-.ciudad-acceso-movil { display: none; }
-.ciudad-mapa { min-width: 0; position: relative; background: var(--ciudad-fondo); isolation: isolate; padding: 18px 10px 45px; }
+.page-home .ciudad-acceso-movil { display: none; }
+.page-home.ciudad-compacta.algo-disponible { padding-bottom: calc(76px + var(--ciudad-espacio-acceso, 76px) + env(safe-area-inset-bottom)); }
+.page-home.algo-abierto .ciudad-acceso-movil, .page-home.nav-abierta .ciudad-acceso-movil { visibility: hidden; }
+.page-home .ciudad-mapa { min-width: 0; position: relative; background: var(--ciudad-fondo); border-radius: 15px 15px 0 0; isolation: isolate; padding: 20px 16px 48px; }
 .ciudad-terreno { position: absolute; width: 100%; height: 100%; inset: 0; z-index: -1; color: var(--ciudad-tierra-borde); }
 .ciudad-isla { fill: var(--ciudad-tierra); stroke: var(--ciudad-tierra-borde); stroke-width: 1.5; }
 .ciudad-verde { fill: var(--ciudad-verde); }
@@ -68,27 +73,34 @@ html[data-tema="claro"] .page-home {
 .ciudad-plaza { fill: var(--ciudad-verde); stroke: var(--ciudad-tierra-borde); stroke-width: 2; }
 .ciudad-plaza path:nth-child(2), .ciudad-plaza circle { fill: var(--ciudad-hoja); }
 .ciudad-bancos { color: var(--ciudad-hoja); }
-.ciudad-zonas { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: start; gap: 20px 8px; min-height: 670px; }
+.page-home .ciudad-zonas { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: start; gap: 18px 12px; min-width: 0; max-width: 1040px; margin-inline: auto; }
 .ciudad-zona { --zona-actual: var(--zona); grid-column: span 2; min-width: 0; width: 100%; padding: 0; position: relative; display: flex; flex-direction: column; align-items: center; font: inherit; color: var(--texto); border: 0; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 html[data-tema="claro"] .ciudad-zona, html[data-tema="claro"] .ciudad-panel, html[data-tema="claro"] .reciente-enlace { --zona-actual: var(--zona-clara); }
 .ciudad-zona--johnson { grid-column: 1 / span 2; grid-row: 1; padding-top: 18px; }
 .ciudad-zona--dijkstra { grid-column: 3 / span 2; grid-row: 1; }
 .ciudad-zona--kruskal { grid-column: 5 / span 2; grid-row: 1; padding-top: 18px; }
-.ciudad-zona--asignacion { grid-column: 2 / span 2; grid-row: 2; }
-.ciudad-zona--northwest { grid-column: 4 / span 2; grid-row: 2; }
+.ciudad-zona--asignacion { grid-column: 1 / span 2; grid-row: 2; }
+.ciudad-zona--northwest { grid-column: 3 / span 2; grid-row: 2; }
+.ciudad-zona--difusa { grid-column: 5 / span 2; grid-row: 2; }
 .ciudad-zona--ordenamiento { grid-column: 2 / span 2; grid-row: 3; }
 .ciudad-zona--arboles { grid-column: 4 / span 2; grid-row: 3; }
-.ciudad-edificio { width: 100%; max-width: 260px; overflow: visible; filter: drop-shadow(0 8px 7px #07161821); transition: transform .2s ease; }
+.page-home .ciudad-edificio { display: block; width: 100%; height: auto; aspect-ratio: 24 / 19; max-width: 230px; overflow: visible; filter: drop-shadow(0 8px 7px #07161821); transition: transform .2s ease; }
 .ciudad-zona:hover .ciudad-edificio, .ciudad-zona:focus-visible .ciudad-edificio { transform: translateY(-4px); }
-.ciudad-etiqueta { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 7px 8px; border-radius: 8px; border: 1px solid transparent; max-width: 100%; margin-top: -3px; background: color-mix(in srgb, var(--ciudad-fondo) 85%, transparent); }
+.page-home .ciudad-etiqueta { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; border-radius: 8px; border: 1px solid transparent; min-width: 0; max-width: 100%; margin-top: 0; background: var(--ciudad-fondo); overflow-wrap: anywhere; }
 .ciudad-etiqueta strong { font-size: .8rem; line-height: 1.4; font-weight: 750; }
-.ciudad-etiqueta > span { color: var(--texto-suave); font-size: .63rem; }
+.page-home .ciudad-etiqueta > span { color: var(--texto-suave); font-size: .7rem; line-height: 1.5; }
 .ciudad-zona[aria-pressed="true"] .ciudad-etiqueta { border-color: var(--zona-actual); box-shadow: 0 0 0 2px color-mix(in srgb, var(--zona-actual) 14%, transparent); background: var(--bg-2); }
 .ciudad-zona[aria-pressed="true"] .ciudad-etiqueta strong { color: var(--zona-actual); }
 .ciudad-zona[aria-pressed="true"] .escena-parcela { stroke: var(--zona-actual); stroke-width: 2; }
 .ciudad-mapa-pie { position: absolute; bottom: 17px; left: 20px; right: 20px; display: flex; justify-content: space-between; gap: 12px; font-size: .61rem; color: var(--texto-suave); }
 .ciudad-mapa-pie i { display: inline-block; width: 5px; height: 5px; border-radius: 50%; margin-right: 5px; background: var(--ciudad-hoja); }
-.ciudad-panel { --zona-actual: var(--zona); min-width: 0; border-left: 1px solid var(--borde); padding: 26px 22px; display: flex; flex-direction: column; align-items: flex-start; background: var(--bg-2); }
+.page-home .ciudad-panel { --zona-actual: var(--zona); min-width: 0; border-top: 1px solid var(--borde); border-radius: 0 0 15px 15px; padding: 24px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-content: start; align-items: start; column-gap: 28px; background: var(--bg-2); overflow-wrap: anywhere; }
+.page-home .ciudad-panel > * { min-width: 0; max-width: 100%; }
+.page-home .ciudad-panel-icono { display: none; }
+.page-home .ciudad-panel-zona, .page-home .ciudad-panel h3, .page-home .ciudad-panel-descripcion { grid-column: 1; }
+.page-home .ciudad-panel dl { grid-column: 2; grid-row: 1 / span 3; margin: 0; padding: 0; border: 0; }
+.page-home .ciudad-panel .ciudad-abrir { grid-column: 1; margin-top: 16px; }
+.page-home .ciudad-panel-nota { grid-column: 2; }
 .ciudad-panel-icono { width: 40px; height: 40px; display: grid; place-items: center; color: var(--zona-actual); background: color-mix(in srgb, var(--zona-actual) 12%, transparent); border: 1px solid color-mix(in srgb, var(--zona-actual) 25%, transparent); border-radius: 10px; margin-bottom: 22px; }
 .ciudad-panel-icono svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.6; }
 .ciudad-panel-zona { color: var(--zona-actual); font-size: .7rem; margin-bottom: 6px; }
@@ -122,6 +134,9 @@ html[data-tema="claro"] .ciudad-abrir { --acento: var(--zona-clara); --acento-fu
 .ciudad-secundaria > p:last-child { color: var(--texto-suave); margin-top: 8px; font-size: .88rem; }
 .page-home .inicio-seccion { margin-top: 36px; }
 .page-home .inicio-seccion__cabecera h2 { font-size: 1.3rem; }
+.page-home .tabla-caja { min-width: 0; max-width: 100%; }
+.page-home .tabla-complejidad td:last-child { white-space: normal; }
+.page-home .tabla-complejidad code { white-space: nowrap; }
 .ciudad-lista .categoria { margin-bottom: 20px; }
 .ciudad-lista .ciudad-categoria { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; color: var(--texto-suave); }
 .ciudad-categoria-descripcion { max-width: 100ch; margin: 0 0 16px; color: var(--texto-suave); font-size: .83rem; line-height: 1.6; }
@@ -191,19 +206,17 @@ html[data-tema="claro"] .ciudad-abrir { --acento: var(--zona-clara); --acento-fu
 @keyframes ciudad-brote { 0% { transform: scale(.35); opacity: .4; } 60%, 100% { transform: scale(1); opacity: 1; } }
 @keyframes ciudad-visita { 0%, 100% { fill: var(--zona); } 40%, 70% { fill: #fff2c1; } }
 
-@media (min-width: 1600px) { .ciudad-distribucion { grid-template-columns: minmax(0, 1fr) 300px; } .ciudad-etiqueta strong { font-size: .84rem; } }
-@media (max-width: 1279px) {
-  .ciudad-distribucion { grid-template-columns: minmax(0, 1fr); }
-  .ciudad-panel { border-left: 0; border-top: 1px solid var(--borde); display: grid; grid-template-columns: 1fr 1fr; column-gap: 26px; padding: 22px; }
-  .ciudad-panel-icono { display: none; }
-  .ciudad-panel-zona, .ciudad-panel h3, .ciudad-panel-descripcion { grid-column: 1; }
-  .ciudad-panel dl { grid-column: 2; grid-row: 1 / span 3; margin: 0; padding: 0; border: 0; }
-  .ciudad-abrir { grid-column: 1; margin-top: 14px; }
-  .ciudad-panel-nota { grid-column: 2; }
-  .ciudad-etiqueta strong { font-size: .75rem; }
-  .ciudad-zonas { min-height: 650px; }
-  .ciudad-edificio { max-width: 230px; }
-  .ciudad-herramientas { flex-wrap: wrap; }
+/* El ancho útil incluye el espacio que deja la navegación lateral. */
+@container ciudad-inicio (min-width: 68rem) {
+  .page-home .ciudad-distribucion { grid-template-columns: minmax(0, 1fr) minmax(18rem, 27%); }
+  .page-home .ciudad-mapa { border-radius: 15px 0 0 15px; }
+  .page-home .ciudad-panel { display: flex; flex-direction: column; align-items: stretch; border-top: 0; border-left: 1px solid var(--borde); border-radius: 0 15px 15px 0; }
+  .page-home .ciudad-panel-icono { display: grid; }
+  .page-home .ciudad-panel dl { margin: 20px 0; padding: 16px 0; border-block: 1px solid var(--borde); }
+  .page-home .ciudad-panel .ciudad-abrir { margin-top: 0; }
+}
+@media (max-width: 950px) {
+  .page-home .inicio-atajos a { display: none; }
 }
 @media (max-width: 767px) {
   .page-home .contenido { padding: 24px 16px; }
@@ -219,33 +232,39 @@ html[data-tema="claro"] .ciudad-abrir { --acento: var(--zona-clara); --acento-fu
   .ciudad-intro h1 { font-size: clamp(1.9rem, 6vw, 2.5rem); }
   .ciudad-intro > p:last-child { font-size: .86rem; }
   .salto-escritorio { display: none; }
-  .ciudad-controles { width: 100%; justify-content: space-between; gap: 4px; }
-  .ciudad-vistas button { min-height: 44px; padding-inline: 11px; }
-  .ciudad-movimiento { font-size: .67rem; }
-  .ciudad-mapa { padding: 12px 8px 45px; }
-  .ciudad-terreno { display: none; }
-  .ciudad-zonas { display: flex; flex-direction: column; gap: 0; position: relative; }
-  .ciudad-zonas::before { content: ''; position: absolute; inset: 20px auto 20px 30%; width: 22px; background: var(--ciudad-calle); border-inline: 1px solid var(--ciudad-tierra-borde); z-index: -1; }
-  .ciudad-zona { display: grid; grid-template-columns: minmax(110px, 47%) minmax(0, 1fr); align-items: center; padding: 4px 0; text-align: left; min-height: 145px; }
-  .ciudad-edificio { width: 100%; max-width: 195px; }
-  .ciudad-etiqueta { align-items: flex-start; gap: 7px; padding: 12px 8px; margin: 0 4px; background: var(--ciudad-fondo); }
-  .ciudad-etiqueta strong { font-size: .83rem; line-height: 1.5; }
-  .ciudad-etiqueta > span { font-size: .68rem; line-height: 1.5; }
-  .ciudad-mapa-pie { font-size: .6rem; left: 14px; right: 14px; }
-  .ciudad-mapa-pie > span:last-child { display: none; }
-  .ciudad-panel { display: flex; padding: 22px; position: relative; }
-  .ciudad-acceso-movil { display: flex; position: fixed; left: 12px; right: 12px; bottom: max(10px, env(safe-area-inset-bottom)); z-index: 30; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 8px 7px 15px; border: 1px solid var(--borde); border-radius: 12px; background: var(--bg-2); box-shadow: 0 5px 25px #0002; }
-  .ciudad-acceso-movil > span { font-size: .8rem; font-weight: 700; }
-  .ciudad-acceso-movil .btn { min-height: 44px; font-size: .8rem; }
-  .page-home .app-footer { padding-bottom: 90px; }
-  .ciudad-panel h3 { font-size: 1.2rem; }
-  .ciudad-panel dl { width: 100%; border-block: 1px solid var(--borde); margin: 15px 0; padding: 15px 0; }
-  .ciudad-panel-descripcion { font-size: .84rem; }
-  .ciudad-abrir { margin: 0; }
   .ciudad-seccion-cab { align-items: flex-start; }
   .ciudad-local { max-width: 95px; text-align: center; }
   .ciudad-trabajos-lista { grid-template-columns: 1fr; }
   .ciudad-secundaria { margin-top: 35px; }
+}
+@container ciudad-inicio (max-width: 39rem) {
+  .page-home .ciudad-distribucion { --ciudad-compacta: 1; }
+  .page-home .ciudad-controles { width: 100%; justify-content: space-between; gap: 8px; }
+  .page-home .ciudad-vistas { flex-wrap: wrap; max-width: 100%; }
+  .page-home .ciudad-movimiento { font-size: .72rem; }
+  .page-home .ciudad-mapa { padding: 12px 8px 42px; }
+  .page-home .ciudad-terreno { display: none; }
+  .page-home .ciudad-zonas { display: flex; flex-direction: column; gap: 6px; position: relative; }
+  .page-home .ciudad-zonas::before { content: ''; position: absolute; inset: 12px auto 12px 24%; width: 18px; background: var(--ciudad-calle); border-inline: 1px solid var(--ciudad-tierra-borde); z-index: -1; }
+  .page-home .ciudad-zona { display: grid; grid-template-columns: minmax(0, 44%) minmax(0, 1fr); align-items: center; padding: 6px 0; text-align: left; min-height: 128px; }
+  .page-home .ciudad-edificio { max-width: 185px; }
+  .page-home .ciudad-etiqueta { align-items: flex-start; gap: 6px; padding: 10px 8px; margin: 0 4px; }
+  .page-home .ciudad-etiqueta strong { font-size: .86rem; line-height: 1.45; }
+  .page-home .ciudad-etiqueta > span { font-size: .73rem; }
+  .page-home .ciudad-mapa-pie { left: 14px; right: 14px; flex-wrap: wrap; }
+  .page-home .ciudad-mapa-pie > span:last-child { display: none; }
+  .page-home .ciudad-panel { display: flex; flex-direction: column; align-items: stretch; padding: 20px; }
+  .page-home .ciudad-panel dl { border-block: 1px solid var(--borde); margin: 16px 0; padding: 16px 0; }
+  .page-home .ciudad-panel-descripcion { font-size: .86rem; }
+  .page-home .ciudad-panel .ciudad-abrir { margin-top: 0; }
+}
+/* Un solo enlace cambia de contenedor; la barra queda fuera del contenedor CSS. */
+.page-home.ciudad-compacta .ciudad-acceso-movil { display: flex; position: fixed; left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right)); bottom: calc(80px + env(safe-area-inset-bottom)); z-index: 30; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; border: 1px solid var(--borde); border-radius: 12px; background: var(--bg-2); box-shadow: 0 5px 25px #0002; }
+.page-home.ciudad-compacta .ciudad-acceso-movil > span { min-width: 0; overflow-wrap: anywhere; font-size: .85rem; font-weight: 700; }
+.page-home.ciudad-compacta .ciudad-acceso-movil .ciudad-abrir { width: auto; flex: 0 1 auto; min-width: 44px; min-height: 44px; white-space: normal; font-size: .8rem; text-align: center; }
+@media (min-width: 1024px) {
+  .page-home.ciudad-compacta .ciudad-acceso-movil { left: calc(var(--lateral) + 12px); }
+  .page-home.ciudad-compacta.nav-colapsada .ciudad-acceso-movil { left: calc(var(--lateral-colapsada) + 12px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .page-home { scroll-behavior: auto; }
@@ -254,4 +273,4 @@ html[data-tema="claro"] .ciudad-abrir { --acento: var(--zona-clara); --acento-fu
   .ciudad-zona:hover .ciudad-edificio, .ciudad-zona:focus-visible .ciudad-edificio { transform: none; }
 }
 .movimiento-detenido .ciudad-edificio * { animation: none !important; }
-[hidden].ciudad-lista, [hidden].ciudad-panel, [hidden].ciudad-mapa, [hidden].ciudad-movimiento, [hidden].ciudad-acceso-movil { display: none; }
+.page-home [hidden].ciudad-lista, .page-home [hidden].ciudad-panel, .page-home [hidden].ciudad-mapa, .page-home [hidden].ciudad-movimiento, .page-home [hidden].ciudad-acceso-movil { display: none; }

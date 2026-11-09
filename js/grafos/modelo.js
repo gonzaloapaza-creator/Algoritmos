@@ -28,6 +28,91 @@ function firmaCalculoGrafo(grafo) {
     conexiones: grafo.conexiones.map(c => [c.id, c.desde, c.hacia, c.valor]) });
 }
 
+/** Reglas compartidas de la interfaz y las operaciones; siempre devuelve una copia válida. */
+function validarPesoGrafoModulo(texto, modulo) {
+  const limpio = String(texto).trim(), minimo = modulo === 'dijkstra' ? 0 : -MAX_PESO;
+  if (!/^-?\d+$/.test(limpio) || !Number.isSafeInteger(Number(limpio)) || Number(limpio) < minimo || Number(limpio) > MAX_PESO) {
+    return { ok: false, error: modulo === 'dijkstra' && Number(limpio) < 0
+      ? 'Dijkstra requiere pesos no negativos. Cero sí es válido.'
+      : `Escribe un entero entre ${minimo} y ${MAX_PESO}.` };
+  }
+  return { ok: true, valor: Number(limpio) };
+}
+
+function siguienteIdGrafoModulo(grafo, prefijo) {
+  const ids = new Set(grafo.nodos.concat(grafo.conexiones).map(e => e.id));
+  let id;
+  do { id = prefijo + grafo.siguienteId++; } while (ids.has(id));
+  return id;
+}
+
+function operarGrafoModulo(grafo, modulo, operacion) {
+  if (!operacion || typeof operacion !== 'object') return { ok: false, grafo: null, error: 'La operación debe ser un objeto.' };
+  const base = validarGrafoModulo(grafo, modulo);
+  if (!base.ok) return base;
+  const g = base.grafo;
+  const fallo = error => ({ ok: false, grafo: null, error });
+  const nodo = g.nodos.find(n => n.id === operacion.id);
+  const arista = g.conexiones.find(c => c.id === operacion.id);
+  if (['renombrar', 'mover', 'eliminar-nodo'].includes(operacion.tipo) && !nodo) return fallo('El vértice seleccionado ya no existe.');
+  if (['peso', 'eliminar-arista'].includes(operacion.tipo) && !arista) return fallo('La conexión seleccionada ya no existe.');
+  let id = operacion.id;
+  switch (operacion.tipo) {
+    case 'nodo':
+      id = siguienteIdGrafoModulo(g, 'n');
+      g.nodos.push({ id, nombre: String(operacion.nombre || '').trim(), x: operacion.x, y: operacion.y }); break;
+    case 'renombrar': nodo.nombre = String(operacion.nombre || '').trim(); break;
+    case 'mover': Object.assign(nodo, { x: operacion.x, y: operacion.y }); break;
+    case 'eliminar-nodo':
+      g.nodos = g.nodos.filter(n => n.id !== id);
+      g.conexiones = g.conexiones.filter(c => c.desde !== id && c.hacia !== id); break;
+    case 'arista':
+    case 'peso': {
+      const peso = validarPesoGrafoModulo(operacion.valor, modulo);
+      if (!peso.ok) return fallo(peso.error);
+      if (operacion.tipo === 'peso') arista.valor = peso.valor;
+      else { id = siguienteIdGrafoModulo(g, 'e'); g.conexiones.push({ id, desde: operacion.desde, hacia: operacion.hacia, valor: peso.valor }); }
+      break;
+    }
+    case 'eliminar-arista': g.conexiones = g.conexiones.filter(c => c.id !== id); break;
+    default: return fallo('Operación de grafo desconocida.');
+  }
+  const resultado = validarGrafoModulo(g, modulo);
+  if (resultado.ok) resultado.id = id;
+  return resultado;
+}
+
+/** Cambiar de dirección exige resolver todos los conflictos antes de publicar la copia. */
+function convertirDireccionGrafoModulo(grafo, modulo, dirigido, pesos = {}) {
+  const validacion = validarGrafoModulo(grafo, modulo);
+  if (!validacion.ok) return validacion;
+  const g = validacion.grafo;
+  if (typeof dirigido !== 'boolean') return { ok: false, grafo: null, error: 'El modo dirigido debe ser verdadero o falso.' };
+  if (modulo === 'kruskal' && dirigido) return { ok: false, grafo: null, error: 'Kruskal requiere un grafo no dirigido.' };
+  if (g.dirigido === dirigido) return validacion;
+  if (dirigido) {
+    const originales = g.conexiones.slice();
+    originales.forEach(c => g.conexiones.push({ id: siguienteIdGrafoModulo(g, 'e'), desde: c.hacia, hacia: c.desde, valor: c.valor }));
+  } else {
+    const nuevas = [], usados = new Set();
+    for (const c of g.conexiones) {
+      if (usados.has(c.id)) continue;
+      const opuesta = g.conexiones.find(a => a.desde === c.hacia && a.hacia === c.desde);
+      let valor = c.valor;
+      if (opuesta && opuesta.valor !== c.valor) {
+        if (!Object.prototype.hasOwnProperty.call(pesos, c.id)) return { ok: false, grafo: null, error: 'Resuelve los pesos opuestos antes de cambiar a no dirigido.' };
+        const peso = validarPesoGrafoModulo(pesos[c.id], modulo);
+        if (!peso.ok) return { ok: false, grafo: null, error: peso.error };
+        valor = peso.valor;
+      }
+      nuevas.push(Object.assign({}, c, { valor })); usados.add(c.id); if (opuesta) usados.add(opuesta.id);
+    }
+    g.conexiones = nuevas;
+  }
+  g.dirigido = dirigido;
+  return validarGrafoModulo(g, modulo);
+}
+
 function validarGrafoModulo(grafo, modulo) {
   const fallo = error => ({ ok: false, grafo: null, error });
   if (modulo !== 'dijkstra' && modulo !== 'kruskal') return fallo('Módulo de grafo desconocido.');
@@ -71,7 +156,7 @@ function validarGrafoModulo(grafo, modulo) {
     pares.add(clave);
     if (!Number.isSafeInteger(conexion.valor)) return fallo('El peso debe ser un número entero finito.');
     const minimo = modulo === 'dijkstra' ? 0 : -MAX_PESO;
-    if (conexion.valor < minimo || conexion.valor > MAX_PESO) return fallo(`El peso debe estar entre ${minimo} y ${MAX_PESO}.`);
+    if (conexion.valor < minimo || conexion.valor > MAX_PESO) return fallo(modulo === 'dijkstra' && conexion.valor < 0 ? 'Dijkstra requiere pesos no negativos. Cero sí es válido.' : `El peso debe estar entre ${minimo} y ${MAX_PESO}.`);
   }
   return { ok: true, grafo: copiarGrafoModulo(grafo), error: null };
 }

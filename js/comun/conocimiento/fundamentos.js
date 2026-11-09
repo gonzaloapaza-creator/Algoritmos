@@ -23,6 +23,7 @@
       id: 'matriz.fila-columna-celda', tema: 'matrices', modulos: ['johnson', 'asignacion', 'northwest'],
       pregunta: '¿Qué son fila, columna y celda?',
       variantes: ['que es una fila', 'que es una columna', 'que es una celda', 'diferencia entre fila y columna', 'que es una casilla', 'fila y columna de una matriz'],
+      variantesAutorizadas: ['que es una fila y una columna'],
       conceptos: ['fila', 'filas', 'columna', 'columnas', 'celda', 'celdas', 'casilla', 'casillas'],
       breve: 'Una fila es una línea horizontal de la matriz; una columna es una línea vertical; una celda (o casilla) es el cruce de una fila con una columna y contiene un solo valor.',
       sencilla: 'Las filas se leen de izquierda a derecha, como renglones. Las columnas van de arriba hacia abajo. Donde se cruzan hay una casilla con un número.',
@@ -48,6 +49,7 @@
       breve: 'Un índice es el número que señala la posición de un elemento. En una matriz se usan dos: el de la fila y el de la columna; en una lista, solo uno.',
       sencilla: 'Es como el número de asiento: te dice exactamente dónde está algo sin tener que mirarlo todo.',
       ejemplo: 'En la lista [8, 3, 5], el valor 3 está en la posición 2 si contamos desde 1. Muchos programas cuentan desde 0; en esta aplicación las posiciones que se muestran al usuario comienzan en 1.',
+      ejemploAutorizado: 'En la lista [8, 3, 5], contando desde 0, el valor 3 tiene índice 1. En Shell, un grupo con índices 0, 4 y 8 reúne esas posiciones reales de la lista, aunque no sean vecinas.',
       relacionadas: ['matriz.fila-columna-celda', 'matriz.leer-posicion']
     },
     {
@@ -258,6 +260,7 @@
       breve: 'El grado de un vértice es la cantidad de aristas que llegan o salen de él. Un vértice aislado tiene grado 0: no está conectado con nadie.',
       sencilla: 'Cuenta cuántas líneas tocan el círculo: ese es su grado. Si ninguna lo toca, está aislado.',
       ejemplo: 'Si A tiene conexiones con B y con C, su grado es 2. Si D no tiene conexiones, está aislado: Dijkstra le asigna ∞ y Kruskal lo deja como componente propio.',
+      ejemploAutorizado: 'Si A tiene conexiones con B y con C, su grado es 2. D, sin conexiones, está aislado. En Dijkstra queda a distancia ∞ si elegiste otro origen; si D es el origen, su distancia a sí mismo es 0. Kruskal conserva D como una componente de un solo vértice.',
       detalle: 'En grafos dirigidos se distinguen grado de entrada (aristas que llegan) y grado de salida (aristas que salen). Un vértice aislado no es un error: simplemente no se puede llegar a él ni salir de él.',
       relacionadas: ['grafo.conectividad', 'dijkstra.inalcanzables', 'kruskal.bosque']
     },
@@ -265,6 +268,7 @@
       id: 'grafo.conectividad', tema: 'grafos', modulos: ['johnson', 'dijkstra', 'kruskal'],
       pregunta: '¿Qué significan conectividad y alcanzabilidad?',
       variantes: ['que es un grafo conexo', 'que significa que el grafo esta conectado', 'que es alcanzable', 'que significa alcanzabilidad', 'grafo desconectado', 'que es un grafo conectado'],
+      variantesAutorizadas: ['que es la conectividad de un grafo'],
       conceptos: ['conectividad', 'conexo', 'conectado', 'desconectado', 'alcanzable', 'alcanzabilidad', 'alcanzar', 'componente', 'componentes'],
       breve: 'Un grafo es conectado (conexo) si desde cualquier vértice se puede llegar a cualquier otro. Un vértice B es alcanzable desde A si existe algún camino de A a B. En grafos dirigidos el sentido importa: B puede ser alcanzable desde A sin que A lo sea desde B.',
       sencilla: 'Conectado quiere decir que el dibujo está «todo en una pieza». Si hay grupos separados, el grafo está desconectado.',
@@ -287,6 +291,7 @@
       id: 'grafo.arbol-bosque', tema: 'grafos', modulos: ['kruskal', 'arboles'],
       pregunta: '¿Qué son un árbol y un bosque en grafos?',
       variantes: ['que es un arbol en grafos', 'que es un bosque', 'que es un arbol de expansion', 'que significa arbol de expansion', 'por que se llama arbol', 'arbol generador'],
+      variantesAutorizadas: ['diferencia entre arbol y bosque'],
       conceptos: ['arbol', 'arboles', 'bosque', 'expansion', 'generador', 'recubridor'],
       breve: 'Un árbol es un grafo conectado sin ciclos. Un bosque es un conjunto de árboles separados. Un árbol de expansión de un grafo es un árbol que usa aristas del grafo y llega a todos sus vértices.',
       sencilla: 'Un árbol conecta todo sin dar vueltas en círculo: entre dos puntos siempre hay un único camino. Si el dibujo está partido en varios grupos sin ciclos, es un bosque.',
@@ -371,6 +376,7 @@
       sencilla: 'Paso: una acción. Iteración: una vuelta completa. Condición de parada: la señal de «ya terminamos».',
       ejemplo: 'En Bubble Sort, comparar dos vecinos es un paso; recorrer toda la lista una vez es una iteración (pasada); la condición de parada es «no hubo intercambios en la última pasada».',
       detalle: 'Los módulos muestran cada paso como un evento que puedes avanzar o retroceder. En Johnson, Bellman-Ford repite pasadas hasta que no hay mejoras o hasta V − 1 veces. En Kruskal se detiene al tener V − 1 aristas o al acabar la lista. El contador de pasos de la pantalla cuenta eventos registrados, no iteraciones.',
+      detalleAutorizado: 'Los módulos muestran cada paso como un evento que puedes avanzar o retroceder. En Johnson, Bellman-Ford repite pasadas hasta que no hay mejoras o hasta V − 1 veces, y comprueba después si existe un ciclo negativo. Kruskal registra todas las aristas para explicar aceptaciones y descartes, incluso cuando el árbol ya está completo. El contador de la pantalla cuenta eventos registrados, no iteraciones.',
       relacionadas: ['basico.algoritmo', 'aplicacion.pasos-controles']
     },
     {

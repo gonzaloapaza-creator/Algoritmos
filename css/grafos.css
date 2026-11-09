@@ -226,3 +226,31 @@
   .gm-avance .btn { width: 100%; }
 }
 @media print { .gm-herramientas, .gm-editor, .gm-config, .gm-flujo, .gm-zoom, .gm-cinta { display: none !important; } .gm-lienzo { max-height: none; overflow: visible; } .gm-lienzo svg { min-width: 0; } .gm-distribucion { display: block; } }
+
+/* Fase 1: herramientas y resultados exclusivos de los dos editores de grafos. */
+.grafo-modulo .gm-distribucion, .grafo-modulo .gm-distribucion[data-vista=procedimiento], .grafo-modulo .gm-distribucion[data-vista=resultado] { grid-template-columns: minmax(0, 1.8fr) minmax(290px, 1fr); }
+.grafo-modulo .gm-distribucion.gm-ampliado { grid-template-columns: minmax(0, 1fr); }
+.grafo-modulo .gm-lienzo { max-height: none; }
+.grafo-modulo .gm-lienzo svg { height: clamp(400px, 46vw, 600px); touch-action: none; user-select: none; }
+.grafo-modulo .gm-editor-herramientas { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px; border-bottom: 1px solid var(--borde); }
+.grafo-modulo .gm-editor-herramientas .btn { min-height: 44px; padding: 8px 10px; white-space: normal; font-size: .78rem; }
+.grafo-modulo .gm-editor-herramientas [aria-pressed=true] { border-color: var(--acento); color: var(--acento-fuerte); background: var(--acento-tinte); }
+.grafo-modulo .gm-herramienta-estado { padding: 0 12px 12px; margin: 0; font-size: .78rem; color: var(--texto-suave); line-height: 1.6; }
+.grafo-modulo .gm-consulta { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; padding: 12px; border-block: 1px solid var(--borde); background: var(--bg); }
+.grafo-modulo .gm-consulta > div { display: grid; grid-template-columns: repeat(3, minmax(90px, 1fr)); gap: 4px 8px; flex: 1 1 100%; }
+.grafo-modulo .gm-consulta #configKruskal { grid-template-columns: 1fr; }
+.grafo-modulo .gm-consulta label { grid-row: 1; margin: 0; font-size: .76rem; font-weight: 650; }
+.grafo-modulo .gm-consulta select { grid-row: 2; min-width: 0; width: 100%; }
+.grafo-modulo .gm-consulta > .btn { min-height: 44px; white-space: normal; }
+.grafo-modulo #svgModuloGrafo[data-herramienta=crear] { cursor: crosshair; }
+.grafo-modulo #svgModuloGrafo[data-herramienta=conectar] .nodo-editor-grafo { cursor: crosshair; }
+.grafo-modulo #svgModuloGrafo[data-herramienta=desplazar], .grafo-modulo #svgModuloGrafo[data-herramienta=desplazar] .nodo-editor-grafo { cursor: grab; }
+.grafo-modulo .gm-extremo-conexion circle { stroke: var(--aviso); stroke-width: 6; stroke-dasharray: 4 3; }
+.grafo-modulo .gm-lienzo .gm-distancia-nodo { font-size: var(--gm-peso, 18px); font-weight: 650; }
+.grafo-modulo .arista-editor-grafo.descartada .gm-arista-linea { stroke-dasharray: 6 6; opacity: .55; }
+.grafo-modulo .gm-arista-secundaria .gm-arista-linea { opacity: .5; }
+.grafo-modulo .gm-tramos-ruta { margin-top: 8px; font-size: .8rem; }
+.grafo-modulo .gm-ampliado .gm-lienzo svg { height: min(720px, 75vh); }
+@media (max-width: 1199px) { .grafo-modulo .gm-distribucion, .grafo-modulo .gm-distribucion[data-vista=procedimiento], .grafo-modulo .gm-distribucion[data-vista=resultado] { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) { .grafo-modulo .gm-lienzo svg { height: 390px; } .grafo-modulo .gm-consulta > div { grid-template-columns: minmax(0, 1fr); } .grafo-modulo .gm-consulta label, .grafo-modulo .gm-consulta select { grid-row: auto; } .grafo-modulo .gm-consulta > .btn { width: 100%; } }
+@media print { .grafo-modulo .gm-editor-herramientas, .grafo-modulo .gm-herramienta-estado, .grafo-modulo .gm-consulta { display: none !important; } }

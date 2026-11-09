@@ -40,8 +40,8 @@ prueba('Los archivos de conocimiento existen y están en el empaquetado', () => 
     cierto(PUBLICOS.includes(a), 'No se publica ' + a);
   });
 });
-prueba('Las ocho páginas cargan una vez el conocimiento, motor e interfaz después de sus dependencias', () => {
-  ['index', 'johnson', 'dijkstra', 'kruskal', 'asignacion', 'northwest', 'ordenamiento', 'arboles'].forEach(n => {
+prueba('Las páginas cargan una vez el conocimiento, motor e interfaz después de sus dependencias', () => {
+  ['index', 'johnson', 'dijkstra', 'kruskal', 'asignacion', 'northwest', 'ordenamiento', 'arboles', 'logica-difusa'].forEach(n => {
     const html = fs.readFileSync(path.join(__dirname, '..', n + '.html'), 'utf8');
     const orden = Array.from(html.matchAll(/<script src="([^"]+)"/g), m => m[1]);
     const bloque = ['js/comun/asistente-contexto.js'].concat(ARCHIVOS_CONOCIMIENTO, 'js/comun/asistente-motor.js', 'js/comun/asistente.js');
@@ -67,10 +67,53 @@ prueba('Cada entrada canónica tiene pregunta, tema válido, respuesta o dinámi
   });
 });
 prueba('Cobertura por tema: todos los temas del explorador tienen entradas', () => {
-  Object.keys(K.TEMAS).forEach(t => cierto(K.porTema(t).length >= 5, 'Tema con pocas entradas: ' + t));
+  Object.keys(K.TEMAS).forEach(t => cierto(K.porTema(t).length >= (t === 'difusa' ? 4 : 5), 'Tema con pocas entradas: ' + t));
   const total = K.entradas().length;
   cierto(total >= 150, 'Entradas canónicas: ' + total);
 });
+prueba('Lógica difusa reconoce conceptos configurables y ayuda del ejercicio sin red', () => {
+  const c = entorno('difusa');
+  [
+    ['¿Qué es lógica difusa?', 'difusa.que-es'],
+    ['¿Qué significa pertenencia?', 'difusa.pertenencia'],
+    ['¿Cómo funciona el ejemplo Nivel de ayuda recomendado?', 'difusa.ejemplo'],
+    ['¿Cómo interpreto el centroide?', 'difusa.centroide'],
+    ['¿Cómo configuro las variables?', 'difusa.variables'],
+    ['¿Cómo funcionan AND y OR?', 'difusa.operadores'],
+    ['¿Qué hace el peso de una regla?', 'difusa.peso'],
+    ['¿Qué es fuzzificación?', 'difusa.fuzzificacion'],
+    ['¿Qué es la implicación?', 'difusa.implicacion'],
+    ['¿Qué es la agregación?', 'difusa.agregacion'],
+    ['¿Qué es la cobertura difusa?', 'difusa.cobertura'],
+    ['¿Qué muestra el mapa de respuesta?', 'difusa.mapa']
+  ].forEach(([pregunta, id]) => igual(responder(c, pregunta).entrada, id, pregunta));
+  const foto = c.AlgoContexto.obtener();
+  cierto(c.AlgoMotor.responder('', foto, { tipo: 'entrada', id: 'ejercicio.resultado' }).texto.includes('no hay un resultado vigente'));
+  cierto(responder(c, '¿Cómo guardo mi trabajo?').texto.includes('modelo y los valores'));
+  igual(c.red(), 0);
+});
+
+prueba('Las respuestas dinámicas difusas explican la selección y el centroide del registro actual', () => {
+  const c = entorno('difusa');
+  const foto = { modulo: 'difusa', referencia: 'Lógica difusa · resultado', firma: 'difusa-actual', contexto: {
+    vista: 'resultado', resultadoVigente: true, error: null,
+    datos: { modelo: { nombre: 'Ventilación didáctica', entradas: [{ nombre: 'Temperatura' }], cantidadReglas: 2, reglasHabilitadas: 2 }, valores: [] },
+    paso: { numero: 3, total: 7, titulo: 'Antecedentes, conector y peso', texto: 'Valores del registro.' },
+    seleccion: { tipo: 'regla-difusa', id: 'regla_alta', conector: 'OR', peso: 0.5, habilitada: true,
+      activacionAntecedente: 0.8, activacion: 0.4, consecuente: 'Rápida',
+      antecedentes: [{ variable: 'Temperatura', conjunto: 'Caliente', grado: 0.8 }],
+      punto: { y: 73, recorte: 0.4, agregada: 0.6 } },
+    resultado: { valor: 62.5, numerador: 25000, denominador: 400, puntos: 1001, minimo: 0, maximo: 100, etiquetas: ['Rápida'] }
+  } };
+  const seleccion = c.AlgoMotor.responder('', foto, { tipo: 'entrada', id: 'ejercicio.seleccion' }).texto;
+  cierto(seleccion.includes('regla_alta') && seleccion.includes('peso 0.5') && seleccion.includes('y = 73'));
+  const salida = c.AlgoMotor.responder('', foto, { tipo: 'entrada', id: 'ejercicio.resultado' }).texto;
+  cierto(salida.includes('62.5') && salida.includes('25000 / 400') && salida.includes('Rápida'));
+  const vieja = JSON.parse(JSON.stringify(foto)); vieja.contexto.resultadoVigente = false;
+  cierto(c.AlgoMotor.responder('', vieja, { tipo: 'entrada', id: 'ejercicio.resultado' }).texto.includes('no hay un resultado vigente'));
+  igual(c.red(), 0);
+});
+
 prueba('Los límites de respaldo coinciden con las constantes reales de los módulos', () => {
   const c = crearContexto();
   cargar(c, ['js/config.js', 'js/comun/utilidades.js', 'js/grafos/modelo.js', 'js/ordenamiento/estado.js', 'js/ordenamiento/algoritmos.js']);

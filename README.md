@@ -1,6 +1,6 @@
 # Ciudad de los Algoritmos
 
-Proyecto de la materia **Análisis de Algoritmos** del grupo **Los Fanáticos del Nabo**: aplicación web educativa de investigación de operaciones y estructuras de datos. Siete módulos:
+Proyecto de la materia **Análisis de Algoritmos** del grupo **Los Fanáticos del Nabo**: aplicación web educativa de investigación de operaciones, estructuras de datos y decisiones. Ocho módulos:
 
 | Categoría | Módulo | Entrada | Resultado |
 |---|---|---|---|
@@ -11,10 +11,11 @@ Proyecto de la materia **Análisis de Algoritmos** del grupo **Los Fanáticos de
 | Transporte | **Esquina noroeste** | Matriz de costos, oferta y demanda | Solución inicial factible paso a paso |
 | Ordenamiento | **Ordenamiento (Bowling)** | 3–200 enteros entre 1 y 99 | Selection, Insertion, Bubble, Shell y Merge Sort animados con pinos, pseudocódigo e historial |
 | Árboles | **Árboles binarios** | 1–31 enteros únicos entre −999 y 999, o recorridos | Árbol SVG, recorridos animados y reconstrucción validada |
+| Decisiones y lógica | **Lógica difusa · Mamdani** | Sistema configurable de 1–3 entradas, conjuntos y reglas AND/OR con peso | Pertenencias, recortes, centroide y mapa de respuesta SVG |
 
-Sin compilación ni dependencias de aplicación: HTML, CSS y JavaScript planos, con servidor Node estático local y ayuda interactiva local de Algo. Sin base de datos. Los siete módulos ofrecen ayuda textual y una presentación en video. Dijkstra usa `UnsRfl6xw2o` y Kruskal, `Wo-Pk0Iq3oU`.
+Sin compilación ni dependencias de aplicación: HTML, CSS y JavaScript planos, con servidor Node estático local y ayuda interactiva local de Algo. Sin base de datos. Todos ofrecen ayuda textual y presentación en video. Lógica difusa utiliza la introducción común y registra su video una sola vez en el catálogo, sin reproducción automática. Dijkstra usa `UnsRfl6xw2o` y Kruskal, `Wo-Pk0Iq3oU`.
 
-El inicio es una ciudad SVG con siete zonas seleccionables y un panel con entrada, resultado y acceso a cada módulo. En móvil, las escenas se conectan en una columna y el acceso al módulo seleccionado permanece visible mientras recorres la ciudad. «Vista lista» ofrece el mismo catálogo por categorías. La vista y la pausa de demostraciones se recuerdan en `ui.inicio.vista.v1` y `ui.inicio.movimiento.v1`; se respeta el movimiento reducido del sistema. Los trabajos recientes usan la biblioteca local existente: abren «Cargar» sin reemplazar el ejercicio hasta confirmar. Fundamentos, videos y equipo continúan al final del inicio.
+El inicio es una ciudad SVG con ocho zonas seleccionables y un panel con entrada, resultado y acceso a cada módulo. En móvil, las escenas se conectan en una columna y el acceso al módulo seleccionado permanece visible mientras recorres la ciudad. «Vista lista» ofrece el mismo catálogo por categorías. La vista y la pausa de demostraciones se recuerdan en `ui.inicio.vista.v1` y `ui.inicio.movimiento.v1`; se respeta el movimiento reducido del sistema. Los trabajos recientes usan la biblioteca local existente: abren «Cargar» sin reemplazar el ejercicio hasta confirmar. Fundamentos, videos y equipo continúan al final del inicio.
 
 ### Equipo
 
@@ -39,7 +40,7 @@ Conserva la dirección que ya utilizabas: `http://localhost:8123` y `http://127.
 
 Los HTML son estáticos, pero abrirlos mediante `file://` no se ha verificado para este cierre y el almacenamiento depende del navegador; para la presentación usa el servidor y tu dirección habitual.
 
-Páginas: `index.html`, `johnson.html`, `dijkstra.html`, `kruskal.html`, `asignacion.html`, `northwest.html`, `ordenamiento.html` y `arboles.html`.
+Páginas: `index.html`, `johnson.html`, `dijkstra.html`, `kruskal.html`, `asignacion.html`, `northwest.html`, `ordenamiento.html`, `arboles.html` y `logica-difusa.html`.
 
 ### Consulta de caminos en Johnson
 
@@ -49,13 +50,23 @@ Los nodos se dividen en T, con el nombre arriba y dos valores abajo. En la consu
 
 Zoom, desplazamiento, ajuste y ampliación conservan las posiciones del editor. PNG e impresión incluyen valores y leyenda; las tablas secundarias son plegables. La entrega anterior de esta consulta se limitó al proyecto local y no regeneró el Drop ni el ZIP. El [ajuste de Johnson del 8 de noviembre de 2026](docs/AJUSTE_JOHNSON_2026-11-08.md) registra el contrato actualizado y sus comprobaciones, sin reemplazar los informes de entregas anteriores.
 
+### Lógica difusa
+
+Desde la ciudad, abre **Centro de decisiones → Lógica difusa**, o visita `http://127.0.0.1:8123/logica-difusa.html` después de `npm start`. Sus cinco vistas separan Inicio y ejemplos, Variables, Reglas, Evaluar y Procedimiento/resultado. Elige Ayuda, Propina o Ventilación, o pulsa **Crear mi sistema**. Configura de 1 a 3 entradas, una salida, 2–5 conjuntos triangulares/trapezoidales por variable y hasta 125 reglas AND/OR con peso. Aplica los borradores antes de evaluar. El ejemplo original conserva sus funciones y nueve reglas; no mide el aprendizaje.
+
+AND usa mínimo; OR máximo; el peso multiplica la activación. Implicación por mínimo y agregación por máximo. El centroide continuo integra la envolvente por tramos lineales, incluidos nudos, recortes e intersecciones; las 1001 muestras son solo consultas auxiliares. El triángulo estrecho [0.01,0.02,0.03] activado a 1 da 0.02. La gráfica conserva los segmentos exactos y cada punto del mapa usa el mismo centroide. Se distinguen ausencia de activación, activación sin masa, fallo numérico y resultado válido sin etiqueta. Los resultados pueden diferir ligeramente de las antiguas sumas discretas. El mapa sigue siendo una exploración de entradas bajo petición, por lotes cancelables: curva de 101 puntos o rejilla 15×15. Los ejemplos son didácticos, sin calibración para decisiones o control real.
+
+Autoguardado independiente en `logica-difusa.v2`, migración del anterior conservando el original, trabajos con nombre y JSON de trabajo validado antes de importar. El **JSON de comparación** tiene un formato distinto y no restaura trabajos. No se persisten muestras, recortes ni mapas. Algo incluye 14 ayudas del módulo y contexto real acotado, sin copiar las 1001 muestras ni usar APIs.
+
+`npm.cmd run test:difusa` ejecuta solo las pruebas dirigidas del módulo; `node tests/logica-difusa-navegador.js` revisa el Drop sin capturas. **Comparación con MATLAB pendiente**: `matlab/validar_sistema_difuso.m` admite el JSON de comparación v2; la referencia original sigue en `matlab/validar_logica_difusa.m`. Requieren MATLAB R2018b+ y Fuzzy Logic Toolbox únicamente para esa comparación. Formatos, resultados y límites en [ENTREGA_LOGICA_DIFUSA.md](ENTREGA_LOGICA_DIFUSA.md).
+
 Parámetros útiles: `?intro=no` salta la presentación con video; `index.html?simular=10` muestra un catálogo simulado (entradas marcadas «Próximamente», nunca enlazadas) para revisar el diseño con muchas entradas.
 
 Navegador comprobado: Microsoft Edge 156.0.4314.58 en Windows, en modo headless y con contextos aislados. Se prevé uso en navegadores modernos con Pointer Events, ResizeObserver, `dvh/svh`, `:has()` y `aspect-ratio`; otros motores y dispositivos requieren comprobación. No se certifican teléfono físico, teclado virtual ni proyector.
 
 ### Asistente educativo Algo
 
-Algo ofrece **Ayuda interactiva** en una sola conversación local, con 195 entradas canónicas y 1.060 variantes declaradas. Cubre conceptos, matrices, grafos, los siete módulos, uso y problemas frecuentes. Incluye **Explorar temas**, buscador, ejemplos, comparaciones y botones para ampliar cada respuesta.
+Algo ofrece **Ayuda interactiva** en una sola conversación local, con 209 entradas canónicas. Cubre conceptos, matrices, grafos, los ocho módulos, uso y problemas frecuentes. Incluye **Explorar temas**, buscador, ejemplos, comparaciones y botones para ampliar cada respuesta. En Lógica difusa también explica la selección y el centroide del resultado vigente mediante un contexto acotado.
 
 Abre el robot, escribe una pregunta o elige una sugerencia y pulsa **Enviar**. Usa «Más sencillo», «Ver un ejemplo», «Más detalle» y las preguntas relacionadas para continuar. Las acciones de paso y resultado aparecen cuando hay un cálculo vigente. Las explicaciones leen el estado y sus pasos ya calculados; no modifican datos ni ejecutan otro motor matemático. Si el resultado quedó invalidado, pide recalcular. Las preguntas no cubiertas reciben una respuesta honesta y sugerencias.
 
@@ -67,7 +78,7 @@ Algo usa conocimiento preparado: no verifica ejercicios nuevos escritos en el ch
 
 Las entradas están en `js/comun/conocimiento/`. Edita la entrada existente y conserva su `id`; añade formulaciones equivalentes a `variantes`. Cada entrada declara `tema`, `modulos`, `pregunta`, `conceptos` y `breve`. Los campos opcionales `sencilla`, `ejemplo`, `detalle`, `relacionadas` y `comparar` habilitan sus acciones. Los límites configurables se obtienen mediante `AlgoConocimiento.limites()`.
 
-Las respuestas del ejercicio se construyen en `asistente-motor.js` con los campos explícitos de `asistente-contexto.js`, sin ejecutar algoritmos nuevos. Las ocho páginas cargan configuración/utilidades y el módulo, contexto, `base.js`, siete archivos temáticos, motor e interfaz, en ese orden. Si añades un archivo, inclúyelo también en `PUBLICOS` de `scripts/preparar-netlify.js`.
+Las respuestas del ejercicio se construyen en `asistente-motor.js` con los campos explícitos de `asistente-contexto.js`, sin ejecutar algoritmos nuevos. Las nueve páginas cargan configuración/utilidades y el módulo, contexto, `base.js`, siete archivos temáticos, motor e interfaz, en ese orden. Si añades un archivo, inclúyelo también en `PUBLICOS` de `scripts/preparar-netlify.js`.
 
 Pruebas dirigidas, sin suites matemáticas generales:
 
@@ -83,7 +94,7 @@ La prueba funcional del asistente usa Edge headless y no genera capturas. Compru
 
 ### Publicar en Netlify Drop
 
-`npm.cmd run preparar:netlify` genera `public/`, `entrega-netlify/drop/` y `entrega-netlify/ciudad-algoritmos-netlify.zip`. El paquete contiene 90 archivos públicos con `index.html` en la raíz, sin `.env`, claves, `.git`, pruebas, capturas, servidor ni Functions.
+`npm.cmd run preparar:netlify` genera `public/`, `entrega-netlify/drop/` y `entrega-netlify/ciudad-algoritmos-netlify.zip`. El paquete usa la lista pública explícita del script, con `index.html` en la raíz, sin `.env`, claves, `.git`, pruebas, capturas, servidor ni Functions. Incluye `js/johnson/caminos.js`, Lógica difusa, su ayuda local y el proveedor de recientes. MATLAB y los informes quedan fuera del paquete público. Rutas de subida y traslado de ejercicios en [PUBLICAR_NETLIFY.md](PUBLICAR_NETLIFY.md).
 
 1. Abre el proyecto existente **tranquil-palmier-b1959c** en Netlify.
 2. Entra en **Deploys** y arrastra la carpeta **`entrega-netlify/drop`** a la zona de carga manual. Si usas el ZIP, extráelo primero y arrastra la carpeta que contiene `index.html` directamente.
@@ -123,7 +134,7 @@ grafo/
 │   │   ├── navegacion.js    Barra lateral + cabecera construidas desde el catálogo
 │   │   ├── intro.js         Presentación con video (YouTube nocookie) antes del algoritmo
 │   │   ├── inicio.js        Selección de zonas, lista, preferencias y recientes
-│   │   ├── ciudad.js        Ilustraciones SVG propias de los siete edificios
+│   │   ├── ciudad.js        Ilustraciones SVG propias de los ocho edificios
 │   │   ├── dialogo.js       Ventana modal compartida (confirmar / informar / pedir dato)
 │   │   ├── notificaciones.js  Toasts
 │   │   ├── guardados.js     «Mis trabajos»: guardar, cargar, renombrar, eliminar, exportar e importar por módulo

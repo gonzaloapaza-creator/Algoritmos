@@ -285,6 +285,28 @@ prueba('API indexada grande consulta snapshots a demanda sin conservarlos por ev
   igual(h.map(p => p.tipo)[h.length - 1], 'fin', 'map conserva la API nativa');
 });
 
+prueba('Shell H07: panel auxiliar conserva los índices reales [0,4,8] en texto y etiquetas accesibles', () => {
+  const fs = require('fs'), path = require('path'), vm = require('vm');
+  const codigo = fs.readFileSync(path.join(__dirname, '../js/ordenamiento/app.js'), 'utf8');
+  const funcion = codigo.slice(codigo.indexOf('function renderPinosAuxiliares('), codigo.indexOf('\nfunction actualizarAuxiliar('));
+  const crearElemento = () => ({ children: [], textContent: '', attrs: {}, append(...hijos) { this.children.push(...hijos); }, appendChild(hijo) { this.children.push(hijo); }, get firstElementChild() { return this.children[0]; }, get lastElementChild() { return this.children[this.children.length - 1]; }, setAttribute(clave, valor) { this.attrs[clave] = valor; } });
+  const c = crearContexto(); c.document = { createElement: crearElemento };
+  vm.runInContext(funcion, c);
+  const contenedor = crearElemento();
+  c.renderPinosAuxiliares(contenedor, [{ id: 'p0', valor: 9 }, { id: 'p4', valor: 5 }, { id: 'p8', valor: 1 }], [0, 4, 8]);
+  igual(contenedor.children.map(e => e.lastElementChild.textContent), ['0', '4', '8']);
+  cierto(contenedor.children.every((e, i) => e.attrs['aria-label'].includes('Posición ' + [0, 4, 8][i])));
+});
+
+prueba('Duración de reproducción usa intervalos pendientes y velocidad; es independiente del tiempo de cálculo', () => {
+  igual(ctx.estimarDuracionOrdenamiento(10, '120', 4), { totalMs: 1080, restanteMs: 600 });
+  igual(ctx.estimarDuracionOrdenamiento(10, '650', 9), { totalMs: 5850, restanteMs: 0 });
+  igual(ctx.estimarDuracionOrdenamiento(0, '120', 99), { totalMs: 0, restanteMs: 0 });
+  igual(ctx.formatearDuracionOrdenamiento(1080), '2 s');
+  igual(ctx.formatearDuracionOrdenamiento(60000), '1 min');
+  igual(ctx.formatearDuracionOrdenamiento(5400000), '1 h 30 min');
+});
+
 async function verificarPreparacion() {
   let cesiones = 0;
   let cancelado = false;

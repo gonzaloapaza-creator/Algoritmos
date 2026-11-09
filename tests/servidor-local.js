@@ -5,7 +5,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const RAIZ = path.resolve(__dirname, '..');
-const PAGINAS = new Set(['index.html', 'johnson.html', 'dijkstra.html', 'kruskal.html', 'asignacion.html', 'northwest.html', 'ordenamiento.html', 'arboles.html']);
+const PAGINAS = new Set(['index.html', 'johnson.html', 'dijkstra.html', 'kruskal.html', 'asignacion.html', 'northwest.html', 'ordenamiento.html', 'arboles.html', 'logica-difusa.html']);
 const IMAGENES = new Set(['.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico']);
 const TIPOS = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',

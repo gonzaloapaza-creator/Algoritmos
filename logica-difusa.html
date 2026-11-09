@@ -1,0 +1,90 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Configura y explora sistemas de lógica difusa Mamdani: variables, funciones, reglas AND/OR, centroide y mapa de respuesta." />
+  <meta name="theme-color" content="#0b1020" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M3 26L11 6L21 26M11 26L23 6L29 26' fill='none' stroke='%235b8cff' stroke-width='3'/></svg>" />
+  <title>Lógica difusa · Mamdani | Ciudad de los Algoritmos</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="js/comun/tema.js"></script>
+  <link rel="stylesheet" href="css/shell.css" />
+  <link rel="stylesheet" href="css/difusa.css" />
+  <link rel="stylesheet" href="css/asistente.css" />
+</head>
+<body class="page-difusa" data-modulo="difusa">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <header class="topbar">
+    <button type="button" class="btn btn-fantasma btn-icono topbar__menu" id="btnMenuLateral" aria-label="Abrir menú" aria-expanded="false" aria-controls="barraLateral"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <a class="topbar__marca" href="index.html" aria-label="Ciudad de los Algoritmos · Inicio"><svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="9" cy="23" r="5"></circle><circle cx="23" cy="9" r="5"></circle><line x1="12" y1="20" x2="20" y2="12"></line></svg><span>Algoritmos</span></a>
+    <span class="topbar__separador" aria-hidden="true"></span><span class="topbar__modulo" id="topbarModulo">Lógica difusa</span>
+    <div class="topbar__acciones"><button type="button" class="btn btn-fantasma btn-sm" id="btnVideoModulo" aria-pressed="false">Video</button><button type="button" class="btn btn-fantasma btn-sm" id="btnAyuda">Ayuda</button></div>
+  </header>
+  <aside class="sidebar" id="barraLateral" aria-label="Navegación principal"></aside><div class="sidebar-fondo" id="barraLateralFondo" hidden></div>
+  <main class="contenido" id="contenido">
+    <section id="introModulo" hidden></section>
+    <div id="moduloContenido">
+      <header class="modulo-cabecera"><div class="modulo-cabecera__texto"><h1>Lógica difusa · Mamdani</h1><p>Configura categorías graduales, conecta reglas y sigue cómo producen un resultado.</p></div></header>
+      <div class="difusa-barra-trabajo" role="group" aria-label="Trabajos del módulo"><button type="button" class="btn btn-neutral" id="guardarTrabajoDifusa">Guardar trabajo</button><button type="button" class="btn btn-neutral" id="verTrabajosDifusa">Mis trabajos</button><button type="button" class="btn btn-neutral" id="exportarTrabajoDifusa">Exportar trabajo JSON</button><button type="button" class="btn btn-neutral" id="importarTrabajoDifusa">Importar trabajo JSON</button><input type="file" id="archivoTrabajoDifusa" accept=".json,application/json" hidden /></div>
+      <div id="proteccionDifusa" class="difusa-aviso" hidden><p>Se conserva un autoguardado incompatible. Las escrituras están pausadas; puedes trabajar en esta sesión.</p><button type="button" class="btn btn-neutral" id="respaldarOriginalDifusa">Descargar original</button><button type="button" class="btn btn-neutral" id="usarActualDifusa">Usar sistema actual</button></div>
+      <p id="estadoDifusa" class="difusa-estado" role="status" aria-live="polite"></p><p id="almacenamientoDifusa" class="difusa-pista" role="status"></p>
+      <nav class="difusa-etapas" aria-label="Vistas del módulo"><button type="button" data-vista="inicio" aria-current="step">1. Inicio y ejemplos</button><button type="button" data-vista="variables">2. Variables</button><button type="button" data-vista="reglas">3. Reglas</button><button type="button" data-vista="evaluar">4. Evaluar</button><button type="button" data-vista="resultado">5. Procedimiento y resultado</button></nav>
+      <div id="preparacionDifusa" class="difusa-preparacion" role="status"></div>
+
+      <section class="tarjeta difusa-vista" id="vista-inicio" aria-labelledby="tituloInicioDifusa">
+        <h2 id="tituloInicioDifusa" tabindex="-1">Empieza con una idea</h2><p>La lógica difusa permite que un valor pertenezca parcialmente a varias categorías. Prueba un sistema listo o crea uno con tus propias variables y decisiones.</p>
+        <div class="difusa-ejemplos-grid">
+          <article class="difusa-ejemplo"><h3>Nivel de ayuda recomendado</h3><p>Familiaridad y dificultad → detalle de una explicación. Conserva las nueve reglas del ejemplo original.</p><button type="button" class="btn btn-primary" data-cargar-ejemplo="ayuda">Usar ejemplo de ayuda</button></article>
+          <article class="difusa-ejemplo"><h3>Propina sugerida</h3><p>Servicio y comida → porcentaje de propina. Explora transiciones suaves entre valoraciones.</p><button type="button" class="btn btn-secondary" data-cargar-ejemplo="propina">Usar ejemplo de propina</button></article>
+          <article class="difusa-ejemplo"><h3>Velocidad de ventilación</h3><p>Temperatura → velocidad del ventilador. Un ejemplo sencillo con una entrada y unidades.</p><button type="button" class="btn btn-secondary" data-cargar-ejemplo="ventilacion">Usar ejemplo de ventilación</button></article>
+        </div>
+        <div class="difusa-acciones"><button type="button" class="btn btn-neutral" id="crearSistemaDifusa">Crear mi sistema</button><button type="button" class="btn btn-primary" data-ir="evaluar">Evaluar el sistema actual</button></div>
+        <div class="difusa-aviso"><p>Los ejemplos son demostraciones didácticas con parámetros escogidos, no modelos calibrados ni recomendaciones de control real. El ejemplo de ayuda no mide ni califica el aprendizaje.</p></div>
+        <details><summary>Ficha de configuración y límites</summary><p>Mamdani tipo 1 · de 1 a 3 entradas · una salida · de 2 a 5 conjuntos por variable · de 1 a 125 reglas.</p><p>AND: mínimo. OR: máximo. Peso: multiplica la activación. Implicación: mínimo. Agregación: máximo. Defuzzificación: centroide continuo por integración de la envolvente lineal; 1001 puntos solo para consulta auxiliar.</p><p>Los nombres admiten 1–40 caracteres. Los números finitos y dominios están limitados a −1000000…1000000. «No importa» excluye ese antecedente; cada regla debe usar al menos una entrada.</p></details>
+      </section>
+
+      <section class="tarjeta difusa-vista" id="vista-variables" aria-labelledby="tituloVariablesDifusa" hidden>
+        <div class="difusa-cabecera-seccion"><div><h2 id="tituloVariablesDifusa" tabindex="-1">Variables y pertenencias</h2><p>Edita una variable y observa sus curvas. Pertenencia no significa probabilidad.</p></div><button type="button" class="btn btn-primary" id="agregarEntradaDifusa">Añadir entrada</button></div>
+        <div class="difusa-editor-layout"><div id="editorVariablesDifusa"></div><div class="difusa-preview"><h3 id="tituloPreviewDifusa">Vista previa</h3><div id="previewVariableDifusa"></div><div id="leyendaPreviewDifusa" class="difusa-leyenda"></div><p id="coberturaVariableDifusa" class="difusa-pista"></p></div></div>
+        <div class="difusa-acciones"><button type="button" class="btn btn-primary" data-ir="reglas">Continuar a reglas</button></div>
+      </section>
+
+      <section class="tarjeta difusa-vista" id="vista-reglas" aria-labelledby="tituloReglasDifusa" hidden>
+        <div class="difusa-cabecera-seccion"><div><h2 id="tituloReglasDifusa" tabindex="-1">Reglas del sistema</h2><p>Elige antecedentes y un consecuente. AND usa el mínimo; OR el máximo. El peso multiplica ese grado antes de recortar la salida.</p></div><div class="difusa-acciones"><button type="button" class="btn btn-primary" id="agregarReglaDifusa">Añadir regla</button><button type="button" class="btn btn-neutral" id="generarCombinacionesDifusa">Generar combinaciones</button></div></div>
+        <p id="avisosReglasDifusa" class="difusa-aviso"></p><div id="editorReglasDifusa" class="difusa-reglas-editor"></div>
+        <div class="difusa-acciones"><button type="button" class="btn btn-primary" data-ir="evaluar">Continuar a evaluación</button></div>
+      </section>
+
+      <section class="tarjeta difusa-vista" id="vista-evaluar" aria-labelledby="tituloEvaluarDifusa" hidden>
+        <h2 id="tituloEvaluarDifusa" tabindex="-1">Valores para esta evaluación</h2><p>Los valores son independientes de la configuración del sistema. Escribe un número con punto o coma decimal, o usa el deslizador.</p>
+        <form id="formDifusa" novalidate><div id="controlesEntradasDifusa" class="difusa-dos-columnas"></div><div class="difusa-acciones"><button type="submit" class="btn btn-primary" id="evaluarDifusa">Evaluar</button><button type="button" class="btn btn-neutral" id="restablecerValoresDifusa">Restablecer valores iniciales</button></div></form>
+        <div id="ejemplosRapidosDifusa" class="difusa-acciones" hidden><span>Valores del ejemplo de ayuda:</span><button type="button" class="btn btn-secondary" data-ejemplo-difusa="2,8">2 y 8</button><button type="button" class="btn btn-secondary" data-ejemplo-difusa="5,5">5 y 5</button><button type="button" class="btn btn-secondary" data-ejemplo-difusa="8,2">8 y 2</button></div>
+        <div id="coberturaSistemaDifusa" class="difusa-aviso"></div>
+      </section>
+
+      <section class="tarjeta difusa-vista" id="vista-resultado" aria-labelledby="tituloResultadoDifusa" hidden>
+        <div class="difusa-cabecera-seccion"><h2 id="tituloResultadoDifusa" tabindex="-1">Procedimiento y resultado</h2><button type="button" class="btn btn-primary" data-ir="evaluar">Volver a evaluar</button></div>
+        <div id="resumenResultado" class="difusa-resultado" role="status" aria-live="polite"></div>
+        <div id="procedimientoVigenteDifusa" hidden>
+          <h3>A. Entradas y pertenencias</h3><div id="graficasEntradasDifusa" class="difusa-dos-columnas"></div><div class="difusa-tabla-contenedor" tabindex="0" role="region" aria-label="Grados de pertenencia"><table class="difusa-tabla"><caption>Pertenencias de las entradas evaluadas</caption><thead><tr><th scope="col">Variable y valor</th><th scope="col">Conjunto</th><th scope="col">Grado</th></tr></thead><tbody id="tablaPertenencias"></tbody></table></div>
+          <h3>B. Activación de reglas</h3><div class="difusa-tabla-contenedor" tabindex="0" role="region" aria-label="Operaciones de las reglas"><table class="difusa-tabla difusa-tabla--reglas"><caption>Operaciones de esta ejecución</caption><thead><tr><th scope="col">Regla y estado</th><th scope="col">Antecedentes</th><th scope="col">Operación y peso</th><th scope="col">Consecuente</th></tr></thead><tbody id="tablaReglas"></tbody></table></div>
+          <h3>C. Implicación y agregación</h3><div class="difusa-controles-fila"><div class="campo"><label class="campo__etiqueta" for="seleccionReglaDifusa">Regla cuyo recorte deseas observar</label><select class="entrada" id="seleccionReglaDifusa"></select></div><div class="campo"><label class="campo__etiqueta" for="puntoSalidaDifusa">Punto del eje de salida (índice 0–1000)</label><input type="range" id="puntoSalidaDifusa" min="0" max="1000" step="1" value="500" /><output id="valorPuntoSalidaDifusa"></output></div></div>
+          <div id="graficaSalida"></div><div id="leyendaSalidaDifusa" class="difusa-leyenda"></div><p id="explicacionRecorteDifusa" class="difusa-calculo"></p><p id="consultaPuntoDifusa" class="difusa-calculo"></p>
+          <h3>D. Centroide</h3><div id="calculoCentroide" class="difusa-calculo"></div><p>El número es el resultado principal. Las etiquetas adicionales describen sus mayores pertenencias de salida, conservando los empates. Pertenencia no significa probabilidad.</p>
+          <details id="procedimientoDifusa"><summary>Registro completo de este cálculo</summary><ol id="pasosDifusa"></ol></details>
+        </div>
+        <details id="panelMapaDifusa"><summary>Mapa de respuesta</summary><p>Se calcula bajo petición con el motor del sistema. Las celdas con una cruz no tienen salida. Es un muestreo para explorar el comportamiento; no demuestra cobertura exhaustiva.</p><div id="controlesMapaDifusa" class="difusa-controles-fila"></div><div class="difusa-acciones"><button type="button" class="btn btn-primary" id="generarMapaDifusa">Generar mapa</button><button type="button" class="btn btn-neutral" id="cancelarMapaDifusa" disabled>Cancelar</button></div><p id="estadoMapaDifusa" role="status"></p><div id="graficaMapaDifusa"></div></details>
+        <details><summary>Comparación numérica y MATLAB</summary><p>El JSON de comparación contiene el modelo, casos y resultados sin redondear. Es distinto del JSON de trabajo, que restaura el sistema. Comparación con MATLAB pendiente; los recursos del proyecto indican el alcance del script y la toolbox necesaria.</p><button type="button" class="btn btn-neutral" id="exportarComparacionDifusa">Descargar JSON de comparación</button></details>
+      </section>
+
+      <section class="tarjeta difusa-vista" id="panelTrabajosDifusa" aria-labelledby="tituloTrabajosDifusa" hidden><div class="difusa-cabecera-seccion"><h2 id="tituloTrabajosDifusa" tabindex="-1">Mis trabajos de lógica difusa</h2><button type="button" class="btn btn-neutral" id="cerrarTrabajosDifusa">Cerrar trabajos</button></div><div id="listaTrabajosDifusa"></div></section>
+      <section class="tarjeta difusa-vista" id="ayudaDifusa" aria-labelledby="tituloAyudaDifusa" hidden><div class="difusa-cabecera-seccion"><h2 id="tituloAyudaDifusa" tabindex="-1">Ayuda: lógica difusa</h2><button type="button" class="btn btn-neutral" id="cerrarAyudaDifusa">Volver al ejercicio</button></div><p>Una variable lingüística tiene un dominio numérico, una unidad opcional y conjuntos como Bajo, Medio o Alto. Una función triangular usa [a, b, c]; una trapezoidal [a, b, c, d]. El orden es no decreciente, el soporte debe tener anchura y los parámetros permanecen dentro del dominio. Los hombros permiten extremos repetidos.</p><p>Fuzzificar es calcular los grados de pertenencia de tus valores. Cada regla conecta categorías de entrada con una de salida. AND toma el mínimo; OR el máximo; «No importa» excluye esa entrada. El peso de 0 a 1 multiplica la activación. La implicación recorta el consecuente por mínimo y la agregación reúne todos los recortes por máximo.</p><p>Defuzzificar produce un número. El centroide continuo es ∫ y μ(y) dy / ∫ μ(y) dy. Se integra la envolvente por tramos lineales, con nudos, recortes e intersecciones. La gráfica conserva esos tramos; los 1001 puntos del deslizador son solo consultas auxiliares y no deciden el resultado. Se distingue ninguna activación, activación positiva sin masa y limitación numérica. Si el centroide cae en un hueco entre categorías, conserva el número sin inventar una etiqueta. Los resultados continuos pueden variar ligeramente de los antiguos discretos.</p><p>La cobertura de curvas se comprueba por tramos. Tener pertenencia en cada entrada no garantiza que existan reglas para cada combinación. Un sistema parcialmente cubierto puede evaluarse; revisa las reglas si aparece «Sin reglas activas para estas entradas».</p><p>Aplica o cancela cada borrador del editor. Los cambios matemáticos invalidan resultados y mapas; renombrar conserva el cálculo. Elimina referencias mediante las acciones explícitas del editor. Generar combinaciones valida primero variables y conjuntos, muestra errores junto a sus campos y conserva el modelo aplicado ante un fallo. Deja consecuentes pendientes: debes decidirlos tú.</p><p>Guardar trabajo conserva una copia con nombre. Exportar e importar trabajo JSON traslada el sistema y valores. La importación se valida antes de reemplazar y no ejecuta su contenido. El JSON de comparación sirve para contrastar cálculos, sin importar modelos MATLAB .fis.</p><p>«Video» vuelve a abrir la bienvenida sin perder el ejercicio. Al continuar se detiene el video. Si no hay conexión o la inserción está bloqueada, usa el enlace a YouTube o sigue trabajando localmente. Algo también ofrece ayuda contextual local.</p></section>
+    </div>
+  </main>
+  <footer class="app-footer"><div class="app-footer__inner"><p><strong>Los Fanáticos del Nabo</strong> · Análisis de Algoritmos</p><p>Herramienta educativa. Cálculo, trabajos y ayuda de Algo locales.</p></div></footer>
+  <script src="js/config.js"></script><script src="js/comun/utilidades.js"></script><script src="js/comun/catalogo.js"></script><script src="js/comun/dialogo.js"></script><script src="js/comun/navegacion.js"></script><script src="js/comun/presentacion.js"></script><script src="js/comun/intro.js"></script>
+  <script src="js/difusa/motor.js"></script><script src="js/difusa/modelo.js"></script><script src="js/difusa/estado.js"></script><script src="js/difusa/dibujo.js"></script><script src="js/difusa/editor.js"></script><script src="js/difusa/mapa.js"></script><script src="js/difusa/app.js"></script>
+  <script src="js/comun/asistente-contexto.js"></script><script src="js/comun/conocimiento/base.js"></script><script src="js/comun/conocimiento/fundamentos.js"></script><script src="js/comun/conocimiento/algoritmos-grafos.js"></script><script src="js/comun/conocimiento/algoritmos-tablas.js"></script><script src="js/comun/conocimiento/algoritmos-datos.js"></script><script src="js/comun/conocimiento/aplicacion.js"></script><script src="js/comun/conocimiento/diagnostico.js"></script><script src="js/comun/conocimiento/ejercicio.js"></script><script src="js/comun/asistente-motor.js"></script><script src="js/comun/asistente.js"></script>
+</body>
+</html>

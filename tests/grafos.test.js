@@ -422,6 +422,93 @@ prueba('Máximo 24/96: pasos acotados, todas las distancias y bosque V−C', () 
   cierto(!validarGrafoModulo(muchas, 'kruskal').ok);
 });
 
+prueba('Edición transaccional: CRUD, IDs estables y eliminación de conexiones incidentes', () => {
+  for (const modulo of ['dijkstra', 'kruskal']) {
+    let grafo = crearGrafoVacio(modulo === 'dijkstra');
+    const crear = (nombre, x) => { const r = ctx.operarGrafoModulo(grafo, modulo, { tipo: 'nodo', nombre, x, y: 100 }); cierto(r.ok); grafo = r.grafo; return r.id; };
+    const a = crear('Nombre largo', 100), b = crear('B', 300), c = crear('C', 500);
+    let r = ctx.operarGrafoModulo(grafo, modulo, { tipo: 'arista', desde: a, hacia: b, valor: 0 }); cierto(r.ok); grafo = r.grafo;
+    const arista = r.id;
+    r = ctx.operarGrafoModulo(grafo, modulo, { tipo: 'arista', desde: b, hacia: c, valor: 2 }); cierto(r.ok); grafo = r.grafo;
+    const original = JSON.stringify(grafo);
+    for (const operacion of [{ tipo: 'arista', desde: a, hacia: a, valor: 1 }, { tipo: 'arista', desde: a, hacia: b, valor: 1 }, { tipo: 'peso', id: arista, valor: maxPeso + 1 }, { tipo: 'mover', id: a, x: 0, y: 100 }, { tipo: 'renombrar', id: a, nombre: '' }]) {
+      cierto(!ctx.operarGrafoModulo(grafo, modulo, operacion).ok); igual(JSON.stringify(grafo), original);
+    }
+    r = ctx.operarGrafoModulo(grafo, modulo, { tipo: 'renombrar', id: a, nombre: 'Renombrado' }); cierto(r.ok); igual(r.grafo.nodos[0].id, a); grafo = r.grafo;
+    r = ctx.operarGrafoModulo(grafo, modulo, { tipo: 'peso', id: arista, valor: modulo === 'dijkstra' ? 3 : -3 }); cierto(r.ok); grafo = r.grafo;
+    r = ctx.operarGrafoModulo(grafo, modulo, { tipo: 'eliminar-nodo', id: b }); cierto(r.ok); igual(r.grafo.conexiones, []); igual(r.grafo.nodos.map(n => n.id), [a, c]);
+    r = ctx.operarGrafoModulo(grafo, modulo, { tipo: 'eliminar-arista', id: arista }); cierto(r.ok); igual(r.grafo.conexiones.length, 1);
+  }
+  const grafo = crearEjemploGrafo('dijkstra');
+  const rechazo = ctx.operarGrafoModulo(grafo, 'dijkstra', { tipo: 'peso', id: 'c1', valor: -1 });
+  cierto(!rechazo.ok && rechazo.error.includes('no negativos'));
+});
+
+prueba('Dirección transaccional: conflictos, parejas opuestas, IDs y límite de aristas', () => {
+  const grafo = crearEjemploGrafo('dijkstra');
+  grafo.conexiones.push({ id: 'opuesta', desde: 'n2', hacia: 'n1', valor: 7 });
+  const antes = JSON.stringify(grafo);
+  cierto(!ctx.convertirDireccionGrafoModulo(grafo, 'dijkstra', false).ok);
+  igual(JSON.stringify(grafo), antes);
+  cierto(!ctx.convertirDireccionGrafoModulo(grafo, 'dijkstra', false, { c1: -1 }).ok);
+  const noDirigido = ctx.convertirDireccionGrafoModulo(grafo, 'dijkstra', false, { c1: 0 });
+  cierto(noDirigido.ok); igual(noDirigido.grafo.conexiones.length, 5); igual(noDirigido.grafo.conexiones[0].valor, 0);
+  const dirigido = ctx.convertirDireccionGrafoModulo(noDirigido.grafo, 'dijkstra', true);
+  cierto(dirigido.ok); igual(dirigido.grafo.conexiones.length, 10);
+  igual(new Set(dirigido.grafo.conexiones.map(c => c.id)).size, 10);
+  cierto(!ctx.convertirDireccionGrafoModulo(crearEjemploGrafo('kruskal'), 'kruskal', true).ok);
+  const grande = generarGrafoAleatorio('dijkstra', { cantidad: 24, aristas: 49, dirigido: false, semilla: 6 });
+  const original = JSON.stringify(grande);
+  cierto(!ctx.convertirDireccionGrafoModulo(grande, 'dijkstra', true).ok); igual(JSON.stringify(grande), original);
+});
+
+prueba('Estado Dijkstra/Kruskal: presentación conserva resultados; matemáticas e importación inválida son atómicas', () => {
+  const fs = require('fs'), vm = require('vm'), path = require('path');
+  for (const modulo of ['dijkstra', 'kruskal']) {
+    const estado = crearContexto();
+    estado.document = { body: { dataset: { modulo } } };
+    cargar(estado, ['js/config.js', 'js/grafos/modelo.js', 'js/grafos/algoritmos.js']);
+    const codigo = fs.readFileSync(path.join(__dirname, '../js/grafos/app.js'), 'utf8').split('\nconstruirInterfazModuloGrafo();')[0];
+    vm.runInContext(codigo, estado, { filename: 'js/grafos/app.js (controlador sin arranque DOM)' });
+    evaluar(estado, `actualizarModuloGrafo = () => {}; actualizarCamposEditorGrafo = () => {}; guardarModuloGrafo = () => {}; detenerReproduccionGrafo = () => {}; notificar = () => {};
+      moduloGrafo.grafo = crearEjemploGrafo(moduloGrafo.modulo); moduloGrafo.origen = 'n1';
+      moduloGrafo.resultado = esDijkstraModulo ? resolverDijkstraGrafo(moduloGrafo.grafo, 'n1') : resolverKruskalGrafo(moduloGrafo.grafo);`);
+    const resultado = evaluar(estado, 'moduloGrafo.resultado');
+    evaluar(estado, `const g = copiarGrafoModulo(moduloGrafo.grafo); g.nodos[0].nombre = 'Nuevo'; g.nodos[0].x += 1; comprometerGrafo(g);`);
+    cierto(evaluar(estado, 'moduloGrafo.resultado') === resultado);
+    igual(resultado.grafo.nodos[0].nombre, 'Nuevo');
+    if (modulo === 'dijkstra') {
+      evaluar(estado, `cambiarConsultaModuloGrafo('destino', 'n4');`);
+      cierto(evaluar(estado, 'moduloGrafo.resultado') === resultado);
+      igual(estado.reconstruirRutaGrafo(resultado, 'n4').distancia, 4);
+    }
+    const antes = evaluar(estado, 'JSON.stringify(serializarModuloGrafo())');
+    cierto(!evaluar(estado, `comprometerGrafo(Object.assign(copiarGrafoModulo(moduloGrafo.grafo), { dirigido: 'inválido' }))`));
+    igual(evaluar(estado, 'JSON.stringify(serializarModuloGrafo())'), antes);
+    lanza(() => evaluar(estado, `aplicarDocumentoModuloGrafo({ version: 1, modulo: moduloGrafo.modulo, grafo: null })`));
+    igual(evaluar(estado, 'JSON.stringify(serializarModuloGrafo())'), antes);
+    evaluar(estado, `const matematico = copiarGrafoModulo(moduloGrafo.grafo); matematico.conexiones[0].valor++; comprometerGrafo(matematico, '', false);`);
+    igual(evaluar(estado, 'moduloGrafo.resultado'), null);
+    evaluar(estado, `deshacerModuloGrafo(false);`);
+    cierto(evaluar(estado, '!!moduloGrafo.resultado'));
+    evaluar(estado, `deshacerModuloGrafo(true);`);
+    igual(evaluar(estado, 'moduloGrafo.resultado'), null);
+    evaluar(estado, `const importado = serializarModuloGrafo(); importado.resuelto = true; importado.resultado = { total: -999, distancias: { n1: -999 } }; aplicarDocumentoModuloGrafo(importado);`);
+    cierto(evaluar(estado, '!!moduloGrafo.resultado'));
+    const antesConsulta = evaluar(estado, 'moduloGrafo.resultado');
+    cierto(!evaluar(estado, `cambiarConsultaModuloGrafo('origen', 'ausente')`));
+    cierto(evaluar(estado, 'moduloGrafo.resultado') === antesConsulta);
+    if (modulo === 'dijkstra') {
+      igual(evaluar(estado, 'moduloGrafo.resultado.distancias.n1'), 0);
+      evaluar(estado, `cambiarConsultaModuloGrafo('origen', 'n2');`);
+    } else {
+      igual(evaluar(estado, 'moduloGrafo.resultado.total'), evaluar(estado, 'resolverKruskalGrafo(moduloGrafo.grafo).total'));
+      evaluar(estado, `cambiarConsultaModuloGrafo('objetivo', 'max');`);
+    }
+    igual(evaluar(estado, 'moduloGrafo.resultado'), null);
+  }
+});
+
 if (!informe('Grafos · Dijkstra, Kruskal y validación compartida')) process.exitCode = 1;
 
 // Medición breve y reproducible; el tamaño JSON no pretende medir el heap de JS.

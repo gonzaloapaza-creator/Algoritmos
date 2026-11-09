@@ -22,6 +22,14 @@ const btnReiniciar = $('btnReiniciar');
 const btnAnterior = $('btnAnterior');
 const btnAuto = $('btnAuto');
 const btnSiguiente = $('btnSiguiente');
+const btnFinal = document.createElement('button');
+btnFinal.type = 'button'; btnFinal.id = 'btnFinalOrdenamiento'; btnFinal.className = 'btn btn-neutral'; btnFinal.textContent = 'Ir al final';
+btnFinal.setAttribute('aria-label', 'Ir al último evento sin reproducir toda la animación');
+btnFinal.disabled = true;
+btnSiguiente.after(btnFinal);
+const duracionReproduccion = document.createElement('p');
+duracionReproduccion.id = 'duracionReproduccion'; duracionReproduccion.className = 'orden-duracion';
+$('estadoPreparacion').after(duracionReproduccion);
 
 const contadorGrande = $('contadorGrande');
 const contadorNumero = $('contadorNumero');
@@ -98,7 +106,8 @@ async function ejecutarAlgoritmo(pasoInicial) {
   construirPseudocodigo();
   estadoPreparacion.textContent = `Preparando ${E.valores.length} valores; puedes cambiar datos o cancelar.`;
   btnCancelarPreparacion.hidden = false;
-  [btnAnterior, btnSiguiente, btnAuto, btnReiniciar, deslizadorPasos].forEach(b => { b.disabled = true; });
+  [btnAnterior, btnSiguiente, btnAuto, btnReiniciar, btnFinal, deslizadorPasos].forEach(b => { b.disabled = true; });
+  duracionReproduccion.textContent = 'La duración se estima al terminar la preparación; puedes cancelarla mientras se generan los eventos.';
   mapaPasos.replaceChildren();
   // Una preparación nueva no debe mostrar contadores ni auxiliares de la anterior.
   contadorNumero.textContent = '0'; contadorTotal.textContent = 'de —'; badgePasos.textContent = 'Preparando';
@@ -128,6 +137,7 @@ async function ejecutarAlgoritmo(pasoInicial) {
 }
 
 function cancelarPreparacion() {
+  pausarReproduccion();
   if (!E.preparando) return;
   versionPreparacion++;
   E.preparando = false;
@@ -135,6 +145,7 @@ function cancelarPreparacion() {
   estadoPreparacion.textContent = 'Preparación cancelada. Pulsa «Usar valores» o elige otro algoritmo para preparar de nuevo.';
   badgePasos.textContent = chipTipo.textContent = 'Sin procedimiento';
   textoEstado.textContent = 'La preparación se canceló. Los valores se conservan; vuelve a prepararlos para recorrer los pasos.';
+  duracionReproduccion.textContent = 'Sin reproducción: preparación cancelada.';
 }
 btnCancelarPreparacion.addEventListener('click', cancelarPreparacion);
 
@@ -186,7 +197,7 @@ function construirPseudocodigo() {
   }
 }
 
-function renderPinosAuxiliares(contenedor, pinos, inicio) {
+function renderPinosAuxiliares(contenedor, pinos, posiciones) {
   while (contenedor.children.length > (pinos || []).length) contenedor.lastElementChild.remove();
   (pinos || []).forEach((pino, indice) => {
     let caja = contenedor.children[indice];
@@ -198,10 +209,11 @@ function renderPinosAuxiliares(contenedor, pinos, inicio) {
     caja.className = 'auxiliar-pino' + (pino ? '' : ' auxiliar-pino--vacio');
     const valor = pino ? String(pino.valor) : '·';
     if (caja.firstElementChild.textContent !== valor) caja.firstElementChild.textContent = valor;
-    caja.title = pino ? `Pino ${pino.id}: valor ${pino.valor}` : 'Sin copiar todavía';
-    caja.setAttribute('aria-label', pino ? `Pino ${pino.valor}, identificador ${pino.id}` : 'Espacio vacío');
+    const indiceReal = Array.isArray(posiciones) ? posiciones[indice] : indice;
+    caja.title = pino ? `Posición ${indiceReal}; pino ${pino.id}: valor ${pino.valor}` : `Posición ${indiceReal}; sin copiar todavía`;
+    caja.setAttribute('aria-label', pino ? `Posición ${indiceReal}, valor ${pino.valor}, identificador ${pino.id}` : `Posición ${indiceReal}, espacio vacío`);
     const posicion = caja.lastElementChild;
-    posicion.textContent = String((inicio || 0) + indice);
+    posicion.textContent = String(indiceReal);
   });
 }
 
@@ -213,7 +225,7 @@ function actualizarAuxiliar(paso) {
   sinAuxiliar.hidden = shell || merge;
   if (shell) {
     saltoShell.textContent = paso.salto || '—';
-    renderPinosAuxiliares(grupoShell, (paso.grupo || []).map(i => paso.arreglo[i]), paso.grupo && paso.grupo[0]);
+    renderPinosAuxiliares(grupoShell, (paso.grupo || []).map(i => paso.arreglo[i]), paso.grupo || []);
     Array.from(grupoShell.children).forEach((el, i) => {
       el.classList.toggle('auxiliar-pino--activo', (paso.grupo || [])[i] === (paso.comparando || [])[0] || (paso.grupo || [])[i] === (paso.comparando || [])[1]);
     });
@@ -271,6 +283,9 @@ function actualizarInterfaz(opciones) {
     s.classList.toggle('actual', i <= E.pasoActual && (!siguiente || Number(siguiente.dataset.indice) > E.pasoActual));
   });
   deslizadorPasos.value = E.pasoActual;
+  deslizadorPasos.setAttribute('aria-valuetext', `Evento ${E.pasoActual} de ${total}: ${nombreTipoPasoOrdenamiento(paso.tipo)}`);
+  const estimacion = estimarDuracionOrdenamiento(E.historial.length, selectorVelocidad.value, E.pasoActual);
+  duracionReproduccion.textContent = `Reproducción estimada completa: ${formatearDuracionOrdenamiento(estimacion.totalMs)}; restante desde este evento: ${formatearDuracionOrdenamiento(estimacion.restanteMs)}. Es duración de reproducción, no tiempo de cálculo. Usa «Ir al final» o el deslizador para consultar directamente.`;
 
   // Consola y estadísticas
   if (textoEstado.textContent !== paso.mensaje) animarTic(textoEstado);
@@ -285,6 +300,7 @@ function actualizarInterfaz(opciones) {
   // Botones
   btnAnterior.disabled = btnReiniciar.disabled = E.pasoActual === 0;
   btnSiguiente.disabled = E.pasoActual === total;
+  btnFinal.disabled = E.pasoActual === total;
   if (E.pasoActual === total && E.reproduciendo) pausarReproduccion();
   if (n === 0) btnAuto.disabled = true;
 
@@ -336,6 +352,7 @@ function pausarReproduccion() {
 btnSiguiente.addEventListener('click', () => { pausarReproduccion(); pasoSiguiente(); });
 btnAnterior.addEventListener('click', () => { pausarReproduccion(); pasoAnterior(); });
 btnReiniciar.addEventListener('click', () => { pausarReproduccion(); irAPaso(0, { sinAnimar: true }); });
+btnFinal.addEventListener('click', () => { pausarReproduccion(); irAPaso(E.historial.length - 1, { sinAnimar: true }); });
 btnAuto.addEventListener('click', alternarReproduccion);
 
 deslizadorPasos.addEventListener('input', () => {
@@ -355,6 +372,7 @@ mapaPasos.addEventListener('click', e => {
 
 selectorVelocidad.addEventListener('change', () => {
   if (E.reproduciendo) { pausarReproduccion(); alternarReproduccion(); }
+  if (!E.preparando) actualizarInterfaz({ sinAnimar: true });
   guardarEstadoOrdenamiento(selectorVelocidad.value);
 });
 selectorCantidad.addEventListener('change', () => {

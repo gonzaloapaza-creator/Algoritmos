@@ -16,7 +16,7 @@
       pregunta: '¿Qué es Ciudad de los Algoritmos?',
       variantes: ['que es esta aplicacion', 'que es la ciudad de los algoritmos', 'para que sirve esta pagina', 'de que trata este sitio', 'que puedo hacer aqui'],
       conceptos: ['ciudad', 'aplicacion', 'sitio', 'pagina', 'proyecto'],
-      breve: 'Ciudad de los Algoritmos es una aplicación educativa que muestra, paso a paso, cómo trabajan siete algoritmos clásicos: Johnson, Dijkstra, Kruskal, Asignación (método húngaro), Esquina noroeste, Ordenamiento y Árboles. Cada módulo es un edificio de la ciudad del inicio.',
+      breve: 'Ciudad de los Algoritmos es una aplicación educativa con ocho módulos: Johnson, Dijkstra, Kruskal, Asignación (método húngaro), Esquina noroeste, Ordenamiento, Árboles y Lógica difusa. Cada módulo es un edificio de la ciudad del inicio.',
       sencilla: 'Es un laboratorio para ver cómo piensa cada algoritmo: tú pones los datos y la aplicación muestra cada decisión.',
       detalle: 'Funciona por completo en tu navegador: los cálculos, los guardados y esta ayuda son locales. Solo los videos de apoyo y la carga inicial del sitio necesitan conexión.',
       relacionadas: ['aplicacion.modulos', 'aplicacion.elegir-algoritmo', 'aplicacion.internet', 'aplicacion.asistente']
@@ -26,7 +26,7 @@
       pregunta: '¿Qué módulos incluye?',
       variantes: ['que algoritmos hay', 'cuales son los modulos', 'que edificios tiene la ciudad', 'lista de modulos', 'que temas cubre'],
       conceptos: ['modulos', 'modulo', 'edificios', 'algoritmos disponibles', 'lista'],
-      breve: 'Siete módulos: Johnson (distancias entre todos los pares), Dijkstra (caminos mínimos desde un origen), Kruskal (árbol de expansión mínimo o máximo), Asignación (método húngaro), Esquina noroeste (solución inicial de transporte), Ordenamiento (Selection, Insertion, Bubble, Shell y Merge) y Árboles (BST, recorridos y reconstrucción).',
+      breve: 'Ocho módulos: Johnson (distancias entre todos los pares), Dijkstra (caminos mínimos desde un origen), Kruskal (árbol de expansión mínimo o máximo), Asignación (método húngaro), Esquina noroeste (solución inicial de transporte), Ordenamiento (Selection, Insertion, Bubble, Shell y Merge), Árboles (BST, recorridos y reconstrucción) y Lógica difusa (pertenencias, reglas Mamdani y centroide).',
       relacionadas: ['aplicacion.elegir-algoritmo', 'aplicacion.abrir-modulo', 'aplicacion.que-es']
     },
     {
@@ -34,7 +34,7 @@
       pregunta: '¿Qué algoritmo elijo según mi problema?',
       variantes: ['que modulo uso para mi problema', 'cual algoritmo necesito', 'que algoritmo sirve para', 'como se cual modulo usar', 'que algoritmo me conviene'],
       conceptos: ['elegir', 'elijo', 'conviene', 'cual uso', 'segun'],
-      breve: 'Camino más barato desde un punto a los demás: Dijkstra (pesos no negativos). Distancias entre todos los pares o pesos negativos: Johnson. Conectar todos los puntos con el menor total: Kruskal. Emparejar personas con tareas una a una: Asignación. Repartir cantidades de orígenes a destinos: Esquina noroeste. Poner una lista en orden: Ordenamiento. Jerarquías y búsqueda por valor: Árboles.',
+      breve: 'Camino más barato desde un punto a los demás: Dijkstra (pesos no negativos). Distancias entre todos los pares o pesos negativos: Johnson. Conectar todos los puntos con el menor total: Kruskal. Emparejar personas con tareas una a una: Asignación. Repartir cantidades de orígenes a destinos: Esquina noroeste. Poner una lista en orden: Ordenamiento. Jerarquías y búsqueda por valor: Árboles. Recomendaciones graduales mediante pertenencias y reglas: Lógica difusa.',
       sencilla: 'Pregúntate qué quieres: ¿una ruta?, ¿una red?, ¿un reparto?, ¿un orden? Cada respuesta lleva a un módulo distinto.',
       relacionadas: ['kruskal.vs-dijkstra-johnson', 'asignacion.vs-transporte', 'aplicacion.modulos']
     },
@@ -154,9 +154,12 @@
       id: 'aplicacion.guardar', tema: 'aplicacion', modulos: TODOS,
       pregunta: '¿Cómo guardo y cargo trabajos?',
       variantes: ['como guardo mi trabajo', 'como guardo el ejercicio', 'donde se guardan mis trabajos', 'como recupero un trabajo', 'que es mis trabajos', 'como cargo un trabajo guardado', 'se guarda solo'],
+      variantesAutorizadas: ['como guardo otra version', 'que diferencia hay entre guardar y exportar'],
       conceptos: ['guardar', 'guardado', 'guardados', 'cargar', 'recuperar', 'trabajo', 'trabajos', 'mis trabajos', 'autoguardado'],
       breve: L => 'Cada módulo guarda automáticamente el ejercicio actual en este navegador. Para conservar varias versiones, pulsa «Guardar» en la cabecera, escribe un nombre y confirma. «Cargar» abre «Mis trabajos», donde puedes cargar, renombrar, eliminar, exportar e importar. Se admiten hasta ' + L.trabajos + ' trabajos por módulo. Cargar reemplaza el ejercicio actual después de confirmar. Johnson además tiene «Guardar grafo» y «Biblioteca» para grafos.',
+      breveAutorizado: 'Guardar conserva un trabajo nombrado en la biblioteca de este navegador y origen. Exportar descarga una copia JSON para trasladarlo; Importar lee ese archivo y valida su formato. Cargar recupera un trabajo de la biblioteca y puede reemplazar lo que tienes en pantalla. Para mover tus ejercicios a otra computadora o dirección, exporta e importa en el mismo módulo.',
       detalle: 'En el inicio, «Trabajos recientes» muestra los últimos guardados y abre la biblioteca del módulo correspondiente. Los trabajos pertenecen a este navegador y a este origen (sitio): no se sincronizan entre equipos ni entre localhost y el sitio publicado.',
+      detalleAutorizado: 'Guardar conserva una versión nombrada en la biblioteca de este navegador y origen; no descarga un archivo. Exportar descarga una copia JSON para trasladarla. Importar lee y valida ese archivo: según la opción, añade trabajos a la biblioteca o restaura el ejercicio. En Inicio, un trabajo reciente abre su biblioteca sin cargar automáticamente el ejercicio. Lógica difusa conserva su biblioteca propia.',
       relacionadas: ['aplicacion.json', 'aplicacion.origenes', 'problema.no-guarda', 'problema.no-encuentro-trabajo'],
       referencia: 'Cabecera · «Guardar» y «Cargar»'
     },
@@ -164,9 +167,11 @@
       id: 'aplicacion.json', tema: 'aplicacion', modulos: TODOS,
       pregunta: '¿Cómo importo y exporto JSON?',
       variantes: ['como exporto mi ejercicio', 'como importo un archivo', 'como llevo mi trabajo a otra computadora', 'que es exportar json', 'donde esta importar json', 'como comparto un ejercicio'],
+      variantesAutorizadas: ['como traslado mi ejercicio', 'como llevo mi ejercicio al sitio publicado'],
       conceptos: ['json', 'exportar', 'importar', 'archivo', 'descargar', 'compartir', 'trasladar', 'otra computadora', 'otro equipo'],
       breve: 'Hay dos niveles. Un ejercicio: Johnson, Dijkstra, Kruskal, Asignación y Esquina noroeste tienen «Exportar JSON» e «Importar JSON» (en «Más», «Más opciones», «Edición» o «Ejemplos» según el módulo). Varios trabajos: en «Cargar» → «Mis trabajos», «Exportar» descarga todos los trabajos del módulo y «Importar» los añade sin pisar los existentes. Ordenamiento y Árboles exportan e importan solo desde «Mis trabajos».',
       detalle: 'Los archivos se validan antes de reemplazar datos; uno inválido o de otro módulo se rechaza con un aviso. El tamaño máximo de importación es 1 MiB. Para llevar un trabajo a otra computadora: exporta aquí, copia el archivo y usa Importar en el mismo módulo allí.',
+      ejemploAutorizado: 'Guardas «Clase A» en la biblioteca local. Para llevarlo a otra dirección, exportas su JSON y lo importas en el mismo módulo allí. Guardar no crea el archivo de traslado; exportarlo sí. Revisa qué trabajo vas a cargar antes de reemplazar el ejercicio actual.',
       relacionadas: ['aplicacion.guardar', 'aplicacion.origenes', 'problema.no-importa']
     },
     {
@@ -198,6 +203,7 @@
       id: 'aplicacion.origenes', tema: 'aplicacion', modulos: TODOS,
       pregunta: '¿Por qué mis guardados no aparecen en otra computadora o en otra dirección?',
       variantes: ['diferencia entre localhost y el sitio publicado', 'mis trabajos no estan en otro navegador', 'guarde en casa y no aparece en clase', 'los guardados se sincronizan', 'por que no veo mis trabajos en el celular'],
+      variantesAutorizadas: ['por que mis guardados cambian segun la direccion'],
       conceptos: ['localhost', 'publicado', 'sitio', 'otra computadora', 'otro navegador', 'sincronizar', 'sincronizan', 'celular', 'origen'],
       breve: 'Porque los guardados viven en el almacenamiento local del navegador que usaste, y ese almacenamiento es distinto por dispositivo, por navegador y por dirección (origen): localhost, 127.0.0.1 y el sitio publicado tienen almacenes separados. No hay cuenta ni servidor que los sincronice. Para moverlos, exporta JSON y usa Importar en el otro lugar.',
       sencilla: 'Es como guardar apuntes en el cajón de un escritorio: están solo en ese escritorio. Para llevarlos a otro, haces una copia (exportar) y la llevas (importar).',

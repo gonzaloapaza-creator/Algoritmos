@@ -40,7 +40,7 @@ function construirIntro() {
   s.innerHTML =
     '<div class="intro__video">' +
     '  <div class="intro__marco" id="introMarco"></div>' +
-    '  <p class="intro__aviso">El video necesita internet. Puedes continuar con «Ir al algoritmo» y consultar «Ayuda» en cualquier momento.</p>' +
+    '  <p class="intro__aviso"></p>' +
     '</div>' +
     '<div class="intro__texto">' +
     '  <p class="eyebrow">Antes de empezar</p>' +
@@ -54,7 +54,10 @@ function construirIntro() {
     '  <label class="intro__omitir"><input type="checkbox" id="introOmitir" /> No mostrar al entrar (se puede volver con «Video»)</label>' +
     '</div>';
   s.querySelector('#introTitulo').textContent = alg.nombre;
-  s.querySelector('.intro__descripcion').textContent = alg.descripcion;
+  s.querySelector('.intro__descripcion').textContent = alg.bienvenida || alg.descripcion;
+  const accion = alg.accionIntro || 'Ir al algoritmo';
+  s.querySelector('#btnComenzarModulo').textContent = accion;
+  s.querySelector('.intro__aviso').textContent = 'El video necesita internet. Si no carga o no permite la inserción, puedes abrirlo en YouTube o continuar con «' + accion + '». La ayuda y el cálculo del módulo son locales.';
   s.querySelector('.intro__entrada').textContent = alg.entrada;
   s.querySelector('.intro__resultado').textContent = alg.resultado;
   s.querySelector('#introEnlaceYoutube').href = 'https://www.youtube.com/watch?v=' + alg.video;
@@ -67,10 +70,10 @@ function construirIntro() {
 function mostrarIntro(inicial) {
   if (!intro.marco.firstChild) {
     const iframe = document.createElement('iframe');
-    iframe.src = 'https://www.youtube-nocookie.com/embed/' + intro.alg.video + '?rel=0';
+    iframe.src = 'https://www.youtube-nocookie.com/embed/' + intro.alg.video + '?rel=0&autoplay=0';
     iframe.title = 'Video: ' + intro.alg.nombre;
     iframe.loading = 'lazy';
-    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    iframe.allow = 'accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
     iframe.allowFullscreen = true;
     iframe.referrerPolicy = 'strict-origin-when-cross-origin';
     intro.marco.appendChild(iframe);
@@ -78,6 +81,7 @@ function mostrarIntro(inicial) {
   intro.seccion.hidden = false;
   intro.contenido.hidden = true;
   document.body.classList.add('intro-visible');
+  window.dispatchEvent(new CustomEvent('intro:cambio', { detail: { visible: true } }));
   if (intro.btnVideo) intro.btnVideo.setAttribute('aria-pressed', 'true');
   window.scrollTo({ top: 0 });
   if (inicial !== true) {
@@ -91,6 +95,7 @@ function cerrarIntro(inicial) {
   intro.seccion.hidden = true;
   intro.contenido.hidden = false;
   document.body.classList.remove('intro-visible');
+  window.dispatchEvent(new CustomEvent('intro:cambio', { detail: { visible: false } }));
   // El video deja de sonar al salir: se quita el iframe y se vuelve a crear la próxima vez.
   if (intro.marco) intro.marco.replaceChildren();
   if (intro.btnVideo) intro.btnVideo.setAttribute('aria-pressed', 'false');

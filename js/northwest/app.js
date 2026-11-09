@@ -62,6 +62,7 @@ function textoDiferencia(t) {
 }
 
 function estadoValidacionNorthwest() {
+  purgarInvalidasNorthwest();
   const v = validarModeloNorthwest(estadoNorthwest.modelo);
   const invalidas = Object.keys(tablaNw.invalidas).length;
   const errores = v.errores.slice();
@@ -99,10 +100,18 @@ function dibujarResumenDatosNorthwest() {
     appNw.resumenDatos.appendChild(msg);
   }
   document.querySelectorAll('[data-ir="balanceo"]').forEach(b => { b.disabled = !v.ok; });
+  document.getElementById('btnConfirmarBalanceo').disabled = !v.ok;
 }
 
 function dibujarDatosNorthwest() {
+  const foco = document.activeElement;
+  const clave = foco && appNw.tablaDatos.contains(foco) ? foco.dataset.claveNw : null;
+  const seleccion = clave ? [foco.selectionStart, foco.selectionEnd] : null;
   appNw.tablaDatos.replaceChildren(construirTablaDatosNorthwest());
+  if (clave) {
+    const nuevo = Array.from(appNw.tablaDatos.querySelectorAll('[data-clave-nw]')).find(e => e.dataset.claveNw === clave);
+    if (nuevo) { nuevo.focus({ preventScroll: true }); if (seleccion[0] !== null) nuevo.setSelectionRange(...seleccion); }
+  }
   dibujarResumenDatosNorthwest();
 }
 
@@ -144,7 +153,7 @@ function confirmarBalanceoNorthwest() {
 
 /* ---------------- Resolución paso a paso ---------------- */
 
-function pasosNw() { return resultadoVigenteNorthwest() ? estadoNorthwest.resultado.datos.pasos : []; }
+function pasosNw() { return resultadoConsultableNorthwest() ? estadoNorthwest.resultado.datos.pasos : []; }
 
 function irAPasoNw(indice) {
   const pasos = pasosNw();
@@ -181,9 +190,7 @@ function dibujarResolucionNorthwest() {
   appNw.resolucionSin.hidden = pasos.length > 0;
   appNw.resolucionCon.hidden = pasos.length === 0;
   if (!pasos.length) {
-    appNw.resolucionSin.querySelector('p').textContent = estadoNorthwest.resultado
-      ? 'Los datos cambiaron: la resolución anterior ya no es válida. Vuelve al balanceo para recalcular.'
-      : 'La resolución aparece después de confirmar el balanceo.';
+    appNw.resolucionSin.querySelector('p').textContent = explicarEstadoResultadoNorthwest();
     return;
   }
   const r = estadoNorthwest.resultado;
@@ -191,6 +198,7 @@ function dibujarResolucionNorthwest() {
   const actual = r.pasoActual || 0;
   const paso = pasos[actual];
   appNw.pasoIndicador.textContent = 'Paso ' + (actual + 1) + ' de ' + pasos.length;
+  if (avisoResultadoNorthwest()) appNw.pasoIndicador.textContent += ' · ' + avisoResultadoNorthwest();
   document.getElementById('btnNwAnterior').disabled = actual === 0;
   document.getElementById('btnNwSiguiente').disabled = actual === pasos.length - 1;
 
@@ -238,13 +246,11 @@ function dibujarResolucionNorthwest() {
 /* ---------------- Resultado ---------------- */
 
 function dibujarResultadoNorthwest() {
-  const vigente = resultadoVigenteNorthwest();
-  appNw.resultadoSin.hidden = vigente;
-  appNw.resultadoCon.hidden = !vigente;
-  if (!vigente) {
-    appNw.resultadoSin.querySelector('p').textContent = estadoNorthwest.resultado
-      ? 'Los datos cambiaron después de resolver: el resultado ya no es válido. Vuelve al balanceo para recalcular.'
-      : 'El resultado aparece después de confirmar el balanceo y resolver.';
+  const consultable = resultadoConsultableNorthwest();
+  appNw.resultadoSin.hidden = consultable;
+  appNw.resultadoCon.hidden = !consultable;
+  if (!consultable) {
+    appNw.resultadoSin.querySelector('p').textContent = explicarEstadoResultadoNorthwest();
     return;
   }
   const r = estadoNorthwest.resultado;
@@ -252,7 +258,7 @@ function dibujarResultadoNorthwest() {
 
   appNw.costoTotal.replaceChildren();
   const et = document.createElement('span');
-  et.textContent = 'Costo total de la solución inicial';
+  et.textContent = avisoResultadoNorthwest() || 'Costo total de la solución inicial';
   const val = document.createElement('span');
   val.className = 'total__valor';
   val.textContent = formatearTotalNorthwest(d.costoTotal);
@@ -291,6 +297,7 @@ function dibujarResultadoNorthwest() {
 
   appNw.notas.replaceChildren();
   const nota = (clase, texto) => { const p = document.createElement('div'); p.className = 'mensaje ' + clase; p.textContent = texto; appNw.notas.appendChild(p); };
+  if (avisoResultadoNorthwest()) nota('mensaje--aviso', explicarEstadoResultadoNorthwest());
   nota('mensaje--aviso mensaje--permanente', 'Esta es una solución inicial factible obtenida por la esquina noroeste. No es necesariamente la de menor costo: los costos no intervinieron en la elección de las celdas.');
   if (b.ficticio) {
     const idx = b.ficticio.indice;
@@ -322,13 +329,20 @@ function renderNorthwest(motivo) {
   document.getElementById('btnDeshacerNw').disabled = !puedeDeshacerNorthwest();
   document.getElementById('btnRehacerNw').disabled = !puedeRehacerNorthwest();
   const chip = document.getElementById('estadoResultadoNw');
-  if (!estadoNorthwest.resultado) { chip.className = 'estado estado--neutro'; chip.textContent = 'Sin resolver'; }
-  else if (resultadoVigenteNorthwest()) { chip.className = 'estado estado--ok'; chip.textContent = 'Solución inicial vigente'; }
-  else { chip.className = 'estado estado--aviso'; chip.textContent = 'Datos modificados: recalcular'; }
+  const consultable = resultadoConsultableNorthwest();
+  const pendientes = hayPendientesNorthwest();
+  if (!estadoNorthwest.resultado) {
+    chip.className = 'estado ' + (pendientes ? 'estado--aviso' : 'estado--neutro');
+    chip.textContent = pendientes ? 'Sin resolver; hay datos pendientes de corregir' : 'Sin resolver';
+  } else if (!consultable) {
+    chip.className = 'estado estado--aviso';
+    chip.textContent = pendientes ? 'Resultado invalidado; corrige los datos y recalcula' : 'Resultado invalidado: recalcular';
+  } else if (pendientes) { chip.className = 'estado estado--aviso'; chip.textContent = avisoResultadoNorthwest(); }
+  else { chip.className = 'estado estado--ok'; chip.textContent = 'Solución inicial vigente'; }
   if (motivo !== 'vista' && motivo !== 'resultado') detenerAutoplayNw();
 
   const vista = estadoNorthwest.vista;
-  if (vista === 'datos') dibujarDatosNorthwest();
+  if (vista === 'datos') { if (motivo === 'borrador') dibujarResumenDatosNorthwest(); else dibujarDatosNorthwest(); }
   if (vista === 'balanceo') dibujarBalanceoNorthwest();
   if (vista === 'resolucion') dibujarResolucionNorthwest();
   if (vista === 'resultado') dibujarResultadoNorthwest();
@@ -343,7 +357,6 @@ function renderNorthwest(motivo) {
 function cargarEjemploNorthwest(id) {
   const aplicar = () => {
     aplicarCambioNorthwest((m, e) => { e.modelo = ejemploNorthwest(id); }, { motivo: 'ejemplo' });
-    tablaNw.invalidas = {};
     cambiarVistaNorthwest('datos');
     notificar('Ejemplo cargado.', 'ok');
   };
@@ -359,7 +372,6 @@ function limpiarNorthwest() {
   }).then(ok => {
     if (!ok) return;
     aplicarCambioNorthwest((m, e) => { e.modelo = crearModeloNorthwest(); agregarOrigen(e.modelo); agregarDestino(e.modelo); }, { motivo: 'limpiar' });
-    tablaNw.invalidas = {};
     cambiarVistaNorthwest('datos');
     notificar('Datos eliminados.', 'ok');
   });
@@ -400,7 +412,6 @@ function importarNorthwestJSON() {
         dialogoConfirmar({ titulo: 'Importar', mensaje: 'Se reemplazarán los datos actuales. Podrás deshacerlo con Ctrl+Z.' }).then(ok => {
           if (!ok) return;
           aplicarCambioNorthwest((m, est) => { est.modelo = modelo; }, { motivo: 'importar' });
-          tablaNw.invalidas = {};
           cambiarVistaNorthwest('datos');
           notificar('Datos importados correctamente.', 'ok');
         });
@@ -433,6 +444,8 @@ const TEXTO_AYUDA_NORTHWEST =
   '4) RESULTADO\n' +
   '· Matriz final de cantidades, lista de envíos, costo total = Σ cantidad × costo unitario y verificación de sumas y de la base.\n\n' +
   '· Cambiar costos, oferta o demanda exige resolver de nuevo. Si solo cambias costos, el recorrido noroeste conserva las cantidades y cambia el total. Renombrar conserva la solución y actualiza los nombres de los envíos.\n' +
+  '· Si escribes datos inválidos y el modelo válido sigue coincidiendo con el cálculo, Resultado y Procedimiento conservan el «Último cálculo válido; hay datos pendientes de corregir». Si antes cambiaste datos válidos, el cálculo anterior queda invalidado y sus valores no se muestran. Algo distingue ambos casos; si aún no calculaste, indica que no hay cálculo. Corrige las casillas antes de balancear o resolver. Al quitar una fila o columna se eliminan solo sus errores incidentes; Deshacer los recupera junto con esa fila o columna.\n' +
+  '· Tab y Mayús+Tab confirman y recorren controles; Enter confirma y avanza. El foco se restaura mediante los IDs de origen y destino.\n' +
   '· «Imprimir» en la resolución incluye todos los pasos; puedes imprimir o guardar como PDF desde el navegador.\n\n' +
   'GUARDADO Y ATAJOS\n' +
   '· El ejercicio se guarda automáticamente en este navegador. «Guardar» conserva un trabajo con nombre; «Cargar» abre «Mis trabajos» para cargar, renombrar, eliminar y exportar/importar trabajos. Confirma el reemplazo antes de cargar otro trabajo.\n' +
@@ -481,7 +494,7 @@ function inicializarNorthwest() {
     const ctrl = evento.ctrlKey || evento.metaKey;
     if (ctrl && evento.key.toLowerCase() === 'z' && !evento.shiftKey) { evento.preventDefault(); deshacerNorthwest(); }
     if ((ctrl && evento.key.toLowerCase() === 'y') || (ctrl && evento.shiftKey && evento.key.toLowerCase() === 'z')) { evento.preventDefault(); rehacerNorthwest(); }
-    if (estadoNorthwest.vista === 'resolucion' && resultadoVigenteNorthwest()) {
+    if (estadoNorthwest.vista === 'resolucion' && resultadoConsultableNorthwest()) {
       if (evento.key === 'ArrowRight') { detenerAutoplayNw(); irAPasoNw(estadoNorthwest.resultado.pasoActual + 1); }
       if (evento.key === 'ArrowLeft') { detenerAutoplayNw(); irAPasoNw(estadoNorthwest.resultado.pasoActual - 1); }
     }

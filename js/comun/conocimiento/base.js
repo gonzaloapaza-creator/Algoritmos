@@ -32,6 +32,7 @@
     northwest: { titulo: 'Esquina noroeste', descripcion: 'Solución inicial de transporte: oferta, demanda y ficticios.' },
     ordenamiento: { titulo: 'Ordenamiento', descripcion: 'Selection, Insertion, Bubble, Shell y Merge.' },
     arboles: { titulo: 'Árboles', descripcion: 'BST, recorridos y reconstrucción.' },
+    difusa: { titulo: 'Lógica difusa', descripcion: 'Variables, pertenencias, reglas AND/OR con peso y centroide Mamdani.' },
     ejercicio: { titulo: 'Ejercicio actual', descripcion: 'Lo que estás viendo: paso, resultado, selección y datos pendientes.' },
     aplicacion: { titulo: 'Uso de la aplicación', descripcion: 'Módulos, controles, guardados, exportación e impresión.' },
     problemas: { titulo: 'Problemas frecuentes', descripcion: 'Qué revisar cuando algo no funciona como esperabas.' }
@@ -39,7 +40,7 @@
   const GRUPOS = [
     { titulo: 'Conceptos básicos', temas: ['basicos'] },
     { titulo: 'Grafos y matrices', temas: ['grafos', 'matrices'] },
-    { titulo: 'Algoritmos', temas: ['johnson', 'dijkstra', 'kruskal', 'asignacion', 'northwest', 'ordenamiento', 'arboles'] },
+    { titulo: 'Algoritmos', temas: ['johnson', 'dijkstra', 'kruskal', 'asignacion', 'northwest', 'ordenamiento', 'arboles', 'difusa'] },
     { titulo: 'Ejercicio actual', temas: ['ejercicio'] },
     { titulo: 'Uso de la aplicación', temas: ['aplicacion'] },
     { titulo: 'Problemas frecuentes', temas: ['problemas'] }

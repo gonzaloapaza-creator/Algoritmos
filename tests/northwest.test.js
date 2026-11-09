@@ -355,4 +355,42 @@ prueba('Northwest restaura estrictamente sin reemplazar autoguardados incompatib
   });
 });
 
+prueba('H04: quitar filas/columnas purga solo errores incidentes y deshacer/rehacer los restaura por ID', () => {
+  const c = cargar(crearContexto(), ['js/config.js', 'js/northwest/validacion.js', 'js/northwest/modelo.js', 'js/northwest/balanceo.js', 'js/northwest/noroeste.js', 'js/northwest/estado.js']);
+  c.escribirAlmacenamientoLocal = () => true;
+  const e = evaluar(c, 'estadoNorthwest'); e.modelo = c.ejemploNorthwest('balanceado');
+  const [o1, o2] = e.modelo.origenes, [d1, d2] = e.modelo.destinos;
+  e.invalidas = { ['costo:' + o1.id + '|' + d1.id]: 'abc', ['oferta:' + o1.id]: '-1', ['costo:' + o2.id + '|' + d2.id]: 'def', ['demanda:' + d2.id]: '1.5', 'costo:fantasma|otro': 'xyz' };
+  c.aplicarCambioNorthwest(m => c.eliminarElementoNorthwest(m, o1.id));
+  igual(Object.keys(e.invalidas).sort(), ['costo:' + o2.id + '|' + d2.id, 'demanda:' + d2.id].sort());
+  c.deshacerNorthwest();
+  igual(Object.keys(e.invalidas).length, 4); cierto(e.invalidas['oferta:' + o1.id] === '-1');
+  c.rehacerNorthwest(); igual(Object.keys(e.invalidas).length, 2);
+  c.aplicarCambioNorthwest(m => c.eliminarElementoNorthwest(m, d2.id));
+  igual(e.invalidas, {}); cierto(!c.hayPendientesNorthwest());
+  cierto(c.resolverNorthwestCompleto().datos.verificacion.ok, 'Las celdas eliminadas no bloquean resolver');
+});
+
+prueba('H19: pendientes preservan el último cálculo, bloquean resolver y se limpian/restauran con coherencia', () => {
+  const almacen = new Map();
+  const c = crearContexto(); c.localStorage = { getItem: clave => almacen.get(clave) || null };
+  c.escribirAlmacenamientoLocal = (clave, texto) => { almacen.set(clave, texto); return true; };
+  cargar(c, ['js/config.js', 'js/northwest/validacion.js', 'js/northwest/modelo.js', 'js/northwest/balanceo.js', 'js/northwest/noroeste.js', 'js/northwest/estado.js']);
+  const e = evaluar(c, 'estadoNorthwest'); e.modelo = c.ejemploNorthwest('balanceado');
+  const resultado = c.resolverNorthwestCompleto(), clave = 'oferta:' + e.modelo.origenes[0].id;
+  c.registrarBorradorNorthwest(clave, '-2', false);
+  cierto(!c.resultadoVigenteNorthwest() && c.resultadoConsultableNorthwest());
+  igual(c.avisoResultadoNorthwest(), 'Último cálculo válido; hay datos pendientes de corregir');
+  lanza(() => c.resolverNorthwestCompleto()); cierto(e.resultado === resultado);
+  c.cargarNorthwest(); igual(e.invalidas[clave], '-2'); igual(e.resultado, null);
+  c.registrarBorradorNorthwest(clave, '20', true); cierto(!c.hayPendientesNorthwest());
+  c.resolverNorthwestCompleto(); cierto(c.resultadoVigenteNorthwest());
+  e.invalidas[clave] = 'abc';
+  c.aplicarCambioNorthwest((m, estado) => { estado.modelo = c.ejemploNorthwest('balanceado'); }, { motivo: 'ejemplo' });
+  igual(e.invalidas, {}); c.deshacerNorthwest(); igual(e.invalidas[clave], 'abc');
+  const antes = JSON.stringify(e.invalidas);
+  lanza(() => c.aplicarCambioNorthwest((m, estado) => { estado.invalidas = {}; m.origenes[0].oferta = -1; }));
+  igual(JSON.stringify(e.invalidas), antes);
+});
+
 process.exitCode = informe('Northwest') ? 0 : 1;

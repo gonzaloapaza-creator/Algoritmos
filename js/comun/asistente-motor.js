@@ -8,6 +8,8 @@
 (() => {
   if (window.AlgoMotor || !window.AlgoConocimiento || !window.AlgoContexto) return;
   const K = window.AlgoConocimiento, C = window.AlgoContexto, I = C.interno;
+  const MODULOS_AYUDA = new Set(['inicio', 'johnson', 'dijkstra', 'kruskal', 'northwest', 'ordenamiento', 'arboles', 'difusa']);
+  const ayudaAutorizada = foto => !!foto && MODULOS_AYUDA.has(foto.modulo) && foto.ayudaAutorizada !== false;
 
   /* ---------------- Normalización y comparación de palabras ---------------- */
   const ABREVIATURAS = { q: 'que', k: 'que', xq: 'por que', pq: 'por que', porq: 'por que', xk: 'por que', porque: 'por que',
@@ -75,21 +77,28 @@
     return false;
   }
   /* ---------------- Índice de la base ---------------- */
-  let indice = null, pesos = new Map();
-  function construirIndice() {
-    indice = K.entradas().map(e => ({
+  const indices = new Map();
+  function construirIndice(ampliado) {
+    const indice = K.entradas().map(e => ({
       entrada: e,
-      variantes: [e.pregunta].concat(e.variantes).map(v => ({ plano: normalizar(v), contenido: tokens(v), completos: tokens(v, true) })),
+      variantes: [e.pregunta].concat(e.variantes, ampliado ? e.variantesAutorizadas || [] : []).map(v => ({ plano: normalizar(v), contenido: tokens(v), completos: tokens(v, true) })),
       conceptos: e.conceptos.map(c => tokens(c, true)).filter(c => c.length)
     }));
     const frecuencias = new Map();
     indice.forEach(item => new Set(item.variantes.flatMap(v => v.contenido)).forEach(t => frecuencias.set(t, (frecuencias.get(t) || 0) + 1)));
-    pesos = new Map(Array.from(frecuencias, ([t, n]) => [t, 1 + Math.log(1 + indice.length / n)]));
+    const pesos = new Map(Array.from(frecuencias, ([t, n]) => [t, 1 + Math.log(1 + indice.length / n)]));
+    const datos = { indice, pesos };
+    indices.set(ampliado, datos);
+    return datos;
   }
-  const asegurarIndice = () => { if (!indice || indice.length !== K.entradas().length) construirIndice(); };
+  const asegurarIndice = ampliado => {
+    const datos = indices.get(ampliado);
+    return datos && datos.indice.length === K.entradas().length ? datos : construirIndice(ampliado);
+  };
 
   function puntuar(pregunta, opciones) {
-    asegurarIndice();
+    const ampliado = MODULOS_AYUDA.has(opciones.modulo) && !(opciones.mencionados || []).some(m => !MODULOS_AYUDA.has(m));
+    const { indice, pesos } = asegurarIndice(ampliado);
     const contenido = tokens(pregunta), completos = tokens(pregunta, true);
     if (!contenido.length) return indice.filter(item => item.variantes.some(v => v.plano === normalizar(pregunta)))
       .map(item => ({ entrada: item.entrada, total: 165, claves: [], cobertura: 100, exacta: true }));
@@ -167,6 +176,17 @@
   /* ---------------- Construcción de respuestas ---------------- */
   const MAX_ACCIONES = 5;
   const texto = v => K.texto(v);
+  const campo = (e, nivel, foto) => texto(ayudaAutorizada(foto) && e[nivel + 'Autorizado'] || e[nivel]);
+  const AYUDA_DIFUSA_POR_ENTRADA = {
+    'aplicacion.guardar': '¿Cómo guardo mi trabajo?',
+    'aplicacion.json': '¿Cómo exporto JSON?',
+    'aplicacion.imprimir': '¿Cómo imprimo?',
+    'aplicacion.png': '¿Cómo exporto PNG?',
+    'aplicacion.pasos-controles': '¿Cómo veo los pasos?',
+    'aplicacion.crear-editar-eliminar': '¿Cómo ingreso datos?',
+    'aplicacion.ejemplos': '¿Cómo ingreso datos?',
+    'aplicacion.reiniciar-vs-limpiar': '¿Cómo uso los controles?'
+  };
   function accionesDe(entrada) {
     const acciones = [];
     if (texto(entrada.sencilla) && !memoria.mostrado.has('sencilla')) acciones.push({ etiqueta: 'Más sencillo', comando: { tipo: 'nivel', id: entrada.id, nivel: 'sencilla' } });
@@ -178,11 +198,16 @@
     return acciones.slice(0, MAX_ACCIONES);
   }
   function respuestaEntrada(entrada, nivel, foto, prefijo) {
-    const cuerpo = texto(entrada[nivel]) || texto(entrada.breve);
+    if (foto && foto.modulo === 'difusa' && AYUDA_DIFUSA_POR_ENTRADA[entrada.id] && !(ayudaAutorizada(foto) && entrada.breveAutorizado)) {
+      recordar(entrada, nivel, foto);
+      return { tipo: 'conocimiento', entrada: entrada.id, texto: C.ayudaLocal(AYUDA_DIFUSA_POR_ENTRADA[entrada.id], foto),
+        acciones: [{ etiqueta: 'Cómo funciona este ejemplo', comando: { tipo: 'entrada', id: 'difusa.ejemplo' } }] };
+    }
+    const cuerpo = campo(entrada, nivel, foto) || campo(entrada, 'breve', foto);
     recordar(entrada, nivel, foto);
     const partes = [];
     if (prefijo) partes.push(prefijo);
-    if (nivel !== 'breve' && nivel !== 'sencilla') partes.push({ ejemplo: 'Ejemplo:', detalle: 'Más detalle:' }[nivel] || '');
+    if (nivel !== 'breve' && nivel !== 'sencilla') partes.push({ ejemplo: ayudaAutorizada(foto) ? 'Ejemplo ilustrativo:' : 'Ejemplo:', detalle: 'Más detalle:' }[nivel] || '');
     partes.push(cuerpo);
     return { tipo: 'conocimiento', entrada: entrada.id, texto: partes.filter(Boolean).join('\n'), referencia: entrada.referencia || null, acciones: accionesDe(entrada) };
   }
@@ -203,7 +228,7 @@
     const comparacion = (a.comparar && a.comparar[b.id]) || (b.comparar && b.comparar[a.id]);
     reiniciar(); // Dos conceptos requieren una referencia explícita en el seguimiento.
     const cuerpo = comparacion ? texto(comparacion)
-      : a.pregunta + '\n' + texto(a.breve) + '\n\n' + b.pregunta + '\n' + texto(b.breve);
+      : a.pregunta + '\n' + campo(a, 'breve', foto) + '\n\n' + b.pregunta + '\n' + campo(b, 'breve', foto);
     return { tipo: 'conocimiento', entrada: a.id, texto: (comparacion ? '' : 'Tu pregunta toca dos temas:\n\n') + cuerpo,
       acciones: [{ etiqueta: 'Más sobre: ' + a.pregunta, comando: { tipo: 'entrada', id: a.id } }, { etiqueta: 'Más sobre: ' + b.pregunta, comando: { tipo: 'entrada', id: b.id } }] };
   }
@@ -220,7 +245,8 @@
       asignacion: 'Con la herramienta «Seleccionar», toca un recurso, una tarea o una conexión del grafo; en la pestaña Resultado, toca una pareja.',
       northwest: 'Esquina noroeste no tiene selección de celdas: edita directamente en la tabla de Datos. En la resolución, cada paso señala la celda en curso.',
       ordenamiento: 'Toca un pino o barra, o usa «Consultar posición» para elegirlo por número.',
-      arboles: 'Toca un nodo del árbol, o enfócalo con Tab y pulsa Enter o Espacio.'
+      arboles: 'Toca un nodo del árbol, o enfócalo con Tab y pulsa Enter o Espacio.',
+      difusa: 'En Procedimiento y resultado elige una regla y consulta un punto de salida para ver su recorte y la agregación del registro.'
     }[modulo] || 'Abre un módulo para seleccionar elementos de su ejercicio.';
   }
   function dinamicaVista(modulo, c, foto) {
@@ -236,6 +262,7 @@
   function dinamicaSeleccion(modulo, c) {
     const s = c.seleccion;
     if (!s) return 'No hay ningún elemento seleccionado en este momento. ' + comoSeleccionar(modulo);
+    if (modulo === 'difusa') return I.explicarPaso(modulo, c);
     if (s.tipo === 'nodo') return 'Nodo seleccionado: «' + (s.nombre || s.id) + '»' + (s.grupo ? ' (' + s.grupo + ')' : '') + '. Puedes editarlo, moverlo o eliminarlo con los controles del módulo.';
     if (s.tipo === 'conexion') return 'Conexión seleccionada: ' + nombre(c, s.desde) + ' → ' + nombre(c, s.hacia) + ', peso ' + valor(s.valor) + '. Puedes cambiar su peso o eliminarla.';
     if (s.tipo === 'pareja') return 'Pareja seleccionada: ' + s.recurso + ' – ' + s.tarea + '. Valor: ' + (s.valor === null ? 'pendiente (sin dato; no equivale a cero)' : valor(s.valor)) + '.';
@@ -257,6 +284,7 @@
     }
     if (modulo === 'northwest') {
       const p = c.paso, d = c.datos || {};
+      if (d.pendientesDeCorregir) return I.pendientes(modulo, c);
       if (c.resultadoVigente && p && typeof p.fila === 'number' && typeof p.col === 'number') {
         const o = lista(d.origenes)[p.fila], t = lista(d.destinos)[p.col];
         const escala = d.escalaCostos || 1;
@@ -292,8 +320,10 @@
     return 'Esta pregunta corresponde a Kruskal o Dijkstra.';
   }
   function dinamicaCambio(modulo, c) {
+    if (modulo === 'northwest' && c.datos && c.datos.pendientesDeCorregir) return I.pendientes(modulo, c);
     if (!c.resultadoVigente) return I.faltaResultado(c);
     if (modulo === 'johnson' && c.resultado && c.resultado.temporal && c.vista === 'resultado') return I.explicarPaso(modulo, c);
+    if (modulo === 'difusa') return I.explicarPaso(modulo, c);
     const p = c.paso;
     if (!p) return 'Aún no hay un paso seleccionado. Avanza al procedimiento.';
     const lineas = ['Paso ' + p.numero + ' de ' + p.total + ' · ' + (p.titulo || p.tipo || '') + '.'];
@@ -321,8 +351,10 @@
     return lineas.join('\n');
   }
   function dinamicaTotal(modulo, c) {
+    if (modulo === 'northwest' && c.datos && c.datos.pendientesDeCorregir) return I.pendientes(modulo, c);
     if (!c.resultadoVigente || !c.resultado) return I.faltaResultado(c);
     if (modulo === 'johnson') return I.explicarResultado(modulo, c);
+    if (modulo === 'difusa') return I.explicarResultado(modulo, c);
     const r = c.resultado, d = c.datos || {};
     if (modulo === 'kruskal') {
       const conexiones = lista(d.conexiones);
@@ -371,8 +403,10 @@
   }
   function dinamicaSiguiente(modulo, c) {
     if (modulo === 'inicio') return 'Elige un módulo de la ciudad (o de «Vista lista») según tu problema. Si no sabes cuál, pregúntame «¿qué algoritmo elijo según mi problema?».';
+    if (modulo === 'difusa') return I.pendientes(modulo, c);
     const d = c.datos || {};
-    if (c.error) return 'Primero atiende el aviso actual: ' + c.error;
+    if (c.error && modulo !== 'northwest') return 'Primero atiende el aviso actual: ' + c.error;
+    if (modulo === 'northwest' && (d.pendientesDeCorregir || d.resultadoInvalidado)) return I.pendientes(modulo, c);
     if (['johnson', 'dijkstra', 'kruskal'].includes(modulo)) {
       if (!d.cantidadVertices) return 'Crea tus primeros nodos o carga un ejemplo. Después conéctalos con pesos.';
       if (modulo === 'johnson' && d.cantidadVertices < 2) return 'Añade un segundo nodo: «Calcular Johnson» requiere al menos dos nodos. Puedes calcular incluso si hay nodos sin conexiones.';
@@ -432,13 +466,20 @@
     { nivel: 'ejercicio', patron: /^(?:y en este caso|en mi caso|y en mi ejercicio|y aqui|en este ejercicio|y en mi grafo|en mi matriz|y en el mio)$/ }
   ];
   function respuestaNivel(nivel, foto, etiqueta) {
+    const cambio = ayudaAutorizada(foto) && memoria.firma && memoria.firma !== foto.firma;
+    const respuesta = respuestaNivelActual(nivel, foto, etiqueta);
+    if (cambio) respuesta.texto = 'El ejercicio cambió desde la consulta anterior; usaré el estado actual.\n\n' + respuesta.texto;
+    return respuesta;
+  }
+  function respuestaNivelActual(nivel, foto, etiqueta) {
     const e = memoria.entrada;
     if (!e) {
+      if (ayudaAutorizada(foto) && nivel === 'sencilla' && foto.modulo !== 'inicio') return respuestaDinamica(K.porId(foto.contexto.resultadoVigente ? 'ejercicio.resultado' : 'ejercicio.pendientes'), foto);
       if (nivel === 'repetir') return { tipo: 'aclaracion', entrada: null, texto: '¿Sobre qué término o tema quieres que te explique? Escríbelo, por ejemplo: «¿qué es una matriz?» o «¿qué es la relajación?».', acciones: [{ etiqueta: 'Explorar temas', comando: { tipo: 'explorar' } }] };
       return { tipo: 'aclaracion', entrada: null, texto: 'Todavía no hemos hablado de un tema concreto. Pregúntame por un concepto y luego podrás pedir una versión más sencilla, un ejemplo o más detalle.', acciones: [{ etiqueta: 'Explorar temas', comando: { tipo: 'explorar' } }, { etiqueta: 'Ver ejemplos de preguntas', comando: { tipo: 'ejemplos' } }] };
     }
     if (e.dinamica && ['sencilla', 'ejemplo', 'detalle'].includes(nivel)) {
-      const fijo = e.relacionadas.map(id => K.porId(id)).find(x => x && !x.dinamica && (x.modulos.includes('*') || x.modulos.includes(foto.modulo)) && texto(x[nivel]));
+      const fijo = e.relacionadas.map(id => K.porId(id)).find(x => x && !x.dinamica && (x.modulos.includes('*') || x.modulos.includes(foto.modulo)) && campo(x, nivel, foto));
       if (fijo) return respuestaEntrada(fijo, nivel, foto, 'Sobre «' + fijo.pregunta + '»:');
       return { tipo: 'aclaracion', entrada: e.id, texto: 'La explicación anterior se construyó con los datos de tu ejercicio y no tiene una versión alternativa. Puedo explicarte el concepto relacionado si me lo preguntas.', acciones: accionesDe(e) };
     }
@@ -457,11 +498,12 @@
       recordar(e, 'breve', foto);
       return { tipo: 'dinamica', entrada: e.id, texto: 'En tu ejercicio de ' + nombres[foto.modulo] + ':\n' + cuerpo, acciones: accionesDe(e) };
     }
-    if (!texto(e[nivel])) {
+    if (!campo(e, nivel, foto)) {
       const faltante = { sencilla: 'una versión más sencilla', ejemplo: 'otro ejemplo preparado', detalle: 'más detalle preparado' }[nivel];
       return { tipo: 'aclaracion', entrada: e.id, texto: 'No tengo ' + faltante + ' para «' + e.pregunta + '». Lo esencial es:\n' + texto(e.breve), acciones: accionesDe(e) };
     }
-    if (memoria.mostrado.has(nivel) && nivel === 'ejemplo') return { tipo: 'conocimiento', entrada: e.id, texto: 'Solo tengo un ejemplo preparado para «' + e.pregunta + '»; es este:\n' + texto(e.ejemplo), acciones: accionesDe(e) };
+    if (memoria.mostrado.has(nivel) && nivel === 'ejemplo') return { tipo: 'conocimiento', entrada: e.id,
+      texto: ayudaAutorizada(foto) ? 'Ya vimos el ejemplo ilustrativo preparado para «' + e.pregunta + '». No tengo otro distinto; puedes pedir más detalle o elegir un tema relacionado.' : 'Solo tengo un ejemplo preparado para «' + e.pregunta + '»; es este:\n' + texto(e.ejemplo), acciones: accionesDe(e) };
     return respuestaEntrada(e, nivel, foto);
   }
   function respuestaComparaciones(id) {
@@ -484,6 +526,10 @@
     paso: 'ejercicio.paso', resultado: 'ejercicio.resultado', vista: 'ejercicio.vista', pendientes: 'ejercicio.pendientes', ejercicio: 'ejercicio.vista',
     errores: 'problema.no-calcula', resaltado: 'ordenamiento.colores', reglas: null, empezar: null, diferencias: null };
   function respuestaIntencion(lectura, pregunta, foto) {
+    if (ayudaAutorizada(foto) && lectura.modulos.length === 1 && lectura.modulo !== foto.modulo &&
+        ['paso', 'resultado', 'vista', 'pendientes', 'ejercicio', 'errores'].includes(lectura.intencion)) {
+      return respuestaDinamica(K.porId(ENTRADA_POR_INTENCION[lectura.intencion] || 'ejercicio.vista'), foto, lectura.modulo);
+    }
     const textoAyuda = C.ayudaLocal(pregunta, foto);
     if (textoAyuda.startsWith(I.SIN_EXPLICACION)) return null;
     let id = ENTRADA_POR_INTENCION[lectura.intencion];
@@ -524,18 +570,57 @@
     asignacion: ['¿Qué es el método húngaro?', '¿Qué es un dato pendiente?', '¿Por qué este elemento quedó sin asignar?', '¿Qué son las reducciones?', '¿Cómo salió este total?'],
     northwest: ['¿Por qué se llama esquina noroeste?', '¿Qué es el balanceo?', '¿Por qué hay un ficticio?', '¿Qué es un 0 básico?', '¿Por qué no garantiza la solución óptima?'],
     ordenamiento: ['¿Cómo funciona Merge Sort?', '¿Qué es la estabilidad?', '¿Qué significan los colores?', '¿Qué cuentan los contadores?', 'La animación va muy rápido'],
-    arboles: ['¿Qué diferencia hay entre árbol binario y BST?', '¿Qué son preorden, inorden y postorden?', '¿Por qué no acepta valores repetidos?', '¿Puedo eliminar un nodo?', '¿Por qué preorden y postorden no determinan un árbol único?']
+    arboles: ['¿Qué diferencia hay entre árbol binario y BST?', '¿Qué son preorden, inorden y postorden?', '¿Por qué no acepta valores repetidos?', '¿Puedo eliminar un nodo?', '¿Por qué preorden y postorden no determinan un árbol único?'],
+    difusa: ['¿Qué es lógica difusa?', '¿Qué significa pertenencia?', '¿Cómo funciona el ejemplo Nivel de ayuda recomendado?', '¿Cómo interpreto el centroide?']
   };
   function ejemplos(modulo) {
     const propios = EJEMPLOS[modulo] || [];
     return propios.concat(EJEMPLOS.generales.filter(p => !propios.includes(p))).slice(0, 8);
   }
 
+  // Formulaciones contextuales completas: no capturan conceptos de otras preguntas.
+  function respuestaContextual(plano, foto, lectura) {
+    if (!ayudaAutorizada(foto) || lectura.modulos.length) return null;
+    const c = foto.contexto || {}, modulo = foto.modulo;
+    const directa = (id, cuerpo) => {
+      const entrada = K.porId(id);
+      if (cuerpo === undefined) return respuestaDinamica(entrada, foto);
+      recordar(entrada, 'breve', foto);
+      return { tipo: 'dinamica', entrada: id, texto: cuerpo, acciones: [{ etiqueta: '¿Qué hago ahora?', comando: { tipo: 'entrada', id: 'ejercicio.siguiente' } }] };
+    };
+    if (/^(?:de donde (?:sale|salio) (?:ese|este|el) numero|como (?:sale|salio|se obtuvo) (?:ese|este) numero)$/.test(plano)) return directa('ejercicio.seleccion', I.explicarNumero(modulo, c));
+    if (modulo === 'johnson' && /^(?:que significan (?:estos|esos|los) dos (?:numeros|valores)|que son (?:estos|esos|los) dos numeros)$/.test(plano)) return directa('ejercicio.seleccion', I.explicarCasillasJohnson(c));
+    if (modulo === 'johnson' && /^(?:que (?:significa|muestra) (?:esta|la) matriz(?: de (?:adyacencia|distancias))?|explicame (?:esta|la) matriz(?: de (?:adyacencia|distancias))?)$/.test(plano)) return directa('ejercicio.celda', I.explicarMatrizJohnson(c, /adyacencia/.test(plano) ? 'adyacencia' : /distancias/.test(plano) ? 'distancias' : null));
+    if (/^por que esta mal$/.test(plano)) {
+      if (c.error && (modulo !== 'northwest' || (c.datos || {}).pendientesDeCorregir || (c.datos || {}).resultadoInvalidado)) return directa('ejercicio.pendientes');
+      reiniciar();
+      const acciones = [{ etiqueta: 'Los datos de entrada', comando: { tipo: 'entrada', id: 'ejercicio.pendientes' } }, { etiqueta: 'La selección actual', comando: { tipo: 'entrada', id: 'ejercicio.seleccion' } }];
+      if (c.resultadoVigente || c.ultimoCalculoValido) acciones.push({ etiqueta: 'El resultado', comando: { tipo: 'entrada', id: 'ejercicio.resultado' } });
+      return { tipo: 'aclaracion', entrada: null, texto: 'No identifico un error concreto en el contexto actual. ¿Te refieres a los datos de entrada' + (acciones.length === 3 ? ', a un elemento seleccionado o al resultado' : ' o a un elemento seleccionado') + '?', acciones };
+    }
+    if (/^(?:como salio (?:ese|este|el) resultado|por que da eso|explicame (?:el|este) resultado|que significan (?:estos|esos) valores)$/.test(plano)) return directa('ejercicio.resultado');
+    if (/^(?:que esta pasando en este paso|explicar este paso|explicame este paso)$/.test(plano)) return directa('ejercicio.paso');
+    if (/^(?:que hago ahora|como calculo)$/.test(plano)) return directa('ejercicio.siguiente');
+    if (/^que restricciones hay$/.test(plano)) return respuestaIntencion({ modulo, modulos: [], intencion: 'reglas' }, '¿Cuáles son las reglas?', foto);
+    if (/^(?:por que no me deja continuar|que dato me falta|que datos me faltan|que me falta)$/.test(plano)) return directa('ejercicio.pendientes');
+    if (['johnson', 'dijkstra'].includes(modulo) && /^por que no hay camino$/.test(plano)) return directa('ejercicio.sin-camino');
+    return null;
+  }
+
   /* ---------------- Entrada principal ---------------- */
   function responder(pregunta, foto, comando) {
-    const f = foto || C.obtener();
+    let f = foto || C.obtener();
     if (memoria.modulo && memoria.modulo !== f.modulo) reiniciar();
-    if (comando && typeof comando === 'object') return responderComando(comando, f);
+    if (comando && typeof comando === 'object') {
+      if (ayudaAutorizada(f) && comando.moduloOrigen && comando.moduloOrigen !== f.modulo) {
+        reiniciar();
+        return { tipo: 'aclaracion', entrada: null, texto: 'Esa acción pertenece a una consulta anterior de otro módulo. Pregunta por el ejercicio que tienes abierto.', acciones: [] };
+      }
+      const cambio = ayudaAutorizada(f) && comando.firmaOrigen && comando.firmaOrigen !== f.firma;
+      const r = responderComando(comando, f);
+      if (cambio && !r.texto.startsWith('El ejercicio cambió')) r.texto = 'El ejercicio cambió desde la consulta anterior; usaré el estado actual.\n\n' + r.texto;
+      return r;
+    }
     if (typeof pregunta !== 'string' || !pregunta.trim() || pregunta.length > 1200) return sinCobertura(f, pregunta);
     const plano = normalizar(pregunta);
     if (/^(?:hola|buenas|buenos dias|buenas tardes|buenas noches|hey|holi|ayuda|help|que tal)$/.test(plano)) {
@@ -545,12 +630,27 @@
       return { tipo: 'conocimiento', entrada: memoria.entrada ? memoria.entrada.id : null, texto: 'De nada. Si quieres, sigue preguntando sobre este tema o sobre tu ejercicio.', acciones: memoria.entrada ? accionesDe(memoria.entrada) : [] };
     }
     const lectura = I.interpretar(pregunta, f.modulo);
+    if (lectura.modulos.some(m => !MODULOS_AYUDA.has(m))) f = Object.assign({}, f, { ayudaAutorizada: false });
+    const contextual = respuestaContextual(plano, f, lectura);
+    if (contextual) return contextual;
     // En Johnson una consulta del resultado actual debe conservar su significado
     // de caminos/temporal. Una entrada estática de transporte no puede apropiarse
     // de «costo total» por coincidencia léxica. La prioridad se acota a este módulo.
     if (f.modulo === 'johnson' && !lectura.modulos.length && lectura.intencion === 'resultado') {
       const contextual = respuestaIntencion(lectura, pregunta, f);
       if (contextual) return contextual;
+    }
+    // Estas preguntas sobre el centroide consultan el cálculo actual de Difusa.
+    // Sin evaluación vigente, solo se explica el método y se pide evaluar.
+    if (f.modulo === 'difusa' && !lectura.modulos.length &&
+        /^(?:como (?:se obtuvo|obtuviste|se calculo|se calcula)|de donde sale) (?:el|este) centroide$/.test(plano)) {
+      const entrada = K.porId('difusa.centroide'), c = f.contexto || {};
+      const respuesta = respuestaEntrada(entrada, 'breve', f);
+      if (c.resultadoVigente && c.resultado) {
+        respuesta.tipo = 'dinamica';
+        respuesta.texto = I.explicarResultado('difusa', c);
+      } else respuesta.texto = 'El centroide es el centro de equilibrio de la salida agregada: primer momento / área. El módulo integra continuamente sus tramos lineales; las 1001 muestras son consultas auxiliares y no determinan la integral. Todavía no hay una evaluación vigente. Revisa los datos y pulsa «Evaluar» para obtener el centroide de la configuración actual.';
+      return respuesta;
     }
     const seguimiento = SEGUIMIENTOS.find(s => s.patron.test(plano));
     if (seguimiento && !lectura.modulos.length && (memoria.entrada || seguimiento.nivel !== 'comparaciones')) {
@@ -582,9 +682,9 @@
     }
     const entrada = mejor.entrada;
     if (entrada.dinamica) return respuestaDinamica(entrada, f, lectura.modulos.length === 1 ? lectura.modulos[0] : null);
-    const nivel = /\bejemplo\b/.test(plano) && texto(entrada.ejemplo) ? 'ejemplo' : 'breve';
+    const nivel = /\bejemplo\b/.test(plano) && campo(entrada, 'ejemplo', f) ? 'ejemplo' : 'breve';
     const r = respuestaEntrada(entrada, nivel, f);
-    if (nivel === 'ejemplo') { memoria.mostrado.add('breve'); r.texto = texto(entrada.breve) + '\n\nEjemplo:\n' + texto(entrada.ejemplo); r.acciones = accionesDe(entrada); }
+    if (nivel === 'ejemplo') { memoria.mostrado.add('breve'); r.texto = campo(entrada, 'breve', f) + (ayudaAutorizada(f) ? '\n\nEjemplo ilustrativo:\n' : '\n\nEjemplo:\n') + campo(entrada, 'ejemplo', f); r.acciones = accionesDe(entrada); }
     if (entrada.tema === 'problemas' && f.contexto && f.contexto.error) r.texto = 'Aviso actual de la aplicación: ' + f.contexto.error + '\n\n' + r.texto;
     return r;
   }

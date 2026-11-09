@@ -1,0 +1,91 @@
+{
+  "modelo": "Nivel de ayuda recomendado",
+  "version": 1,
+  "metodo": "Mamdani tipo 1",
+  "muestreo": {
+    "minimo": 0,
+    "maximo": 100,
+    "puntos": 1001,
+    "paso": 0.1,
+    "uso": "consulta auxiliar; no determina el centroide"
+  },
+  "integracion": {
+    "metodo": "continua-por-tramos-lineales",
+    "formula": "integral(y * mu(y)) / integral(mu(y))"
+  },
+  "tolerancia": 1e-8,
+  "casos": [
+    {
+      "familiaridad": 0,
+      "dificultad": 0,
+      "resultado": 50,
+      "etiquetas": [
+        "intermedia"
+      ]
+    },
+    {
+      "familiaridad": 0,
+      "dificultad": 10,
+      "resultado": 84.44444444444444,
+      "etiquetas": [
+        "detallada"
+      ]
+    },
+    {
+      "familiaridad": 10,
+      "dificultad": 0,
+      "resultado": 15.555555555555555,
+      "etiquetas": [
+        "breve"
+      ]
+    },
+    {
+      "familiaridad": 10,
+      "dificultad": 10,
+      "resultado": 50,
+      "etiquetas": [
+        "intermedia"
+      ]
+    },
+    {
+      "familiaridad": 5,
+      "dificultad": 5,
+      "resultado": 50,
+      "etiquetas": [
+        "intermedia"
+      ]
+    },
+    {
+      "familiaridad": 2,
+      "dificultad": 8,
+      "resultado": 84.44444444444444,
+      "etiquetas": [
+        "detallada"
+      ]
+    },
+    {
+      "familiaridad": 8,
+      "dificultad": 2,
+      "resultado": 15.555555555555555,
+      "etiquetas": [
+        "breve"
+      ]
+    },
+    {
+      "familiaridad": 3.5,
+      "dificultad": 6.5,
+      "resultado": 66.63670411985018,
+      "etiquetas": [
+        "intermedia"
+      ]
+    },
+    {
+      "familiaridad": 6.2,
+      "dificultad": 4.1,
+      "resultado": 36.98716466577738,
+      "etiquetas": [
+        "intermedia"
+      ]
+    }
+  ]
+}

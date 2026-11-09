@@ -53,6 +53,7 @@
   const mensajes = buscar('algoMensajes'), cuerpo = buscar('algoCuerpo'), estado = buscar('algoEstado');
   const nuevas = buscar('algoNuevas'), fondo = buscar('algoFondo'), formulario = buscar('algoFormulario');
   const fondoAnterior = new Map();
+  const consultasAnteriores = new WeakMap();
   const vistaModal = window.matchMedia('(max-width: 640px), (max-height: 480px)');
   const movimientoReducido = window.matchMedia('(prefers-reduced-motion: reduce)');
   let iniciado = false, componiendo = false;
@@ -140,12 +141,61 @@
     }));
   }).observe(document.body, { childList: true });
 
-  function botonAccion(accion, destino) {
+  function botonAccion(accion, destino, origen) {
     const boton = document.createElement('button');
     boton.type = 'button'; boton.className = 'algo-sugerida'; boton.textContent = accion.etiqueta;
-    boton.addEventListener('click', () => ejecutarAccion(accion));
+    boton.addEventListener('click', () => ejecutarAccion(accion, origen));
     destino.appendChild(boton);
     return boton;
+  }
+
+  function conservarLectura() {
+    const borde = cuerpo.getBoundingClientRect().top;
+    const ancla = cuerpo.scrollTop > 0 && Array.from(mensajes.querySelectorAll('article > p'))
+      .find(elemento => elemento.getBoundingClientRect().bottom > borde);
+    return { posicion: cuerpo.scrollTop, ancla, arriba: ancla ? ancla.getBoundingClientRect().top : 0 };
+  }
+
+  function restaurarLectura(lectura) {
+    cuerpo.scrollTop = lectura.ancla && lectura.ancla.isConnected
+      ? cuerpo.scrollTop + lectura.ancla.getBoundingClientRect().top - lectura.arriba : lectura.posicion;
+  }
+
+  function actualizarHistorial(foto) {
+    mensajes.querySelectorAll('.algo-mensaje--local').forEach(articulo => {
+      const consulta = consultasAnteriores.get(articulo);
+      if (consulta) consulta.aviso.hidden = consulta.firma === foto.firma;
+    });
+  }
+
+  function actualizarPreguntas(foto, sugeridas) {
+    let preguntas = buscar('algoPreguntasContexto');
+    if (!preguntas) {
+      sugeridas.replaceChildren();
+      preguntas = document.createElement('div');
+      preguntas.id = 'algoPreguntasContexto'; preguntas.className = 'algo-preguntas-contexto';
+      preguntas.setAttribute('role', 'group'); preguntas.setAttribute('aria-label', 'Preguntas para el estado actual');
+      sugeridas.appendChild(preguntas);
+      const accesos = document.createElement('div');
+      accesos.className = 'algo-accesos'; accesos.setAttribute('role', 'group'); accesos.setAttribute('aria-label', 'Explorar la ayuda');
+      botonAccion({ etiqueta: 'Explorar temas', comando: { tipo: 'explorar' } }, accesos);
+      botonAccion({ etiqueta: 'Ver ejemplos de preguntas', comando: { tipo: 'ejemplos' } }, accesos);
+      sugeridas.appendChild(accesos);
+    }
+    const textos = [...new Set(window.AlgoContexto.sugeridas(foto)
+      .filter(pregunta => typeof pregunta === 'string' && pregunta.trim()).map(pregunta => pregunta.trim()))].slice(0, 3);
+    const existentes = Array.from(preguntas.querySelectorAll('button'));
+    if (existentes.length === textos.length && existentes.every((boton, i) => boton.textContent === textos[i])) return;
+    const indiceFoco = existentes.indexOf(document.activeElement);
+    const textoFoco = indiceFoco >= 0 ? existentes[indiceFoco].textContent : null;
+    const porTexto = new Map(existentes.map(boton => [boton.textContent, boton]));
+    const vigentes = textos.map(pregunta => porTexto.get(pregunta) || botonAccion({ etiqueta: pregunta, pregunta }, preguntas));
+    existentes.forEach(boton => { if (!vigentes.includes(boton)) boton.remove(); });
+    vigentes.forEach(boton => preguntas.appendChild(boton));
+    if (indiceFoco >= 0 && vigentes.length) {
+      (vigentes.find(boton => boton.textContent === textoFoco) || vigentes[Math.min(indiceFoco, vigentes.length - 1)])
+        .focus({ preventScroll: true });
+    }
   }
 
   function refrescarContexto(foto) {
@@ -156,6 +206,14 @@
     moduloAnterior = foto.modulo;
     buscar('algoModulo').textContent = foto.referencia;
     const sugeridas = buscar('algoSugeridas');
+    // El módulo excluido conserva sus controles y su actualización anteriores.
+    if (foto.modulo !== 'asignacion') {
+      const lectura = conservarLectura();
+      actualizarHistorial(foto);
+      actualizarPreguntas(foto, sugeridas);
+      restaurarLectura(lectura);
+      return;
+    }
     const acciones = [
       { etiqueta: 'Explorar temas', comando: { tipo: 'explorar' } },
       { etiqueta: 'Ver ejemplos de preguntas', comando: { tipo: 'ejemplos' } }
@@ -215,20 +273,30 @@
     if (respuesta.tipo === 'explorador' || respuesta.tipo === 'lista') { explorar(respuesta); return; }
     const seguir = alFinal(), posicion = cuerpo.scrollTop;
     const articulo = agregar('Algo', respuesta.texto, 'local', foto.referencia);
+    if (foto.modulo !== 'asignacion') {
+      const aviso = document.createElement('small');
+      aviso.className = 'algo-consulta-anterior'; aviso.hidden = true;
+      aviso.textContent = 'Consulta anterior: el estado del ejercicio cambió.';
+      articulo.insertBefore(aviso, articulo.querySelector('p'));
+      consultasAnteriores.set(articulo, { firma: foto.firma, aviso });
+    }
     if (respuesta.entrada) articulo.dataset.entrada = respuesta.entrada;
     if (respuesta.acciones.length) {
       const acciones = document.createElement('div'); acciones.className = 'algo-respuesta-acciones';
       acciones.setAttribute('aria-label', 'Ampliar esta respuesta');
-      respuesta.acciones.forEach(a => botonAccion(a, acciones)); articulo.appendChild(acciones);
+      const origen = foto.modulo !== 'asignacion' ? { firma: foto.firma, modulo: foto.modulo } : null;
+      respuesta.acciones.forEach(a => botonAccion(a, acciones, origen)); articulo.appendChild(acciones);
     }
     if (seguir) verUltimos(); else cuerpo.scrollTop = posicion;
   }
 
-  function ejecutarAccion(accion) {
+  function ejecutarAccion(accion, origen) {
     if (accion.pregunta) { buscar('algoExplorador').hidden = true; enviarPregunta(accion.pregunta); return; }
     const foto = window.AlgoContexto.obtener();
     refrescarContexto(foto);
-    const respuesta = motor.responder('', foto, accion.comando);
+    const comando = origen && foto.modulo !== 'asignacion' && accion.comando
+      ? Object.assign({}, accion.comando, { firmaOrigen: origen.firma, moduloOrigen: origen.modulo }) : accion.comando;
+    const respuesta = motor.responder('', foto, comando);
     if (!['explorador', 'lista'].includes(respuesta.tipo)) {
       buscar('algoExplorador').hidden = true;
       agregar('Tú', accion.etiqueta, 'usuario', foto.referencia);

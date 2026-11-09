@@ -15,7 +15,8 @@ const CATEGORIAS_ALGORITMOS = [
   { id: 'asignacion', nombre: 'Asignación', descripcion: 'Emparejar recursos con tareas al menor costo o mayor beneficio.' },
   { id: 'transporte', nombre: 'Transporte', descripcion: 'Distribuir oferta entre destinos con demanda.' },
   { id: 'arreglos', nombre: 'Ordenamiento', descripcion: 'Visualización de algoritmos de ordenamiento con arreglos y pinos de boliche.' },
-  { id: 'arboles', nombre: 'Árboles', descripcion: 'Construcción, recorridos y reconstrucción de árboles binarios.' }
+  { id: 'arboles', nombre: 'Árboles', descripcion: 'Construcción, recorridos y reconstrucción de árboles binarios.' },
+  { id: 'decisiones', nombre: 'Decisiones y lógica', descripcion: 'Pertenencias y reglas para explorar recomendaciones graduales.' }
 ];
 
 /* Iconos como contenido interno de un <svg viewBox="0 0 24 24"> con trazo currentColor. */
@@ -27,7 +28,8 @@ const ICONOS_ALGORITMOS = {
   tabla: '<rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M3.5 15h17M9 4v16M15 4v16"/>',
   esquina: '<rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M3.5 15h17M9.5 4v16M15 4v16"/><rect x="4.5" y="5" width="4" height="4" rx="1" fill="currentColor" stroke="none"/>',
   ordenamiento: '<path d="M4 20h16M6 16v4M12 8v12M18 12v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
-  arbol: '<circle cx="12" cy="5" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M12 7.5v4m0 0-6 4m6-4 6 4"/>'
+  arbol: '<circle cx="12" cy="5" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M12 7.5v4m0 0-6 4m6-4 6 4"/>',
+  difusa: '<path d="M3 20V4m0 16h18M4 17 8 7l5 10M10 17l5-10h5v10"/><circle cx="14" cy="17" r="1.5"/>'
 };
 
 const CATALOGO_ALGORITMOS = [
@@ -156,6 +158,26 @@ const CATALOGO_ALGORITMOS = [
     ruta: 'northwest.html',
     icono: 'esquina',
     video: 'HjXWStUh0yE',
+    disponible: true
+  },
+  {
+    id: 'difusa',
+    zona: 'Centro de decisiones',
+    etiqueta: 'Lógica difusa · Mamdani',
+    distrito: 'decisiones',
+    escena: 'decisiones',
+    color: '#d4a3ed', colorClaro: '#84539f', colorFuerte: '#e5c6f6',
+    nombre: 'Lógica difusa',
+    corto: 'Lógica difusa',
+    categoria: 'decisiones',
+    descripcion: 'Explora cómo reglas y pertenencias producen una recomendación gradual',
+    entrada: 'De 1 a 3 entradas, funciones de pertenencia y reglas configurables',
+    resultado: 'Salida gradual mediante centroide, procedimiento y mapa de respuesta',
+    ruta: 'logica-difusa.html',
+    icono: 'difusa',
+    video: 'ayfoP7Tqa-s',
+    bienvenida: 'La lógica difusa representa categorías graduales mediante funciones de pertenencia y reglas. Configura de una a tres entradas, una salida y sus conjuntos; observa las activaciones, los recortes y el centroide con ejemplos didácticos o con tu propio sistema.',
+    accionIntro: 'Ir al módulo',
     disponible: true
   }
 ];

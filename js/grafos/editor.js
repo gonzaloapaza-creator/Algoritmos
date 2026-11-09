@@ -4,6 +4,8 @@
 // Las coordenadas del ejercicio no cambian al adaptar la vista a una pantalla.
 let vistaAjustadaEditorGrafo = true;
 let observadorVistaEditorGrafo;
+let arrastreVistaGrafo = null;
+let suprimirClickEditorGrafo = 0;
 
 function encuadreEditorGrafo() {
   const svg = document.getElementById('svgModuloGrafo');
@@ -15,7 +17,7 @@ function encuadreEditorGrafo() {
   const ancho = Math.max(120, mayorX - menorX), alto = Math.max(120, mayorY - menorY);
   // El margen se calcula en píxeles visibles e incluye círculos, trazos y etiquetas.
   const escala = Math.min(Math.max(80, caja.width - 64) / ancho, Math.max(80, caja.height - 64) / alto);
-  const margen = Math.max(46, 48 / escala);
+  const margen = Math.max(100, 88 / escala);
   return { x: (menorX + mayorX - ancho) / 2 - margen, y: (menorY + mayorY - alto) / 2 - margen,
     ancho: ancho + margen * 2, alto: alto + margen * 2 };
 }
@@ -49,6 +51,7 @@ function configurarVistaEditorGrafo() {
   if (observadorVistaEditorGrafo) observadorVistaEditorGrafo.disconnect();
   observadorVistaEditorGrafo = new ResizeObserver(() => dibujarEditorGrafo());
   observadorVistaEditorGrafo.observe(document.getElementById('svgModuloGrafo'));
+  instalarHerramientasEditorGrafo();
   ajustarVistaEditorGrafo();
 }
 
@@ -88,6 +91,7 @@ function textoAristaGrafo(id) {
 function seleccionarElementoGrafo(tipo, id) {
   moduloGrafo.seleccion = { tipo, id };
   actualizarCamposEditorGrafo();
+  actualizarHerramientasEditorGrafo();
   if (moduloGrafo.vista === 'grafo') {
     document.getElementById(tipo === 'nodo' ? 'ajustesVerticeGrafo' : 'ajustesAristaGrafo').open = true;
   }
@@ -150,9 +154,12 @@ function dibujarEditorGrafo() {
   const radio = aplicarVistaEditorGrafo();
   const matrizVista = svg.getScreenCTM();
   const escalaVista = Math.max(.05, Math.hypot(matrizVista.a, matrizVista.b));
+  const fuenteNombre = Math.max(16, 13 / escalaVista);
+  const fuenteDistancia = Math.max(18, 14 / escalaVista);
   const separacionPeso = Math.max(20, 18 / escalaVista);
   const etiquetas = [];
-  const g = moduloGrafo.grafo;
+  const g = arrastreVistaGrafo ? copiarGrafoModulo(moduloGrafo.grafo) : moduloGrafo.grafo;
+  if (arrastreVistaGrafo) Object.assign(g.nodos.find(n => n.id === arrastreVistaGrafo.id), arrastreVistaGrafo.posicion);
   const resultado = moduloGrafo.resultado;
   const paso = pasoVisibleModuloGrafo();
   const mostrandoResultado = moduloGrafo.vista === 'resultado';
@@ -160,6 +167,14 @@ function dibujarEditorGrafo() {
   const ruta = resultado && moduloGrafo.modulo === 'dijkstra' && mostrandoResultado && moduloGrafo.destino ? reconstruirRutaGrafo(resultado, moduloGrafo.destino) : null;
   const finalizados = new Set(paso && !mostrandoResultado ? paso.finalizados || [] : []);
   const porId = new Map(g.nodos.map(n => [n.id, n]));
+  const radioNodo = n => {
+    const distancia = esDijkstraModulo && resultado ? (mostrandoResultado ? resultado.distancias[n.id] : paso && paso.distancias[n.id]) : undefined;
+    const anchoNombre = Math.min(n.nombre.length, 6) * fuenteNombre * .34 + 10 / escalaVista;
+    const anchoDistancia = distancia === undefined ? 0 : ('d = ' + distanciaTextoGrafo(distancia)).length * fuenteDistancia * .32 + 9 / escalaVista;
+    const altoTexto = n.nombre.length > 6 ? (distancia === undefined ? fuenteNombre * 1.8
+      : (fuenteNombre + fuenteDistancia) * .8 + fuenteDistancia * .8) + 10 / escalaVista : 0;
+    return Math.max(radio, anchoNombre, anchoDistancia, altoTexto);
+  };
   const capa = elementoSvgGrafo('g');
   const defs = elementoSvgGrafo('defs');
   const marcador = elementoSvgGrafo('marker', { id: 'flechaEditorGrafo', viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 5, markerHeight: 5, orient: 'auto' });
@@ -171,13 +186,15 @@ function dibujarEditorGrafo() {
     const ux = dx / longitud, uy = dy / longitud;
     const opuesta = g.dirigido && g.conexiones.some(a => a.desde === c.hacia && a.hacia === c.desde);
     const curva = opuesta ? 32 : 0;
-    const margenDesde = Math.min(radio + 3, longitud * .45), margenHasta = Math.min(radio + 6, longitud * .45);
+    const margenDesde = Math.min(radioNodo(desde) + 3, longitud * .45), margenHasta = Math.min(radioNodo(hacia) + 6, longitud * .45);
     const x1 = desde.x + ux * margenDesde, y1 = desde.y + uy * margenDesde;
     const x2 = hacia.x - ux * margenHasta, y2 = hacia.y - uy * margenHasta;
     const mx = (x1 + x2) / 2 - uy * curva, my = (y1 + y2) / 2 + ux * curva;
     const d = 'M' + x1 + ' ' + y1 + ' Q' + mx + ' ' + my + ' ' + x2 + ' ' + y2;
     const seleccionado = moduloGrafo.seleccion && moduloGrafo.seleccion.id === c.id;
-    const grupo = elementoSvgGrafo('g', { class: 'arista-editor-grafo' + (seleccionado ? ' seleccionado' : '') + (elegidas.has(c.id) ? ' elegida' : '') + (paso && !mostrandoResultado && paso.arista === c.id ? ' actual' : '') + (ruta && ruta.conexiones.includes(c.id) ? ' ruta' : ''), 'data-id': c.id, tabindex: 0, role: 'button', 'aria-label': 'Editar arista ' + textoAristaGrafo(c.id) });
+    const descartada = mostrandoResultado && !esDijkstraModulo && resultado && !elegidas.has(c.id);
+    const grupo = elementoSvgGrafo('g', { class: 'arista-editor-grafo' + (seleccionado ? ' seleccionado' : '') + (elegidas.has(c.id) ? ' elegida' : '') + (descartada ? ' descartada' : '') + (paso && !mostrandoResultado && paso.arista === c.id ? ' actual' : '') + (ruta && ruta.conexiones.includes(c.id) ? ' ruta' : ''), 'data-id': c.id, tabindex: 0, role: 'button', 'aria-label': 'Editar arista ' + textoAristaGrafo(c.id) + (descartada ? ', descartada por ciclo' : elegidas.has(c.id) ? ', elegida' : '') });
+    if (mostrandoResultado && esDijkstraModulo && !elegidas.has(c.id)) grupo.classList.add('gm-arista-secundaria');
     grupo.appendChild(elementoSvgGrafo('title', {}, textoAristaGrafo(c.id)));
     grupo.appendChild(elementoSvgGrafo('path', { d, class: 'gm-arista-hit' }));
     const linea = elementoSvgGrafo('path', { d, class: 'gm-arista-linea' });
@@ -191,13 +208,31 @@ function dibujarEditorGrafo() {
     capa.appendChild(grupo);
   });
   g.nodos.forEach(n => {
+    const radioActual = radioNodo(n);
     const seleccionado = moduloGrafo.seleccion && moduloGrafo.seleccion.id === n.id;
     const grupo = elementoSvgGrafo('g', { transform: 'translate(' + n.x + ' ' + n.y + ')', class: 'nodo-editor-grafo' + (seleccionado ? ' seleccionado' : '') + (paso && !mostrandoResultado && paso.actual === n.id ? ' actual' : '') + (finalizados.has(n.id) ? ' finalizado' : '') + (esDijkstraModulo && n.id === moduloGrafo.origen ? ' gm-origen' : '') + (esDijkstraModulo && n.id === moduloGrafo.destino ? ' gm-destino' : ''), 'data-id': n.id, tabindex: 0, role: 'button', 'aria-label': 'Seleccionar vértice ' + n.nombre + (esDijkstraModulo && n.id === moduloGrafo.origen ? ', origen' : '') + (esDijkstraModulo && n.id === moduloGrafo.destino ? ', destino' : '') });
     grupo.appendChild(elementoSvgGrafo('title', {}, n.nombre + ' · ' + n.id));
-    grupo.appendChild(elementoSvgGrafo('circle', { r: radio }));
-    grupo.appendChild(elementoSvgGrafo('text', { y: 0 }, n.nombre.length > 5 ? n.nombre.slice(0, 4) + '…' : n.nombre));
+    if (moduloGrafo.conexionDesde === n.id) grupo.classList.add('gm-extremo-conexion');
+    grupo.appendChild(elementoSvgGrafo('circle', { r: radioActual }));
+    const distancia = esDijkstraModulo && resultado ? (mostrandoResultado ? resultado.distancias[n.id] : paso && paso.distancias[n.id]) : undefined;
+    const multilinea = n.nombre.length > 6;
+    // La fuente tiene un tamaño mínimo lógico; sus separaciones deben usar ese
+    // mismo tamaño para que acercar la vista no junte nombre y distancia.
+    const yNombre = multilinea ? -fuenteNombre * (distancia !== undefined ? 1.2 : .6)
+      : distancia !== undefined ? -fuenteDistancia * .65 : 0;
+    const nombre = elementoSvgGrafo('text', { y: yNombre, class: 'gm-nombre-nodo' });
+    if (multilinea) { nombre.append(elementoSvgGrafo('tspan', { x: 0 }, n.nombre.slice(0, 6)), elementoSvgGrafo('tspan', { x: 0, dy: fuenteNombre * 1.2 }, n.nombre.slice(6))); }
+    else nombre.textContent = n.nombre;
+    nombre.style.fontSize = fuenteNombre + 'px'; grupo.appendChild(nombre);
+    if (distancia !== undefined) {
+      const yDistancia = multilinea ? (fuenteNombre + fuenteDistancia) * .8 + 4 / escalaVista : fuenteNombre * .75;
+      const etiquetaDistancia = elementoSvgGrafo('text', { y: yDistancia, class: 'gm-distancia-nodo' }, 'd = ' + distanciaTextoGrafo(distancia));
+      etiquetaDistancia.style.fontSize = fuenteDistancia + 'px';
+      grupo.appendChild(etiquetaDistancia);
+      grupo.setAttribute('aria-label', grupo.getAttribute('aria-label') + ', distancia desde el origen ' + distanciaTextoGrafo(distancia));
+    }
     if (esDijkstraModulo && (n.id === moduloGrafo.origen || n.id === moduloGrafo.destino)) {
-      grupo.appendChild(elementoSvgGrafo('text', { y: radio + 16 / escalaVista, class: 'gm-nodo-etiqueta' }, n.id === moduloGrafo.origen ? 'Origen' : 'Destino'));
+      grupo.appendChild(elementoSvgGrafo('text', { y: radioActual + 16 / escalaVista, class: 'gm-nodo-etiqueta' }, n.id === moduloGrafo.origen && n.id === moduloGrafo.destino ? 'Origen / destino' : n.id === moduloGrafo.origen ? 'Origen' : 'Destino'));
     }
     activarSeleccionSvgGrafo(grupo, 'nodo', n.id);
     grupo.addEventListener('pointerdown', evento => comenzarArrastreGrafo(evento, grupo, n));
@@ -217,7 +252,8 @@ function dibujarEditorGrafo() {
   document.getElementById('resumenGrafo').textContent = g.nodos.length + ' puntos · ' + g.conexiones.length + ' conexiones · ' + (g.dirigido ? 'Con dirección →' : 'En ambos sentidos ↔');
   document.getElementById('seleccionTextoGrafo').textContent = moduloGrafo.seleccion
     ? 'Selección: ' + (moduloGrafo.seleccion.tipo === 'nodo' ? nombreNodoGrafo(moduloGrafo.seleccion.id) : textoAristaGrafo(moduloGrafo.seleccion.id)) + '. Puedes editar sus datos en el formulario.'
-    : 'Toca un punto o una conexión para seleccionarlo. Arrastra los puntos con el ratón; también puedes moverlos desde «Editar un punto». Usa «Ver todo» para encuadrar la red.';
+    : 'Selecciona o arrastra puntos con ratón o pantalla táctil. Usa las herramientas para crear, conectar o desplazar; los formularios permiten las mismas operaciones con teclado.';
+  actualizarHerramientasEditorGrafo();
 }
 
 function colocarPesosEditorGrafo(svg, etiquetas, separacion, escala) {
@@ -244,10 +280,15 @@ function colocarPesosEditorGrafo(svg, etiquetas, separacion, escala) {
 }
 
 function activarSeleccionSvgGrafo(elemento, tipo, id) {
-  elemento.addEventListener('click', () => seleccionarElementoGrafo(tipo, id));
+  const activar = () => {
+    if (Date.now() < suprimirClickEditorGrafo) return;
+    if (tipo === 'nodo' && moduloGrafo.herramienta === 'conectar') conectarExtremoEditorGrafo(id);
+    else if (moduloGrafo.herramienta !== 'desplazar') seleccionarElementoGrafo(tipo, id);
+  };
+  elemento.addEventListener('click', evento => { evento.stopPropagation(); activar(); });
   elemento.addEventListener('keydown', evento => {
     if (evento.key === 'Enter' || evento.key === ' ') {
-      evento.preventDefault(); seleccionarElementoGrafo(tipo, id);
+      evento.preventDefault(); activar();
       const nuevo = document.querySelector('[data-id="' + CSS.escape(id) + '"]');
       if (nuevo) nuevo.focus();
     }
@@ -255,7 +296,8 @@ function activarSeleccionSvgGrafo(elemento, tipo, id) {
 }
 
 function comenzarArrastreGrafo(evento, grupo, nodo) {
-  if (evento.pointerType !== 'mouse' || evento.button !== 0) return;
+  if (moduloGrafo.herramienta !== 'seleccionar' || evento.button !== 0 || !evento.isPrimary) return;
+  evento.stopPropagation();
   const svg = document.getElementById('svgModuloGrafo');
   const punto = e => {
     const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse());
@@ -264,24 +306,140 @@ function comenzarArrastreGrafo(evento, grupo, nodo) {
   const inicio = punto(evento);
   let final = { x: nodo.x, y: nodo.y };
   const revision = moduloGrafo.revision;
-  grupo.setPointerCapture(evento.pointerId);
+  svg.setPointerCapture(evento.pointerId);
   const mover = e => {
     const p = punto(e);
     final = { x: limitar(nodo.x + p.x - inicio.x, 30, 970), y: limitar(nodo.y + p.y - inicio.y, 30, 570) };
-    grupo.setAttribute('transform', 'translate(' + final.x + ' ' + final.y + ')');
+    if (Math.hypot(final.x - nodo.x, final.y - nodo.y) > 3) {
+      vistaAjustadaEditorGrafo = false;
+      arrastreVistaGrafo = { id: nodo.id, posicion: final };
+      dibujarEditorGrafo();
+    }
   };
   const terminar = e => {
-    grupo.removeEventListener('pointermove', mover); grupo.removeEventListener('pointerup', terminar);
-    grupo.removeEventListener('pointercancel', cancelar);
+    svg.removeEventListener('pointermove', mover); svg.removeEventListener('pointerup', terminar);
+    svg.removeEventListener('pointercancel', cancelar);
+    arrastreVistaGrafo = null;
     if (revision !== moduloGrafo.revision) { dibujarEditorGrafo(); return; }
     if (Math.hypot(final.x - nodo.x, final.y - nodo.y) > 1) {
+      suprimirClickEditorGrafo = Date.now() + 400;
       const g = copiarGrafoModulo(moduloGrafo.grafo);
       Object.assign(g.nodos.find(n => n.id === nodo.id), final);
       comprometerGrafo(g, 'Posición actualizada.', false);
     }
     seleccionarElementoGrafo('nodo', nodo.id);
-    if (grupo.hasPointerCapture(e.pointerId)) grupo.releasePointerCapture(e.pointerId);
+    if (svg.hasPointerCapture(e.pointerId)) svg.releasePointerCapture(e.pointerId);
   };
-  const cancelar = () => { grupo.removeEventListener('pointermove', mover); grupo.removeEventListener('pointerup', terminar); grupo.removeEventListener('pointercancel', cancelar); dibujarEditorGrafo(); };
-  grupo.addEventListener('pointermove', mover); grupo.addEventListener('pointerup', terminar); grupo.addEventListener('pointercancel', cancelar);
+  const cancelar = () => { svg.removeEventListener('pointermove', mover); svg.removeEventListener('pointerup', terminar); svg.removeEventListener('pointercancel', cancelar); arrastreVistaGrafo = null; dibujarEditorGrafo(); };
+  svg.addEventListener('pointermove', mover); svg.addEventListener('pointerup', terminar); svg.addEventListener('pointercancel', cancelar);
+}
+
+function actualizarHerramientasEditorGrafo() {
+  document.querySelectorAll('[data-herramienta-grafo]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.herramientaGrafo === moduloGrafo.herramienta)));
+  const svg = document.getElementById('svgModuloGrafo');
+  svg.dataset.herramienta = moduloGrafo.herramienta;
+  document.getElementById('btnCancelarConexionGrafo').hidden = !moduloGrafo.conexionDesde;
+  document.getElementById('btnEditarSeleccionGrafo').disabled = !moduloGrafo.seleccion;
+  document.getElementById('bienvenidaGrafo').hidden = !!moduloGrafo.grafo.nodos.length || moduloGrafo.herramienta === 'crear';
+  document.getElementById('estadoHerramientaGrafo').textContent = moduloGrafo.conexionDesde
+    ? 'Desde ' + nombreNodoGrafo(moduloGrafo.conexionDesde) + ': elige el otro extremo. Escape o «Cancelar conexión» cancela.'
+    : ({ seleccionar: 'Selecciona un elemento o arrastra un punto. Doble clic en el fondo crea un punto.', crear: 'Toca o haz clic en el fondo para crear un punto. También puedes usar el formulario.', conectar: 'Selecciona dos puntos para conectar sus extremos y después escribe el peso.', desplazar: 'Arrastra el lienzo para desplazar la vista. Los controles de zoom también funcionan con teclado y táctil.' })[moduloGrafo.herramienta];
+}
+
+function cancelarConexionEditorGrafo() {
+  moduloGrafo.conexionDesde = null;
+  dibujarEditorGrafo(); actualizarHerramientasEditorGrafo();
+}
+
+function ejecutarOperacionEditorGrafo(operacion, mensaje) {
+  const resultado = operarGrafoModulo(moduloGrafo.grafo, moduloGrafo.modulo, operacion);
+  if (!resultado.ok) { notificar(resultado.error + ' El ejercicio anterior se conserva.', 'error'); return false; }
+  if (!comprometerGrafo(resultado.grafo, mensaje)) return false;
+  if (operacion.tipo === 'nodo' || operacion.tipo === 'arista') seleccionarElementoGrafo(operacion.tipo === 'nodo' ? 'nodo' : 'arista', resultado.id);
+  return true;
+}
+
+async function crearNodoEnPuntoEditorGrafo(evento) {
+  if (moduloGrafo.solicitandoConexion) return;
+  const svg = document.getElementById('svgModuloGrafo');
+  const p = new DOMPoint(evento.clientX, evento.clientY).matrixTransform(svg.getScreenCTM().inverse());
+  const revision = moduloGrafo.revision;
+  moduloGrafo.solicitandoConexion = true;
+  const nombre = await dialogoPedirTexto({ titulo: 'Crear un punto', mensaje: 'Escribe su nombre. Podrás moverlo o renombrarlo después.', valor: String.fromCharCode(65 + moduloGrafo.grafo.nodos.length), validar: texto => {
+    const valor = String(texto).trim();
+    return valor && valor.length <= MAX_LARGO_NOMBRE ? { ok: true, valor } : { ok: false, error: 'Escribe un nombre de 1 a ' + MAX_LARGO_NOMBRE + ' caracteres.' };
+  } });
+  moduloGrafo.solicitandoConexion = false;
+  if (nombre === undefined || revision !== moduloGrafo.revision) return;
+  ejecutarOperacionEditorGrafo({ tipo: 'nodo', nombre, x: limitar(p.x, 30, 970), y: limitar(p.y, 30, 570) }, 'Punto creado.');
+}
+
+async function conectarExtremoEditorGrafo(id) {
+  if (moduloGrafo.solicitandoConexion) return;
+  if (!moduloGrafo.conexionDesde) {
+    moduloGrafo.conexionDesde = id; moduloGrafo.seleccion = { tipo: 'nodo', id };
+    actualizarCamposEditorGrafo(); dibujarEditorGrafo(); return;
+  }
+  const desde = moduloGrafo.conexionDesde;
+  if (desde === id) { notificar('Elige otro punto. El editor no admite bucles.', 'aviso'); return; }
+  const existente = moduloGrafo.grafo.conexiones.find(c => c.desde === desde && c.hacia === id || !moduloGrafo.grafo.dirigido && c.desde === id && c.hacia === desde);
+  if (existente) { notificar('Esta conexión ya existe. Selecciónala para editar su peso.', 'aviso'); return; }
+  const revision = moduloGrafo.revision;
+  moduloGrafo.solicitandoConexion = true;
+  const valor = await dialogoPedirTexto({ titulo: 'Peso de la conexión', mensaje: nombreNodoGrafo(desde) + (moduloGrafo.grafo.dirigido ? ' → ' : ' — ') + nombreNodoGrafo(id) + '. ' + (esDijkstraModulo ? 'Dijkstra admite enteros no negativos; cero es válido.' : 'Kruskal admite enteros negativos, cero y positivos.'), valor: document.getElementById('pesoArista').value, validar: validarPesoEditorGrafo, inputmode: 'numeric' });
+  moduloGrafo.solicitandoConexion = false;
+  // Cancelar el diálogo cancela también la conexión pendiente.
+  if (valor === undefined || revision !== moduloGrafo.revision || moduloGrafo.conexionDesde !== desde) { cancelarConexionEditorGrafo(); return; }
+  moduloGrafo.conexionDesde = null;
+  ejecutarOperacionEditorGrafo({ tipo: 'arista', desde, hacia: id, valor }, 'Conexión creada.');
+}
+
+function organizarEditorGrafo() {
+  const g = copiarGrafoModulo(moduloGrafo.grafo);
+  if (!g.nodos.length) return;
+  // Solo una acción explícita distribuye las posiciones; calcular y elegir rutas no lo hacen.
+  const caja = document.getElementById('svgModuloGrafo').getBoundingClientRect();
+  const proporcion = Math.max(.6, Math.min(1.9, caja.width / Math.max(1, caja.height)));
+  const columnas = Math.ceil(Math.sqrt(g.nodos.length * proporcion)), filas = Math.ceil(g.nodos.length / columnas), ancho = Math.min(790, 400 * proporcion);
+  g.nodos.forEach((n, i) => { n.x = columnas === 1 ? 500 : 500 - ancho / 2 + (i % columnas) * ancho / (columnas - 1); n.y = filas === 1 ? 300 : 100 + Math.floor(i / columnas) * 400 / (filas - 1); });
+  const seleccion = moduloGrafo.seleccion;
+  comprometerGrafo(g, 'Distribución actualizada; el cálculo se conserva.', false);
+  moduloGrafo.seleccion = seleccion; ajustarVistaEditorGrafo(); actualizarCamposEditorGrafo();
+}
+
+function instalarHerramientasEditorGrafo() {
+  const svg = document.getElementById('svgModuloGrafo');
+  document.querySelectorAll('[data-herramienta-grafo]').forEach(b => b.addEventListener('click', () => {
+    moduloGrafo.herramienta = b.dataset.herramientaGrafo; cancelarConexionEditorGrafo();
+  }));
+  document.getElementById('btnCancelarConexionGrafo').addEventListener('click', cancelarConexionEditorGrafo);
+  document.getElementById('btnOrganizarGrafo').addEventListener('click', organizarEditorGrafo);
+  document.getElementById('btnEditarSeleccionGrafo').addEventListener('click', () => {
+    if (!moduloGrafo.seleccion) return;
+    const seleccion = moduloGrafo.seleccion;
+    cambiarVistaModuloGrafo('grafo'); seleccionarElementoGrafo(seleccion.tipo, seleccion.id);
+    document.getElementById(seleccion.tipo === 'nodo' ? 'nombreSeleccionado' : 'pesoSeleccionado').focus({ preventScroll: true });
+  });
+  document.addEventListener('keydown', evento => {
+    if (evento.key === 'Escape' && moduloGrafo.conexionDesde && !moduloGrafo.solicitandoConexion) { evento.preventDefault(); cancelarConexionEditorGrafo(); }
+  });
+  svg.addEventListener('click', evento => {
+    if (Date.now() < suprimirClickEditorGrafo || evento.target.closest('[data-id]')) return;
+    if (moduloGrafo.herramienta === 'crear') crearNodoEnPuntoEditorGrafo(evento);
+    else if (moduloGrafo.herramienta === 'conectar') cancelarConexionEditorGrafo();
+  });
+  svg.addEventListener('dblclick', evento => {
+    if (moduloGrafo.herramienta === 'seleccionar' && !evento.target.closest('[data-id]')) { evento.preventDefault(); crearNodoEnPuntoEditorGrafo(evento); }
+  });
+  svg.addEventListener('pointerdown', evento => {
+    if (moduloGrafo.herramienta !== 'desplazar' || evento.button !== 0 || !evento.isPrimary) return;
+    const inicio = { x: evento.clientX, y: evento.clientY }, vista = Object.assign({}, moduloGrafo.vistaSvg);
+    const inversa = svg.getScreenCTM().inverse();
+    const puntoInicio = new DOMPoint(inicio.x, inicio.y).matrixTransform(inversa);
+    svg.setPointerCapture(evento.pointerId);
+    const mover = e => { const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(inversa); Object.assign(moduloGrafo.vistaSvg, { x: vista.x - p.x + puntoInicio.x, y: vista.y - p.y + puntoInicio.y }); actualizarVistaEditorGrafo(); };
+    const terminar = e => { svg.removeEventListener('pointermove', mover); svg.removeEventListener('pointerup', terminar); svg.removeEventListener('pointercancel', terminar); if (svg.hasPointerCapture(e.pointerId)) svg.releasePointerCapture(e.pointerId); };
+    svg.addEventListener('pointermove', mover); svg.addEventListener('pointerup', terminar); svg.addEventListener('pointercancel', terminar);
+  });
+  actualizarHerramientasEditorGrafo();
 }

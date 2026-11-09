@@ -73,6 +73,9 @@ function aplicarColorZona(elemento, alg) {
 function dibujarInicio() {
   const contenedor = document.getElementById('catalogo');
   if (!contenedor) return;
+  const cantidadModulos = CATALOGO_ALGORITMOS.filter(alg => alg.disponible).length;
+  document.getElementById('resumenModulos').textContent = cantidadModulos + ' módulos, una ciudad de ideas. Elige una zona y transforma tus datos en algo que puedes ver y comprender.';
+  document.getElementById('resumenCatalogo').textContent = cantidadModulos + ' zonas conectadas por el conocimiento.';
   const parametros = new URLSearchParams(window.location.search);
   const simular = Number(parametros.get('simular'));
   const lista = Number.isInteger(simular) && simular > CATALOGO_ALGORITMOS.length ? catalogoSimulado(Math.min(simular, 30)) : CATALOGO_ALGORITMOS;
@@ -102,6 +105,7 @@ function dibujarInicio() {
   let temporizador = null;
   let visible = true;
   let vistaActual = 'ciudad';
+  let enlaceActual = null;
   let movimiento = leerPreferenciaInicio(CLAVE_MOVIMIENTO_INICIO, ['activo', 'pausado'], 'activo');
   const reducir = window.matchMedia('(prefers-reduced-motion: reduce)');
   const detenerDemo = () => {
@@ -120,6 +124,7 @@ function dibujarInicio() {
       b.setAttribute('aria-pressed', String(b.dataset.modulo === seleccion));
     });
     aplicarColorZona(panel, alg);
+    if (enlaceActual) enlaceActual.remove();
     panel.replaceChildren();
     const icono = document.createElement('span');
     icono.className = 'ciudad-panel-icono';
@@ -150,19 +155,15 @@ function dibujarInicio() {
       arboles: 'BST por inserción y reconstrucción de árboles binarios. Incluye varios recorridos y operaciones.',
       johnson: 'Todos los pares; admite negativos y detecta ciclos negativos.',
       dijkstra: 'Desde un origen; admite cero y desconexión. Los pesos deben ser no negativos.',
-      kruskal: 'Optimiza el peso total de la conexión de cada componente; los caminos mínimos se estudian en Dijkstra y Johnson.'
+      kruskal: 'Optimiza el peso total de la conexión de cada componente; los caminos mínimos se estudian en Dijkstra y Johnson.',
+      difusa: 'Mamdani tipo 1 con nueve reglas. La recomendación didáctica no mide ni califica el aprendizaje.'
     };
     nota.textContent = alg.metodos ? alg.metodos.join(' · ') : (notas[alg.id] || 'Carga un ejemplo desde el módulo y sigue su procedimiento.');
     panel.append(icono, zona, titulo, descripcion, datos, abrir, nota);
-    const acceso = document.getElementById('ciudadAccesoMovil');
-    acceso.replaceChildren();
-    const nombreMovil = document.createElement('span'); nombreMovil.textContent = alg.corto;
-    const abrirMovil = document.createElement('a');
-    abrirMovil.href = alg.ruta;
-    abrirMovil.className = 'btn btn-primary';
-    abrirMovil.textContent = 'Abrir módulo ↗';
-    abrirMovil.setAttribute('aria-label', 'Abrir módulo: ' + alg.corto);
-    acceso.append(nombreMovil, abrirMovil);
+    enlaceActual = abrir;
+    nombreMovil.textContent = alg.corto;
+    aplicarColorZona(accesoMovil, alg);
+    actualizarAcceso();
     const anuncio = document.getElementById('estadoCiudad');
     if (anuncio) anuncio.textContent = 'Seleccionado: ' + alg.etiqueta;
     if (animar) demostrar(zonas.querySelector('[data-modulo="' + alg.id + '"]'));
@@ -173,9 +174,28 @@ function dibujarInicio() {
   anuncio.setAttribute('role', 'status');
   zonas.after(anuncio);
   const accesoMovil = document.createElement('div');
-  accesoMovil.className = 'ciudad-acceso-movil';
   accesoMovil.id = 'ciudadAccesoMovil';
-  mapa.after(accesoMovil);
+  accesoMovil.className = 'ciudad-acceso-movil';
+  accesoMovil.setAttribute('role', 'region');
+  accesoMovil.setAttribute('aria-label', 'Entrada al módulo seleccionado');
+  const nombreMovil = document.createElement('span');
+  accesoMovil.appendChild(nombreMovil);
+  document.body.appendChild(accesoMovil);
+
+  function actualizarAcceso() {
+    const compacta = getComputedStyle(document.getElementById('ciudadDistribucion')).getPropertyValue('--ciudad-compacta').trim() === '1';
+    document.body.classList.toggle('ciudad-compacta', compacta);
+    if (enlaceActual) {
+      if (compacta && enlaceActual.parentElement !== accesoMovil) accesoMovil.appendChild(enlaceActual);
+      else if (!compacta && enlaceActual.parentElement !== panel) panel.insertBefore(enlaceActual, panel.querySelector('.ciudad-panel-nota'));
+    }
+    accesoMovil.hidden = !compacta || !visible || vistaActual !== 'ciudad';
+    const alto = accesoMovil.getBoundingClientRect().height;
+    if (compacta && alto) document.body.style.setProperty('--ciudad-espacio-acceso', Math.ceil(alto) + 12 + 'px');
+  }
+
+  if ('ResizeObserver' in window) new ResizeObserver(actualizarAcceso).observe(document.getElementById('ciudadDistribucion'));
+  else window.addEventListener('resize', actualizarAcceso);
   agruparCatalogo().forEach(grupo => grupo.algoritmos.filter(a => a.disponible).forEach((alg) => {
     const boton = document.createElement('button');
     boton.type = 'button';
@@ -208,11 +228,11 @@ function dibujarInicio() {
     mapa.hidden = !esCiudad;
     panel.hidden = !esCiudad;
     contenedor.hidden = esCiudad;
-    accesoMovil.hidden = !esCiudad || !visible;
     document.getElementById('ciudadDistribucion').classList.toggle('es-lista', !esCiudad);
     document.getElementById('vistaCiudad').setAttribute('aria-pressed', String(esCiudad));
     document.getElementById('vistaLista').setAttribute('aria-pressed', String(!esCiudad));
     document.getElementById('btnMovimiento').hidden = !esCiudad;
+    actualizarAcceso();
     if (guardar) guardarPreferenciaInicio(CLAVE_VISTA_INICIO, vista);
   }
   ['Ciudad', 'Lista'].forEach(nombre => document.getElementById('vista' + nombre).addEventListener('click', () => cambiarVista(nombre.toLowerCase(), true)));
@@ -238,10 +258,10 @@ function dibujarInicio() {
   if ('IntersectionObserver' in window) {
     const observador = new IntersectionObserver(entradas => {
       visible = entradas[0].isIntersecting;
-      accesoMovil.hidden = !visible || vistaActual !== 'ciudad';
+      actualizarAcceso();
       if (!visible) detenerDemo();
     });
-    observador.observe(mapa);
+    observador.observe(document.getElementById('algoritmos'));
   }
   actualizarMovimiento();
 }
@@ -249,7 +269,8 @@ function dibujarInicio() {
 function dibujarTrabajosRecientes() {
   const caja = document.getElementById('trabajosRecientes');
   caja.replaceChildren();
-  const trabajos = leerTrabajos().filter(t => algoritmoPorId(t.modulo)).sort((a, b) => b.fecha.localeCompare(a.fecha)).slice(0, 3);
+  const difusa = typeof leerRecientesDifusa === 'function' ? leerRecientesDifusa() : [];
+  const trabajos = leerTrabajos().concat(difusa).filter(t => algoritmoPorId(t.modulo)).sort((a, b) => b.fecha.localeCompare(a.fecha)).slice(0, 3);
   if (!trabajos.length) {
     const vacio = document.createElement('div');
     vacio.className = 'ciudad-sin-trabajos';
@@ -270,7 +291,7 @@ function dibujarTrabajosRecientes() {
     enlace.appendChild(svgIcono(alg.icono));
     const texto = document.createElement('span');
     const nombre = document.createElement('strong'); nombre.textContent = t.nombre;
-    const datos = document.createElement('span'); datos.textContent = alg.corto + ' · ' + resumenTrabajo(t);
+    const datos = document.createElement('span'); datos.textContent = alg.corto + ' · ' + (t.resumen || resumenTrabajo(t));
     texto.append(nombre, datos);
     const flecha = document.createElement('span'); flecha.textContent = '↗'; flecha.setAttribute('aria-hidden', 'true');
     enlace.append(texto, flecha); item.appendChild(enlace); lista.appendChild(item);
@@ -281,7 +302,7 @@ function dibujarTrabajosRecientes() {
 function inicializarAyudaInicio() {
   document.getElementById('btnAyudaInicio').addEventListener('click', () => dialogoInformar({
     titulo: 'Explora la ciudad',
-    mensaje: 'Selecciona uno de los siete edificios para conocer su módulo y pulsa «Abrir módulo» para trabajar. Usa Tab y Enter para navegar con teclado. En «Vista lista» puedes comparar los módulos: Johnson calcula todos los pares de caminos, Dijkstra los caminos desde un origen y Kruskal una conexión de peso total mínimo o máximo. «Mis trabajos» reúne los ejercicios guardados en este navegador. Puedes pausar las demostraciones desde el control de movimiento.'
+    mensaje: 'Selecciona uno de los ' + CATALOGO_ALGORITMOS.filter(a => a.disponible).length + ' edificios para conocer su módulo y pulsa «Abrir módulo» para trabajar. Usa Tab y Enter para navegar con teclado. En «Vista lista» puedes comparar los módulos: Johnson calcula todos los pares de caminos, Dijkstra los caminos desde un origen y Kruskal una conexión de peso total mínimo o máximo. «Trabajos recientes» incluye la biblioteca propia de Lógica difusa y abre la biblioteca de cada módulo, sin cargar automáticamente el ejercicio. Se conservan en este navegador. Puedes pausar las demostraciones desde el control de movimiento.'
   }));
   const boton = document.getElementById('btnTemaInicio');
   const actualizar = () => {
@@ -291,7 +312,7 @@ function inicializarAyudaInicio() {
   boton.addEventListener('click', alternarTema);
   window.addEventListener('tema:cambio', actualizar);
   actualizar();
-  window.addEventListener('storage', evento => { if (!evento.key || evento.key === CLAVE_TRABAJOS) dibujarTrabajosRecientes(); });
+  window.addEventListener('storage', evento => { if (!evento.key || evento.key === CLAVE_TRABAJOS || evento.key === CLAVE_RECIENTES_DIFUSA) dibujarTrabajosRecientes(); });
   window.addEventListener('pageshow', dibujarTrabajosRecientes);
 }
 /**
@@ -314,7 +335,16 @@ function inicializarVideoInicio() {
   });
 }
 
+function ajustarCabeceraInicio() {
+  const cabecera = document.querySelector('.page-home .topbar');
+  const medir = () => document.documentElement.style.setProperty('--topbar', Math.ceil(cabecera.getBoundingClientRect().height) + 'px');
+  medir();
+  if ('ResizeObserver' in window) new ResizeObserver(medir).observe(cabecera);
+  else window.addEventListener('resize', medir);
+}
+
 dibujarInicio();
 dibujarTrabajosRecientes();
 inicializarAyudaInicio();
 inicializarVideoInicio();
+ajustarCabeceraInicio();

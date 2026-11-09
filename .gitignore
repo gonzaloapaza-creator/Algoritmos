@@ -8,3 +8,5 @@ Thumbs.db
 /public/
 /entrega-netlify/
 /.netlify/
+__pycache__/
+*.pyc

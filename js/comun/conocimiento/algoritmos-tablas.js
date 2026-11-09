@@ -295,7 +295,7 @@
       breve: 'Se multiplica la cantidad enviada en cada celda por su costo unitario y se suman todas las celdas. Las celdas vacías y los 0 básicos aportan 0; las celdas del ficticio también, porque su costo unitario es 0.',
       sencilla: 'Para cada casilla con cajas: cajas × precio por caja. Luego sumas todo.',
       ejemplo: 'F1–T1: 20 × 2 = 40. F1–T2: 10 × 5 = 50. F2–T2: 40 × 3 = 120. Costo total = 210.',
-      detalle: 'Si cambias un costo unitario sin tocar ofertas ni demandas, las cantidades asignadas no cambian (el método no mira costos), pero el total sí. La aplicación exige resolver de nuevo para actualizarlo.',
+      detalle: 'Si cambias un costo unitario sin tocar ofertas ni demandas, las cantidades asignadas no cambian (el método no mira costos), pero el total sí y debes resolver de nuevo. Ante texto inválido, Resultado y Procedimiento conservan «Último cálculo válido; hay datos pendientes de corregir»: sus cantidades y costo pertenecen al modelo válido anterior. Algo muestra el mismo aviso. Debes corregir las casillas antes de balancear o recalcular. Quitar una fila o columna elimina solo sus errores incidentes; Deshacer los restaura junto con sus IDs.',
       relacionadas: ['northwest.costo-unitario', 'northwest.costos-no-deciden', 'ejercicio.total']
     },
     {

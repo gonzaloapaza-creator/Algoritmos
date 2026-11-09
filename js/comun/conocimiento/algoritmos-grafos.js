@@ -90,10 +90,10 @@
       pregunta: '¿Qué es un ciclo negativo en Johnson y por qué impide el resultado?',
       variantes: ['que es un ciclo negativo', 'me aparece un ciclo negativo', 'por que no calcula si hay ciclo negativo', 'que hago con el ciclo negativo', 'como corrijo un ciclo negativo', 'ciclo negativo detectado'],
       conceptos: ['ciclo negativo', 'ciclo', 'negativo'],
-      breve: 'Un ciclo negativo es un recorrido cerrado cuya suma de pesos es menor que cero. Si existe, dar vueltas reduce el costo sin límite, así que no hay distancias mínimas. Johnson lo detecta en Bellman-Ford, se detiene y muestra el ciclo en lugar de la matriz.',
+      breve: 'Un ciclo negativo es un recorrido cerrado cuya suma de pesos es menor que cero. Los pares que pueden pasar por ese ciclo no tienen un mínimo finito: cada vuelta reduce el costo. Este módulo de Johnson detecta ciclos negativos en cualquier componente y detiene el cálculo global, mostrando el ciclo en lugar de la matriz.',
       sencilla: 'Si hay un circuito que «paga» por recorrerlo, nadie puede decir cuál es el camino más barato: siempre se puede dar otra vuelta. Por eso el algoritmo se niega a inventar un número.',
       ejemplo: 'A→B (2), B→C (1), C→A (−6): la vuelta completa suma −3. La aplicación resaltará estas tres conexiones y pedirá corregirlas.',
-      detalle: 'Para continuar, cambia alguno de los pesos del ciclo señalado (o elimina una conexión) para que su suma sea mayor o igual a cero, y recalcula. Un ciclo de suma exactamente 0 sí se admite. Los pesos negativos sueltos, sin formar ciclo negativo, no son un problema.',
+      detalle: 'Un par origen-destino queda afectado cuando el origen puede llegar al ciclo y desde el ciclo se puede llegar al destino; otros pares podrían conservar un mínimo matemático. La implementación global de Johnson aborta ante cualquier ciclo negativo porque necesita potenciales válidos para todos. Para continuar, corrige el ciclo señalado y recalcula. Un ciclo de suma 0 y los pesos negativos sin ciclo negativo sí se admiten.',
       relacionadas: ['grafo.pesos-negativos', 'johnson.bellman-ford', 'problema.ciclo-negativo']
     },
     {
@@ -104,7 +104,7 @@
       breve: '∞ en la celda (A, B) significa que no existe ninguna secuencia de conexiones que vaya de A a B respetando los sentidos. No es un error ni un costo enorme: es «imposible llegar».',
       sencilla: 'Es como buscar una ruta en coche a una isla sin puente: no hay camino, por mucho que pagues.',
       ejemplo: 'Con la única conexión A→B, la celda (A, B) tiene el peso de la conexión y la celda (B, A) tiene ∞: no hay forma de volver.',
-      detalle: 'Como Johnson trabaja con grafos dirigidos, es frecuente que (A, B) sea finita y (B, A) sea ∞. Si quieres que ambas direcciones existan, añade la conexión inversa… pero recuerda que este editor no permite conexiones opuestas entre el mismo par; en su lugar puedes pasar por otro vértice.',
+      detalle: 'Como Johnson trabaja con grafos dirigidos, es frecuente que (A, B) sea finita y (B, A) sea ∞. Este editor prohíbe conexiones opuestas para una misma pareja: para permitir el regreso puedes conectar a través de otro vértice, respetando esa restricción del editor.',
       relacionadas: ['matriz.cero-vacio-infinito', 'grafo.conectividad', 'johnson.restriccion-editor']
     },
     {
@@ -112,11 +112,11 @@
       pregunta: '¿Cómo interpreto la matriz de resultados y las rutas de Johnson?',
       variantes: ['como leo el resultado de johnson', 'como veo la ruta de una celda', 'que significa la fila y la columna del resultado', 'como se lee la matriz final', 'donde veo el camino'],
       conceptos: ['interpretar', 'ruta', 'rutas', 'resultado', 'matriz final'],
-      breve: 'La fila es el origen y la columna el destino; la celda contiene la distancia mínima. La diagonal vale 0; ∞ significa que no hay camino. Selecciona una celda para que la aplicación resalte sobre el grafo la ruta concreta que produce esa distancia.',
+      breve: 'El grafo y el resumen muestran la ruta completa, los pesos originales de sus tramos y su costo total. Elige origen, destino y objetivo cerca del grafo. La matriz es una consulta secundaria de mínimos: fila = origen, columna = destino, diagonal = 0 y ∞ = sin camino. Seleccionar una celda consulta esa ruta mínima.',
       sencilla: 'Lee como un horario de trenes: fila «salgo de», columna «llego a». El número es el costo total del mejor recorrido.',
       ejemplo: 'Si la celda (A, D) marca 7 y al seleccionarla se resalta A → B → D, significa que ir por B cuesta 7 y no hay forma más barata.',
-      detalle: 'La distancia que ves ya es la original, recuperada después de la reponderación. Si editas el grafo, el resultado queda invalidado y debes volver a calcular antes de interpretarlo.',
-      relacionadas: ['matriz.leer-posicion', 'matriz.distancias', 'johnson.sin-camino', 'ejercicio.celda'],
+      detalle: 'El resultado usa costos originales; los pesos reponderados se explican únicamente en el procedimiento. Una consulta válida del origen a sí mismo da costo 0 y ruta de un solo nodo. Mover o renombrar conserva el cálculo; cambiar pesos o conexiones lo invalida. El máximo sobre DAG es un cálculo adicional, y los valores del nodo siguen significando mínimo | máximo aunque elijas un solo objetivo.',
+      relacionadas: ['matriz.leer-posicion', 'matriz.distancias', 'johnson.sin-camino', 'johnson.valores-t', 'johnson.tiempos-holguras', 'ejercicio.celda'],
       referencia: 'Johnson · pestaña 4 Resultado'
     },
     {
@@ -149,6 +149,67 @@
       breve: L => 'Pesos enteros entre −' + L.peso + ' y ' + L.peso + ', incluidos cero y negativos. No admite decimales. El editor prohíbe bucles, duplicados y conexiones inversas, pero sí permite ciclos de tres o más vértices. Nombres de vértice de hasta ' + L.nombreVertice + ' caracteres.',
       relacionadas: ['johnson.restriccion-editor', 'johnson.ciclo-negativo', 'problema.decimal'],
       referencia: 'Johnson · reglas del editor'
+    },
+    {
+      id: 'johnson.valores-t', tema: 'johnson', modulos: ['johnson'],
+      pregunta: '¿Qué significan las dos casillas de los nodos en T de Johnson?',
+      variantes: ['que significan los numeros de abajo', 'por que el destino tiene dos valores distintos', 'minimo maximo en el nodo', 'casillas del nodo t', 'por que sale 19 y 58', 'como leo los nodos divididos'],
+      conceptos: ['casillas', 'compartimentos', 'minimo', 'maximo', 'valores', 'nodo t'],
+      breve: 'En «Consulta de caminos», el nombre ocupa la parte superior; abajo izquierda está la distancia mínima desde el origen y abajo derecha la máxima sobre DAG desde ese mismo origen. Son dos datos independientes: elegir una ruta no obliga a que coincidan, tampoco en el destino.',
+      ejemplo: 'Con A→B=58, A→E=6, E→D=5 y D→B=8, el mínimo A→E→D→B cuesta 19 y el máximo A→B cuesta 58. B muestra 19 | 58, tanto al minimizar como al maximizar.',
+      detalle: 'El costo del recorrido elegido aparece en su resumen, con secuencia y suma de pesos originales. Si hay ciclos, el máximo no está disponible y muestra — con una explicación; eso no afirma que sea infinito. Al cambiar a «Tiempos y holguras» las dos casillas cambian de significado a temprano | tardío y se recalculan con las reglas temporales.',
+      relacionadas: ['johnson.maximos-dag', 'johnson.tiempos-holguras', 'johnson.interpretar-matriz'],
+      referencia: 'Johnson · Resultado → Vista → Consulta de caminos'
+    },
+    {
+      id: 'johnson.maximos-dag', tema: 'johnson', modulos: ['johnson'],
+      pregunta: '¿Cómo se calcula el camino máximo y por qué puede estar bloqueado?',
+      variantes: ['johnson maximizar', 'maximo no disponible', 'por que no calcula el maximo', 'maximos en dag', 'maximo con ciclos', 'johnson invierte comparaciones'],
+      conceptos: ['maximos', 'maximo', 'dag', 'aciclico', 'bloqueado'],
+      breve: 'El máximo es un análisis adicional sobre un grafo dirigido acíclico (DAG), mediante orden topológico y programación dinámica. Johnson sigue calculando mínimos entre pares: el máximo no se obtiene invirtiendo sus comparaciones.',
+      detalle: 'Esta versión exige que todo el grafo sea acíclico, incluso las componentes ajenas al origen. Si encuentra un ciclo, bloquea el máximo y muestra —; no lo declara infinito automáticamente. En un DAG admite pesos negativos, cero y positivos. «Comparar mínimo y máximo» permite distinguir ambas rutas y sus aristas compartidas.',
+      relacionadas: ['johnson.valores-t', 'johnson.alternativas', 'dijkstra.caminos-maximos']
+    },
+    {
+      id: 'johnson.tiempos-holguras', tema: 'johnson', modulos: ['johnson'],
+      pregunta: '¿Cómo funcionan los tiempos tempranos, tardíos y las holguras?',
+      variantes: ['tiempos y holguras', 'tiempo temprano y tardio', 'como calculo la holgura', 'actividad critica', 'por que el destino muestra t t', 'red temporal', 'ruta critica'],
+      conceptos: ['temprano', 'tardio', 'temporal', 'holgura', 'critica', 'duracion'],
+      breve: '«Tiempos y holguras» es un análisis temporal complementario: cada peso representa una duración. Requiere toda la red dirigida acíclica, duraciones no negativas, origen distinto del destino y algún camino entre ambos. Calcula únicamente la subred que participa en caminos de ese origen a ese destino; el resto sigue visible y atenuado.',
+      sencilla: 'Temprano indica cuándo puede estar listo un punto según la cadena más larga que lo precede. Tardío indica hasta cuándo puede esperar sin retrasar el final. La holgura de una actividad mide cuánto margen tiene.',
+      ejemplo: 'En el ejemplo «Rutas y tiempos (19 / 58)»: A=0 | 0, E=6 | 45, D=11 | 50 y B=58 | 58. A→B tiene holgura 0; A→E, E→D y D→B tienen holgura 39 cada una. En consulta de caminos B era 19 | 58: son interpretaciones diferentes.',
+      detalle: 'Temprano(origen)=0; en orden topológico, temprano(v)=máx(temprano(u)+duración(u,v)). T=temprano(destino), y tardío(destino)=T; hacia atrás, tardío(u)=mín(tardío(v)−duración(u,v)). Holgura(u→v)=tardío(v)−temprano(u)−duración(u,v). Es crítica una actividad de holgura 0, con tolerancia de redondeo; que sus dos nodos tengan temprano=tardío no basta. El destino muestra T | T por la condición inicial del cálculo hacia atrás. Este análisis no es el cálculo de mínimos de Johnson.',
+      relacionadas: ['johnson.valores-t', 'johnson.maximos-dag', 'johnson.reglas'],
+      referencia: 'Johnson · Resultado → Vista → Tiempos y holguras'
+    },
+    {
+      id: 'johnson.alternativas', tema: 'johnson', modulos: ['johnson'],
+      pregunta: '¿Cómo comparo rutas y busco alternativas sin bloquear el grafo?',
+      variantes: ['buscar alternativas', 'colores de los caminos', 'seleccionar una ruta', 'cancelar busqueda', 'lista parcial de caminos', 'busqueda truncada', 'todos los caminos'],
+      conceptos: ['alternativas', 'colores', 'seleccionar ruta', 'cancelar', 'truncada', 'lista parcial'],
+      breve: 'Usa «Comparar mínimo y máximo» para las rutas principales y «Buscar alternativas» cuando quieras explorar otras rutas simples, sin repetir nodos. Cada ruta ofrece identificador, color, secuencia y costo; seleccionarla la destaca. La leyenda y el texto permiten reconocerla además del color.',
+      detalle: 'La búsqueda se inicia bajo petición, cede el control al navegador y permite «Cancelar búsqueda». Está limitada a 30 rutas y 10000 aristas examinadas; si se cancela o alcanza un límite, se avisa que la lista es parcial. El orden es de exploración y no garantiza las mejores alternativas. Los motores de Johnson y máximo DAG calculan las rutas principales independientemente de esa lista. Los resultados y colores son estáticos, sin reproducción automática.',
+      relacionadas: ['johnson.maximos-dag', 'johnson.interpretar-matriz', 'grafos.edicion-fase1'],
+      referencia: 'Johnson · Resultado → Buscar alternativas'
+    },
+    {
+      id: 'grafos.edicion-fase1', tema: 'grafo', modulos: ['johnson', 'dijkstra', 'kruskal'],
+      pregunta: '¿Cómo creo, conecto, muevo y edito los puntos del grafo?',
+      variantes: ['como creo nodos', 'crear puntos', 'conectar extremos', 'cancelar una conexion', 'editar una conexion', 'mover nodos en tactil', 'organizar grafo', 'ampliar restaurar grafo'],
+      conceptos: ['crear', 'editar', 'mover', 'renombrar', 'conectar', 'cancelar conexion', 'organizar', 'ampliar'],
+      breve: 'Elige la herramienta para crear un nodo o punto y pulsa el fondo del grafo. Para conectar, selecciona la herramienta de conexión, toca sus dos extremos e indica el peso. «Cancelar conexión» descarta el extremo pendiente. Selecciona un nodo o conexión para renombrar, cambiar peso o eliminar con sus controles.',
+      detalle: 'Puedes arrastrar puntos y usar los formularios como alternativa accesible. Eliminar un nodo elimina también sus conexiones incidentes. «Deshacer» y «Rehacer» recuperan ediciones. Zoom, desplazamiento y ajustar/ver todo cambian el encuadre; ampliar/restaurar conserva el ejercicio. «Organizar grafo» redistribuye posiciones solo cuando lo pides: recalcular o seleccionar otra ruta no reorganiza tus puntos. Se aplican las reglas particulares del módulo; una operación inválida explica el motivo y conserva el ejercicio anterior.',
+      relacionadas: ['johnson.reglas', 'dijkstra.reglas', 'kruskal.reglas', 'grafos.estado-fase1'],
+      referencia: 'Johnson, Dijkstra y Kruskal · herramientas del grafo y formularios'
+    },
+    {
+      id: 'grafos.estado-fase1', tema: 'grafo', modulos: ['johnson', 'dijkstra', 'kruskal'],
+      pregunta: '¿Qué cambios conservan el resultado y cuáles obligan a recalcular?',
+      variantes: ['resultado vigente', 'mover conserva el resultado', 'renombrar conserva calculo', 'por que tengo que recalcular', 'importacion invalida', 'cambiar destino sin recalcular', 'dijkstra rapido y resultado'],
+      conceptos: ['estado', 'vigente', 'recalcular', 'conserva', 'invalida', 'importar'],
+      breve: 'Mover o renombrar nodos conserva los cálculos válidos y actualiza los textos. Cambiar pesos, conexiones o nodos altera los datos matemáticos y elimina resultados y resaltados anteriores. Dijkstra invalida también al cambiar modo u origen, y Kruskal al cambiar objetivo. Cambiar solo el destino de Dijkstra reutiliza las distancias del origen.',
+      detalle: 'Cambiar entre consulta de caminos y tiempos/holguras usa los datos correspondientes a esa operación. Dijkstra rápido dentro de Johnson tiene su propia visualización; volver a Resultado recupera la consulta de Johnson. Importar un documento inválido conserva el ejercicio activo y explica el error. Los documentos recuperados se validan y los resultados se recalculan: una respuesta guardada no se acepta como autoridad matemática. Nombres y posiciones no sustituyen los IDs que mantienen las referencias.',
+      relacionadas: ['grafos.edicion-fase1', 'johnson.valores-t', 'dijkstra.arbol-ruta', 'kruskal.resultado']
     },
 
     /* ---------------- Dijkstra ---------------- */
@@ -204,7 +265,7 @@
       breve: 'El predecesor de un vértice es el vértice inmediatamente anterior en su camino mínimo desde el origen. Para reconstruir la ruta hasta un destino se parte de él y se sigue la cadena de predecesores hacia atrás hasta llegar al origen; luego se invierte.',
       sencilla: 'Cada punto recuerda «desde dónde llegué». Para saber el camino completo, vas preguntando hacia atrás hasta volver a casa.',
       ejemplo: 'Predecesores: pred(D) = B, pred(B) = C, pred(C) = A. Ruta de A a D: A → C → B → D.',
-      detalle: 'La tabla de predecesores define el árbol de caminos mínimos. Al elegir un destino, la aplicación recorre esa tabla para resaltar la ruta; «Ver todos los caminos» muestra el árbol completo. Un vértice con distancia ∞ no tiene predecesor.',
+      detalle: 'La tabla de predecesores define el árbol de caminos mínimos desde el origen. Elegir un destino sigue esa tabla para resaltar una ruta concreta, con sus pesos y costo; no vuelve a ejecutar Dijkstra. «Ver árbol de predecesores» muestra las conexiones del árbol completo sobre los nodos alcanzables. Un vértice con distancia ∞ no tiene predecesor.',
       relacionadas: ['dijkstra.relajacion', 'dijkstra.inalcanzables', 'ejercicio.resultado']
     },
     {
@@ -275,7 +336,7 @@
       conceptos: ['modo', 'dirigido', 'no dirigido'],
       breve: 'En modo dirigido cada conexión solo se recorre en el sentido de la flecha, y A→B y B→A son conexiones distintas. En modo no dirigido cada conexión funciona en ambos sentidos con el mismo peso. Cambiar el modo cambia qué vértices son alcanzables y, por tanto, el resultado, que se invalida.',
       ejemplo: 'Conexión única A→B: en dirigido, desde B no se llega a A (∞); en no dirigido, d(A) desde B es el peso de la conexión.',
-      detalle: 'En no dirigido el editor no permite dos conexiones entre el mismo par, porque serían duplicadas. En dirigido sí permite la opuesta.',
+      detalle: 'En no dirigido el editor no permite dos conexiones entre el mismo par, porque serían duplicadas. En dirigido sí permite la opuesta. Al pasar a no dirigido se fusionan las opuestas y se pide resolver cualquier diferencia de pesos; cancelar conserva el documento. Pasar a dirigido crea las dos direcciones de cada arista y valida el límite antes de aceptar el cambio.',
       relacionadas: ['grafo.dirigido-no-dirigido', 'grafo.aristas-duplicadas-opuestas', 'aplicacion.recalcular'],
       referencia: 'Dijkstra · campo «Modo del grafo»'
     },
@@ -284,10 +345,10 @@
       pregunta: '¿Por qué no basta invertir las comparaciones para calcular caminos máximos?',
       variantes: ['puedo usar dijkstra para el camino mas largo', 'como calculo el camino maximo', 'dijkstra para maximizar', 'camino mas largo con dijkstra', 'por que dijkstra solo calcula minimos'],
       conceptos: ['maximo', 'maximos', 'mas largo', 'maximizar', 'invertir'],
-      breve: 'Porque el camino más largo no está bien definido cuando hay ciclos: se podría dar vueltas para alargarlo sin límite. Además, la propiedad en la que se apoya Dijkstra (un vértice finalizado ya no mejora) deja de cumplirse al maximizar. Por eso este módulo solo calcula caminos mínimos.',
-      sencilla: 'Buscar «el camino más caro» en un mapa con rotondas no tiene respuesta: siempre puedes dar una vuelta más. Dijkstra no fue pensado para eso.',
-      ejemplo: 'Multiplicar los pesos por −1 convierte el problema en uno de mínimos con pesos negativos, que Dijkstra no admite; y si hay ciclos, aparecen ciclos negativos sin solución.',
-      detalle: 'El camino simple más largo (sin repetir vértices) es un problema difícil en general (NP-duro). En grafos dirigidos sin ciclos sí se puede resolver con otro método, pero no está implementado aquí. Kruskal sí ofrece un objetivo «Máximo» porque un árbol de expansión no tiene este problema.',
+      breve: 'La propiedad que usa Dijkstra para fijar un vértice deja de estar garantizada al invertir las comparaciones. Por eso este módulo calcula mínimos. Si se permiten repeticiones, un ciclo de peso positivo situado en el recorrido puede hacer crecer el costo sin límite; la presencia de cualquier ciclo por sí sola no demuestra un máximo infinito.',
+      sencilla: 'Dijkstra garantiza la ruta más barata con pesos no negativos. Cambiar «menor» por «mayor» no proporciona la misma garantía para la ruta más cara.',
+      ejemplo: 'Multiplicar un peso positivo por −1 produce un peso negativo que Dijkstra no admite. Si un recorrido puede repetir un ciclo de suma positiva, tras invertir signos ese ciclo es negativo.',
+      detalle: 'El camino simple más largo, sin repetir vértices, siempre tiene longitud finita en un grafo finito y es difícil de obtener en general (NP-duro). En grafos dirigidos acíclicos se resuelve por orden topológico; el módulo Johnson ofrece ese cálculo adicional. Kruskal ofrece máximo para un árbol o bosque de expansión, un problema diferente.',
       relacionadas: ['dijkstra.pesos-negativos', 'kruskal.minimo-maximo', 'grafo.camino-recorrido-ciclo']
     },
     {
@@ -299,6 +360,15 @@
       relacionadas: ['dijkstra.pesos-negativos', 'dijkstra.dirigido-vs-no-dirigido', 'problema.decimal'],
       referencia: 'Dijkstra · «Cómo funciona y límites»'
     },
+    {
+      id: 'dijkstra.arbol-ruta', tema: 'dijkstra', modulos: ['dijkstra'],
+      pregunta: '¿Qué diferencia hay entre el árbol de predecesores y la ruta al destino?',
+      variantes: ['arbol de predecesores', 'ruta al destino', 'cambiar destino', 'ver arbol de caminos minimos', 'como leo resultado dijkstra'],
+      conceptos: ['arbol', 'predecesores', 'ruta', 'destino', 'resultado'],
+      breve: 'El árbol reúne una conexión predecesora por cada nodo alcanzable distinto del origen. La ruta al destino es solo la cadena de ese árbol que termina en el nodo elegido: el grafo distingue sus estilos. El resumen da origen, destino, secuencia, pesos originales y suma total; la tabla permite consultar distancias e inalcanzables.',
+      detalle: 'El motor calcula las distancias desde un origen a todos los nodos. Por eso cambiar únicamente destino conserva el cálculo y reconstruye otra cadena de predecesores. Cambiar origen, pesos, topología o dirección exige recalcular. Un destino inalcanzable queda sin ruta; origen=destino produce un nodo y costo 0. Los nodos muestran datos propios de Dijkstra, no tiempos tempranos/tardíos.',
+      relacionadas: ['dijkstra.predecesores', 'dijkstra.inalcanzables', 'grafos.estado-fase1']
+    },
 
     /* ---------------- Kruskal ---------------- */
     {
@@ -306,7 +376,7 @@
       pregunta: '¿Qué resuelve Kruskal?',
       variantes: ['que es el algoritmo de kruskal', 'para que sirve kruskal', 'que hace kruskal', 'cuando uso kruskal', 'que calcula kruskal'],
       conceptos: ['kruskal', 'arbol de expansion', 'expansion'],
-      breve: 'Kruskal construye un árbol de expansión de peso mínimo (o máximo): elige el conjunto de conexiones más barato que une todos los vértices sin formar ciclos. Si el grafo tiene grupos separados, produce un bosque.',
+      breve: 'Kruskal construye un árbol de expansión de peso mínimo o máximo: elige conexiones que unen todos los vértices sin ciclos, minimizando o maximizando la suma según el objetivo. Si el grafo tiene grupos separados, produce un bosque. No necesita origen ni destino.',
       sencilla: 'Imagina pueblos que hay que conectar con carreteras gastando lo menos posible. Kruskal va eligiendo las carreteras más baratas, pero salta las que conectarían pueblos que ya están unidos.',
       ejemplo: 'Aristas A–B (1), B–C (2), A–C (3). Kruskal acepta A–B y B–C y descarta A–C porque A y C ya están conectados. Total: 3.',
       detalle: 'Ordena todas las aristas por peso y las recorre en orden; acepta una arista si sus extremos están en componentes distintas (Union-Find) y la rechaza si cerraría un ciclo. Termina con V − 1 aristas si el grafo es conectado.',
@@ -385,7 +455,7 @@
       conceptos: ['negativo', 'negativos', 'cero'],
       breve: 'Sí, ambos. Kruskal solo ordena las aristas y evita ciclos; el signo del peso no afecta a su lógica. Un peso negativo simplemente se coloca al principio de la lista en el objetivo mínimo.',
       ejemplo: 'Aristas A–B (−4), B–C (0), A–C (2): el árbol mínimo usa A–B y B–C con total −4.',
-      detalle: 'A diferencia de Dijkstra, no hay ningún problema con negativos: no se buscan caminos, así que los ciclos negativos no existen como concepto aquí. El ejemplo «Negativos, cero y empates» del módulo lo ilustra.',
+      detalle: 'Los pesos negativos son válidos para el árbol o bosque: Kruskal no repite recorridos y siempre descarta las aristas que cerrarían un ciclo. Un ciclo de suma negativa en el grafo de entrada no impide este cálculo. El ejemplo «Negativos, cero y empates» del módulo lo ilustra.',
       relacionadas: ['grafo.pesos-negativos', 'dijkstra.pesos-negativos', 'kruskal.reglas']
     },
     {
@@ -406,7 +476,7 @@
       conceptos: ['diferencia', 'comparar', 'elegir'],
       breve: 'Kruskal conecta todos los vértices con el menor (o mayor) peso total, sin origen ni destino: responde «¿cómo unir todo barato?». Dijkstra busca el camino más barato desde un origen; Johnson, entre todos los pares. Dijkstra y Johnson responden «¿cómo llego de aquí a allá?».',
       sencilla: 'Kruskal diseña la red de carreteras; Dijkstra y Johnson planean viajes sobre una red que ya existe.',
-      ejemplo: 'Triángulo A–B (1), B–C (1), A–C (1.5): Kruskal elige A–B y B–C. Dijkstra desde A hasta C elige la directa A–C (1.5), que Kruskal no incluyó.',
+      ejemplo: 'Triángulo A–B (2), B–C (2), A–C (3): Kruskal elige A–B y B–C, total 4. Dijkstra desde A hasta C elige la directa A–C, costo 3, que Kruskal no incluyó.',
       detalle: 'Kruskal usa grafos no dirigidos y admite negativos. Dijkstra admite modo dirigido o no, solo pesos no negativos. Johnson usa grafos dirigidos y admite negativos sin ciclos negativos.',
       relacionadas: ['grafo.camino-minimo-vs-arbol', 'kruskal.que-es', 'dijkstra.que-es', 'johnson.que-es']
     },
@@ -418,6 +488,15 @@
       breve: L => 'Grafo no dirigido con hasta ' + L.grafosNodos + ' vértices y ' + L.grafosAristas + ' aristas, nombres de hasta ' + L.nombreVertice + ' caracteres. Pesos enteros entre −' + L.peso + ' y ' + L.peso + ', incluidos cero y negativos. No admite decimales, bucles ni duplicados. El grafo de entrada sí puede tener ciclos.',
       relacionadas: ['kruskal.pesos-negativos-cero', 'problema.decimal'],
       referencia: 'Kruskal · «Cómo funciona y límites»'
+    },
+    {
+      id: 'kruskal.resultado', tema: 'kruskal', modulos: ['kruskal'],
+      pregunta: '¿Cómo leo el resultado de Kruskal y sus aristas descartadas?',
+      variantes: ['resultado de kruskal', 'aristas elegidas y descartadas', 'nodos aislados', 'cantidad de aristas', 'por que kruskal no pide origen ni destino'],
+      conceptos: ['resultado', 'aceptadas', 'descartadas', 'aislados', 'componentes', 'total'],
+      breve: 'El resultado identifica el objetivo mínimo o máximo, costo total, aristas aceptadas, componentes y nodos aislados. Si existe una sola componente es un árbol de expansión; si hay varias, es un bosque. No se eligen origen ni destino porque se construye una red de expansión, no una ruta.',
+      detalle: 'Las aristas descartadas por ciclo se consultan en su apartado y se distinguen por trazo discontinuo. El costo suma únicamente las aceptadas. Con V nodos y C componentes se eligen V−C aristas, incluidos los aislados como componentes de un solo nodo. Cambiar objetivo recalcula las decisiones con el orden de pesos correspondiente; mover o renombrar conserva un resultado válido.',
+      relacionadas: ['kruskal.bosque', 'kruskal.detectar-ciclos', 'kruskal.v-menos-1', 'grafos.estado-fase1']
     }
   ]);
 })();
