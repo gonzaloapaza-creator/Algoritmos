@@ -39,7 +39,7 @@ async function northwest(browser, movil) {
   comprobar(await page.evaluate(clave => document.activeElement.dataset.claveNw === clave, claves[1]), caso + ': Enter confirma y avanza sin perder foco');
   await clic(page, '#pasosNorthwest [data-vista=balanceo]'); await clic(page, '#btnConfirmarBalanceo');
   await clic(page, '#pasosNorthwest [data-vista=resultado]');
-  comprobar(await page.$eval('#nwNotas', e => e.textContent.includes('No es necesariamente la de menor costo')), caso + ': conserva advertencia de solución inicial factible');
+  comprobar(await page.$eval('#nwNotas', e => e.textContent.includes('se optimizó con MODI')), caso + ': indica que el resultado pasó por MODI');
   const costo = await page.evaluate(() => estadoNorthwest.resultado.datos.costoTotal);
   await clic(page, '#pasosNorthwest [data-vista=datos]'); await escribir(page, primero, '-2');
   comprobar(await page.evaluate(() => !resultadoVigenteNorthwest() && resultadoConsultableNorthwest() && document.getElementById('btnConfirmarBalanceo').disabled), caso + ': texto inválido bloquea recalcular y conserva el cálculo previo');

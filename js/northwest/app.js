@@ -142,10 +142,10 @@ function dibujarBalanceoNorthwest() {
 
 function confirmarBalanceoNorthwest() {
   try {
-    resolverNorthwestCompleto();
+    resolverNorthwestCompleto(document.getElementById('objetivoNorthwest').value);
     detenerAutoplayNw();
     cambiarVistaNorthwest('resolucion');
-    notificar('Solución inicial calculada. Recorre los pasos.', 'ok');
+    notificar('Solución óptima calculada y verificada. Recorre los pasos.', 'ok');
   } catch (e) {
     notificar(e.message, 'error');
   }
@@ -227,6 +227,31 @@ function dibujarResolucionNorthwest() {
     nota.textContent = 'Degeneración: la oferta y la demanda se agotaron a la vez. Se tacha una sola línea y la siguiente celda del recorrido recibe un «0 básico» para conservar m + n − 1 variables básicas sin formar ciclos. No se usa ningún decimal pequeño que altere las cantidades.';
     appNw.pasoDetalle.appendChild(nota);
   }
+  const optimizacion = r.datos.pasosOptimizacion || [];
+  const resumenOptimizacion = document.createElement('section');
+  resumenOptimizacion.className = 'nw-modi';
+  const tituloOptimizacion = document.createElement('h3');
+  tituloOptimizacion.textContent = 'Mejoras MODI · objetivo ' + (r.objetivo === 'min' ? 'mínimo' : 'máximo');
+  resumenOptimizacion.appendChild(tituloOptimizacion);
+  if (!optimizacion.length) {
+    const texto = document.createElement('p');
+    texto.textContent = 'La solución inicial ya es óptima: ningún costo reducido permite mejorar el objetivo.';
+    resumenOptimizacion.appendChild(texto);
+  } else {
+    const lista = document.createElement('ol');
+    optimizacion.forEach(mejora => {
+      const item = document.createElement('li');
+      const ciclo = [{ fila: mejora.entrada.fila, col: mejora.entrada.col }].concat(mejora.camino);
+      item.textContent = 'Iteración ' + mejora.iteracion + ': entra ' + nombreCeldaNw(balance, mejora.entrada.fila, mejora.entrada.col) +
+        ' (costo reducido ' + formatearCostoNorthwest(mejora.reducido) + '); ciclo alternante: ' +
+        ciclo.map(c => nombreCeldaNw(balance, c.fila, c.col)).join(' → ') +
+        '; θ = ' + mejora.theta + '; sale ' + nombreCeldaNw(balance, mejora.salida.fila, mejora.salida.col) +
+        '. Total: ' + formatearTotalNorthwest(mejora.costoAnterior) + ' → ' + formatearTotalNorthwest(mejora.costoTotal) + '.';
+      lista.appendChild(item);
+    });
+    resumenOptimizacion.appendChild(lista);
+  }
+  appNw.pasoDetalle.appendChild(resumenOptimizacion);
 
   const basicasHastaAhora = r.datos.basicas.slice(0, actual + 1);
   const satisfechasFilas = paso.restanteOferta.map(v => v === 0);
@@ -258,7 +283,7 @@ function dibujarResultadoNorthwest() {
 
   appNw.costoTotal.replaceChildren();
   const et = document.createElement('span');
-  et.textContent = avisoResultadoNorthwest() || 'Costo total de la solución inicial';
+  et.textContent = avisoResultadoNorthwest() || (r.objetivo === 'min' ? 'Costo mínimo total verificado' : 'Valor máximo total verificado');
   const val = document.createElement('span');
   val.className = 'total__valor';
   val.textContent = formatearTotalNorthwest(d.costoTotal);
@@ -285,7 +310,7 @@ function dibujarResultadoNorthwest() {
     ['Cantidades no negativas', v.noNegativas],
     ['Suma de cada fila = oferta balanceada', v.filasOk],
     ['Suma de cada columna = demanda balanceada', v.columnasOk],
-    ['Costo total = Σ cantidad × costo unitario', v.costoOk],
+    [(r.objetivo === 'min' ? 'Costo mínimo' : 'Valor máximo') + ' = Σ cantidad × costo unitario', v.costoOk],
     ['Base con m + n − 1 = ' + (d.m + d.n - 1) + ' variables básicas', v.cantidadBaseOk],
     ['Base sin ciclos', v.sinCiclos]
   ].forEach(([texto, ok]) => {
@@ -298,7 +323,8 @@ function dibujarResultadoNorthwest() {
   appNw.notas.replaceChildren();
   const nota = (clase, texto) => { const p = document.createElement('div'); p.className = 'mensaje ' + clase; p.textContent = texto; appNw.notas.appendChild(p); };
   if (avisoResultadoNorthwest()) nota('mensaje--aviso', explicarEstadoResultadoNorthwest());
-  nota('mensaje--aviso mensaje--permanente', 'Esta es una solución inicial factible obtenida por la esquina noroeste. No es necesariamente la de menor costo: los costos no intervinieron en la elección de las celdas.');
+  nota('mensaje--ok mensaje--permanente', 'Se obtuvo una solución inicial por esquina noroeste y se optimizó con MODI hasta que los costos reducidos demostraron el ' + (r.objetivo === 'min' ? 'mínimo' : 'máximo') + ' global.');
+  nota('mensaje--info', 'Total inicial de esquina noroeste: ' + formatearTotalNorthwest(d.costoInicial) + '. Total óptimo: ' + formatearTotalNorthwest(d.costoTotal) + '.');
   if (b.ficticio) {
     const idx = b.ficticio.indice;
     const absorbido = b.ficticio.tipo === 'destino' ? d.asignaciones.reduce((s, f) => s + f[idx], 0) : d.asignaciones[idx].reduce((s, x) => s + x, 0);
@@ -338,7 +364,7 @@ function renderNorthwest(motivo) {
     chip.className = 'estado estado--aviso';
     chip.textContent = pendientes ? 'Resultado invalidado; corrige los datos y recalcula' : 'Resultado invalidado: recalcular';
   } else if (pendientes) { chip.className = 'estado estado--aviso'; chip.textContent = avisoResultadoNorthwest(); }
-  else { chip.className = 'estado estado--ok'; chip.textContent = 'Solución inicial vigente'; }
+  else { chip.className = 'estado estado--ok';   chip.textContent = 'Óptimo vigente'; }
   if (motivo !== 'vista' && motivo !== 'resultado') detenerAutoplayNw();
 
   const vista = estadoNorthwest.vista;
@@ -427,7 +453,7 @@ const TEXTO_AYUDA_NORTHWEST =
   '· El botón «Video» de la cabecera abre la presentación con el video explicativo del método.\n\n' +
   '· En móvil, abre el menú ☰ para usar «Video del módulo» y «Ayuda del módulo».\n\n' +
   'QUÉ HACE\n' +
-  '· El método de la esquina noroeste obtiene una solución inicial factible del problema de transporte. No garantiza el costo mínimo: los costos no intervienen en la elección de las celdas.\n\n' +
+  '· La esquina noroeste crea una solución inicial factible. En el balanceo eliges minimizar o maximizar el total; MODI (potenciales u-v y ciclos alternantes) mejora la solución hasta demostrar optimalidad. La esquina noroeste por sí sola no optimiza.\n\n' +
   '1) DATOS\n' +
   '· Costos unitarios en el centro (0 a ' + MAX_COSTO_NORTHWEST + ', hasta 2 decimales, coma o punto). Oferta en la última columna y demanda en la última fila (enteros de 0 a ' + MAX_CANTIDAD_NORTHWEST + ').\n' +
   '· De ' + MIN_NORTHWEST_DIMENSION + ' a ' + MAX_NORTHWEST_DIMENSION + ' orígenes y destinos reales. Nombres de 1 a ' + MAX_LARGO_ETIQUETA_NORTHWEST + ' caracteres.\n' +
@@ -442,7 +468,7 @@ const TEXTO_AYUDA_NORTHWEST =
   '· Si ambas se agotan a la vez, la siguiente celda recibe un «0 básico» para conservar m + n − 1 variables básicas (degeneración).\n\n' +
   '· «Anterior», «Siguiente» y «Reiniciar» recorren las decisiones; «Reproducir» y «Pausar» controlan el avance automático. Un 0 básico pertenece a la base aunque no implique un envío; no es una cantidad pequeña añadida artificialmente.\n\n' +
   '4) RESULTADO\n' +
-  '· Matriz final de cantidades, lista de envíos, costo total = Σ cantidad × costo unitario y verificación de sumas y de la base.\n\n' +
+  '· Matriz óptima de cantidades, lista de envíos, total = Σ cantidad × costo unitario y verificación de sumas, base sin ciclos y objetivo elegido. El resultado muestra también los pivotes MODI y compara el total inicial con el óptimo.\n\n' +
   '· Cambiar costos, oferta o demanda exige resolver de nuevo. Si solo cambias costos, el recorrido noroeste conserva las cantidades y cambia el total. Renombrar conserva la solución y actualiza los nombres de los envíos.\n' +
   '· Si escribes datos inválidos y el modelo válido sigue coincidiendo con el cálculo, Resultado y Procedimiento conservan el «Último cálculo válido; hay datos pendientes de corregir». Si antes cambiaste datos válidos, el cálculo anterior queda invalidado y sus valores no se muestran. Algo distingue ambos casos; si aún no calculaste, indica que no hay cálculo. Corrige las casillas antes de balancear o resolver. Al quitar una fila o columna se eliminan solo sus errores incidentes; Deshacer los recupera junto con esa fila o columna.\n' +
   '· Tab y Mayús+Tab confirman y recorren controles; Enter confirma y avanza. El foco se restaura mediante los IDs de origen y destino.\n' +
@@ -462,6 +488,9 @@ function inicializarNorthwest() {
   document.querySelectorAll('#pasosNorthwest .paso').forEach(b => b.addEventListener('click', () => cambiarVistaNorthwest(b.dataset.vista)));
   document.querySelectorAll('[data-ir]').forEach(b => b.addEventListener('click', () => cambiarVistaNorthwest(b.dataset.ir)));
   document.getElementById('btnConfirmarBalanceo').addEventListener('click', confirmarBalanceoNorthwest);
+  document.getElementById('objetivoNorthwest').addEventListener('change', () => {
+    if (estadoNorthwest.resultado) { estadoNorthwest.resultado.vigente = false; renderNorthwest('modelo'); }
+  });
   document.getElementById('btnAgregarOrigen').addEventListener('click', () => agregarElementoNorthwest('origen'));
   document.getElementById('btnAgregarDestino').addEventListener('click', () => agregarElementoNorthwest('destino'));
   document.getElementById('btnDeshacerNw').addEventListener('click', () => { if (!deshacerNorthwest()) notificar('No hay acciones para deshacer.', 'info'); });

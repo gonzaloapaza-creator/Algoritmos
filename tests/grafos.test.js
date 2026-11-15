@@ -5,7 +5,7 @@ const ctx = cargar(crearContexto(), ['js/config.js', 'js/grafos/modelo.js', 'js/
 const {
   crearGrafoVacio, copiarGrafoModulo, validarGrafoModulo, validarDocumentoGrafo,
   crearEjemploGrafo, generarGrafoAleatorio, resolverDijkstraGrafo,
-  reconstruirRutaGrafo, resolverKruskalGrafo
+  reconstruirRutaGrafo, resolverCaminoMaximoDAG, resolverKruskalGrafo
 } = ctx;
 const maxPeso = evaluar(ctx, 'MAX_PESO');
 const maxNodos = evaluar(ctx, 'GRAFOS_MAX_NODOS');
@@ -77,6 +77,36 @@ prueba('Dijkstra: caso obligatorio dirigido, todas las distancias y ruta de peso
   cierto(reconstruirRutaGrafo(resultado, 'n5') === null);
   igual(reconstruirRutaGrafo(resultado, 'n1'), { nodos: ['n1'], conexiones: [], distancia: 0 });
   igual(resultado.arbol, ['c2', 'c3', 'c4']);
+});
+
+prueba('Camino máximo: orden topológico elige la ruta de mayor peso en un DAG', () => {
+  const grafo = {
+    dirigido: true, siguienteId: 10,
+    nodos: ['A', 'B', 'C', 'D', 'E'].map((nombre, i) => ({ id: 'n' + (i + 1), nombre, x: 100 + i * 120, y: 200 })),
+    conexiones: [
+      { id: 'a', desde: 'n1', hacia: 'n2', valor: 2 },
+      { id: 'b', desde: 'n1', hacia: 'n3', valor: 1 },
+      { id: 'c', desde: 'n2', hacia: 'n3', valor: 5 },
+      { id: 'd', desde: 'n2', hacia: 'n4', valor: 3 },
+      { id: 'e', desde: 'n3', hacia: 'n4', valor: 8 }
+    ]
+  };
+  const resultado = resolverCaminoMaximoDAG(grafo, 'n1');
+  igual(resultado.objetivo, 'max');
+  igual(resultado.distancias.n4, 15);
+  igual(resultado.distancias.n5, -Infinity);
+  igual(reconstruirRutaGrafo(resultado, 'n4'), { nodos: ['n1', 'n2', 'n3', 'n4'], conexiones: ['a', 'c', 'e'], distancia: 15 });
+  igual(reconstruirRutaGrafo(resultado, 'n5'), null);
+  igual(resultado.ordenTopologico, ['n1', 'n2', 'n3', 'n4', 'n5']);
+});
+
+prueba('Camino máximo: rechaza grafos no dirigidos y ciclos', () => {
+  const grafo = crearEjemploGrafo('dijkstra');
+  grafo.dirigido = false;
+  lanza(() => resolverCaminoMaximoDAG(grafo, 'n1'));
+  grafo.dirigido = true;
+  grafo.conexiones.push({ id: 'ciclo', desde: 'n4', hacia: 'n1', valor: 1 });
+  lanza(() => resolverCaminoMaximoDAG(grafo, 'n1'));
 });
 
 prueba('Dijkstra: pesos cero y desempates por orden de nodos, sin reemplazar una igualdad', () => {
@@ -177,13 +207,13 @@ prueba('Kruskal: caso obligatorio mínimo 6 y máximo matemático 12', () => {
   igual(extremosExhaustivos(grafo), { minimo: 6, maximo: 12 });
 });
 
-prueba('Kruskal: negativos, ceros y desempates estables en ambos objetivos', () => {
+prueba('Kruskal: ceros y desempates estables en ambos objetivos', () => {
   const grafo = crearEjemploGrafo('kruskal', 'ceros');
   const minimo = resolverKruskalGrafo(grafo, 'min');
   const maximo = resolverKruskalGrafo(grafo, 'max');
   igual(minimo.ordenadas, ['c1', 'c2', 'c3', 'c4', 'c5']);
-  igual(maximo.ordenadas, ['c4', 'c5', 'c2', 'c3', 'c1']);
-  igual(minimo.total, -1);
+  igual(maximo.ordenadas, ['c4', 'c5', 'c1', 'c2', 'c3']);
+  igual(minimo.total, 2);
   igual(maximo.total, 4);
 });
 
@@ -327,7 +357,7 @@ prueba('Validación de documento: versiones, módulo y opciones inválidas no al
     d => { d.origen = 1; }, d => { d.objetivo = null; }, d => { d.vista = 'otra'; },
     d => { d.paso = -1; }, d => { d.paso = 0.1; }, d => { d.paso = Number.MAX_SAFE_INTEGER + 1; },
     d => { d.resuelto = 1; }, d => { d.resuelto = true; },
-    d => { d.objetivo = 'max'; },
+    d => { d.objetivo = 'otro'; },
     d => { d.grafo.conexiones[0].valor = -1; }
   ];
   invalidos.forEach(modificar => {
@@ -339,6 +369,8 @@ prueba('Validación de documento: versiones, módulo y opciones inválidas no al
   });
   const resuelto = Object.assign(documento(), { origen: 'n1', destino: 'n4', resuelto: true, vista: 'resultado', paso: 3 });
   cierto(validarDocumentoGrafo(resuelto, 'dijkstra').ok);
+  const maximo = Object.assign(documento(), { origen: 'n1', objetivo: 'max', resuelto: true });
+  cierto(validarDocumentoGrafo(maximo, 'dijkstra').ok);
 });
 
 prueba('Firma matemática: mover y renombrar conservan el cálculo; pesos, referencias, IDs y modo lo invalidan', () => {
@@ -435,7 +467,7 @@ prueba('Edición transaccional: CRUD, IDs estables y eliminación de conexiones 
       cierto(!ctx.operarGrafoModulo(grafo, modulo, operacion).ok); igual(JSON.stringify(grafo), original);
     }
     r = ctx.operarGrafoModulo(grafo, modulo, { tipo: 'renombrar', id: a, nombre: 'Renombrado' }); cierto(r.ok); igual(r.grafo.nodos[0].id, a); grafo = r.grafo;
-    r = ctx.operarGrafoModulo(grafo, modulo, { tipo: 'peso', id: arista, valor: modulo === 'dijkstra' ? 3 : -3 }); cierto(r.ok); grafo = r.grafo;
+    r = ctx.operarGrafoModulo(grafo, modulo, { tipo: 'peso', id: arista, valor: 3 }); cierto(r.ok); grafo = r.grafo;
     r = ctx.operarGrafoModulo(grafo, modulo, { tipo: 'eliminar-nodo', id: b }); cierto(r.ok); igual(r.grafo.conexiones, []); igual(r.grafo.nodos.map(n => n.id), [a, c]);
     r = ctx.operarGrafoModulo(grafo, modulo, { tipo: 'eliminar-arista', id: arista }); cierto(r.ok); igual(r.grafo.conexiones.length, 1);
   }
@@ -481,12 +513,23 @@ prueba('Estado Dijkstra/Kruskal: presentación conserva resultados; matemáticas
       evaluar(estado, `cambiarConsultaModuloGrafo('destino', 'n4');`);
       cierto(evaluar(estado, 'moduloGrafo.resultado') === resultado);
       igual(estado.reconstruirRutaGrafo(resultado, 'n4').distancia, 4);
+      evaluar(estado, `cambiarConsultaModuloGrafo('objetivo', 'max');`);
+      igual(evaluar(estado, 'moduloGrafo.resultado'), null);
+      evaluar(estado, `moduloGrafo.resultado = resolverCaminoMaximoDAG(moduloGrafo.grafo, moduloGrafo.origen);`);
+      igual(evaluar(estado, 'moduloGrafo.resultado.objetivo'), 'max');
+      igual(evaluar(estado, 'serializarModuloGrafo().objetivo'), 'max');
     }
     const antes = evaluar(estado, 'JSON.stringify(serializarModuloGrafo())');
     cierto(!evaluar(estado, `comprometerGrafo(Object.assign(copiarGrafoModulo(moduloGrafo.grafo), { dirigido: 'inválido' }))`));
     igual(evaluar(estado, 'JSON.stringify(serializarModuloGrafo())'), antes);
     lanza(() => evaluar(estado, `aplicarDocumentoModuloGrafo({ version: 1, modulo: moduloGrafo.modulo, grafo: null })`));
     igual(evaluar(estado, 'JSON.stringify(serializarModuloGrafo())'), antes);
+    if (modulo === 'dijkstra') {
+      const historiaAntes = evaluar(estado, 'JSON.stringify(moduloGrafo.historial)');
+      lanza(() => evaluar(estado, `aplicarDocumentoModuloGrafo({ version: 1, modulo: 'dijkstra', grafo: crearEjemploGrafo('dijkstra', 'ciclico'), origen: 'n1', objetivo: 'max', resuelto: true }, true, true)`));
+      igual(evaluar(estado, 'JSON.stringify(serializarModuloGrafo())'), antes);
+      igual(evaluar(estado, 'JSON.stringify(moduloGrafo.historial)'), historiaAntes);
+    }
     evaluar(estado, `const matematico = copiarGrafoModulo(moduloGrafo.grafo); matematico.conexiones[0].valor++; comprometerGrafo(matematico, '', false);`);
     igual(evaluar(estado, 'moduloGrafo.resultado'), null);
     evaluar(estado, `deshacerModuloGrafo(false);`);

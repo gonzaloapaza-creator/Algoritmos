@@ -129,10 +129,26 @@
 .difusa-clave--recorte::before { border-color: var(--ficticio); border-top-style: dashed; }
 .difusa-clave--consulta::before { border-color: var(--aviso); border-top-style: dotted; }
 .modal-scroll { overflow-wrap: anywhere; }
+.page-difusa .difusa-conjunto-editor { padding: 8px 12px; }
+.page-difusa .difusa-curva-seleccionada { stroke-width: 6; filter: drop-shadow(0 0 1px var(--texto)); }
+.page-difusa .difusa-conjunto-editor[open] { border: 2px solid var(--acento); }
+.page-difusa #resumenReglasDifusa, .page-difusa #combinacionesDifusa { margin-block: 12px; overflow-wrap: anywhere; }
+.page-difusa .difusa-preview { position: sticky; top: 90px; }
+.page-difusa #vista-inicio > h3 { margin-top: 24px; margin-bottom: 12px; }
+.page-difusa #vista-inicio .difusa-ejemplos-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+.page-difusa .difusa-lectura { padding: 10px 12px; border-left: 3px solid var(--acento); line-height: 1.6; }
+.page-difusa .difusa-etiqueta-centroide { font-weight: 750; }
+.page-difusa .difusa-etiqueta-consulta { text-decoration: underline dotted; }
+.page-difusa #tablaReglas button { display: block; white-space: normal; margin-top: 8px; min-height: 44px; }
+.page-difusa #resumenResultado details { font-size: .9rem; }
+.page-difusa .difusa-consulta-linea { stroke-width: 2; }
+.page-difusa #graficaSalida .difusa-marcador { stroke-width: 5; }
+.page-difusa .difusa-vista summary { scroll-margin-top: 90px; scroll-margin-bottom: 100px; }
 @media (max-width: 1050px) {
   .difusa-ejemplos-grid { grid-template-columns: minmax(0, 1fr); }
   .difusa-editor-layout { grid-template-columns: minmax(0, 1fr); }
   .difusa-preview { grid-row: 1; }
+  .page-difusa .difusa-preview { position: static; }
 }
 @media (max-width: 700px) {
   .difusa-vista { padding: 16px; }

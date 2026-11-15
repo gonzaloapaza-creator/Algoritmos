@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="description" content="Método de la esquina noroeste: solución inicial factible del problema de transporte, paso a paso." />
+  <meta name="description" content="Resuelve y optimiza problemas de transporte para minimizar o maximizar su costo usando esquina noroeste y MODI." />
   <meta name="theme-color" content="#0b1020" />
   <title>Esquina noroeste | Ciudad de los Algoritmos</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='9' cy='23' r='5' fill='%235b8cff'/><circle cx='23' cy='9' r='5' fill='%2300d3a7'/><line x1='12' y1='20' x2='20' y2='12' stroke='white' stroke-width='2'/></svg>" />
@@ -40,12 +40,12 @@
     <section class="modulo-cabecera">
       <div class="modulo-cabecera__texto">
         <h1>Esquina noroeste</h1>
-        <p>Problema de transporte: datos → balanceo → resolución paso a paso → resultado.</p>
+        <p>Problema de transporte: elige minimizar o maximizar y sigue la solución inicial y su optimización paso a paso.</p>
       </div>
     </section>
 
     <div class="mensaje mensaje--aviso mensaje--permanente nw-aclaracion" role="note">
-      El método de la esquina noroeste obtiene una solución inicial factible. No garantiza el costo mínimo.
+      La esquina noroeste obtiene una solución inicial factible; MODI mejora esa solución hasta demostrar el mínimo o máximo global.
     </div>
 
     <nav class="nw-pasos" aria-label="Pasos del módulo">
@@ -117,6 +117,14 @@
             <h2 id="tituloBalanceo">Vista previa del problema balanceado</h2>
           </div>
           <div class="nw-balanceo-texto" id="balanceoTexto"></div>
+          <div class="nw-objetivo">
+            <label for="objetivoNorthwest">Objetivo del problema de transporte</label>
+            <select class="entrada" id="objetivoNorthwest">
+              <option value="min">Minimizar el costo total</option>
+              <option value="max">Maximizar el costo total</option>
+            </select>
+            <p class="tarjeta__pista">Esquina noroeste genera la solución inicial; después MODI mejora las asignaciones hasta verificar el óptimo.</p>
+          </div>
           <div class="tabla-caja" id="tablaBalanceo"></div>
           <div class="leyenda nw-leyenda">
             <span class="leyenda__item"><span class="leyenda__muestra leyenda__muestra--caja leyenda__muestra--ficticio"></span>Fila o columna ficticia (borde discontinuo, costo 0)</span>
@@ -227,6 +235,7 @@
   <script src="js/northwest/modelo.js"></script>
   <script src="js/northwest/balanceo.js"></script>
   <script src="js/northwest/noroeste.js"></script>
+  <script src="js/northwest/optimizacion.js"></script>
   <script src="js/northwest/estado.js"></script>
   <script src="js/northwest/tabla.js"></script>
   <script src="js/comun/impresion.js"></script>

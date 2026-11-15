@@ -158,6 +158,43 @@ prueba('Dijkstra serializa dirección, origen, destino, distancias y predecesore
   igual(JSON.stringify(e), antes);
 });
 
+prueba('Dijkstra distingue un nodo aún sin descubrir del diagnóstico final sin camino', () => {
+  const e = estadoDijkstra(); e.seleccion = { tipo: 'nodo', id: 'n_2' };
+  const c = entorno('dijkstra', { moduloGrafo: e }), foto = c.AlgoContexto.obtener();
+  const paso = c.AlgoContexto.ayudaLocal('Explícame este paso', foto);
+  const numero = c.AlgoContexto.interno.explicarNumero('dijkstra', foto.contexto);
+  cierto(paso.includes('B: Aún sin descubrir') && !paso.includes('Sin camino desde A'), paso);
+  cierto(numero.includes('Aún sin descubrir') && !numero.includes('Sin camino desde A'), numero);
+  cierto(c.AlgoContexto.ayudaLocal('¿Qué significa infinito?', foto).includes('Durante los pasos'));
+  const final = estadoDijkstra(); final.resultado.pasos[0].tipo = 'final'; final.seleccion = e.seleccion;
+  const cf = entorno('dijkstra', { moduloGrafo: final }), ff = cf.AlgoContexto.obtener();
+  cierto(cf.AlgoContexto.ayudaLocal('Explícame este paso', ff).includes('B: Sin camino desde A'));
+  cierto(cf.AlgoContexto.interno.explicarNumero('dijkstra', ff.contexto).includes('Sin camino desde A'));
+  const resultado = estadoDijkstra(); resultado.vista = 'resultado'; resultado.seleccion = e.seleccion;
+  const cr = entorno('dijkstra', { moduloGrafo: resultado });
+  cierto(cr.AlgoContexto.interno.explicarNumero('dijkstra', cr.AlgoContexto.obtener().contexto).includes('Sin camino desde A'));
+});
+
+prueba('Máximo DAG no confunde procesar un nodo inalcanzable con descubrirlo', () => {
+  const crear = procesado => {
+    const e = estadoDijkstra(); e.objetivo = 'max'; e.resultado.objetivo = 'max'; e.seleccion = { tipo: 'nodo', id: 'n_2' };
+    e.resultado.distancias.n_2 = -Infinity;
+    const p = e.resultado.pasos[0]; p.distancias.n_2 = -Infinity;
+    if (procesado) { p.tipo = 'seleccion'; p.actual = 'n_2'; p.finalizados = ['n_2']; }
+    return e;
+  };
+  for (const procesado of [false, true]) {
+    const c = entorno('dijkstra', { moduloGrafo: crear(procesado) }), foto = c.AlgoContexto.obtener();
+    const paso = c.AlgoContexto.ayudaLocal('Explícame este paso', foto);
+    const numero = c.AlgoContexto.interno.explicarNumero('dijkstra', foto.contexto);
+    for (const respuesta of [paso, numero]) {
+      cierto(respuesta.includes(procesado ? 'Sin camino desde A' : 'Aún sin descubrir'), respuesta);
+      cierto(!respuesta.includes('Valor definitivo'), respuesta);
+      if (procesado) cierto(respuesta.includes('Procesado no significa alcanzable'), respuesta);
+    }
+  }
+});
+
 prueba('Dijkstra rechaza un resultado de otro origen, otro peso o una preparación activa', () => {
   const origen = estadoDijkstra(); origen.origen = 'n_2';
   const peso = estadoDijkstra(); peso.grafo = { ...grafo, conexiones: [{ ...conexiones[0], valor: 7 }] };

@@ -387,7 +387,7 @@
     const r = c.resultado, dirigido = c.datos && c.datos.dirigido !== false;
     const causas = '\nCausas posibles: falta una conexión hacia ese vértice, la conexión existe en sentido contrario' + (dirigido ? ' (el grafo es dirigido)' : '') + ', o el vértice está aislado o en otro grupo. Añade o corrige la conexión y recalcula.';
     if (modulo === 'dijkstra') {
-      const sin = lista(r.distancias).filter(v => v.distancia === '∞').map(v => nombre(c, v.nodo));
+      const sin = lista(r.distancias).filter(v => ['∞', '−∞'].includes(v.distancia)).map(v => nombre(c, v.nodo));
       return (sin.length ? 'Sin camino desde ' + nombre(c, r.origen) + ': ' + sin.join(', ') + '.' : 'Todos los vértices son alcanzables desde ' + nombre(c, r.origen) + ' en el resultado vigente.') + (sin.length ? causas : '')
         + (!c.seleccion ? '\nNo hay un nodo seleccionado. ' + comoSeleccionar(modulo) : '');
     }
@@ -410,8 +410,8 @@
     if (['johnson', 'dijkstra', 'kruskal'].includes(modulo)) {
       if (!d.cantidadVertices) return 'Crea tus primeros nodos o carga un ejemplo. Después conéctalos con pesos.';
       if (modulo === 'johnson' && d.cantidadVertices < 2) return 'Añade un segundo nodo: «Calcular Johnson» requiere al menos dos nodos. Puedes calcular incluso si hay nodos sin conexiones.';
-      if (modulo === 'dijkstra' && !d.origen) return 'Elige el origen en la etapa 2 (el destino es opcional) y pulsa «Encontrar caminos mínimos».';
-      if (!c.resultadoVigente) return 'Los datos están listos: pulsa ' + (modulo === 'johnson' ? '«Calcular Johnson»' : modulo === 'dijkstra' ? '«Encontrar caminos mínimos»' : '«Encontrar conexiones»') + ' y después recorre los pasos.';
+      if (modulo === 'dijkstra' && !d.origen) return 'Elige el origen y el objetivo en la etapa 2 (el destino es opcional) y calcula. El máximo requiere un grafo dirigido acíclico.';
+      if (!c.resultadoVigente) return 'Los datos están listos: pulsa ' + (modulo === 'johnson' ? '«Calcular Johnson»' : modulo === 'dijkstra' ? (d.objetivo === 'max' ? '«Encontrar caminos máximos (DAG)»' : '«Encontrar caminos mínimos»') : '«Encontrar conexiones»') + ' y después recorre los pasos.';
     }
     if (modulo === 'asignacion' || modulo === 'northwest') {
       const pendientes = I.pendientes(modulo, c);

@@ -1,5 +1,15 @@
 'use strict';
 
+function catalogoEjemplosArbol() {
+  return [
+    { id: 'clase', nombre: 'Básico · Ejemplo de clase', modo: 'busqueda', valores: [5, 3, 1, 4, 7, 11, 8, 15], descripcion: 'Inserta los valores en orden. Compara preorden, inorden y postorden sobre la misma estructura.' },
+    { id: 'equilibrado', nombre: 'Básico · BST equilibrado', modo: 'busqueda', valores: [40, 20, 60, 10, 30, 50, 70], descripcion: 'Inserta primero la raíz y después sus niveles. Observa tres recorridos diferentes de un árbol de siete nodos.' },
+    { id: 'cadena', nombre: 'Intermedio · BST en cadena', modo: 'busqueda', valores: [10, 20, 30, 40, 50], descripcion: 'Inserta en orden ascendente: cada nodo nuevo queda a la derecha. Usa Ajustar, zoom o desplaza la vista para recorrer la cadena.' },
+    { id: 'general-pre', nombre: 'Especial · General con preorden + inorden', modo: 'pre_in', recorridos: { inorden: [8, 2, 6, 4, 1], preorden: [6, 2, 8, 1, 4] }, descripcion: 'Reconstruye con raíz 6. Es un árbol binario general: su inorden no es ascendente y no cumple las reglas de un BST.' },
+    { id: 'general-post', nombre: 'Especial · General con inorden + postorden', modo: 'in_post', recorridos: { inorden: [8, 2, 6, 4, 1], postorden: [8, 2, 4, 1, 6] }, descripcion: 'Reconstruye la misma estructura con otro par de recorridos. El último valor de postorden indica la raíz 6.' }
+  ];
+}
+
 function crearNodoArbol(valor) {
   if (!Number.isSafeInteger(valor) || valor < MIN_VALOR_ARBOL || valor > MAX_VALOR_ARBOL) throw new Error('Cada nodo debe ser un entero entre ' + MIN_VALOR_ARBOL + ' y ' + MAX_VALOR_ARBOL + '.');
   return { valor, izquierdo: null, derecho: null };

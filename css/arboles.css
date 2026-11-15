@@ -1,4 +1,8 @@
 .page-arboles .arbol-seccion { margin-top: var(--esp-4); min-width: 0; }
+.page-arboles .arbol-ejemplos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 12px; }
+.page-arboles .arbol-ejemplo { display: flex; flex-direction: column; gap: 10px; border: 1px solid var(--borde); border-radius: var(--radio); padding: 16px; background: var(--bg-input); min-width: 0; }
+.page-arboles .arbol-ejemplo .btn { margin-top: auto; min-height: 44px; }
+.page-arboles #guiaEjemploArbol { overflow-wrap: anywhere; }
 .page-arboles .arbol-seccion > * + * { margin-top: var(--esp-3); }
 .page-arboles .tarjeta__cabecera { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--esp-3); }
 .page-arboles .tarjeta__pista { margin-top: 6px; color: var(--texto-suave); max-width: 100ch; }

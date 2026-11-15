@@ -171,7 +171,8 @@ async function revisarMatriz(browser) {
       await captura(page, modulo, ancho, tema, 'configuracion');
       await clic(page, '#btnResolverGrafo');
       await page.waitForFunction(() => !!moduloGrafo.resultado);
-      comprobar(await page.evaluate(() => moduloGrafo.vista === 'procedimiento' && document.activeElement.id === 'tituloEtapaGrafo'), etiqueta + ': Calcular abre el procedimiento con foco');
+      comprobar(await page.evaluate(() => moduloGrafo.vista === 'resultado' && document.activeElement.id === 'tituloEtapaGrafo'), etiqueta + ': Calcular abre Resultado con foco');
+      comprobar(await page.$eval('[data-vista-grafo="procedimiento"]', e => !e.classList.contains('completo')), etiqueta + ': Paso a paso no se marca visitado al calcular');
       await revisarVista(page, etiqueta + '/ejemplo', 'procedimiento', false);
       const pasoAntes = await page.evaluate(() => moduloGrafo.paso);
       await clic(page, '#btnSiguienteGrafo');

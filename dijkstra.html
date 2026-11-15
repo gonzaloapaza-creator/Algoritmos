@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="description" content="Caminos mínimos desde un origen en grafos dirigidos o no dirigidos con pesos no negativos." />
+  <meta name="description" content="Caminos mínimos con Dijkstra o máximos en grafos dirigidos acíclicos mediante orden topológico." />
   <meta name="theme-color" content="#0b1020" />
   <title>Dijkstra | Ciudad de los Algoritmos</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='9' cy='23' r='5' fill='%235b8cff'/><circle cx='23' cy='9' r='5' fill='%2300d3a7'/><line x1='12' y1='20' x2='20' y2='12' stroke='white' stroke-width='2'/></svg>" />
@@ -28,7 +28,7 @@
   <main class="contenido" id="contenido">
     <section id="introModulo" hidden></section>
     <div id="moduloContenido">
-      <section class="modulo-cabecera gm-portada"><div class="modulo-cabecera__texto"><p class="gm-eyebrow">Explora rutas · Aprende paso a paso</p><h1>Dijkstra</h1><p>Encuentra el camino más corto desde un punto y descubre cómo se elige cada ruta.</p><span class="gm-portada-nota">Distancias y costos desde cero · Con o sin dirección</span></div><svg class="gm-portada-red" viewBox="0 0 220 130" aria-hidden="true" focusable="false"><path class="gm-red-base" d="M25 88 80 30 130 95 194 38M25 88 130 95M80 30 194 38"/><path class="gm-red-ruta" d="M25 88 80 30 194 38"/><circle cx="25" cy="88" r="12"/><circle cx="80" cy="30" r="12"/><circle cx="130" cy="95" r="12"/><circle cx="194" cy="38" r="12"/></svg></section>
+      <section class="modulo-cabecera gm-portada"><div class="modulo-cabecera__texto"><p class="gm-eyebrow">Explora rutas · Aprende paso a paso</p><h1>Dijkstra</h1><p>Elige caminos mínimos con Dijkstra o máximos en un grafo dirigido acíclico.</p><span class="gm-portada-nota">Mínimos: pesos no negativos · Máximos: solo DAG</span></div><svg class="gm-portada-red" viewBox="0 0 220 130" aria-hidden="true" focusable="false"><path class="gm-red-base" d="M25 88 80 30 130 95 194 38M25 88 130 95M80 30 194 38"/><path class="gm-red-ruta" d="M25 88 80 30 194 38"/><circle cx="25" cy="88" r="12"/><circle cx="80" cy="30" r="12"/><circle cx="130" cy="95" r="12"/><circle cx="194" cy="38" r="12"/></svg></section>
       <div id="editorModuloGrafo"></div>
     </div>
   </main>

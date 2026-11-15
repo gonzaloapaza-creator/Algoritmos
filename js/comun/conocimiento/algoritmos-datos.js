@@ -9,6 +9,15 @@
   K.registrar([
     /* ---------------- Lógica difusa: conceptos y uso del editor local ---------------- */
     {
+      id: 'difusa.borrador-participacion', tema: 'difusa', modulos: ['difusa'],
+      pregunta: '¿Por qué una entrada nueva no cambia el resultado?',
+      variantes: ['como usar la tercera entrada', 'entrada nueva sin valor', 'que significa borrador', 'cambios sin aplicar en difusa', 'participacion de una entrada', 'como configurar las reglas de una entrada'],
+      conceptos: ['borrador', 'aplicado', 'entrada nueva', 'tercera entrada', 'participacion', 'pendiente'],
+      breve: 'Una entrada nueva queda sin valor y las reglas existentes usan «No importa» para conservar su significado. En Variables, «Configurar reglas de esta entrada» lleva a sus condiciones. El contador muestra reglas habilitadas con peso positivo que la utilizan; participar no garantiza cambiar la salida en toda evaluación. Aplica o cancela el Borrador y completa los valores pendientes: Evaluar señala el error junto al campo y lo enfoca.',
+      detalle: 'Aplicado determina los resultados; Borrador determina los contadores del editor. Un cambio matemático descarta la evaluación y el mapa anteriores, incluso si después cancelas: vuelve a evaluar el modelo aplicado. El ejemplo de ventilación de tres entradas permite comparar 20 °C y 50 % con 0 y 20 personas.',
+      relacionadas: ['difusa.que-es', 'difusa.centroide']
+    },
+    {
       id: 'difusa.que-es', tema: 'difusa', modulos: ['difusa'],
       pregunta: '¿Qué es lógica difusa?',
       variantes: ['que es la logica difusa', 'para que sirve la logica difusa', 'que significa difusa', 'que es mamdani', 'como empiezo con logica difusa'],

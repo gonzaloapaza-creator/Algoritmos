@@ -8,12 +8,14 @@ const ctx = cargar(crearContexto(), [
   'js/northwest/modelo.js',
   'js/northwest/balanceo.js',
   'js/northwest/noroeste.js',
+  'js/northwest/optimizacion.js',
+  'js/northwest/optimizacion.js',
   'js/comun/utilidades.js',
   'js/northwest/estado.js'
 ]);
 
 const {
-  resolverEsquinaNoroeste, balancearNorthwest, modeloNorthwestDesdeMatrices, ejemploNorthwest,
+  resolverEsquinaNoroeste, optimizarTransporteMODI, balancearNorthwest, modeloNorthwestDesdeMatrices, ejemploNorthwest,
   validarCostoNorthwest, validarCantidadNorthwest, validarEtiquetaNorthwest, formatearCostoNorthwest,
   validarModeloNorthwest, depurarModeloNorthwest, agregarOrigen, agregarDestino, fijarCostoNorthwest,
   eliminarElementoNorthwest, crearModeloNorthwest, firmaModeloNorthwest
@@ -49,6 +51,61 @@ prueba('Cambiar solo los costos conserva las cantidades asignadas', () => {
   const b = resolverDesde([[9, 1, 7], [1, 9, 2]], [20, 30], [10, 25, 15]).r;
   igual(a.asignaciones, b.asignaciones);
   cierto(a.costoTotal !== b.costoTotal);
+});
+
+prueba('MODI: minimiza y maximiza respetando balances y mejora real del objetivo', () => {
+  const costos = [[100, 1000], [900, 200]];
+  const ofertas = [5, 5], demandas = [5, 5];
+  const inicial = resolverEsquinaNoroeste(costos, ofertas, demandas);
+  const minimo = optimizarTransporteMODI(costos, ofertas, demandas, inicial, 'min');
+  const maximo = optimizarTransporteMODI(costos, ofertas, demandas, inicial, 'max');
+  igual(inicial.costoTotal, 1500);
+  igual(minimo.costoTotal, 1500);
+  igual(maximo.costoInicial, 1500);
+  igual(maximo.costoTotal, 9500);
+  igual(maximo.asignaciones, [[0, 5], [5, 0]]);
+  igual(maximo.pasosOptimizacion.length, 1);
+  cierto(minimo.verificacion.ok && maximo.verificacion.ok);
+  lanza(() => optimizarTransporteMODI(costos, ofertas, demandas, inicial, 'otro'));
+});
+
+prueba('MODI: ambos objetivos coinciden con enumeración exhaustiva en problemas pequeños', () => {
+  let semilla = 931;
+  const azar = max => { semilla = (semilla * 48271) % 2147483647; return semilla % max; };
+  for (let caso = 0; caso < 60; caso++) {
+    const m = 1 + azar(3), n = 1 + azar(3);
+    const plan = Array.from({ length: m }, () => Array.from({ length: n }, () => azar(3)));
+    const ofertas = plan.map(f => f.reduce((s, v) => s + v, 0));
+    const demandas = Array.from({ length: n }, (_, j) => plan.reduce((s, f) => s + f[j], 0));
+    const costos = Array.from({ length: m }, () => Array.from({ length: n }, () => azar(12)));
+    let minimo = Infinity, maximo = -Infinity;
+    const matriz = Array.from({ length: m }, () => new Array(n).fill(0));
+    function enumerar(fila, col, falta) {
+      if (fila === m) {
+        if (demandas.some((d, j) => d !== 0)) return;
+        const total = matriz.reduce((s, f, i) => s + f.reduce((t, v, j) => t + v * costos[i][j], 0), 0);
+        minimo = Math.min(minimo, total); maximo = Math.max(maximo, total);
+        return;
+      }
+      if (col === n) { if (falta === 0) enumerar(fila + 1, 0, fila + 1 < m ? ofertas[fila + 1] : 0); return; }
+      const limite = Math.min(falta, demandas[col]);
+      for (let cantidad = 0; cantidad <= limite; cantidad++) {
+        matriz[fila][col] = cantidad; demandas[col] -= cantidad;
+        enumerar(fila, col + 1, falta - cantidad);
+        demandas[col] += cantidad;
+      }
+      matriz[fila][col] = 0;
+    }
+    const demandasRestaurables = demandas.slice();
+    enumerar(0, 0, ofertas[0]);
+    demandas.splice(0, demandas.length, ...demandasRestaurables);
+    const inicial = resolverEsquinaNoroeste(costos, ofertas, demandas);
+    for (const objetivo of ['min', 'max']) {
+      const resultado = optimizarTransporteMODI(costos, ofertas, demandas, inicial, objetivo);
+      igual(resultado.costoTotal, objetivo === 'min' ? minimo : maximo, 'Caso ' + caso + ', objetivo ' + objetivo);
+      cierto(resultado.verificacion.ok);
+    }
+  }
 });
 
 prueba('Exceso de oferta: destino ficticio absorbe la diferencia con costo 0', () => {
@@ -180,6 +237,8 @@ prueba('formatearCostoNorthwest', () => {
   igual(formatearCostoNorthwest(200), '2');
   igual(formatearCostoNorthwest(5), '0.05');
   igual(formatearCostoNorthwest(0), '0');
+  igual(formatearCostoNorthwest(-50), '-0.5');
+  igual(formatearCostoNorthwest(-105), '-1.05');
 });
 
 /* ---------------- Modelo ---------------- */
@@ -325,7 +384,7 @@ prueba('Noroeste coincide con la referencia independiente de intervalos acumulad
 });
 
 prueba('Transacciones de Northwest rechazan sin modificar historial o resultado y deshacen con coherencia', () => {
-  const c = cargar(crearContexto(), ['js/config.js', 'js/northwest/validacion.js', 'js/northwest/modelo.js', 'js/northwest/balanceo.js', 'js/northwest/noroeste.js', 'js/northwest/estado.js']);
+  const c = cargar(crearContexto(), ['js/config.js', 'js/northwest/validacion.js', 'js/northwest/modelo.js', 'js/northwest/balanceo.js', 'js/northwest/noroeste.js', 'js/northwest/optimizacion.js', 'js/northwest/estado.js']);
   c.escribirAlmacenamientoLocal = () => true;
   const e = evaluar(c, 'estadoNorthwest'); e.modelo = c.ejemploNorthwest('balanceado'); c.resolverNorthwestCompleto();
   const antes = JSON.stringify(e.modelo), resultado = e.resultado;
@@ -356,7 +415,7 @@ prueba('Northwest restaura estrictamente sin reemplazar autoguardados incompatib
 });
 
 prueba('H04: quitar filas/columnas purga solo errores incidentes y deshacer/rehacer los restaura por ID', () => {
-  const c = cargar(crearContexto(), ['js/config.js', 'js/northwest/validacion.js', 'js/northwest/modelo.js', 'js/northwest/balanceo.js', 'js/northwest/noroeste.js', 'js/northwest/estado.js']);
+  const c = cargar(crearContexto(), ['js/config.js', 'js/northwest/validacion.js', 'js/northwest/modelo.js', 'js/northwest/balanceo.js', 'js/northwest/noroeste.js', 'js/northwest/optimizacion.js', 'js/northwest/estado.js']);
   c.escribirAlmacenamientoLocal = () => true;
   const e = evaluar(c, 'estadoNorthwest'); e.modelo = c.ejemploNorthwest('balanceado');
   const [o1, o2] = e.modelo.origenes, [d1, d2] = e.modelo.destinos;
@@ -375,7 +434,7 @@ prueba('H19: pendientes preservan el último cálculo, bloquean resolver y se li
   const almacen = new Map();
   const c = crearContexto(); c.localStorage = { getItem: clave => almacen.get(clave) || null };
   c.escribirAlmacenamientoLocal = (clave, texto) => { almacen.set(clave, texto); return true; };
-  cargar(c, ['js/config.js', 'js/northwest/validacion.js', 'js/northwest/modelo.js', 'js/northwest/balanceo.js', 'js/northwest/noroeste.js', 'js/northwest/estado.js']);
+  cargar(c, ['js/config.js', 'js/northwest/validacion.js', 'js/northwest/modelo.js', 'js/northwest/balanceo.js', 'js/northwest/noroeste.js', 'js/northwest/optimizacion.js', 'js/northwest/estado.js']);
   const e = evaluar(c, 'estadoNorthwest'); e.modelo = c.ejemploNorthwest('balanceado');
   const resultado = c.resolverNorthwestCompleto(), clave = 'oferta:' + e.modelo.origenes[0].id;
   c.registrarBorradorNorthwest(clave, '-2', false);

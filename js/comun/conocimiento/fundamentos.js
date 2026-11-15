@@ -387,7 +387,7 @@
       breve: 'Una solución válida cumple las reglas del formato (datos completos y en rango). Una solución factible cumple todas las restricciones del problema (por ejemplo, satisface oferta y demanda). Una solución óptima es factible y, además, tiene el mejor valor posible: ningún otra factible la supera.',
       sencilla: 'Válida: «está bien escrita». Factible: «se puede llevar a cabo». Óptima: «es la mejor de todas las que se pueden llevar a cabo».',
       ejemplo: 'Esquina noroeste da una solución factible de transporte: envía todo lo que se pide sin superar las ofertas. Pero no es necesariamente óptima: puede existir otro reparto más barato.',
-      detalle: 'Dijkstra, Johnson, Kruskal y el método húngaro garantizan soluciones óptimas (dentro de sus supuestos). Esquina noroeste solo garantiza factibilidad; métodos como MODI mejorarían esa solución, pero no están implementados aquí.',
+      detalle: 'Dijkstra y Johnson resuelven caminos mínimos bajo sus supuestos; Kruskal y el método húngaro optimizan sus objetivos. Esquina noroeste por sí sola solo da factibilidad, pero este módulo aplica MODI para optimizar el transporte por costo mínimo o máximo.',
       relacionadas: ['northwest.no-optimo', 'basico.voraz', 'grafo.empates']
     },
     {

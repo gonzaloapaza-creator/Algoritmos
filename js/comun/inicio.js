@@ -154,9 +154,9 @@ function dibujarInicio() {
     const notas = {
       arboles: 'BST por inserción y reconstrucción de árboles binarios. Incluye varios recorridos y operaciones.',
       johnson: 'Todos los pares; admite negativos y detecta ciclos negativos.',
-      dijkstra: 'Desde un origen; admite cero y desconexión. Los pesos deben ser no negativos.',
+      dijkstra: 'Desde un origen: mínimo con Dijkstra y máximo en grafos dirigidos acíclicos. Admite cero y nodos sin camino.',
       kruskal: 'Optimiza el peso total de la conexión de cada componente; los caminos mínimos se estudian en Dijkstra y Johnson.',
-      difusa: 'Mamdani tipo 1 con nueve reglas. La recomendación didáctica no mide ni califica el aprendizaje.'
+      difusa: 'Mamdani tipo 1: de una a tres entradas, una salida y hasta 125 reglas configurables. Los ejemplos son didácticos.'
     };
     nota.textContent = alg.metodos ? alg.metodos.join(' · ') : (notas[alg.id] || 'Carga un ejemplo desde el módulo y sigue su procedimiento.');
     panel.append(icono, zona, titulo, descripcion, datos, abrir, nota);

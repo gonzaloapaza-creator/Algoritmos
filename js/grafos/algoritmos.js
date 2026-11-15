@@ -62,12 +62,82 @@ function resolverDijkstraGrafo(grafo, origen) {
   }
   registrar('final', { explicacion: 'No quedan pendientes alcanzables. Las distancias infinitas indican que no existe camino.' });
   const idsArbol = new Set(ids.filter(id => predecesores[id]).map(id => predecesores[id].conexion));
-  return { origen, grafo: datos, distancias, predecesores, pasos, arbol: datos.conexiones.filter(c => idsArbol.has(c.id)).map(c => c.id), exploradas: Array.from(exploradas) };
+  return { origen, objetivo: 'min', grafo: datos, distancias, predecesores, pasos, arbol: datos.conexiones.filter(c => idsArbol.has(c.id)).map(c => c.id), exploradas: Array.from(exploradas) };
+}
+
+/**
+ * Camino de peso máximo desde un origen en un DAG, mediante orden topológico.
+ * A diferencia de Dijkstra, no finaliza por distancias crecientes: relaja cada
+ * arista una vez en orden topológico, por lo que también admite pesos cero.
+ */
+function resolverCaminoMaximoDAG(grafo, origen) {
+  const validacion = validarGrafoModulo(grafo, 'dijkstra');
+  if (!validacion.ok) throw new Error(validacion.error);
+  const datos = validacion.grafo;
+  if (!datos.nodos.length) throw new Error('Crea al menos un nodo antes de calcular.');
+  if (!datos.dirigido) throw new Error('El camino máximo solo está disponible para grafos dirigidos acíclicos.');
+  if (!datos.nodos.some(n => n.id === origen)) throw new Error('Selecciona un origen válido.');
+
+  const ids = datos.nodos.map(n => n.id);
+  const indice = new Map(ids.map((id, i) => [id, i]));
+  const adyacencia = new Map(ids.map(id => [id, []]));
+  const grados = new Map(ids.map(id => [id, 0]));
+  datos.conexiones.forEach(c => {
+    adyacencia.get(c.desde).push({ hacia: c.hacia, conexion: c.id, valor: c.valor });
+    grados.set(c.hacia, grados.get(c.hacia) + 1);
+  });
+  const disponibles = ids.filter(id => grados.get(id) === 0);
+  const orden = [];
+  while (disponibles.length) {
+    disponibles.sort((a, b) => indice.get(a) - indice.get(b));
+    const actual = disponibles.shift();
+    orden.push(actual);
+    adyacencia.get(actual).forEach(arista => {
+      grados.set(arista.hacia, grados.get(arista.hacia) - 1);
+      if (grados.get(arista.hacia) === 0) disponibles.push(arista.hacia);
+    });
+  }
+  if (orden.length !== ids.length) throw new Error('Ciclo incompatible con máximo: el grafo debe ser dirigido y acíclico. El ciclo se conserva y puedes calcular el mínimo.');
+
+  const distancias = Object.create(null), predecesores = Object.create(null);
+  ids.forEach(id => { distancias[id] = -Infinity; predecesores[id] = null; });
+  distancias[origen] = 0;
+  const finalizados = new Set(), exploradas = new Set(), pasos = [];
+  const registrar = (tipo, detalle = {}) => pasos.push(Object.assign({
+    tipo, actual: null, arista: null, anterior: null, candidata: null, mejora: false,
+    distancias: Object.assign(Object.create(null), distancias),
+    predecesores: Object.fromEntries(ids.map(id => [id, predecesores[id] ? Object.assign({}, predecesores[id]) : null])),
+    finalizados: ids.filter(id => finalizados.has(id)),
+    pendientes: ids.filter(id => !finalizados.has(id))
+  }, detalle));
+  registrar('inicio', { ordenTopologico: orden.slice(), explicacion: 'Se procesa cada vértice una vez, en orden topológico.' });
+  orden.forEach(actual => {
+    finalizados.add(actual);
+    registrar('seleccion', { actual, explicacion: 'Se procesa ' + actual + ' en orden topológico; todos sus predecesores ya fueron revisados.' });
+    if (!Number.isFinite(distancias[actual])) return;
+    adyacencia.get(actual).forEach(arista => {
+      const anterior = distancias[arista.hacia];
+      const candidata = distancias[actual] + arista.valor;
+      const mejora = candidata > anterior;
+      exploradas.add(arista.conexion);
+      if (mejora) {
+        distancias[arista.hacia] = candidata;
+        predecesores[arista.hacia] = { nodo: actual, conexion: arista.conexion };
+      }
+      registrar('relajacion', { actual, desde: actual, hacia: arista.hacia, arista: arista.conexion, anterior, candidata, mejora,
+        explicacion: mejora ? 'La candidata es mayor: cambian el valor máximo y el predecesor.' : 'La candidata no es mayor: se conserva el mejor camino.' });
+    });
+  });
+  registrar('final', { explicacion: 'Orden topológico completado. Los valores −∞ indican que no existe un camino desde el origen.' });
+  const idsArbol = new Set(ids.filter(id => predecesores[id]).map(id => predecesores[id].conexion));
+  return { origen, objetivo: 'max', grafo: datos, distancias, predecesores, pasos, ordenTopologico: orden,
+    arbol: datos.conexiones.filter(c => idsArbol.has(c.id)).map(c => c.id), exploradas: Array.from(exploradas) };
 }
 
 /** Reconstruye y suma pesos originales, también en grafos no dirigidos. */
 function reconstruirRutaGrafo(resultado, destino) {
-  if (!resultado || !resultado.grafo || !Object.prototype.hasOwnProperty.call(resultado.distancias, destino) || !Number.isFinite(resultado.distancias[destino])) return null;
+  if (!resultado || !resultado.grafo || !Object.prototype.hasOwnProperty.call(resultado.distancias, destino) ||
+      (resultado.objetivo === 'max' ? resultado.distancias[destino] === -Infinity : !Number.isFinite(resultado.distancias[destino]))) return null;
   if (destino === resultado.origen) return { nodos: [destino], conexiones: [], distancia: 0 };
   const conexionesPorId = new Map(resultado.grafo.conexiones.map(c => [c.id, c]));
   const nodos = [];

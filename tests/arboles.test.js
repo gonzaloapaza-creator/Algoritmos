@@ -170,10 +170,10 @@ prueba('Restaurar Árboles aplica estructura, recorrido y paso con la reproducci
   const contexto = crearContexto();
   const elementos = new Map();
   const elemento = id => {
-    if (!elementos.has(id)) elementos.set(id, { value: '', addEventListener() {}, setAttribute() {} });
+    if (!elementos.has(id)) elementos.set(id, { value: '', append() {}, addEventListener() {}, setAttribute() {} });
     return elementos.get(id);
   };
-  contexto.document = { getElementById: elemento, querySelectorAll: () => [], addEventListener() {} };
+  contexto.document = { getElementById: elemento, createElement: () => ({ dataset: {}, append() {}, addEventListener() {} }), querySelectorAll: () => [], addEventListener() {} };
   contexto.dibujarArbol = () => {};
   contexto.cambiarZoomArbol = contexto.centrarArbol = contexto.ajustarZoomArbol = () => {};
   contexto.instalarAyudaModal = () => {};

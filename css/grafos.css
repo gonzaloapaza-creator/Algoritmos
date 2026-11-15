@@ -236,8 +236,27 @@
 .grafo-modulo .gm-editor-herramientas .btn { min-height: 44px; padding: 8px 10px; white-space: normal; font-size: .78rem; }
 .grafo-modulo .gm-editor-herramientas [aria-pressed=true] { border-color: var(--acento); color: var(--acento-fuerte); background: var(--acento-tinte); }
 .grafo-modulo .gm-herramienta-estado { padding: 0 12px 12px; margin: 0; font-size: .78rem; color: var(--texto-suave); line-height: 1.6; }
+.grafo-modulo #edicionJuntoGrafo > summary { cursor: pointer; min-height: 44px; padding: 12px; font-weight: 650; }
+.grafo-modulo #guiaEjemploGrafo { flex: 1 1 100%; margin: 0; }
+.page-dijkstra .gm-guia-ejemplo { padding: 12px 16px; border-bottom: 1px solid var(--borde); line-height: 1.6; font-size: .85rem; }
+.page-dijkstra .gm-guia-ejemplo p { margin: 4px 0 0; color: var(--texto-suave); }
+.page-dijkstra #btnDecisionDijkstra { margin-top: 10px; min-height: 44px; white-space: normal; text-align: left; }
+.grafo-modulo .gm-consulta-ruta { padding: 12px 16px; border-block: 1px solid var(--borde); background: var(--acento-tinte); overflow-wrap: anywhere; line-height: 1.6; }
+.grafo-modulo .gm-consulta-ruta .btn { margin-top: 8px; white-space: normal; }
+.grafo-modulo .gm-sin-camino circle { fill-opacity: .6; stroke-dasharray: 3 3; }
+.grafo-modulo .gm-lienzo .arista-editor-grafo.ruta .gm-arista-linea { stroke-dasharray: 16 4; }
+.grafo-modulo #destinosSinCaminoGrafo > summary { min-height: 44px; padding-block: 10px; cursor: pointer; }
+.grafo-modulo #moduloContenido { padding-bottom: 20px; }
+.grafo-modulo #svgModuloGrafo, .grafo-modulo .gm-consulta .btn { scroll-margin-bottom: 100px; }
 .grafo-modulo .gm-consulta { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; padding: 12px; border-block: 1px solid var(--borde); background: var(--bg); }
-.grafo-modulo .gm-consulta > div { display: grid; grid-template-columns: repeat(3, minmax(90px, 1fr)); gap: 4px 8px; flex: 1 1 100%; }
+.grafo-modulo .gm-consulta > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; flex: 1 1 100%; }
+.grafo-modulo .gm-campo-config { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.grafo-modulo .gm-consulta #configDijkstra > p { grid-column: 1 / -1; margin: 0; }
+.grafo-modulo .gm-consulta #destinoGrafo { min-width: 0; }
+.grafo-modulo .gm-tabla-caja { max-height: 420px; overflow: auto; overscroll-behavior: contain; }
+.grafo-modulo .gm-tabla-caja table { min-width: 0; table-layout: fixed; }
+.grafo-modulo .gm-destinos { gap: 4px; }
+.grafo-modulo .gm-destinos button { padding: 8px 12px; min-height: 52px; }
 .grafo-modulo .gm-consulta #configKruskal { grid-template-columns: 1fr; }
 .grafo-modulo .gm-consulta label { grid-row: 1; margin: 0; font-size: .76rem; font-weight: 650; }
 .grafo-modulo .gm-consulta select { grid-row: 2; min-width: 0; width: 100%; }

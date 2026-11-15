@@ -12,20 +12,20 @@ const DifusaDibujo = (() => {
   }
   function variable(contenedor, v, valor, id, salida) {
     const resultado = salida && salida.resultado, regla = salida && salida.regla, indice = salida && salida.indice;
-    const x0 = 65, x1 = 550, y0 = 38, y1 = 218;
+    const x0 = 65, x1 = 550, y0 = resultado ? 124 : 38, y1 = resultado ? 304 : 218;
     const px = x => x0 + (x - v.min) / (v.max - v.min) * (x1 - x0), py = grado => y1 - grado * (y1 - y0);
-    const svg = base(v.nombre, 'Dominio de ' + v.min + ' a ' + v.max + (v.unidad ? ' ' + v.unidad : '') + '. Pertenencia de 0 a 1. Curvas diferenciadas por trazo y leyenda. ' + (valor == null ? 'Sin valor evaluado.' : 'Valor marcado: ' + valor + '.') + (resultado ? ' Agregación por segmentos e integración del centroide continuo. ' + resultado.centroide.mensaje : ''), id);
-    svg.append(crear('text', { x: x0, y: 22 }, 'Pertenencia μ'));
+    const svg = base(v.nombre, 'Dominio de ' + v.min + ' a ' + v.max + (v.unidad ? ' ' + v.unidad : '') + '. Pertenencia de 0 a 1. Curvas diferenciadas por trazo y leyenda. ' + (valor == null ? 'Sin valor evaluado.' : 'Valor marcado: ' + valor + '.') + (resultado ? ' Agregación por segmentos e integración del centroide continuo. ' + resultado.centroide.mensaje : ''), id, resultado ? 382 : 280);
+    svg.append(crear('text', { x: x0, y: resultado ? 110 : 22 }, 'Pertenencia μ'));
     [0, 0.5, 1].forEach(y => {
       svg.append(crear('line', { x1: x0, x2: x1, y1: py(y), y2: py(y), class: 'difusa-rejilla' }), crear('text', { x: x0 - 9, y: py(y) + 5, 'text-anchor': 'end' }, formato(y)));
     });
     [0, 0.25, 0.5, 0.75, 1].forEach(fraccion => {
       const x = v.min + fraccion * (v.max - v.min);
-      svg.append(crear('line', { x1: px(x), x2: px(x), y1, y2: y1 + 5, class: 'difusa-eje' }), crear('text', { x: px(x), y: 243, 'text-anchor': 'middle' }, formato(x)));
+      svg.append(crear('line', { x1: px(x), x2: px(x), y1, y2: y1 + 5, class: 'difusa-eje' }), crear('text', { x: px(x), y: y1 + 25, 'text-anchor': 'middle' }, formato(x)));
     });
     svg.append(crear('line', { x1: x0, x2: x1, y1, y2: y1, class: 'difusa-eje' }), crear('line', { x1: x0, x2: x0, y1: y0, y2: y1, class: 'difusa-eje' }));
     const etiqueta = v.nombre.slice(0, 24) + (v.unidad ? ' (' + v.unidad.slice(0, 12) + ')' : '');
-    svg.append(crear('text', { x: (x0 + x1) / 2, y: 271, 'text-anchor': 'middle' }, etiqueta));
+    svg.append(crear('text', { x: (x0 + x1) / 2, y: y1 + 53, 'text-anchor': 'middle' }, etiqueta));
     const trazo = (puntos, grados) => puntos.map((x, i) => (i ? 'L' : 'M') + px(x) + ',' + py(grados[i])).join(' ');
     const trazoTramos = tramos => tramos.map(t => 'M' + px(t.x0) + ',' + py(t.y0) + 'L' + px(t.x1) + ',' + py(t.y1)).join(' ');
     if (resultado) {
@@ -39,21 +39,36 @@ const DifusaDibujo = (() => {
       if (v.min < p[0]) vertices.unshift([v.min, 0]);
       if (v.max > p[p.length - 1]) vertices.push([v.max, 0]);
       const curva = crear('path', { d: vertices.map(([x, y], j) => (j ? 'L' : 'M') + px(x) + ',' + py(y)).join(' '), class: 'difusa-curva difusa-curva--' + i });
+      if (salida && salida.conjuntoId === c.id) { curva.classList.add('difusa-curva-seleccionada'); curva.setAttribute('aria-label', 'Conjunto seleccionado: ' + c.nombre); }
       curva.append(crear('title', {}, c.nombre)); svg.append(curva);
     });
     if (resultado) svg.append(crear('path', { d: resultado.tramos ? trazoTramos(resultado.tramos) : trazo(resultado.puntos, resultado.agregada), class: 'difusa-agregada-linea' }));
     if (regla) svg.append(crear('path', { d: regla.tramos ? trazoTramos(regla.tramos) : trazo(resultado.puntos, regla.recortada), class: 'difusa-recorte-linea' }));
     if (valor != null) {
       svg.append(crear('line', { x1: px(valor), x2: px(valor), y1: y0, y2: y1, class: 'difusa-marcador' }));
-      svg.append(crear('text', { x: px(valor), y: 60, 'text-anchor': valor < v.min + (v.max - v.min) / 10 ? 'start' : valor > v.max - (v.max - v.min) / 10 ? 'end' : 'middle', class: 'difusa-marca-texto' }, formato(valor)));
+      if (!resultado) svg.append(crear('text', { x: px(valor), y: 60, 'text-anchor': valor < v.min + (v.max - v.min) / 10 ? 'start' : valor > v.max - (v.max - v.min) / 10 ? 'end' : 'middle', class: 'difusa-marca-texto' }, formato(valor)));
     }
-    if (resultado && Number.isInteger(indice)) svg.append(crear('line', { x1: px(resultado.puntos[indice]), x2: px(resultado.puntos[indice]), y1: y0, y2: y1, class: 'difusa-consulta-linea' }));
+    if (resultado) {
+      // Dos filas reservadas: incluso valores coincidentes mantienen rótulos
+      // independientes, dentro de los bordes, sin mover el dato matemático.
+      const fuente = Math.max(22, 14 * 590 / Math.max(240, contenedor.clientWidth || 590));
+      const rotulo = (x, y, texto, clase) => {
+        const mitad = Math.min(280, texto.length * fuente * .29), centro = Math.max(mitad + 8, Math.min(582 - mitad, px(x)));
+        const etiqueta = crear('text', { x: centro, y, 'text-anchor': 'middle', class: clase, style: 'font-size:' + fuente + 'px' }, texto);
+        svg.append(etiqueta);
+      };
+      if (valor != null) rotulo(valor, 36, 'Centroide final: ' + formato(valor), 'difusa-etiqueta-centroide');
+      if (Number.isInteger(indice)) {
+        svg.append(crear('line', { x1: px(resultado.puntos[indice]), x2: px(resultado.puntos[indice]), y1: y0, y2: y1, class: 'difusa-consulta-linea' }));
+        rotulo(resultado.puntos[indice], 80, 'Inspección: ' + formato(resultado.puntos[indice]), 'difusa-etiqueta-consulta');
+      }
+    }
     contenedor.replaceChildren(svg); return svg;
   }
   function leyenda(contenedor, v, extras) {
     contenedor.replaceChildren();
     v.conjuntos.forEach((c, i) => { const span = document.createElement('span'); span.className = 'difusa-clave difusa-clave--' + i; span.textContent = c.nombre + ' · trazo ' + (i + 1); contenedor.append(span); });
-    if (extras) [['agregada', 'Área y línea gruesa: agregación'], ['recorte', 'Línea fina rayada: regla seleccionada'], ['valor', 'Línea vertical: centroide'], ['consulta', 'Puntos verticales: punto consultado']].forEach(([clase, texto]) => {
+    if (extras) [['agregada', 'Área y envolvente gruesa: agregación'], ['recorte', 'Línea fina rayada: recorte de la regla seleccionada'], ['valor', 'Línea vertical continua: centroide final'], ['consulta', 'Línea vertical de puntos: valor inspeccionado']].forEach(([clase, texto]) => {
       const span = document.createElement('span'); span.className = 'difusa-clave difusa-clave--' + clase; span.textContent = texto; contenedor.append(span);
     });
   }

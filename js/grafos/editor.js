@@ -80,7 +80,7 @@ function elementoSvgGrafo(nombre, atributos, texto) {
 
 function nombreNodoGrafo(id) {
   const nodo = moduloGrafo.grafo.nodos.find(n => n.id === id);
-  return nodo ? nodo.nombre : '—';
+  return nodo ? etiquetaNodoGrafo(moduloGrafo.grafo, id) : '—';
 }
 
 function textoAristaGrafo(id) {
@@ -111,7 +111,7 @@ function actualizarCamposEditorGrafo() {
     datos.forEach(([clave, texto]) => campo.add(new Option(texto, clave)));
     if (datos.some(d => d[0] === valor)) campo.value = valor;
   }
-  const nodos = g.nodos.map(n => [n.id, n.nombre]);
+  const nodos = g.nodos.map(n => [n.id, nombreNodoGrafo(n.id)]);
   ['seleccionVertice', 'aristaDesde', 'aristaHacia', 'origenGrafo'].forEach(id => opciones(id, nodos, id === 'aristaDesde' || id === 'aristaHacia' ? 'Elige…' : 'Elige un punto'));
   opciones('destinoGrafo', nodos, 'Todos los destinos');
   opciones('seleccionArista', g.conexiones.map(c => [c.id, textoAristaGrafo(c.id)]), 'Selecciona una arista');
@@ -141,6 +141,7 @@ function actualizarCamposEditorGrafo() {
   document.getElementById('origenGrafo').value = moduloGrafo.origen || '';
   document.getElementById('destinoGrafo').value = moduloGrafo.destino || '';
   document.getElementById('objetivoGrafo').value = moduloGrafo.objetivo;
+  document.getElementById('objetivoDijkstra').value = moduloGrafo.objetivo;
   document.getElementById('selectorModoGrafo').value = g.dirigido ? 'dirigido' : 'no-dirigido';
 }
 
@@ -154,7 +155,7 @@ function dibujarEditorGrafo() {
   const radio = aplicarVistaEditorGrafo();
   const matrizVista = svg.getScreenCTM();
   const escalaVista = Math.max(.05, Math.hypot(matrizVista.a, matrizVista.b));
-  const fuenteNombre = Math.max(16, 13 / escalaVista);
+  const fuenteNombre = Math.max(16, 14 / escalaVista);
   const fuenteDistancia = Math.max(18, 14 / escalaVista);
   const separacionPeso = Math.max(20, 18 / escalaVista);
   const etiquetas = [];
@@ -163,17 +164,18 @@ function dibujarEditorGrafo() {
   const resultado = moduloGrafo.resultado;
   const paso = pasoVisibleModuloGrafo();
   const mostrandoResultado = moduloGrafo.vista === 'resultado';
-  const elegidas = new Set(resultado ? (mostrandoResultado ? (resultado.arbol || resultado.elegidas) : (paso && (paso.elegidas || Object.values(paso.predecesores || {}).filter(Boolean).map(p => p.conexion))) || []) : []);
   const ruta = resultado && moduloGrafo.modulo === 'dijkstra' && mostrandoResultado && moduloGrafo.destino ? reconstruirRutaGrafo(resultado, moduloGrafo.destino) : null;
+  const elegidas = new Set(resultado ? (mostrandoResultado ? (esDijkstraModulo && moduloGrafo.destino ? (ruta ? ruta.conexiones : []) : (resultado.arbol || resultado.elegidas)) : (paso && (paso.elegidas || Object.values(paso.predecesores || {}).filter(Boolean).map(p => p.conexion))) || []) : []);
   const finalizados = new Set(paso && !mostrandoResultado ? paso.finalizados || [] : []);
   const porId = new Map(g.nodos.map(n => [n.id, n]));
   const radioNodo = n => {
     const distancia = esDijkstraModulo && resultado ? (mostrandoResultado ? resultado.distancias[n.id] : paso && paso.distancias[n.id]) : undefined;
-    const anchoNombre = Math.min(n.nombre.length, 6) * fuenteNombre * .34 + 10 / escalaVista;
+    const anchoNombre = Math.min(nombreNodoGrafo(n.id).length, 6) * fuenteNombre * .34 + 10 / escalaVista;
     const anchoDistancia = distancia === undefined ? 0 : ('d = ' + distanciaTextoGrafo(distancia)).length * fuenteDistancia * .32 + 9 / escalaVista;
-    const altoTexto = n.nombre.length > 6 ? (distancia === undefined ? fuenteNombre * 1.8
+    const altoTexto = nombreNodoGrafo(n.id).length > 6 ? (distancia === undefined ? fuenteNombre * 1.8
       : (fuenteNombre + fuenteDistancia) * .8 + fuenteDistancia * .8) + 10 / escalaVista : 0;
-    return Math.max(radio, anchoNombre, anchoDistancia, altoTexto);
+    const altoIdentificador = Math.ceil(nombreNodoGrafo(n.id).length / 6) > 2 ? fuenteNombre * Math.ceil(nombreNodoGrafo(n.id).length / 6) * .7 + fuenteDistancia : 0;
+    return Math.max(radio, anchoNombre, anchoDistancia, altoTexto, altoIdentificador);
   };
   const capa = elementoSvgGrafo('g');
   const defs = elementoSvgGrafo('defs');
@@ -210,22 +212,29 @@ function dibujarEditorGrafo() {
   g.nodos.forEach(n => {
     const radioActual = radioNodo(n);
     const seleccionado = moduloGrafo.seleccion && moduloGrafo.seleccion.id === n.id;
-    const grupo = elementoSvgGrafo('g', { transform: 'translate(' + n.x + ' ' + n.y + ')', class: 'nodo-editor-grafo' + (seleccionado ? ' seleccionado' : '') + (paso && !mostrandoResultado && paso.actual === n.id ? ' actual' : '') + (finalizados.has(n.id) ? ' finalizado' : '') + (esDijkstraModulo && n.id === moduloGrafo.origen ? ' gm-origen' : '') + (esDijkstraModulo && n.id === moduloGrafo.destino ? ' gm-destino' : ''), 'data-id': n.id, tabindex: 0, role: 'button', 'aria-label': 'Seleccionar vértice ' + n.nombre + (esDijkstraModulo && n.id === moduloGrafo.origen ? ', origen' : '') + (esDijkstraModulo && n.id === moduloGrafo.destino ? ', destino' : '') });
+    const grupo = elementoSvgGrafo('g', { transform: 'translate(' + n.x + ' ' + n.y + ')', class: 'nodo-editor-grafo' + (seleccionado ? ' seleccionado' : '') + (paso && !mostrandoResultado && paso.actual === n.id ? ' actual' : '') + (finalizados.has(n.id) && (!esDijkstraModulo || Number.isFinite(paso.distancias[n.id])) ? ' finalizado' : '') + (esDijkstraModulo && n.id === moduloGrafo.origen ? ' gm-origen' : '') + (esDijkstraModulo && n.id === moduloGrafo.destino ? ' gm-destino' : ''), 'data-id': n.id, tabindex: 0, role: 'button', 'aria-label': 'Seleccionar vértice ' + nombreNodoGrafo(n.id) + (esDijkstraModulo && n.id === moduloGrafo.origen ? ', origen' : '') + (esDijkstraModulo && n.id === moduloGrafo.destino ? ', destino' : '') });
+    if (esDijkstraModulo && resultado && mostrandoResultado && !Number.isFinite(resultado.distancias[n.id])) {
+      grupo.classList.add('gm-sin-camino'); grupo.setAttribute('aria-label', grupo.getAttribute('aria-label') + ', Sin camino desde ' + nombreNodoGrafo(resultado.origen));
+    }
     grupo.appendChild(elementoSvgGrafo('title', {}, n.nombre + ' · ' + n.id));
     if (moduloGrafo.conexionDesde === n.id) grupo.classList.add('gm-extremo-conexion');
     grupo.appendChild(elementoSvgGrafo('circle', { r: radioActual }));
     const distancia = esDijkstraModulo && resultado ? (mostrandoResultado ? resultado.distancias[n.id] : paso && paso.distancias[n.id]) : undefined;
-    const multilinea = n.nombre.length > 6;
+    const multilinea = nombreNodoGrafo(n.id).length > 6;
     // La fuente tiene un tamaño mínimo lógico; sus separaciones deben usar ese
     // mismo tamaño para que acercar la vista no junte nombre y distancia.
     const yNombre = multilinea ? -fuenteNombre * (distancia !== undefined ? 1.2 : .6)
       : distancia !== undefined ? -fuenteDistancia * .65 : 0;
     const nombre = elementoSvgGrafo('text', { y: yNombre, class: 'gm-nombre-nodo' });
-    if (multilinea) { nombre.append(elementoSvgGrafo('tspan', { x: 0 }, n.nombre.slice(0, 6)), elementoSvgGrafo('tspan', { x: 0, dy: fuenteNombre * 1.2 }, n.nombre.slice(6))); }
-    else nombre.textContent = n.nombre;
+    if (multilinea) {
+      const lineas = nombreNodoGrafo(n.id).match(/.{1,6}/g);
+      nombre.setAttribute('y', yNombre - Math.max(0, lineas.length - 2) * fuenteNombre * .6);
+      lineas.forEach((linea, i) => nombre.append(elementoSvgGrafo('tspan', { x: 0, dy: i ? fuenteNombre * 1.2 : 0 }, linea)));
+    }
+    else nombre.textContent = nombreNodoGrafo(n.id);
     nombre.style.fontSize = fuenteNombre + 'px'; grupo.appendChild(nombre);
     if (distancia !== undefined) {
-      const yDistancia = multilinea ? (fuenteNombre + fuenteDistancia) * .8 + 4 / escalaVista : fuenteNombre * .75;
+      const yDistancia = multilinea ? (fuenteNombre + fuenteDistancia) * .8 + 4 / escalaVista + Math.max(0, Math.ceil(nombreNodoGrafo(n.id).length / 6) - 2) * fuenteNombre * .6 : fuenteNombre * .75;
       const etiquetaDistancia = elementoSvgGrafo('text', { y: yDistancia, class: 'gm-distancia-nodo' }, 'd = ' + distanciaTextoGrafo(distancia));
       etiquetaDistancia.style.fontSize = fuenteDistancia + 'px';
       grupo.appendChild(etiquetaDistancia);
@@ -386,7 +395,7 @@ async function conectarExtremoEditorGrafo(id) {
   if (existente) { notificar('Esta conexión ya existe. Selecciónala para editar su peso.', 'aviso'); return; }
   const revision = moduloGrafo.revision;
   moduloGrafo.solicitandoConexion = true;
-  const valor = await dialogoPedirTexto({ titulo: 'Peso de la conexión', mensaje: nombreNodoGrafo(desde) + (moduloGrafo.grafo.dirigido ? ' → ' : ' — ') + nombreNodoGrafo(id) + '. ' + (esDijkstraModulo ? 'Dijkstra admite enteros no negativos; cero es válido.' : 'Kruskal admite enteros negativos, cero y positivos.'), valor: document.getElementById('pesoArista').value, validar: validarPesoEditorGrafo, inputmode: 'numeric' });
+  const valor = await dialogoPedirTexto({ titulo: 'Peso de la conexión', mensaje: nombreNodoGrafo(desde) + (moduloGrafo.grafo.dirigido ? ' → ' : ' — ') + nombreNodoGrafo(id) + '. ' + (esDijkstraModulo ? 'Dijkstra admite enteros no negativos; cero es válido.' : 'Este producto admite enteros de 0 a 999999, incluido cero.'), valor: document.getElementById('pesoArista').value, validar: validarPesoEditorGrafo, inputmode: 'numeric' });
   moduloGrafo.solicitandoConexion = false;
   // Cancelar el diálogo cancela también la conexión pendiente.
   if (valor === undefined || revision !== moduloGrafo.revision || moduloGrafo.conexionDesde !== desde) { cancelarConexionEditorGrafo(); return; }

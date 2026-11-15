@@ -30,13 +30,44 @@ function firmaCalculoGrafo(grafo) {
 
 /** Reglas compartidas de la interfaz y las operaciones; siempre devuelve una copia válida. */
 function validarPesoGrafoModulo(texto, modulo) {
-  const limpio = String(texto).trim(), minimo = modulo === 'dijkstra' ? 0 : -MAX_PESO;
+  const limpio = String(texto).trim(), minimo = 0;
   if (!/^-?\d+$/.test(limpio) || !Number.isSafeInteger(Number(limpio)) || Number(limpio) < minimo || Number(limpio) > MAX_PESO) {
-    return { ok: false, error: modulo === 'dijkstra' && Number(limpio) < 0
-      ? 'Dijkstra requiere pesos no negativos. Cero sí es válido.'
+    return { ok: false, error: Number(limpio) < 0
+      ? 'Este módulo admite pesos no negativos por política del producto. Cero sí es válido.'
       : `Escribe un entero entre ${minimo} y ${MAX_PESO}.` };
   }
   return { ok: true, valor: Number(limpio) };
+}
+
+function normalizarNombreNodoGrafo(nombre) {
+  return String(nombre).trim().replace(/\s+/g, ' ').toLocaleLowerCase('es');
+}
+
+// Los nombres antiguos se conservan. Solo las altas y los cambios de nombre
+// deben ser únicos; mover o corregir otro nodo sigue siendo posible.
+function validarNombresEditadosGrafo(anterior, nuevo) {
+  for (const n of nuevo.nodos) {
+    const previo = anterior.nodos.find(p => p.id === n.id);
+    if (previo && previo.nombre === n.nombre) continue;
+    if (nuevo.nodos.some(p => p.id !== n.id && normalizarNombreNodoGrafo(p.nombre) === normalizarNombreNodoGrafo(n.nombre))) {
+      return { ok: false, error: 'Nombre duplicado. Se ignoran mayúsculas y espacios repetidos o exteriores.' };
+    }
+  }
+  return { ok: true };
+}
+
+function etiquetaNodoGrafo(grafo, id) {
+  const nodo = grafo.nodos.find(n => n.id === id);
+  if (!nodo) return '—';
+  if (!grafo.nodos.some(n => n.id !== id && normalizarNombreNodoGrafo(n.nombre) === normalizarNombreNodoGrafo(nodo.nombre))) return nodo.nombre;
+  const breve = clave => {
+    let hash = 2166136261;
+    for (const letra of clave) hash = Math.imul(hash ^ letra.charCodeAt(0), 16777619);
+    return (hash >>> 0).toString(36);
+  };
+  const marca = id.length <= 8 ? id : breve(id);
+  const colision = grafo.nodos.some(n => n.id !== id && (n.id.length <= 8 ? n.id : breve(n.id)) === marca);
+  return nodo.nombre + ' [' + (colision ? id : marca) + ']';
 }
 
 function siguienteIdGrafoModulo(grafo, prefijo) {
@@ -77,6 +108,8 @@ function operarGrafoModulo(grafo, modulo, operacion) {
     case 'eliminar-arista': g.conexiones = g.conexiones.filter(c => c.id !== id); break;
     default: return fallo('Operación de grafo desconocida.');
   }
+  const nombres = validarNombresEditadosGrafo(grafo, g);
+  if (!nombres.ok) return fallo(nombres.error);
   const resultado = validarGrafoModulo(g, modulo);
   if (resultado.ok) resultado.id = id;
   return resultado;
@@ -148,15 +181,17 @@ function validarGrafoModulo(grafo, modulo) {
     if (ids.has(conexion.id)) return fallo(`ID repetido: ${conexion.id}.`);
     ids.add(conexion.id);
     if (!nodos.has(conexion.desde) || !nodos.has(conexion.hacia)) return fallo('Una conexión apunta a un nodo que no existe.');
-    if (conexion.desde === conexion.hacia) return fallo('Esta versión no admite bucles.');
+    if (conexion.desde === conexion.hacia) return fallo('Conexión consigo mismo: no se admiten bucles propios.');
     // JSON de la pareja evita colisiones si un ID contiene un separador.
     const pareja = grafo.dirigido ? [conexion.desde, conexion.hacia] : [conexion.desde, conexion.hacia].sort();
     const clave = JSON.stringify(pareja);
     if (pares.has(clave)) return fallo('Hay una arista duplicada entre los mismos nodos.');
     pares.add(clave);
     if (!Number.isSafeInteger(conexion.valor)) return fallo('El peso debe ser un número entero finito.');
-    const minimo = modulo === 'dijkstra' ? 0 : -MAX_PESO;
-    if (conexion.valor < minimo || conexion.valor > MAX_PESO) return fallo(modulo === 'dijkstra' && conexion.valor < 0 ? 'Dijkstra requiere pesos no negativos. Cero sí es válido.' : `El peso debe estar entre ${minimo} y ${MAX_PESO}.`);
+    const minimo = 0;
+    if (conexion.valor < minimo || conexion.valor > MAX_PESO) return fallo(conexion.valor < 0
+      ? `La conexión ${conexion.id} tiene peso negativo (${conexion.valor}). La política actual admite enteros de 0 a ${MAX_PESO}. Se conserva el original; corrige una copia del trabajo antes de cargar. El ejercicio activo no se reemplaza.`
+      : `El peso debe estar entre ${minimo} y ${MAX_PESO}.`);
   }
   return { ok: true, grafo: copiarGrafoModulo(grafo), error: null };
 }
@@ -180,7 +215,6 @@ function validarDocumentoGrafo(datos, modulo) {
   if (origen !== null && (typeof origen !== 'string' || !ids.has(origen))) return fallo('El origen no corresponde a un nodo del grafo.');
   if (destino !== null && (typeof destino !== 'string' || !ids.has(destino))) return fallo('El destino no corresponde a un nodo del grafo.');
   if (objetivo !== 'min' && objetivo !== 'max') return fallo('El objetivo debe ser min o max.');
-  if (modulo === 'dijkstra' && objetivo !== 'min') return fallo('Dijkstra calcula caminos mínimos; no admite el objetivo máximo.');
   if (!['grafo', 'configuracion', 'procedimiento', 'resultado'].includes(vista)) return fallo('La vista guardada no es válida.');
   if (!Number.isSafeInteger(paso) || paso < 0) return fallo('El paso debe ser un entero seguro no negativo.');
   if (typeof resuelto !== 'boolean') return fallo('El estado resuelto debe ser verdadero o falso.');
@@ -189,9 +223,26 @@ function validarDocumentoGrafo(datos, modulo) {
 }
 
 /** Ejemplos propios: no cargan ni modifican el estado de Johnson. */
+function catalogoEjemplosGrafo(modulo) {
+  if (modulo === 'dijkstra') return [
+    { id: 'atajo', nombre: 'Básico · El atajo aparente', descripcion: 'Compara un enlace directo con tres tramos de menor costo. Menos tramos no significa menor suma.', origen: 'n1', destino: 'n4', observar: 'Sigue cómo cambia el costo de llegar a D al descubrir la ruta por B y C. Después compara Mínimo con Máximo: este grafo dirigido no tiene ciclos.' },
+    { id: 'mejoras', nombre: 'Intermedio · Una distancia puede mejorar', descripcion: 'Una ruta descubierta primero puede ser sustituida. Observa cómo cambian las distancias y los predecesores.', origen: 'n1', destino: 'n5', observar: 'En Paso a paso, B y D mejoran al llegar desde C y B; E vuelve a mejorar al pasar por D. Una distancia provisional todavía puede cambiar.' },
+    { id: 'campus', nombre: 'Aplicado · Caminos de un campus', descripcion: 'Busca de Entrada a Biblioteca y compara caminos en metros. Las conexiones se pueden recorrer en ambos sentidos.', origen: 'n1', destino: 'n4', observar: 'Compara pasar por Patio y Bloque con las conexiones más directas. Puedes cambiar el origen a Biblioteca para comprobar el regreso. Datos didácticos en metros; Máximo requiere un grafo dirigido sin ciclos.' },
+    { id: 'direcciones', nombre: 'Intermedio · Las flechas importan', descripcion: 'Un punto puede estar conectado y aun así no ser alcanzable. Sigue el sentido de cada flecha.', origen: 'n1', destino: 'n3', observar: 'Desde A se llega a C, pero no a D: la conexión sale de D hacia B. Consulta D y luego prueba D como origen; sus destinos alcanzables cambian.' },
+    { id: 'ceros', nombre: 'Especial · Costo cero y rutas empatadas', descripcion: 'Cero es una conexión real. Dos rutas a D tienen el mismo costo; el módulo conserva la primera que encuentra.', origen: 'n1', destino: 'n4', observar: 'Compara A→B→D con A→C→D. Ambas suman lo mismo y B y C quedan a costo cero desde A. Se muestra una ruta óptima, sin afirmar que sea la única.' }
+  ];
+  return [
+    { id: 'obligatorio', nombre: 'Básico · Caso de clase', descripcion: 'Observa cómo se acepta una conexión entre grupos y se descarta la que cierra un ciclo.' },
+    { id: 'ceros', nombre: 'Especial · Ceros y redes empatadas', descripcion: 'Cero es un peso válido. Los empates conservan el orden de las conexiones.' },
+    { id: 'desconectado', nombre: 'Especial · Grupos separados y un aislado', descripcion: 'Obtén un bosque de tres componentes: cada grupo tiene su subtotal y el aislado aporta cero.' },
+    { id: 'cableado', nombre: 'Intermedio · Cableado entre edificios', descripcion: 'Conecta todos los edificios. Mínimo y máximo se aplican a la suma de toda la red, no a una ruta.' },
+    { id: 'optimos', nombre: 'Especial · Varias redes óptimas', descripcion: 'Un circuito de cuatro enlaces iguales ofrece varios árboles mínimos. Observa el desempate y el descarte por ciclo.' }
+  ];
+}
+
 function crearEjemploGrafo(modulo, nombre = 'obligatorio') {
   if (modulo !== 'dijkstra' && modulo !== 'kruskal') throw new Error('Módulo de grafo desconocido.');
-  const dirigido = modulo === 'dijkstra';
+  let dirigido = modulo === 'dijkstra';
   let nombres = dirigido ? ['A', 'B', 'C', 'D', 'E'] : ['A', 'B', 'C', 'D'];
   let conexiones = dirigido
     ? [['A', 'B', 4], ['A', 'C', 1], ['C', 'B', 2], ['B', 'D', 1], ['C', 'D', 5]]
@@ -200,16 +251,44 @@ function crearEjemploGrafo(modulo, nombre = 'obligatorio') {
     nombres = ['A', 'B', 'C', 'D'];
     conexiones = dirigido
       ? [['A', 'B', 0], ['A', 'C', 0], ['B', 'D', 2], ['C', 'D', 2]]
-      : [['A', 'B', -3], ['A', 'C', 0], ['B', 'C', 0], ['C', 'D', 2], ['B', 'D', 2]];
+      : [['A', 'B', 0], ['A', 'C', 0], ['B', 'C', 0], ['C', 'D', 2], ['B', 'D', 2]];
   } else if (nombre === 'desconectado') {
     nombres = ['A', 'B', 'C', 'D', 'E', 'F'];
-    conexiones = dirigido ? [['A', 'B', 2], ['B', 'C', 0], ['D', 'E', 1]] : [['A', 'B', -2], ['B', 'C', 0], ['A', 'C', 3], ['D', 'E', 1]];
+    conexiones = dirigido ? [['A', 'B', 2], ['B', 'C', 0], ['D', 'E', 1]] : [['A', 'B', 2], ['B', 'C', 0], ['A', 'C', 3], ['D', 'E', 1]];
+  } else if (dirigido && nombre === 'inalcanzable') {
+    nombres = ['A', 'B', 'C']; conexiones = [['A', 'B', 2]];
+  } else if (dirigido && nombre === 'ciclico') {
+    nombres = ['A', 'B', 'C']; conexiones = [['A', 'B', 2], ['B', 'A', 1], ['B', 'C', 3]];
+  } else if (modulo === 'dijkstra' && nombre === 'atajo') {
+    nombres = ['A', 'B', 'C', 'D']; conexiones = [['A', 'B', 2], ['B', 'C', 2], ['C', 'D', 2], ['A', 'D', 9]];
+  } else if (modulo === 'dijkstra' && nombre === 'mejoras') {
+    nombres = ['A', 'B', 'C', 'D', 'E'];
+    conexiones = [['A', 'B', 8], ['A', 'C', 2], ['C', 'B', 1], ['B', 'D', 2], ['C', 'D', 7], ['D', 'E', 3], ['B', 'E', 10]];
+  } else if (modulo === 'dijkstra' && nombre === 'direcciones') {
+    nombres = ['A', 'B', 'C', 'D']; conexiones = [['A', 'B', 2], ['B', 'C', 3], ['D', 'B', 1]];
+  } else if (modulo === 'dijkstra' && nombre === 'campus') {
+    dirigido = false; nombres = ['Entrada', 'Patio', 'Bloque', 'Biblioteca'];
+    conexiones = [['Entrada', 'Patio', 20], ['Entrada', 'Bloque', 50], ['Patio', 'Bloque', 15], ['Patio', 'Biblioteca', 70], ['Bloque', 'Biblioteca', 25]];
+  } else if (modulo === 'kruskal' && nombre === 'cableado') {
+    conexiones = [['A', 'B', 2], ['A', 'C', 6], ['B', 'C', 3], ['B', 'D', 7], ['C', 'D', 4], ['A', 'D', 9]];
+  } else if (modulo === 'kruskal' && nombre === 'optimos') {
+    conexiones = [['A', 'B', 1], ['B', 'C', 1], ['C', 'D', 1], ['D', 'A', 1], ['A', 'C', 4]];
   } else if (nombre !== 'obligatorio') {
     throw new Error('Ejemplo de grafo desconocido.');
   }
+  // Los ejemplos de aprendizaje usan una disposición sin cruces de aristas.
+  // Los casos antiguos siguen disponibles como documentos y datos de regresión.
+  const disposicionesDijkstra = {
+    atajo: [[150, 380], [350, 100], [650, 100], [850, 380]],
+    mejoras: [[250, 70], [250, 300], [700, 70], [700, 300], [475, 550]],
+    campus: [[250, 50], [700, 50], [250, 550], [700, 550]],
+    direcciones: [[150, 280], [470, 280], [830, 100], [830, 480]],
+    ceros: [[150, 300], [500, 100], [500, 500], [850, 300]]
+  };
+  const posiciones = modulo === 'dijkstra' && disposicionesDijkstra[nombre];
   const nodos = nombres.map((nombreNodo, i) => {
     const angulo = -Math.PI / 2 + (2 * Math.PI * i / nombres.length);
-    return { id: 'n' + (i + 1), nombre: nombreNodo, x: Math.round(500 + 355 * Math.cos(angulo)), y: Math.round(300 + 220 * Math.sin(angulo)) };
+    return { id: 'n' + (i + 1), nombre: nombreNodo, x: posiciones ? posiciones[i][0] : Math.round(500 + 355 * Math.cos(angulo)), y: posiciones ? posiciones[i][1] : Math.round(300 + 220 * Math.sin(angulo)) };
   });
   const porNombre = new Map(nodos.map(n => [n.nombre, n.id]));
   return {
@@ -248,7 +327,7 @@ function generarGrafoAleatorio(modulo, opciones = {}) {
     [pares[i], pares[j]] = [pares[j], pares[i]];
   }
   const conexiones = pares.slice(0, cantidadAristas).map(([desde, hacia], i) => ({
-    id: 'c' + (i + 1), desde, hacia, valor: Math.floor(azar() * (modulo === 'kruskal' ? 30 : 21)) - (modulo === 'kruskal' ? 9 : 0)
+    id: 'c' + (i + 1), desde, hacia, valor: Math.floor(azar() * 21)
   }));
   return { dirigido, nodos, conexiones, siguienteId: nodos.length + conexiones.length + 1 };
 }

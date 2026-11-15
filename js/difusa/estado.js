@@ -34,7 +34,7 @@
     modelo.entradas.forEach(variable => {
       const candidato = modelo.valoresIniciales && modelo.valoresIniciales[variable.id];
       valores[variable.id] = valorValido(variable, candidato)
-        ? candidato : variable.min + (variable.max - variable.min) / 2;
+        ? candidato : null;
     });
     return valores;
   }

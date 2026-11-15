@@ -278,6 +278,19 @@
         entradas: [tres('temperatura', 'Temperatura', '°C', 0, 40, ['Baja', 'Templada', 'Alta'])],
         salida: tres('velocidad', 'Velocidad de ventilación', '%', 0, 100, ['Baja', 'Media', 'Alta']), reglas: [], valoresIniciales: { temperatura: 20 } };
       destinos = ['baja', 'media', 'alta'];
+    } else if (tipo === 'ventilacion3') {
+      modelo = { version: 2, id: 'ventilacion3', nombre: 'Ventilación con tres entradas',
+        descripcion: 'Ejemplo didáctico, no controlador calibrado. Cada regla combina temperatura, humedad y ocupación. A 20 °C y 50 %, pasar de 0 a 20 personas cambia la categoría elegida de Baja a Alta.',
+        entradas: [tres('temperatura', 'Temperatura', '°C', 0, 40, ['Baja', 'Templada', 'Alta']),
+          tres('humedad', 'Humedad', '%', 0, 100, ['Baja', 'Media', 'Alta']),
+          tres('ocupacion', 'Ocupación', 'personas', 0, 20, ['Baja', 'Media', 'Alta'])],
+        salida: tres('nivel', 'Nivel de ventilación', '%', 0, 100, ['Baja', 'Media', 'Alta']),
+        reglas: [], valoresIniciales: { temperatura: 20, humedad: 50, ocupacion: 0 } };
+      // Tabla didáctica explícita: la ocupación desplaza la demanda; los
+      // extremos térmicos y de humedad también participan en las 27 decisiones.
+      destinos = ['baja', 'baja', 'media', 'baja', 'media', 'alta', 'media', 'alta', 'alta',
+        'baja', 'media', 'alta', 'baja', 'media', 'alta', 'media', 'alta', 'alta',
+        'media', 'alta', 'alta', 'media', 'alta', 'alta', 'alta', 'alta', 'alta'];
     } else throw new RangeError('Ejemplo desconocido: ' + tipo + '.');
     modelo.reglas = generarCombinaciones(modelo).map(function (r, i) { r.consecuente = destinos[i]; return r; });
     return modelo;

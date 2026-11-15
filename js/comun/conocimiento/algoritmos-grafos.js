@@ -7,6 +7,14 @@
   if (!K) return;
 
   K.registrar([
+    {
+      id: 'kruskal.politica-producto', tema: 'kruskal', modulos: ['kruskal'],
+      pregunta: '¿Qué módulos admiten negativos?',
+      variantes: ['se admiten numeros negativos', 'puedo poner pesos negativos', 'por que no acepta un peso negativo', 'que pasa al cargar trabajos antiguos con negativos'],
+      conceptos: ['negativos', 'politica', 'pesos', 'trabajos antiguos'],
+      breve: 'En Kruskal de esta aplicación se aceptan enteros de 0 a 999999. Cero es válido; negativos, vacíos, decimales, letras e infinitos se rechazan sin modificar el ejercicio. La restricción de negativos es una política del producto: el algoritmo matemático sí puede procesarlos. Los trabajos antiguos con negativos se conservan y se rechazan con un diagnóstico; corrige una copia antes de cargar.',
+      relacionadas: ['kruskal.reglas', 'kruskal.pesos-negativos-cero']
+    },
     /* ---------------- Johnson ---------------- */
     {
       id: 'johnson.que-es', tema: 'johnson', modulos: ['johnson'],
@@ -345,10 +353,10 @@
       pregunta: '¿Por qué no basta invertir las comparaciones para calcular caminos máximos?',
       variantes: ['puedo usar dijkstra para el camino mas largo', 'como calculo el camino maximo', 'dijkstra para maximizar', 'camino mas largo con dijkstra', 'por que dijkstra solo calcula minimos'],
       conceptos: ['maximo', 'maximos', 'mas largo', 'maximizar', 'invertir'],
-      breve: 'La propiedad que usa Dijkstra para fijar un vértice deja de estar garantizada al invertir las comparaciones. Por eso este módulo calcula mínimos. Si se permiten repeticiones, un ciclo de peso positivo situado en el recorrido puede hacer crecer el costo sin límite; la presencia de cualquier ciclo por sí sola no demuestra un máximo infinito.',
-      sencilla: 'Dijkstra garantiza la ruta más barata con pesos no negativos. Cambiar «menor» por «mayor» no proporciona la misma garantía para la ruta más cara.',
+      breve: 'La propiedad que usa Dijkstra para fijar un vértice deja de estar garantizada al invertir las comparaciones. Este módulo usa Dijkstra para mínimos y otro procedimiento para máximos: relajación en orden topológico, solo en grafos dirigidos acíclicos (DAG). Un ciclo bloquea el máximo y conserva el grafo; el mínimo sigue disponible.',
+      sencilla: 'Dijkstra garantiza la ruta más barata con pesos no negativos. Para buscar la más cara, el módulo exige un DAG y revisa sus conexiones en orden topológico; cambiar «menor» por «mayor» en Dijkstra no basta.',
       ejemplo: 'Multiplicar un peso positivo por −1 produce un peso negativo que Dijkstra no admite. Si un recorrido puede repetir un ciclo de suma positiva, tras invertir signos ese ciclo es negativo.',
-      detalle: 'El camino simple más largo, sin repetir vértices, siempre tiene longitud finita en un grafo finito y es difícil de obtener en general (NP-duro). En grafos dirigidos acíclicos se resuelve por orden topológico; el módulo Johnson ofrece ese cálculo adicional. Kruskal ofrece máximo para un árbol o bosque de expansión, un problema diferente.',
+      detalle: 'El camino simple más largo, sin repetir vértices, siempre tiene longitud finita en un grafo finito y es difícil de obtener en general (NP-duro). En grafos dirigidos acíclicos se resuelve por orden topológico; este módulo ofrece esa alternativa y rechaza ciclos o grafos no dirigidos. Kruskal ofrece máximo para un árbol o bosque de expansión, un problema diferente.',
       relacionadas: ['dijkstra.pesos-negativos', 'kruskal.minimo-maximo', 'grafo.camino-recorrido-ciclo']
     },
     {
@@ -356,7 +364,7 @@
       pregunta: '¿Qué valores acepta Dijkstra?',
       variantes: ['cuales son los limites de dijkstra', 'cuantos nodos admite dijkstra', 'rango de pesos de dijkstra', 'dijkstra acepta decimales', 'limite de vertices y aristas'],
       conceptos: ['limites', 'reglas', 'pesos', 'rango', 'acepta', 'cuantos'],
-      breve: L => 'Hasta ' + L.grafosNodos + ' vértices y ' + L.grafosAristas + ' aristas, con nombres de hasta ' + L.nombreVertice + ' caracteres. Pesos enteros entre 0 y ' + L.peso + ': no admite negativos ni decimales. Sin bucles ni duplicados; en modo dirigido se permiten A→B y B→A como conexiones diferentes.',
+      breve: L => 'Hasta ' + L.grafosNodos + ' vértices y ' + L.grafosAristas + ' aristas, con nombres de hasta ' + L.nombreVertice + ' caracteres. Pesos enteros entre 0 y ' + L.peso + ': no admite negativos ni decimales. Sin bucles ni duplicados; el máximo requiere un grafo dirigido acíclico.',
       relacionadas: ['dijkstra.pesos-negativos', 'dijkstra.dirigido-vs-no-dirigido', 'problema.decimal'],
       referencia: 'Dijkstra · «Cómo funciona y límites»'
     },
@@ -453,9 +461,9 @@
       pregunta: '¿Kruskal acepta pesos negativos y cero?',
       variantes: ['puedo usar negativos en kruskal', 'que pasa con un peso negativo en kruskal', 'peso cero en kruskal', 'kruskal con pesos negativos'],
       conceptos: ['negativo', 'negativos', 'cero'],
-      breve: 'Sí, ambos. Kruskal solo ordena las aristas y evita ciclos; el signo del peso no afecta a su lógica. Un peso negativo simplemente se coloca al principio de la lista en el objetivo mínimo.',
-      ejemplo: 'Aristas A–B (−4), B–C (0), A–C (2): el árbol mínimo usa A–B y B–C con total −4.',
-      detalle: 'Los pesos negativos son válidos para el árbol o bosque: Kruskal no repite recorridos y siempre descarta las aristas que cerrarían un ciclo. Un ciclo de suma negativa en el grafo de entrada no impide este cálculo. El ejemplo «Negativos, cero y empates» del módulo lo ilustra.',
+      breve: 'Este producto acepta cero y enteros positivos hasta 999999; rechaza negativos por una decisión de la interfaz. Kruskal como algoritmo matemático sí admite pesos negativos.',
+      ejemplo: 'Aristas A–B (0), B–C (0), A–C (2): el árbol mínimo usa A–B y B–C con total 0.',
+      detalle: 'El ejemplo «Ceros y empates» conserva el cero como conexión real. Un trabajo antiguo con negativos se rechaza con diagnóstico antes de reemplazar el ejercicio; conserva el original y corrige una copia. No se borran conexiones ni se convierten negativos a positivos.',
       relacionadas: ['grafo.pesos-negativos', 'dijkstra.pesos-negativos', 'kruskal.reglas']
     },
     {
@@ -485,7 +493,7 @@
       pregunta: '¿Qué valores acepta Kruskal?',
       variantes: ['cuales son los limites de kruskal', 'cuantos nodos admite kruskal', 'rango de pesos de kruskal', 'kruskal acepta decimales'],
       conceptos: ['limites', 'reglas', 'pesos', 'rango', 'acepta', 'cuantos'],
-      breve: L => 'Grafo no dirigido con hasta ' + L.grafosNodos + ' vértices y ' + L.grafosAristas + ' aristas, nombres de hasta ' + L.nombreVertice + ' caracteres. Pesos enteros entre −' + L.peso + ' y ' + L.peso + ', incluidos cero y negativos. No admite decimales, bucles ni duplicados. El grafo de entrada sí puede tener ciclos.',
+      breve: L => 'Grafo no dirigido con hasta ' + L.grafosNodos + ' vértices y ' + L.grafosAristas + ' aristas, nombres de hasta ' + L.nombreVertice + ' caracteres. Pesos enteros entre 0 y ' + L.peso + ', incluido cero, por política del producto. No admite decimales, vacíos, bucles propios ni duplicados. El grafo de entrada sí puede tener ciclos.',
       relacionadas: ['kruskal.pesos-negativos-cero', 'problema.decimal'],
       referencia: 'Kruskal · «Cómo funciona y límites»'
     },

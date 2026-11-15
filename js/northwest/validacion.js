@@ -67,11 +67,13 @@ function validarEtiquetaNorthwest(texto, existentes, idActual) {
 /** 275 → "2.75", 200 → "2", 250 → "2.5". Siempre con punto decimal, sin separador de miles. */
 function formatearCostoNorthwest(escalado) {
   if (!Number.isInteger(escalado)) return '—';
-  const entera = Math.floor(escalado / ESCALA_COSTO_NORTHWEST);
-  const dec = escalado % ESCALA_COSTO_NORTHWEST;
-  if (dec === 0) return String(entera);
+  const signo = escalado < 0 ? '-' : '';
+  const absoluto = Math.abs(escalado);
+  const entera = Math.floor(absoluto / ESCALA_COSTO_NORTHWEST);
+  const dec = absoluto % ESCALA_COSTO_NORTHWEST;
+  if (dec === 0) return signo + String(entera);
   const texto = String(dec).padStart(2, '0').replace(/0$/, '');
-  return entera + '.' + texto;
+  return signo + entera + '.' + texto;
 }
 
 /** Igual que formatearCostoNorthwest pero para un total (puede ser grande). */

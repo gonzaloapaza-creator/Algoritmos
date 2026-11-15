@@ -26,7 +26,7 @@
       pregunta: '¿Qué módulos incluye?',
       variantes: ['que algoritmos hay', 'cuales son los modulos', 'que edificios tiene la ciudad', 'lista de modulos', 'que temas cubre'],
       conceptos: ['modulos', 'modulo', 'edificios', 'algoritmos disponibles', 'lista'],
-      breve: 'Ocho módulos: Johnson (distancias entre todos los pares), Dijkstra (caminos mínimos desde un origen), Kruskal (árbol de expansión mínimo o máximo), Asignación (método húngaro), Esquina noroeste (solución inicial de transporte), Ordenamiento (Selection, Insertion, Bubble, Shell y Merge), Árboles (BST, recorridos y reconstrucción) y Lógica difusa (pertenencias, reglas Mamdani y centroide).',
+      breve: 'Ocho módulos: Johnson (distancias entre todos los pares), Dijkstra (caminos mínimos) o caminos máximos en DAG, Kruskal (árbol de expansión mínimo o máximo), Asignación (método húngaro), Transporte (esquina noroeste y optimización MODI min/max), Ordenamiento (Selection, Insertion, Bubble, Shell y Merge), Árboles (BST, recorridos y reconstrucción) y Lógica difusa (pertenencias, reglas Mamdani y centroide).',
       relacionadas: ['aplicacion.elegir-algoritmo', 'aplicacion.abrir-modulo', 'aplicacion.que-es']
     },
     {

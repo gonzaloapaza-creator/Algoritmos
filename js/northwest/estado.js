@@ -198,18 +198,22 @@ function explicarEstadoResultadoNorthwest() {
   return pendientes ? 'Aún no hay un cálculo. Corrige las casillas marcadas y confirma el balanceo para resolver.' : 'El resultado y el procedimiento aparecen después de confirmar el balanceo y resolver.';
 }
 
-/** Balancea el modelo actual y ejecuta la esquina noroeste. */
-function resolverNorthwestCompleto() {
+/** Genera una solución inicial noroeste y la optimiza según el objetivo elegido. */
+function resolverNorthwestCompleto(objetivo = 'min') {
+  if (objetivo !== 'min' && objetivo !== 'max') throw new Error('El objetivo debe ser min o max.');
   if (hayPendientesNorthwest()) throw new Error(explicarEstadoResultadoNorthwest());
   const v = validarModeloNorthwest(estadoNorthwest.modelo);
   if (!v.ok) throw new Error(v.errores[0]);
   const balance = balancearNorthwest(estadoNorthwest.modelo);
-  const datos = resolverEsquinaNoroeste(balance.costos, balance.ofertas, balance.demandas);
+  const inicial = resolverEsquinaNoroeste(balance.costos, balance.ofertas, balance.demandas);
+  const optimizado = optimizarTransporteMODI(balance.costos, balance.ofertas, balance.demandas, inicial, objetivo);
+  const datos = Object.assign({}, inicial, optimizado, { pasos: inicial.pasos });
   estadoNorthwest.resultado = {
     firma: firmaModeloNorthwest(estadoNorthwest.modelo),
     vigente: true,
     balance,
     datos,
+    objetivo,
     pasoActual: 0
   };
   emitirCambioNorthwest('resultado');

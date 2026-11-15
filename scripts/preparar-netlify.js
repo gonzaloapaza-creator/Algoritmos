@@ -34,7 +34,7 @@ const PUBLICOS = [
   'js/grafos/algoritmos.js', 'js/grafos/app.js', 'js/grafos/editor.js', 'js/grafos/modelo.js',
   'js/johnson/ejemplos.js', 'js/johnson/caminos.js', 'js/johnson/vistas.js',
   'js/northwest/app.js', 'js/northwest/balanceo.js', 'js/northwest/estado.js',
-  'js/northwest/modelo.js', 'js/northwest/noroeste.js', 'js/northwest/tabla.js', 'js/northwest/validacion.js',
+  'js/northwest/modelo.js', 'js/northwest/noroeste.js', 'js/northwest/optimizacion.js', 'js/northwest/tabla.js', 'js/northwest/validacion.js',
   'js/ordenamiento/algoritmos.js', 'js/ordenamiento/app.js',
   'js/ordenamiento/dibujo.js', 'js/ordenamiento/estado.js'
 ];

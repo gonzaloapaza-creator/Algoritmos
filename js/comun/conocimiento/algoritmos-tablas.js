@@ -174,7 +174,7 @@
       breve: 'En asignación cada fila y columna se empareja a lo sumo una vez (cada recurso hace una tarea). En transporte cada origen puede enviar a varios destinos y cada destino recibir de varios orígenes, en cantidades que deben respetar ofertas y demandas. Asignación es un caso particular de transporte con todas las ofertas y demandas iguales a 1.',
       sencilla: 'Asignación: una persona, un trabajo. Transporte: una fábrica puede abastecer a varias tiendas, repartiendo su producción.',
       ejemplo: 'Asignación: 3 repartidores y 3 zonas, cada zona a un repartidor. Transporte: 2 almacenes con 100 y 150 cajas y 3 tiendas que piden 80, 90 y 80.',
-      detalle: 'El método húngaro garantiza el óptimo en asignación. Esquina noroeste solo obtiene una solución inicial factible de transporte; para optimizar habría que aplicar MODI u otro método, no incluidos en esta aplicación.',
+      detalle: 'El método húngaro garantiza el óptimo en asignación. En transporte, Esquina noroeste obtiene una solución inicial factible y el módulo aplica MODI para optimizar el objetivo elegido.',
       relacionadas: ['asignacion.que-es', 'northwest.que-es', 'northwest.no-optimo']
     },
     {
@@ -196,7 +196,7 @@
       breve: 'Es un método para obtener una primera solución factible del problema de transporte: cuánto enviar desde cada origen a cada destino respetando ofertas y demandas. Se llama así porque empieza por la celda superior izquierda de la tabla, que en un mapa sería el noroeste, y avanza hacia la derecha y hacia abajo.',
       sencilla: 'Empiezas en la esquina de arriba a la izquierda, asignas todo lo que puedas, y te mueves a la derecha o hacia abajo hasta llenar la tabla. No mira los precios: solo reparte cantidades.',
       ejemplo: 'Fábricas F1 (oferta 30) y F2 (oferta 40); tiendas T1 (demanda 20) y T2 (demanda 50). Celda F1–T1: min(30, 20) = 20. Se agota T1 → derecha. F1–T2: min(10, 50) = 10. Se agota F1 → abajo. F2–T2: min(40, 40) = 40.',
-      detalle: 'Es rápido (O(m + n)) y siempre produce una solución factible si el problema está balanceado, pero no garantiza el costo mínimo porque ignora los costos. Métodos como Vogel o costo mínimo dan mejores puntos de partida, y MODI optimiza; no están implementados en este módulo.',
+      detalle: 'Es rápido (O(m + n)) y siempre produce una solución factible si el problema está balanceado, pero por sí solo no garantiza el costo mínimo porque ignora los costos. Este módulo usa su resultado como punto de partida y aplica MODI para minimizar o maximizar el costo total.',
       relacionadas: ['northwest.oferta-demanda', 'northwest.primera-celda', 'northwest.movimiento', 'northwest.no-optimo', 'northwest.otros-metodos'],
       referencia: 'Esquina noroeste · Datos → Balanceo → Resolución → Resultado'
     },
@@ -316,7 +316,7 @@
       breve: 'Porque ignora los costos al repartir: solo garantiza que la solución sea factible (cumple ofertas y demandas). Casi siempre existe otro reparto más barato. Por eso se considera una solución inicial, el punto de partida para métodos de mejora.',
       sencilla: 'Es como empacar la maleta metiendo las cosas en el orden en que las encuentras: todo cabe, pero seguramente hay una forma mejor de acomodarlas.',
       ejemplo: 'Con costos F1–T1 = 9 y F1–T2 = 1, F2–T1 = 1 y F2–T2 = 9, Esquina noroeste asigna primero F1–T1 (caro). Un reparto que use F1–T2 y F2–T1 costaría mucho menos.',
-      detalle: 'Para llegar al óptimo se aplican métodos como MODI (distribución modificada) o el de los escalones (stepping stone), que mejoran la solución inicial. No están implementados en este módulo: el resultado que ves es la solución inicial factible.',
+      detalle: 'La esquina noroeste por sí sola no garantiza el óptimo: produce una solución inicial que ignora los costos. Este módulo continúa con MODI, que calcula el mínimo o máximo global según el objetivo seleccionado.',
       relacionadas: ['basico.solucion-valida-factible-optima', 'northwest.otros-metodos', 'northwest.costos-no-deciden']
     },
     {
@@ -324,9 +324,9 @@
       pregunta: '¿Qué son Vogel, costo mínimo y MODI?',
       variantes: ['que es el metodo de vogel', 'que es el metodo del costo minimo', 'que es modi', 'la aplicacion tiene vogel', 'puedo optimizar con modi', 'que otros metodos de transporte existen', 'que es stepping stone'],
       conceptos: ['vogel', 'costo minimo', 'modi', 'stepping stone', 'escalones', 'otros metodos', 'aproximacion'],
-      breve: 'Son otros métodos del problema de transporte. Costo mínimo y Vogel (aproximación de Vogel) obtienen soluciones iniciales mejores que Esquina noroeste porque sí consideran los costos. MODI (y el método de los escalones) parten de una solución inicial y la mejoran hasta el óptimo. Ninguno de ellos está implementado en esta aplicación: el módulo solo ofrece Esquina noroeste.',
+      breve: 'Son métodos del problema de transporte. Costo mínimo y Vogel (aproximación de Vogel) obtienen soluciones iniciales considerando los costos. MODI (y el método de los escalones) parte de una solución inicial y la mejora hasta el óptimo. Esta aplicación implementa Esquina noroeste como inicio y MODI para la optimización.',
       sencilla: 'Costo mínimo: empieza por la ruta más barata. Vogel: empieza donde más se perdería si no se usa la ruta barata. MODI: toma una solución y la va corrigiendo hasta que ya no se puede mejorar.',
-      detalle: 'Puedes calcular aquí la solución inicial con Esquina noroeste y continuar a mano con MODI usando su costo total como punto de partida. La aplicación no verifica optimalidad.',
+      detalle: 'Elige minimizar o maximizar en Balanceo. La aplicación usa Esquina noroeste para la solución inicial, ejecuta MODI con potenciales y ciclos alternantes, y verifica balances y optimalidad antes de mostrar el resultado.',
       relacionadas: ['northwest.no-optimo', 'northwest.que-es']
     },
     {

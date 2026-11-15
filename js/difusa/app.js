@@ -3,9 +3,10 @@
   'use strict';
   const $ = id => document.getElementById(id), estado = DifusaEstado.estado;
   const fmt = (n, d = 5) => new Intl.NumberFormat('es', Math.abs(n) > 0 && Math.abs(n) < 1e-5 ? { notation: 'scientific', maximumSignificantDigits: 8 } : { maximumFractionDigits: d }).format(n);
+  const breve = n => new Intl.NumberFormat('es', n !== 0 && Math.abs(n) < .005 ? { notation: 'scientific', maximumSignificantDigits: 3 } : { maximumFractionDigits: 2 }).format(n);
   const el = (tag, texto, clase) => { const e = document.createElement(tag); if (texto !== undefined) e.textContent = texto; if (clase) e.className = clase; return e; };
   const vistas = ['inicio', 'variables', 'reglas', 'evaluar', 'resultado'];
-  let auxiliar = null, mapa = null, mapaEjes = {}, mapaRevision = 0;
+  let auxiliar = null, mapa = null, mapaEjes = {}, mapaRevision = 0, resultadoPresentado = null;
   const valoresEscritos = new Map();
   function notificar(texto) { $('estadoDifusa').textContent = texto; }
   function mensajeError(error) { return error && error.errores ? error.errores.map(e => e.mensaje || e).join(' · ') : error.message || String(error); }
@@ -24,9 +25,11 @@
     const faltantes = m.entradas.filter(x => !Number.isFinite(estado.valores[x.id])).length;
     const borrador = DifusaEditor.tieneBorradores();
     const problemas = [].concat(v.errores || [], (v.pendientes || []).filter(p => p.activa), (estado.errores || []).filter(e => e.ruta && e.ruta.startsWith('valores.')));
-    $('preparacionDifusa').textContent = m.nombre + ' · ' + m.entradas.length + ' entradas · ' + m.entradas.concat(m.salida).reduce((n, x) => n + x.conjuntos.length, 0) + ' conjuntos · ' + activas + '/' + m.reglas.length + ' reglas habilitadas con peso positivo y consecuente. ' +
-      (borrador ? 'Aplica o cancela los cambios del editor.' : problemas.length ? problemas.map(p => p.mensaje || p).join(' · ') : faltantes ? faltantes + ' valores de entrada pendientes.' : 'Configuración lista para evaluar.');
-    $('evaluarDifusa').disabled = borrador || !v.listo || (estado.errores || []).some(e => e.ruta && e.ruta.startsWith('valores.'));
+    const editor = DifusaEditor.obtenerModeloEditor();
+    $('preparacionDifusa').textContent = 'Aplicado: ' + m.nombre + ' · Entradas ' + m.entradas.length + '/3 · una salida · ' + activas + '/' + m.reglas.length + ' reglas habilitadas con peso positivo y consecuente. ' +
+      (borrador ? 'Borrador: Entradas ' + editor.entradas.length + '/3 · ' + editor.reglas.length + ' reglas. Cambios sin aplicar: aplica o cancela en el editor.' : problemas.length ? problemas.map(p => p.mensaje || p).join(' · ') : faltantes ? faltantes + ' valores de entrada pendientes.' : 'Configuración lista para evaluar.');
+    // Permitir intentar evaluar valores pendientes para asociar y enfocar sus errores.
+    $('evaluarDifusa').disabled = borrador || !v.listo;
     $('generarMapaDifusa').disabled = borrador || !v.listo || DifusaMapa.activo();
     const cobertura = m.entradas.concat(m.salida).map(variable => {
       const c = DifusaModelo.cobertura(variable);
@@ -73,6 +76,8 @@
         const validacion = DifusaEstado.actualizarValor(v.id, numero.value);
         error.textContent = validacion.ok ? '' : validacion.error; numero.setAttribute('aria-invalid', String(!validacion.ok)); rango.disabled = !validacion.ok;
         if (validacion.ok) { rango.value = validacion.valor; rango.setAttribute('aria-valuetext', fmt(validacion.valor, 10) + (v.unidad ? ' ' + v.unidad : '')); }
+        cancelarMapa('Cambiaste los valores. Genera un mapa nuevo con los valores fijos actuales.', true);
+        renderMapaControles();
         renderResultado(); preparacion(); notificar('Valores modificados. Pulsa Evaluar para ver el procedimiento de esta entrada.');
       }
       numero.addEventListener('input', () => sincronizar(false)); rango.addEventListener('input', () => sincronizar(true));
@@ -85,6 +90,7 @@
       ficha.append(label, numero, rangoLabel, rango, dominio, error); contenedor.append(ficha);
     });
     $('ejemplosRapidosDifusa').hidden = estado.modelo.id !== 'ayuda' || estado.modelo.entradas.length !== 2;
+    $('casosVentilacionDifusa').hidden = estado.modelo.id !== 'ventilacion3' || estado.modelo.entradas.length !== 3;
   }
   function datosSalida() { return estado.modelo.salida; }
   function etiquetasResultado(resultado) { return resultado.etiquetas.map(id => (datosSalida().conjuntos.find(c => c.id === id) || { nombre: id }).nombre).join(' / '); }
@@ -92,7 +98,10 @@
     const graficas = $('graficasEntradasDifusa'), tabla = $('tablaPertenencias'); graficas.replaceChildren(); tabla.replaceChildren();
     estado.modelo.entradas.forEach(v => {
       const figura = el('figure', undefined, 'difusa-figura'), caption = el('figcaption', v.nombre + ' = ' + fmt(resultado.entradas[v.id]) + (v.unidad ? ' ' + v.unidad : ''));
-      const grafica = el('div'), leyenda = el('div', undefined, 'difusa-leyenda'); figura.append(caption, grafica, leyenda); graficas.append(figura);
+      const grafica = el('div'), leyenda = el('div', undefined, 'difusa-leyenda');
+      const relevantes = v.conjuntos.filter(c => resultado.pertenencias[v.id][c.id] > 0);
+      const lectura = el('p', 'Con ' + fmt(resultado.entradas[v.id]) + (v.unidad ? ' ' + v.unidad : '') + ', ' + v.nombre + (relevantes.length ? ' tiene pertenencia ' + relevantes.map(c => fmt(resultado.pertenencias[v.id][c.id]) + ' a ' + c.nombre).join(' y ') + '.' : ' no pertenece a ningún conjunto; revisa las zonas sin cobertura.'), 'difusa-lectura');
+      figura.append(caption, grafica, lectura, leyenda); graficas.append(figura);
       DifusaDibujo.variable(grafica, v, resultado.entradas[v.id], 'evaluada-' + v.id); DifusaDibujo.leyenda(leyenda, v);
       v.conjuntos.forEach(c => { const fila = el('tr'), h = el('th', v.nombre + ' = ' + fmt(resultado.entradas[v.id])); h.scope = 'row'; fila.append(h, el('td', c.nombre), el('td', fmt(resultado.pertenencias[v.id][c.id]))); tabla.append(fila); });
     });
@@ -101,45 +110,64 @@
     const tabla = $('tablaReglas'); tabla.replaceChildren();
     resultado.reglas.forEach((r, i) => {
       const fila = el('tr'); fila.dataset.activa = String(r.activacion > 0); fila.dataset.reglaId = r.id;
-      const cabecera = el('th', 'R' + (i + 1)); cabecera.scope = 'row'; cabecera.append(el('small', r.activacion > 0 ? '● Activa' : r.habilitada ? '○ Sin activación' : '○ Deshabilitada'));
+      const cabecera = el('th', 'R' + (i + 1) + ' · ' + r.id); cabecera.scope = 'row'; cabecera.append(el('small', r.activacion > 0 ? '● Activa' : r.habilitada ? '○ Sin activación' : '○ Deshabilitada'));
       const antecedentes = r.antecedentes.map(a => {
         const v = estado.modelo.entradas.find(x => x.id === a.variableId);
         return a.conjuntoId === null ? v.nombre + ': No importa' : v.nombre + ' / ' + v.conjuntos.find(c => c.id === a.conjuntoId).nombre + ': ' + fmt(a.grado);
       });
       const usados = r.antecedentes.filter(a => a.grado !== null).map(a => fmt(a.grado));
-      const operacion = (r.conector === 'AND' ? 'mínimo' : 'máximo') + '(' + usados.join('; ') + ') = ' + fmt(r.activacionAntecedente) + '; × peso ' + fmt(r.peso) + ' = ' + fmt(r.activacionAntecedente * r.peso) + (r.habilitada ? '' : '; deshabilitada → 0') + '. Activación final: ' + fmt(r.activacion);
+      const operacion = (r.conector === 'AND' ? 'mínimo' : 'máximo') + '(' + usados.join('; ') + ') = ' + fmt(r.activacionAntecedente) + (r.peso !== 1 ? '; × peso ' + fmt(r.peso) + ' = ' + fmt(r.activacionAntecedente * r.peso) : '') + (r.habilitada ? '' : '; deshabilitada → 0') + '. Activación final: ' + fmt(r.activacion);
       const c = datosSalida().conjuntos.find(c => c.id === r.consecuente);
-      fila.append(cabecera, el('td', antecedentes.join(' · ')), el('td', operacion), el('td', c ? c.nombre : 'Borrador deshabilitado')); tabla.append(fila);
+      const consecuente = el('td', c ? c.nombre : 'Borrador deshabilitado');
+      const consultar = el('button', 'Ver recorte', 'btn btn-neutral'); consultar.type = 'button'; consultar.dataset.consultarRegla = r.id;
+      consultar.addEventListener('click', () => { DifusaEstado.seleccionarRegla(r.id); renderConsulta(); abrirDetalle('agregacionResultadoDifusa'); }); cabecera.append(consultar);
+      fila.append(cabecera, el('td', 'SI ' + antecedentes.join(r.conector === 'OR' ? ' O ' : ' Y ') + ' ENTONCES ' + datosSalida().nombre + ' es ' + (c ? c.nombre : 'pendiente') + '.'), el('td', operacion), consecuente); tabla.append(fila);
+      fila.hidden = $('soloActivasDifusa').checked && r.activacion <= 0;
     });
   }
   function renderConsulta() {
     const resultado = estado.resultado; if (!resultado) return;
     const indice = Number.isInteger(estado.seleccion.puntoIndice) ? estado.seleccion.puntoIndice : 500;
-    const regla = resultado.reglas.find(r => r.id === estado.seleccion.reglaId) || resultado.reglas[0];
-    if (!regla) return;
-    if (estado.seleccion.reglaId !== regla.id) DifusaEstado.seleccionarRegla(regla.id);
+    const masActiva = resultado.reglas.reduce((mejor, r) => r.activacion > 0 && (!mejor || r.activacion > mejor.activacion) ? r : mejor, null);
+    const regla = resultado.reglas.find(r => r.id === estado.seleccion.reglaId) || masActiva;
+    if (regla && estado.seleccion.reglaId !== regla.id) DifusaEstado.seleccionarRegla(regla.id);
     if (estado.seleccion.puntoIndice !== indice) DifusaEstado.seleccionarPunto(indice);
-    $('seleccionReglaDifusa').value = regla.id; $('puntoSalidaDifusa').value = indice;
-    const y = resultado.puntos[indice], v = datosSalida(), consecuente = v.conjuntos.find(c => c.id === regla.consecuente);
-    $('valorPuntoSalidaDifusa').textContent = 'y = ' + fmt(y, 8) + (v.unidad ? ' ' + v.unidad : '');
+    $('seleccionReglaDifusa').value = regla ? regla.id : ''; $('puntoSalidaDifusa').value = indice;
+    const y = resultado.puntos[indice], v = datosSalida(), consecuente = regla && v.conjuntos.find(c => c.id === regla.consecuente);
+    $('valorPuntoSalidaDifusa').textContent = 'Inspeccionando: ' + fmt(y, 8) + (v.unidad ? ' ' + v.unidad : '') + '. Centroide final: ' + (resultado.centroide.valor === null ? 'sin salida numérica' : fmt(resultado.centroide.valor, 8) + (v.unidad ? ' ' + v.unidad : '')) + '.';
     const grado = consecuente ? DifusaMotor.pertenenciasVariable(v, y)[consecuente.id] : 0;
-    $('explicacionRecorteDifusa').textContent = 'Regla ' + (resultado.reglas.indexOf(regla) + 1) + ': ' + (consecuente ? consecuente.nombre : 'sin consecuente habilitado') + '. En y = ' + fmt(y, 8) + ': mínimo(activación ' + fmt(regla.activacion) + '; pertenencia ' + fmt(grado) + ') = ' + fmt(regla.recortada[indice]) + '.';
+    $('explicacionRecorteDifusa').textContent = regla ? 'Regla ' + (resultado.reglas.indexOf(regla) + 1) + ' · ' + regla.id + ': ' + (consecuente ? consecuente.nombre : 'sin consecuente habilitado') + '. En y = ' + fmt(y, 8) + ': mínimo(activación ' + fmt(regla.activacion) + '; pertenencia ' + fmt(grado) + ') = ' + fmt(regla.recortada[indice]) + '.' + (regla.activacion > 0 ? '' : ' Esta regla no aporta al gráfico: ' + (!regla.habilitada ? 'está deshabilitada.' : regla.peso === 0 ? 'su peso es cero.' : 'sus condiciones tienen activación cero para estas entradas.')) : 'No hay reglas activas. ' + resultado.centroide.mensaje + ' Puedes seleccionar una regla inactiva para revisar por qué no aporta.';
     $('consultaPuntoDifusa').textContent = 'Agregación en y = ' + fmt(y, 8) + ': máximo(' + resultado.reglas.map(r => fmt(r.recortada[indice])).join('; ') + ') = ' + fmt(resultado.agregada[indice]) + '.';
     DifusaDibujo.variable($('graficaSalida'), v, resultado.centroide.valor, 'salidaDifusa', { resultado, regla, indice }); DifusaDibujo.leyenda($('leyendaSalidaDifusa'), v, true);
   }
   function renderResultado() {
     const r = estado.resultado, resumen = $('resumenResultado'); resumen.replaceChildren(); $('procedimientoVigenteDifusa').hidden = !r;
     if (!r) { resumen.append(el('p', estado.pendiente ? 'Resultado pendiente de recalcular. Evalúa los valores y la configuración actuales.' : 'Todavía no hay una evaluación. Completa los datos y pulsa Evaluar.')); $('tablaReglas').replaceChildren(); $('tablaPertenencias').replaceChildren(); return; }
+    if (r !== resultadoPresentado) {
+      resultadoPresentado = r; $('soloActivasDifusa').checked = true;
+      ['pertenenciasResultadoDifusa', 'reglasResultadoDifusa', 'agregacionResultadoDifusa', 'centroideResultadoDifusa', 'procedimientoDifusa'].forEach(id => { $(id).open = false; });
+    }
+    resumen.append(el('h3', datosSalida().nombre));
+    resumen.append(el('p', 'Entradas utilizadas: ' + estado.modelo.entradas.map(v => v.nombre + ' = ' + fmt(r.entradas[v.id]) + (v.unidad ? ' ' + v.unidad : '')).join(' · ') + '.'));
+    resumen.append(el('p', 'Se activaron ' + r.reglas.filter(regla => regla.activacion > 0).length + ' de ' + r.reglas.length + ' reglas del modelo.'));
+    const precision = el('details'), cabPrecision = el('summary', 'Precisión, pertenencias y participación de las entradas'); precision.append(cabPrecision);
+    precision.append(el('p', 'Aplicado · Valor del centroide sin redondear: ' + (r.centroide.valor === null ? 'sin salida numérica' : String(r.centroide.valor)) + (datosSalida().unidad ? ' ' + datosSalida().unidad : '') + '. El contador usa todas las reglas del modelo, incluidas las deshabilitadas o de peso cero.'));
+    estado.modelo.entradas.forEach(v => {
+      const participantes = estado.modelo.reglas.filter(regla => regla.activa && regla.peso > 0 && regla.antecedentes[v.id] != null);
+      const activadas = r.reglas.filter(regla => regla.activacion > 0 && participantes.some(p => p.id === regla.id)).length;
+      precision.append(el('p', v.nombre + ': participa en ' + participantes.length + ' reglas habilitadas con peso positivo; ' + activadas + ' activadas aquí. Esto no prueba influencia efectiva: AND/OR y la envolvente pueden conservar la misma salida.', 'difusa-pista'));
+    });
     if (r.centroide.valor === null) resumen.append(el('strong', r.centroide.estado === 'sin-reglas-activas' ? 'Sin reglas activas para estas entradas' : r.centroide.estado === 'activacion-sin-masa' ? 'Activación positiva sin masa de salida' : 'Limitación numérica de la evaluación'), el('p', r.centroide.mensaje));
     else {
-      const precision = Math.min(12, Math.max(5, Math.ceil(-Math.log10(datosSalida().max - datosSalida().min)) + 2));
-      const numero = el('output', fmt(r.centroide.valor, precision) + (datosSalida().unidad ? ' ' + datosSalida().unidad : ''), 'difusa-valor'); numero.id = 'valorResultadoDifusa';
-      resumen.append(numero, el('p', datosSalida().nombre + ' · rango ' + fmt(datosSalida().min) + ' a ' + fmt(datosSalida().max)));
-      resumen.append(el('p', r.sinEtiqueta ? 'Ningún conjunto de salida contiene el centroide. Se mantiene el valor numérico sin asignar una etiqueta.' : 'Interpretación adicional: ' + etiquetasResultado(r) + '.'));
-      resumen.append(el('p', datosSalida().conjuntos.map(c => c.nombre + ': ' + fmt(r.pertenenciasResultado[c.id])).join(' · '), 'difusa-pista'));
+      const numero = el('output', breve(r.centroide.valor) + (datosSalida().unidad ? ' ' + datosSalida().unidad : ''), 'difusa-valor'); numero.id = 'valorResultadoDifusa';
+      resumen.insertBefore(numero, resumen.children[1]);
+      resumen.append(el('p', r.sinEtiqueta ? 'El centroide no pertenece a ningún conjunto de salida; se conserva el número sin etiqueta.' : 'Etiqueta de salida: ' + etiquetasResultado(r) + '. Describe la salida; un grado de pertenencia no es una probabilidad.'));
+      precision.append(el('p', datosSalida().conjuntos.map(c => c.nombre + ': ' + String(r.pertenenciasResultado[c.id])).join(' · '), 'difusa-pista'));
     }
+    resumen.append(precision);
     renderEntradasResultado(r); renderReglasResultado(r);
     const selector = $('seleccionReglaDifusa'); selector.replaceChildren();
+    if (!r.reglas.some(regla => regla.activacion > 0)) { const vacio = el('option', 'Sin reglas activas · elige una para revisarla'); vacio.value = ''; selector.append(vacio); }
     r.reglas.forEach((regla, i) => { const option = el('option', 'Regla ' + (i + 1) + ' · activación ' + fmt(regla.activacion)); option.value = regla.id; selector.append(option); });
     renderConsulta();
     const calculo = $('calculoCentroide'); calculo.replaceChildren();
@@ -179,7 +207,7 @@
       if (revision !== mapaRevision) return;
       if (resultado.estado === 'completo') {
         mapa = resultado.datos; DifusaDibujo.mapa($('graficaMapaDifusa'), mapa, estado.modelo);
-        const fijados = mapa.fijos.map(f => f.nombre + ' = ' + f.valor).join('; ');
+        const fijados = mapa.fijos.map(f => f.nombre + ' = ' + f.valor + (estado.modelo.entradas.find(v => v.id === f.id)?.unidad ? ' ' + estado.modelo.entradas.find(v => v.id === f.id).unidad : '')).join('; ');
         $('estadoMapaDifusa').textContent = (mapa.ejeY ? 'Mapa 15 × 15' : 'Curva de 101 puntos') + ' · ' + mapa.sinSalida + ' puntos sin salida (×).' + (fijados ? ' Valor fijo: ' + fijados + '.' : '') + ' Entradas por muestreo; cada salida usa el centroide continuo. Diagnósticos: ' + Object.entries(mapa.diagnosticos).map(([estado, cantidad]) => estado + ': ' + cantidad).join('; ') + '.';
       } else $('estadoMapaDifusa').textContent = 'Mapa cancelado.';
     } catch (error) { $('estadoMapaDifusa').textContent = mensajeError(error); }
@@ -196,7 +224,15 @@
     if (invalidos) { notificar('Corrige los valores de entrada antes de guardar o exportar.'); return false; } return true;
   }
   async function evaluar() {
-    if (!asegurarAplicado()) return;
+    if (DifusaEditor.tieneBorradores()) { notificar('Aplica o cancela el borrador antes de evaluar.'); return; }
+    let primero = null;
+    document.querySelectorAll('[data-entrada-id]').forEach(input => {
+      const validacion = DifusaEstado.actualizarValor(input.dataset.entradaId, input.value);
+      input.setAttribute('aria-invalid', String(!validacion.ok));
+      $('error-' + input.dataset.entradaId).textContent = validacion.ok ? '' : validacion.error;
+      if (!validacion.ok && !primero) primero = input;
+    });
+    if (primero) { renderResultado(); ir('evaluar', false); primero.focus(); notificar('Completa o corrige los campos señalados. El resultado anterior no está vigente.'); return; }
     try { const resultado = DifusaEstado.evaluar(); notificar(resultado.centroide.valor === null ? resultado.centroide.mensaje : 'Evaluación vigente. Consulta las pertenencias, reglas, recortes y centroide continuo.'); renderResultado(); ir('resultado'); }
     catch (error) { estado.errores = error.errores || [{ mensaje: error.message }]; notificar(mensajeError(error)); preparacion(); }
   }
@@ -229,9 +265,20 @@
     if (!await confirmarReemplazo()) return; DifusaEstado.cargarEjemplo(b.dataset.cargarEjemplo); cancelarMapa('Ejemplo cambiado. El mapa no se genera automáticamente.', true); refrescar(true); ir('evaluar'); notificar(estado.modelo.descripcion);
   }));
   $('crearSistemaDifusa').addEventListener('click', async () => { if (!await confirmarReemplazo()) return; DifusaEstado.crearSistema(); cancelarMapa('Sistema nuevo.', true); refrescar(true); ir('variables'); notificar('Plantilla editable: configura variables y selecciona el consecuente pendiente de la regla.'); });
-  $('restablecerValoresDifusa').addEventListener('click', () => { DifusaEstado.restablecer(); valoresEscritos.clear(); renderControles(); renderResultado(); preparacion(); notificar('Valores iniciales restablecidos para el sistema actual. Pulsa Evaluar.'); });
-  document.querySelectorAll('[data-ejemplo-difusa]').forEach(b => b.addEventListener('click', () => { const valores = b.dataset.ejemploDifusa.split(',').map(Number); estado.modelo.entradas.forEach((v, i) => DifusaEstado.actualizarValor(v.id, valores[i])); valoresEscritos.clear(); renderControles(); evaluar(); }));
+  $('restablecerValoresDifusa').addEventListener('click', () => { DifusaEstado.restablecer(); valoresEscritos.clear(); cancelarMapa('Valores iniciales restablecidos. Genera un mapa nuevo.', true); renderControles(); renderMapaControles(); renderResultado(); preparacion(); notificar('Valores iniciales restablecidos para el sistema actual. Pulsa Evaluar.'); });
+  document.querySelectorAll('[data-ejemplo-difusa]').forEach(b => b.addEventListener('click', () => { const valores = b.dataset.ejemploDifusa.split(',').map(Number); estado.modelo.entradas.forEach((v, i) => DifusaEstado.actualizarValor(v.id, valores[i])); valoresEscritos.clear(); cancelarMapa('Valores de ejemplo cambiados. Genera un mapa nuevo.', true); renderControles(); renderMapaControles(); evaluar(); }));
   $('seleccionReglaDifusa').addEventListener('change', e => { DifusaEstado.seleccionarRegla(e.target.value); renderConsulta(); });
+  $('soloActivasDifusa').addEventListener('change', () => { if (estado.resultado) renderReglasResultado(estado.resultado); });
+  $('verTodasReglasDifusa').addEventListener('click', () => { $('soloActivasDifusa').checked = false; if (estado.resultado) renderReglasResultado(estado.resultado); });
+  $('agregacionResultadoDifusa').addEventListener('toggle', () => { if ($('agregacionResultadoDifusa').open) renderConsulta(); });
+  function abrirDetalle(id) { const detalle = $(id); detalle.open = true; const cabecera = detalle.querySelector('summary'); cabecera.focus({ preventScroll: true }); cabecera.scrollIntoView({ block: 'start', behavior: 'instant' }); }
+  $('verReglasActivasDifusa').addEventListener('click', () => { $('soloActivasDifusa').checked = true; if (estado.resultado) renderReglasResultado(estado.resultado); abrirDetalle('reglasResultadoDifusa'); });
+  $('explorarMapaDifusa').addEventListener('click', () => abrirDetalle('panelMapaDifusa'));
+  $('verCalculoCompletoDifusa').addEventListener('click', () => { document.querySelectorAll('#procedimientoVigenteDifusa details, #resumenResultado details').forEach(detalle => { detalle.open = true; }); $('soloActivasDifusa').checked = false; if (estado.resultado) renderReglasResultado(estado.resultado); abrirDetalle('procedimientoDifusa'); });
+  if (typeof ResizeObserver !== 'undefined') {
+    let anchoSalida = 0;
+    new ResizeObserver(entradas => { const ancho = entradas[0].contentRect.width; if (ancho > 0 && Math.abs(ancho - anchoSalida) > 1) { anchoSalida = ancho; if ($('agregacionResultadoDifusa').open) renderConsulta(); } }).observe($('graficaSalida'));
+  }
   $('puntoSalidaDifusa').addEventListener('input', e => { DifusaEstado.seleccionarPunto(Number(e.target.value)); renderConsulta(); });
   $('generarMapaDifusa').addEventListener('click', generarMapa); $('cancelarMapaDifusa').addEventListener('click', () => { cancelarMapa('Mapa cancelado; la evaluación normal sigue disponible.'); preparacion(); });
   window.addEventListener('intro:cambio', e => { if (e.detail && e.detail.visible) { cancelarMapa('Mapa cancelado al abrir el video.'); preparacion(); } });
@@ -269,7 +316,7 @@
   $('respaldarOriginalDifusa').addEventListener('click', () => { const original = DifusaEstado.obtenerOriginal(); if (!original) return; descargar(original.nombreArchivo, original.texto); DifusaEstado.respaldarOriginal(); almacenamiento(); });
   $('usarActualDifusa').addEventListener('click', async () => { if (await dialogoConfirmar({ titulo: 'Usar el sistema actual', mensaje: 'Se habilitará el autoguardado con el sistema actual. Descarga primero el original si quieres conservar una copia.', textoAceptar: 'Usar sistema actual' }) !== true) return; DifusaEstado.descartarOriginal(); almacenamiento(); });
   DifusaEstado.restaurar();
-  DifusaEditor.inicializar({ notificar, alErrorVariables: () => ir('variables'), alBorrador: matematico => { if (matematico) invalidaPorEdicion(); else preparacion(); }, alCancelar: () => { preparacion(); notificar('Borrador cancelado. Se mantiene la última configuración aplicada.'); }, alCambiar: () => { if (mapa && mapa.firma !== DifusaModelo.firmaMatematica(estado.modelo)) cancelarMapa('Configuración cambiada. Genera el mapa otra vez.', true); valoresEscritos.clear(); refrescar(false); } });
+  DifusaEditor.inicializar({ notificar, alResumen: preparacion, alReglas: () => ir('reglas'), alErrorVariables: () => ir('variables'), alBorrador: matematico => { if (matematico) invalidaPorEdicion(); else preparacion(); }, alCancelar: () => { preparacion(); notificar('Borrador cancelado. Se mantiene Aplicado.' + (estado.pendiente ? ' Vuelve a evaluar; la edición matemática descartó el resultado y el mapa anteriores.' : ' La evaluación sigue vigente si existe.')); }, alCambiar: () => { if (mapa && mapa.firma !== DifusaModelo.firmaMatematica(estado.modelo)) cancelarMapa('Configuración cambiada. Genera el mapa otra vez.', true); valoresEscritos.clear(); refrescar(false); notificar('Aplicado. ' + (estado.resultado ? 'El cálculo conserva su validez matemática.' : 'Completa las entradas pendientes y vuelve a evaluar.')); } });
   refrescar(false); notificar('Elige un ejemplo, crea un sistema o continúa con el sistema actual.');
   if (new URLSearchParams(window.location.search).get('trabajos') === '1') { renderTrabajos(); auxiliar = 'trabajos'; mostrarVista(true); }
 })();

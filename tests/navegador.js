@@ -561,11 +561,11 @@ async function sinScrollHorizontal(page) {
     if (respuesta && respuesta.status() === 200) {
       await page.evaluate(() => localStorage.clear());
       await page.reload({ waitUntil: 'networkidle0' });
-      check((await page.$eval('body', b => b.textContent)).includes('No garantiza el costo mínimo'), 'Aclaración permanente visible');
-      check(!(await page.$eval('body', b => /encontrar óptimo|costo mínimo total/i.test(b.textContent))), 'No hay etiquetas de optimización');
+      check((await page.$eval('body', b => b.textContent)).includes('MODI mejora esa solución'), 'Se explica la optimización MODI');
+      check(await page.$eval('#objetivoNorthwest option[value="max"]', o => o.textContent.includes('Maximizar')), 'La interfaz permite maximizar');
       check(await page.$eval('#vistaDatos', v => !v.hidden), 'Empieza en Datos');
       await capturar(page, 'northwest-datos-1440');
-      await page.click('[data-ir="balanceo"]');
+      await page.click('#pasosNorthwest [data-vista="balanceo"]');
       await page.waitForSelector('#vistaBalanceo:not([hidden])');
       await capturar(page, 'northwest-balanceo-1440');
       await page.click('#btnConfirmarBalanceo');
@@ -581,17 +581,24 @@ async function sinScrollHorizontal(page) {
       check((await page.$eval('#nwPasoIndicador', e => e.textContent)).startsWith('Paso 1 de 4'), 'Reiniciar vuelve al paso 1');
       await page.click('[data-ir="resultado"]');
       await page.waitForSelector('#vistaResultadoNw:not([hidden])');
-      check((await page.$eval('#nwCostoTotal', e => e.textContent)).includes('230'), 'Costo total 230');
-      check((await page.$eval('#vistaResultadoNw', e => e.textContent)).includes('solución inicial'), 'Advertencia de solución inicial');
+      check(await page.evaluate(() => estadoNorthwest.resultado.objetivo === 'min' && estadoNorthwest.resultado.datos.verificacion.ok), 'Mínimo validado con MODI');
+      check((await page.$eval('#vistaResultadoNw', e => e.textContent)).includes('solución óptima'), 'Resultado declara el óptimo');
+      await page.click('#pasosNorthwest [data-vista="balanceo"]');
+      await page.select('#objetivoNorthwest', 'max');
+      await page.click('#btnConfirmarBalanceo');
+      check(await page.evaluate(() => estadoNorthwest.resultado.objetivo === 'max' && estadoNorthwest.resultado.datos.verificacion.ok), 'Máximo validado con MODI');
+      await page.click('#pasosNorthwest [data-vista="balanceo"]');
+      await page.select('#objetivoNorthwest', 'min');
+      await page.click('#btnConfirmarBalanceo');
       await capturar(page, 'northwest-resultado-1440');
-      // Cambiar solo costos conserva cantidades.
-      const antes = await page.evaluate(() => JSON.stringify(estadoNorthwest.resultado.datos.asignaciones));
+      // Cambiar costos conserva la solución inicial, pero MODI vuelve a optimizar.
+      const antes = await page.evaluate(() => JSON.stringify(estadoNorthwest.resultado.datos.asignacionesIniciales));
       await page.evaluate(() => aplicarCambioNorthwest(m => fijarCostoNorthwest(m, m.origenes[0].id, m.destinos[0].id, 900)));
       check(!(await page.evaluate(() => resultadoVigenteNorthwest())), 'Cambiar un costo invalida el resultado');
       await page.evaluate(() => resolverNorthwestCompleto());
-      const despues = await page.evaluate(() => JSON.stringify(estadoNorthwest.resultado.datos.asignaciones));
-      check(antes === despues, 'Cambiar solo costos conserva las cantidades');
-      check(!(await page.$eval('#nwCostoTotal', e => e.textContent)).includes('230'), 'El costo total sí cambia');
+      const despues = await page.evaluate(() => JSON.stringify(estadoNorthwest.resultado.datos.asignacionesIniciales));
+      check(antes === despues, 'La esquina noroeste sigue produciendo la misma solución inicial');
+      check(await page.evaluate(() => estadoNorthwest.resultado.datos.verificacion.ok), 'El resultado reoptimizado verifica balances y total');
       // Exceso de oferta → ficticio, y rebalancear no acumula.
       await page.evaluate(() => aplicarCambioNorthwest(m => { m.origenes[0].oferta = 50; }));
       await page.evaluate(() => cambiarVistaNorthwest('balanceo'));

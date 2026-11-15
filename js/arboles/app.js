@@ -161,11 +161,47 @@ function aplicarNuevoArbol(raiz, modo, secuencia, opciones) {
 }
 
 function confirmarReemplazoArbol(accion, vaciar) {
+  detenerRecorridoArbol();
   if (!arbol.raiz) { accion(); return; }
   dialogoConfirmar({
     titulo: vaciar ? 'Vaciar árbol' : 'Reemplazar árbol',
     mensaje: vaciar ? 'Se eliminarán los nodos del árbol actual. Puedes guardar el trabajo antes de vaciarlo.' : 'El árbol actual será reemplazado. Puedes guardarlo antes de continuar.'
-  }).then(aceptado => { if (aceptado) accion(); });
+  }).then(aceptado => { if (aceptado === true) accion(); });
+}
+
+function cargarEjemploArbol(id) {
+  const ejemplo = catalogoEjemplosArbol().find(e => e.id === id);
+  if (!ejemplo) return;
+  confirmarReemplazoArbol(() => {
+    if (ejemplo.modo === 'busqueda') {
+      aplicarNuevoArbol(crearArbolBusqueda(ejemplo.valores), 'busqueda', ejemplo.valores);
+      arbolElemento('errorInsercion').textContent = '';
+      ajustarZoomArbol();
+    } else {
+      arbolElemento('modoReconstruccion').value = ejemplo.modo;
+      actualizarCamposReconstruccion();
+      ['preorden', 'inorden', 'postorden'].forEach(nombre => {
+        arbolElemento('entrada' + nombre[0].toUpperCase() + nombre.slice(1)).value = (ejemplo.recorridos[nombre] || []).join(', ');
+      });
+      ejecutarReconstruccion(); ajustarZoomArbol();
+    }
+    arbolElemento('guiaEjemploArbol').textContent = ejemplo.nombre + '. ' + ejemplo.descripcion;
+    const accion = arbolElemento(ejemplo.modo === 'busqueda' ? 'btnRecorridoSiguiente' : 'btnReconstruir');
+    accion.focus({ preventScroll: true }); accion.scrollIntoView({ block: 'center', behavior: 'instant' });
+  });
+}
+
+function mostrarEjemplosArbol() {
+  catalogoEjemplosArbol().forEach(ejemplo => {
+    const ficha = document.createElement('article'); ficha.className = 'arbol-ejemplo';
+    const titulo = document.createElement('h4'); titulo.textContent = ejemplo.nombre;
+    const descripcion = document.createElement('p'); descripcion.textContent = ejemplo.descripcion;
+    const datos = document.createElement('p'); datos.className = 'arbol-secuencia';
+    datos.textContent = ejemplo.valores ? 'Insertar: ' + ejemplo.valores.join(', ') : Object.entries(ejemplo.recorridos).map(([r, valores]) => r + ': ' + valores.join(', ')).join(' · ');
+    const boton = document.createElement('button'); boton.type = 'button'; boton.className = 'btn btn-secondary'; boton.dataset.ejemploArbol = ejemplo.id; boton.textContent = 'Cargar ejemplo'; boton.addEventListener('click', () => cargarEjemploArbol(ejemplo.id));
+    ficha.append(titulo, descripcion, datos, boton);
+    arbolElemento(ejemplo.modo === 'busqueda' ? 'ejemplosBusquedaArbol' : 'ejemplosReconstruccionArbol').append(ficha);
+  });
 }
 
 /**
@@ -367,6 +403,7 @@ arbolElemento('btnExportarPngArbol').addEventListener('click', () => {
 const modalAyudaArbol = arbolElemento('modalAyuda');
 instalarAyudaModal(modalAyudaArbol, arbolElemento('btnAyuda'), arbolElemento('btnCerrarAyuda'), detenerRecorridoArbol);
 
+mostrarEjemplosArbol();
 actualizarCamposReconstruccion();
 const guardado = restaurarEstadoArboles();
 if (guardado) {

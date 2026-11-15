@@ -356,6 +356,18 @@ prueba('Dijkstra: nodos sin camino con causas; sin selección explica cómo sele
   cierto(r.texto.includes('Sin camino desde A: B, C') && r.texto.includes('sentido contrario'), r.texto);
   cierto(responder(c, '¿Qué nodo está seleccionado?').texto.includes('No hay ningún elemento seleccionado'));
 });
+prueba('Máximo DAG reconoce −∞ como sin camino desde el origen del resultado vigente', () => {
+  const nodosMaximo = [...nodos.slice(0, 2), { id: 'n_4', nombre: 'D' }];
+  const grafo = { dirigido: true, nodos: nodosMaximo, conexiones: [{ id: 'c_1', desde: 'n_1', hacia: 'n_2', valor: 2 }] };
+  const e = { grafo, origen: 'n_1', destino: 'n_4', vista: 'resultado', paso: 0, objetivo: 'max', seleccion: { tipo: 'nodo', id: 'n_4' }, resultado: {
+    grafo, origen: 'n_1', objetivo: 'max', distancias: { n_1: 0, n_2: 2, n_4: -Infinity }, predecesores: { n_1: null, n_2: { nodo: 'n_1', conexion: 'c_1' }, n_4: null }, pasos: []
+  } };
+  const c = entorno('dijkstra', { moduloGrafo: e });
+  const r = responder(c, '¿Por qué este nodo no tiene camino?');
+  cierto(r.texto.includes('Sin camino desde A: D') && !r.texto.includes('Todos los vértices son alcanzables'), r.texto);
+  cierto(r.texto.includes('sentido contrario') && r.texto.includes('aislado'), r.texto);
+  igual(c.AlgoContexto.obtener().contexto.resultado.distancias.find(v => v.nodo === 'n_4').distancia, '−∞');
+});
 prueba('Sin ejercicio, sin resultado o con resultado invalidado, las dinámicas no inventan datos', () => {
   const vacio = entorno('asignacion', { estadoAsignacion: { vista: 'grafo', objetivo: 'min', modelo: { recursos: [], tareas: [], valores: {} }, resultado: null }, resultadoVigenteAsignacion: () => false });
   const p = responder(vacio, 'Explícame este paso');
@@ -423,6 +435,11 @@ prueba('Las acciones integradas responden por comando: entrada, nivel, comparar,
   cierto(c.AlgoMotor.responder('', foto, { tipo: 'comparar', a: 'matriz.adyacencia', b: 'matriz.distancias' }).texto.includes('dato de entrada'));
   cierto(c.AlgoMotor.responder('', foto, { tipo: 'empezar' }).texto.includes('origen'));
   cierto(c.AlgoMotor.responder('', foto, { tipo: 'ejemplos' }).acciones.every(a => a.pregunta));
+});
+prueba('La ayuda de máximo distingue Dijkstra de la relajación topológica disponible', () => {
+  const c = entorno('dijkstra'), r = responder(c, '¿Cómo calculo el camino máximo?');
+  cierto(r.texto.includes('Dijkstra para mínimos') && r.texto.includes('orden topológico'), r.texto);
+  cierto(r.texto.includes('Un ciclo bloquea el máximo') && !r.texto.includes('este módulo calcula mínimos'), r.texto);
 });
 prueba('El asistente no realiza llamadas de red ni usa almacenamiento en ninguna respuesta', () => {
   const c = entorno('ordenamiento');

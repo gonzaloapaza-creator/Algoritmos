@@ -13,10 +13,10 @@
     inicio: 'Elige una tarjeta de la ciudad: Johnson, Dijkstra, Kruskal, Asignación, Esquina noroeste, Ordenamiento, Árboles o Lógica difusa. Dentro de cada módulo puedes cargar un ejemplo y consultar su ayuda.',
     difusa: 'Carga un ejemplo o elige «Crear mi sistema». Revisa Variables y pertenencias, configura Reglas y pasa a Evaluar para introducir valores. Procedimiento y resultado muestra la ejecución real. Puedes usar de una a tres entradas, una salida, conjuntos triangulares o trapezoidales y reglas AND/OR con peso. Los ejemplos son didácticos, sin calibración para decisiones reales.',
     johnson: 'Crea los vértices y las conexiones, revisa la matriz y calcula para seguir los pasos y ver las distancias entre todos los pares. Esta aplicación prohíbe bucles, duplicados y conexiones inversas; es una decisión del editor, no una limitación matemática de Johnson. Sí permite pesos negativos y ciclos de tres o más vértices. Un ciclo negativo impide obtener distancias mínimas.',
-    dijkstra: 'Crea un grafo o carga un ejemplo; elige origen y, si quieres, destino. Usa pesos enteros no negativos y calcula. Se obtienen distancias desde el origen a todos los vértices. En modo dirigido se permiten A→B y B→A como conexiones diferentes. No se admiten bucles ni duplicados.',
-    kruskal: 'Crea un grafo no dirigido o carga un ejemplo, elige peso mínimo o máximo y calcula. Los pasos aceptan una conexión cuando une componentes distintas; rechazan la que cerraría un ciclo. Un grafo conectado produce un árbol de expansión y uno desconectado, un bosque. Los pesos pueden ser negativos o cero.',
+    dijkstra: 'Crea un grafo o carga un ejemplo; elige origen, objetivo y, si quieres, destino. El mínimo usa Dijkstra con pesos enteros no negativos. El máximo usa orden topológico y solo se admite en grafos dirigidos acíclicos. Se calculan los mejores valores desde el origen a todos los vértices.',
+    kruskal: 'Crea un grafo no dirigido o carga un ejemplo, elige peso mínimo o máximo y calcula. Los pasos aceptan una conexión cuando une componentes distintas; rechazan la que cerraría un ciclo. Un grafo conectado produce un árbol de expansión y uno desconectado, un bosque. Se aceptan enteros de 0 a 999999, incluido cero, por política del producto. El algoritmo matemático sí admite negativos.',
     asignacion: 'Añade recursos y tareas y completa todos sus valores en el grafo o la matriz. Elige minimizar costos o maximizar beneficios y pulsa Resolver. Una casilla pendiente no equivale a cero. El método húngaro asigna cada recurso y tarea a lo sumo una vez; si las cantidades difieren, algunas quedan sin asignar.',
-    northwest: 'Completa costos, ofertas y demandas; revisa el balanceo y avanza por la resolución. El balanceo agrega un origen o destino ficticio cuando hace falta. Esquina noroeste obtiene una solución inicial factible: no garantiza el costo mínimo. Cero es un dato válido; una casilla vacía sigue pendiente.',
+    northwest: 'Completa costos, ofertas y demandas; revisa el balanceo y elige minimizar o maximizar. Esquina noroeste obtiene la solución inicial factible y MODI la optimiza al objetivo elegido. La esquina noroeste por sí sola no garantiza el óptimo. Cero es un dato válido; una casilla vacía sigue pendiente.',
     ordenamiento: 'Escribe entre 3 y 200 enteros de 1 a 99 o genera una lista; elige uno de los cinco algoritmos y avanza o reproduce. La velocidad cambia la animación; el tiempo de preparación mide el cálculo del procedimiento. No son la misma medida. Se permiten valores repetidos.',
     arboles: 'En BST, inserta valores únicos entre −999 y 999, con un máximo de 31 nodos. Quitar última revierte la última inserción; no elimina un nodo arbitrario. En reconstrucción, introduce recorridos compatibles para crear un árbol binario general, que no tiene por qué ser BST. Elige un recorrido para visitar y emitir sus valores.'
   };
@@ -33,7 +33,7 @@
       errores: 'Si no encuentras un módulo en la ciudad, usa «Vista lista». Los videos requieren conexión; puedes trabajar sin reproducirlos.'
     },
     difusa: {
-      datos: 'Configura nombres, unidades, dominios y conjuntos en Variables y pertenencias. Los valores de una evaluación se introducen por separado en Evaluar mediante campo o deslizador. Se admite punto o coma decimal sin separadores ambiguos. Editar datos matemáticos invalida la ejecución anterior.',
+      datos: 'Configura nombres, unidades, dominios y conjuntos en Variables y pertenencias. Aplicado es el modelo vigente; Borrador contiene cambios que debes aplicar o cancelar. Una entrada nueva queda pendiente y las reglas existentes la ignoran hasta usarla en sus condiciones. El contador de participación cuenta reglas habilitadas con peso positivo; no garantiza influencia en toda evaluación. Los valores de una evaluación se introducen por separado en Evaluar mediante campo o deslizador. Se admite punto o coma decimal sin separadores ambiguos. Editar datos matemáticos invalida la ejecución anterior.',
       reglas: 'De 1 a 3 entradas, una salida, entre 2 y 5 conjuntos por variable y de 1 a 125 reglas. AND usa mínimo y OR máximo. El peso de 0 a 1 multiplica la activación. Implicación mínimo, agregación máximo y centroide continuo de la envolvente lineal con nudos, recortes e intersecciones. Una regla necesita alguna entrada y un consecuente válido.',
       herramientas: 'Navega por Inicio, Variables y pertenencias, Reglas, Evaluar y Procedimiento y resultado. Selecciona una regla y un punto de salida para consultar su recorte. Genera el mapa bajo petición; puedes cancelarlo. Los cambios de ejemplo y las eliminaciones con reglas afectadas requieren una decisión explícita.',
       pasos: 'La ejecución registra datos, fuzzificación, activación AND/OR, peso, recortes, envolvente e integral del centroide continuo. La gráfica usa los tramos de esa integral. Los 1001 puntos uniformes son consultas auxiliares y no determinan el resultado. Un punto muestreado con pertenencia cero no demuestra que toda la salida tenga masa cero.',
@@ -50,15 +50,15 @@
     },
     dijkstra: {
       datos: 'Carga un ejemplo o escribe el nombre del punto y pulsa «Añadir». Elige «Desde», «Hasta» y peso, y pulsa «Conectar». Continúa a elegir origen; el destino es opcional. El modo puede ser dirigido o no dirigido.',
-      reglas: 'Hasta 24 vértices, 96 aristas y nombres de 12 caracteres. Pesos enteros entre 0 y 999999. No admite negativos, bucles ni duplicados. En dirigido A→B y B→A son diferentes. Solo calcula caminos mínimos.',
+      reglas: 'Hasta 24 vértices, 96 aristas y nombres de 12 caracteres. Pesos enteros entre 0 y 999999. No admite negativos, vacíos, decimales, bucles propios ni duplicados. En dirigido A→B y B→A son distintas; en no dirigido representan la misma conexión. Un bucle propio une un nodo consigo mismo; un ciclo recorre varios nodos y sí es válido para mínimo. El mínimo usa Dijkstra y admite grafos dirigidos o no dirigidos; el máximo requiere un grafo dirigido acíclico y usa orden topológico.',
       herramientas: 'Selecciona el dibujo o usa «Editar un punto existente» y «Editar una conexión existente» para renombrar, cambiar pesos o eliminar. Puedes arrastrar puntos o ajustar sus coordenadas. «Ver todo» encuadra y «Zoom y más» ofrece zoom, desplazamiento y PNG.',
-      pasos: 'Después de calcular, usa «Anterior», «Siguiente» y «Reproducir/Pausar». «Velocidad y más controles» ofrece reiniciar y último paso. Se elige el pendiente de menor distancia y se revisan sus conexiones; las tablas muestran distancias y predecesores.',
-      resultado: 'Las distancias parten del origen elegido y se calculan a todos los puntos. ∞ o «Sin camino» significa inalcanzable; el origen tiene distancia 0. Elegir otro destino muestra su ruta sin recalcular. «Ver todos los caminos» recupera el árbol de caminos mínimos. En empates se conserva el primer camino encontrado.',
+      pasos: 'Calcular abre Resultado. Paso a paso es una consulta opcional: usa «Anterior», «Siguiente» y «Reproducir/Pausar». «Velocidad y más controles» ofrece reiniciar y último paso. En mínimo se elige el pendiente de menor distancia; en máximo DAG se sigue el orden topológico. Las tablas muestran valores y predecesores. Antes de descubrir un camino, ∞ o −∞ es un valor inicial; al terminar identifica los nodos sin camino.',
+      resultado: 'El objetivo mínimo (Dijkstra) o máximo (solo DAG) se calcula desde el origen a todos los puntos. ∞ o −∞ o «Sin camino» significa inalcanzable; el origen tiene valor 0. Elegir otro destino muestra su ruta sin recalcular. El árbol de mejores caminos reúne los predecesores. En empates se conserva el primer camino encontrado.',
       errores: 'Elige un origen y usa pesos no negativos. ∞ no es un error ni un costo cero: puede faltar una conexión o su dirección impedir el acceso. Cambiar pesos, conexiones, modo u origen invalida el resultado; mover o renombrar puntos y cambiar solo el destino lo conserva.'
     },
     kruskal: {
       datos: 'Carga un ejemplo o añade puntos con nombre. Elige dos extremos y un peso para «Conectar». Continúa a elegir el objetivo Mínimo o Máximo y calcula. No necesita origen ni destino.',
-      reglas: 'Grafo no dirigido: hasta 24 vértices y 96 aristas, nombres de hasta 12 caracteres. Pesos enteros entre −999999 y 999999, incluidos cero y negativos. No se admiten bucles ni duplicados. El grafo de entrada puede contener ciclos.',
+      reglas: 'Grafo no dirigido: hasta 24 vértices y 96 aristas, nombres de hasta 12 caracteres. Pesos enteros entre 0 y 999999, incluido cero. Los negativos se excluyen por política del producto. No se admiten bucles propios ni duplicados; A—B y B—A son la misma conexión. El grafo de entrada sí puede contener ciclos entre distintos nodos.',
       herramientas: 'Selecciona un punto o conexión en el dibujo o en los editores de listas para renombrar, cambiar pesos o eliminar. Arrastra los puntos o ajusta sus coordenadas. «Ver todo» encuadra; «Ampliar» da espacio y «Zoom y más» ofrece zoom y PNG.',
       pasos: 'Usa «Anterior», «Siguiente» o «Reproducir/Pausar». Las conexiones se ordenan según Mínimo o Máximo y se aceptan si unen grupos distintos; se rechazan si forman un ciclo. «Velocidad y más controles» permite reiniciar o ir al último paso.',
       resultado: 'El resultado muestra conexiones elegidas, peso total y componentes. Un grupo conectado produce un árbol; varios producen un bosque, conservando puntos aislados. No calcula rutas mínimas. Con pesos iguales puede existir otra selección con el mismo total.',
@@ -77,8 +77,8 @@
       reglas: 'De 1 a 10 orígenes y destinos reales. Costos de 0 a 999999 con hasta 2 decimales, coma o punto; oferta y demanda enteras de 0 a 999999. Nombres de hasta 40 caracteres. Vacío es pendiente, cero es válido. No admite rutas prohibidas ni cantidades fraccionarias.',
       herramientas: 'La tabla de Datos permite editar costos, oferta, demanda y nombres. Balanceo muestra el ficticio sin modificar tus datos reales. Usa ejemplos para comenzar y Ctrl+Z / Ctrl+Y para deshacer o rehacer cambios.',
       pasos: 'Datos → Balanceo → Resolución paso a paso → Resultado. Se asigna min(oferta restante, demanda restante), empezando arriba a la izquierda. Baja al agotarse la oferta o avanza a la derecha al cubrir la demanda. «Anterior», «Siguiente», «Reiniciar» y «Reproducir/Pausar» recorren las decisiones.',
-      resultado: 'Es una solución inicial factible; no garantiza el costo mínimo. El total suma cantidad × costo unitario. Si sobra oferta se agrega destino ficticio; si falta oferta, origen ficticio, con costo 0 por convención. Un 0 básico pertenece a la base sin representar un envío. Los ficticios no alteran los datos originales.',
-      errores: 'Completa todas las celdas; corrige costos negativos, más de dos decimales o cantidades fraccionarias. Una oferta y demanda desiguales requieren balanceo. Cambiar costos, oferta o demanda exige resolver de nuevo. Cambiar solo costos conserva la lógica de cantidades, pero cambia el total.'
+      resultado: 'Es una solución óptima verificada para el objetivo elegido (mínimo o máximo). La esquina noroeste crea el punto inicial y MODI usa potenciales u-v y ciclos alternantes para mejorar hasta que ningún costo reducido permite una mejora. El total suma cantidad × costo unitario. Si sobra oferta se agrega destino ficticio; si falta oferta, origen ficticio, con costo 0 por convención. Un 0 básico pertenece a la base sin representar un envío.',
+      errores: 'Completa todas las celdas; corrige costos negativos, más de dos decimales o cantidades fraccionarias. Una oferta y demanda desiguales requieren balanceo. Cambiar costos, oferta o demanda exige resolver de nuevo; pueden cambiar las cantidades óptimas.'
     },
     ordenamiento: {
       datos: 'Escribe de 3 a 200 enteros de 1 a 99, incluidos repetidos, y pulsa «Usar valores». También puedes generar datos al azar, casi ordenados o invertidos. Elige Selection, Insertion, Bubble, Shell o Merge Sort.',
@@ -277,12 +277,17 @@
       contexto.vista = texto(e.vista);
       contexto.datos = Object.assign(grafo(e.grafo), { origen: texto(e.origen) || null, destino: texto(e.destino) || null, objetivo: texto(e.objetivo), preparando: !!e.preparando });
       contexto.seleccion = seleccionGrafo(e.seleccion, e.grafo);
+      if (typeof etiquetaNodoGrafo === 'function') {
+        contexto.datos.nodos.forEach(n => { n.nombre = texto(etiquetaNodoGrafo(e.grafo, n.id), 160); });
+        if (contexto.seleccion && contexto.seleccion.tipo === 'nodo') contexto.seleccion.nombre = texto(etiquetaNodoGrafo(e.grafo, contexto.seleccion.id), 160);
+      }
       revision = revisionGrafo(e.grafo);
       // El controlador invalida el resultado al cambiar datos matemáticos. Además,
       // se compara la entrada del resultado sin nombres ni posiciones visuales.
       const firmaGrafo = g => JSON.stringify([g.dirigido !== false, lista(g.nodos).map(n => n.id), lista(g.conexiones).map(c => [c.id, c.desde, c.hacia, c.valor])]);
       contexto.resultadoVigente = !!r && !e.preparando && !!r.grafo && firmaGrafo(r.grafo) === firmaGrafo(e.grafo)
-        && (modulo === 'dijkstra' ? r.origen === e.origen : r.objetivo === e.objetivo);
+        && (modulo === 'dijkstra' ? r.origen === e.origen && !!e.resultado &&
+          (e.resultado.objetivo === e.objetivo || e.resultado.objetivo === undefined && e.objetivo === 'min') : r.objetivo === e.objetivo);
       if (contexto.resultadoVigente) {
         const p = lista(r.pasos)[indice(e.paso)];
         contexto.paso = marcaPaso(p, e.paso, lista(r.pasos).length);
@@ -292,7 +297,7 @@
               const anterior = propio(valores, n.id);
               return { nodo: texto(n.id), anterior: anterior ? texto(anterior.nodo) : null, conexion: anterior ? texto(anterior.conexion) : null };
             });
-          contexto.resultado = { origen: texto(r.origen), destino: texto(e.destino) || null,
+          contexto.resultado = { objetivo: texto(e.objetivo), origen: texto(r.origen), destino: texto(e.destino) || null,
             distancias: distancias(r.distancias), predecesores: predecesores(r.predecesores) };
           if (contexto.paso) Object.assign(contexto.paso, {
             actual: texto(p.actual) || null, desde: texto(p.desde) || null, hacia: texto(p.hacia) || null,
@@ -348,10 +353,15 @@
         costos: origenes.map(o => destinos.map(d => numero(propio(m.costos, o.id + '|' + d.id)))) };
       revision = [m.origenes.map(o => [o.id, o.nombre, o.oferta]), m.destinos.map(d => [d.id, d.nombre, d.demanda]), m.origenes.map(o => m.destinos.map(d => propio(m.costos, o.id + '|' + d.id)))];
       const invalidas = typeof hayPendientesNorthwest === 'function' ? hayPendientesNorthwest() : typeof tablaNw !== 'undefined' && Object.keys(tablaNw.invalidas || {}).length > 0;
-      const consultable = typeof resultadoConsultableNorthwest === 'function' && resultadoConsultableNorthwest();
+      const resultadoConsultable = typeof resultadoConsultableNorthwest === 'function'
+        ? resultadoConsultableNorthwest()
+        : typeof resultadoVigenteNorthwest === 'function' && resultadoVigenteNorthwest();
+      const firmaCoincide = !e.resultado || typeof firmaModeloNorthwest !== 'function'
+        || e.resultado.firma === firmaModeloNorthwest(m);
+      const consultable = resultadoConsultable && firmaCoincide;
       contexto.datos.pendientesDeCorregir = invalidas;
       contexto.datos.resultadoInvalidado = !!e.resultado && !consultable;
-      if (invalidas && consultable) contexto.ultimoCalculoValido = { costoTotal: numero(e.resultado.datos.costoTotal), escalaCostos, consultable: true };
+      if (invalidas && consultable) contexto.ultimoCalculoValido = { objetivo: texto(e.resultado.objetivo), costoTotal: numero(e.resultado.datos.costoTotal), escalaCostos, consultable: true };
       revision.push(invalidas ? Object.entries(e.invalidas || (typeof tablaNw !== 'undefined' ? tablaNw.invalidas : {})) : []);
       contexto.resultadoVigente = consultable && !invalidas;
       if (contexto.resultadoVigente) {
@@ -361,9 +371,13 @@
           ofertaAntes: numero(p.ofertaAntes), demandaAntes: numero(p.demandaAntes), costoUnitario: numero(p.costoUnitario), movimiento: texto(p.movimiento) || null, basicaCero: !!p.basicaCero,
           restanteOferta: tomar(p.restanteOferta, 11, 'paso.restanteOferta'), restanteDemanda: tomar(p.restanteDemanda, 11, 'paso.restanteDemanda'),
           asignaciones: matriz(p.asignaciones, 11, 'paso.asignaciones') });
-        contexto.resultado = { escalaCostos, costoTotal: numero(r.costoTotal), asignaciones: matriz(r.asignaciones, 11, 'resultado.asignaciones'), degenerado: !!r.degenerado,
+        contexto.resultado = { objetivo: texto(r.objetivo), costoTotal: numero(r.costoTotal), costoInicial: numero(r.costoInicial),
+          iteracionesMODI: lista(r.pasosOptimizacion).length, escalaCostos, asignaciones: matriz(r.asignaciones, 11, 'resultado.asignaciones'), degenerado: !!r.degenerado,
           ficticio: b && b.ficticio ? { tipo: texto(b.ficticio.tipo), cantidad: numero(b.ficticio.cantidad), indice: numero(b.ficticio.indice) } : null };
-      } else contexto.error = explicarEstadoResultadoNorthwest();
+      } else contexto.error = typeof explicarEstadoResultadoNorthwest === 'function'
+        ? explicarEstadoResultadoNorthwest()
+        : invalidas ? 'Hay casillas con texto no válido. Corrígelas antes de resolver.'
+          : 'Los datos cambiaron: el resultado anterior no está vigente. Recalcula.';
     } else if (modulo === 'ordenamiento' && typeof estadoOrdenamiento !== 'undefined') {
       const e = estadoOrdenamiento;
       contexto.vista = e.preparando ? 'preparando' : 'procedimiento';
@@ -438,7 +452,7 @@
           reglasHabilitadas: lista(m.reglas).filter(regla => regla.activa !== false && regla.peso > 0).length,
           reglas: tomar(m.reglas, 8, 'datos.modelo.reglas', resumenRegla) },
         valores: entradas.map(v => ({ id: texto(v.id), nombre: texto(v.nombre, 40), valor: numero(propio(e.valores, v.id)), unidad: texto(v.unidad, 40) })),
-        pendiente: !!e.pendiente, resultadoInvalidado: !!e.pendiente };
+        pendiente: !!e.pendiente, resultadoInvalidado: !!e.pendiente, borrador: typeof DifusaEditor !== 'undefined' && DifusaEditor.tieneBorradores(), participacion: entradas.map(v => ({ id: v.id, reglas: m.reglas.filter(r => r.activa && r.peso > 0 && r.antecedentes[v.id] != null).length })) };
         // Huella de configuración/valores; nunca de muestras, tramos o recortes.
         revision = [m, e.valores];
         contexto.resultadoVigente = !!e.resultado && !e.pendiente && entradas.every(v =>
@@ -649,9 +663,9 @@
     if (modulo === 'johnson' && s.tipo === 'nodo') return explicarCasillasJohnson(c);
     if (modulo === 'dijkstra' && s.tipo === 'nodo') {
       if (!c.resultadoVigente || !c.resultado) return faltaResultado(c);
-      const origen = c.resultado.origen, distancias = c.vista === 'resolucion' && c.paso ? c.paso.distancias : c.resultado.distancias;
+      const origen = c.resultado.origen, distancias = c.vista === 'procedimiento' && c.paso ? c.paso.distancias : c.resultado.distancias;
       const distancia = lista(distancias).find(x => x.nodo === s.id);
-      return distancia ? 'La distancia registrada desde ' + nombreNodo(c, origen) + ' hasta el nodo seleccionado ' + nombreNodo(c, s.id) + ' es ' + valor(distancia.distancia) + '. ' + (distancia.distancia === '∞' ? 'No hay camino desde ese origen; no equivale a cero.' : 'Suma pesos del camino mínimo, no solo la última conexión.') : 'La muestra de contexto no incluye la distancia de ese nodo; consulta su fila en el módulo.';
+      return distancia ? 'La distancia registrada desde ' + nombreNodo(c, origen) + ' hasta el nodo seleccionado ' + nombreNodo(c, s.id) + ' es ' + valor(distancia.distancia) + '. ' + (['∞', '−∞'].includes(distancia.distancia) || distancia.distancia === null ? explicarNoFinitoDijkstra(c, s.id, c.vista === 'procedimiento' ? c.paso : null) : 'Suma pesos originales del camino ' + (c.resultado.objetivo === 'max' ? 'máximo' : 'mínimo') + ', no solo la última conexión.') : 'La muestra de contexto no incluye la distancia de ese nodo; consulta su fila en el módulo.';
     }
     if (s.tipo === 'pino') return 'En la posición ' + (s.indice + 1) + ' está el elemento seleccionado de valor ' + valor(s.valor) + '. La posición y el valor son datos distintos; otro elemento puede tener el mismo valor.';
     if (s.tipo === 'valor' && modulo === 'arboles') return 'El nodo seleccionado guarda el valor ' + valor(s.valor) + '. Ese valor identifica al nodo; el orden de emisión depende del recorrido elegido.';
@@ -666,18 +680,23 @@
     const nodo = lista(c.datos && c.datos.nodos).find(n => n.id === id);
     return nodo ? nodo.nombre || nodo.id : valor(id);
   }
+  function explicarNoFinitoDijkstra(c, id, paso) {
+    const procesadoMaximo = c.resultado && c.resultado.objetivo === 'max' && paso && lista(paso.finalizados).includes(id);
+    if (paso && paso.tipo !== 'final' && !procesadoMaximo) return 'Aún sin descubrir. En este paso todavía no se ha encontrado un camino desde ' + nombreNodo(c, c.resultado.origen) + '; las conexiones siguientes pueden descubrirlo. No equivale a cero.';
+    return 'Sin camino desde ' + nombreNodo(c, c.resultado.origen) + '. No equivale a cero.' + (procesadoMaximo ? ' Procesado no significa alcanzable.' : '');
+  }
   function faltaResultado(c) {
     return 'Todavía no hay un resultado vigente. ' + (c.error || 'Completa los datos y calcula o recalcula en el módulo.');
   }
   function pendientes(modulo, c) {
     if (modulo === 'northwest' && c.datos && c.datos.pendientesDeCorregir) {
       const anterior = c.ultimoCalculoValido;
-      return (c.error || 'Hay datos pendientes de corregir.') + (anterior && anterior.consultable ? '\nCosto del último cálculo válido: ' + valor(anterior.costoTotal / anterior.escalaCostos) + '. Es una solución inicial factible del modelo anterior, sin garantía de costo mínimo.' : '') + '\nCorrige las entradas marcadas en Datos antes de balancear o resolver.';
+      return (c.error || 'Hay datos pendientes de corregir.') + (anterior && anterior.consultable ? '\nTotal ' + (anterior.objetivo === 'max' ? 'máximo' : 'mínimo') + ' del último cálculo válido: ' + valor(anterior.costoTotal / anterior.escalaCostos) + '.' : '') + '\nCorrige las entradas marcadas en Datos antes de balancear o resolver.';
     }
     if (modulo === 'difusa') {
       const d = c.datos || {}, modelo = d.modelo;
       return [c.error ? 'Aviso actual: ' + c.error : '', !modelo ? 'Carga un ejemplo o crea tu sistema.' :
-        'Modelo «' + modelo.nombre + '»: ' + lista(modelo.entradas).length + ' entradas, ' + modelo.cantidadReglas + ' reglas y ' + modelo.reglasHabilitadas + ' habilitadas con peso mayor que cero.',
+        (d.borrador ? 'Hay un Borrador sin aplicar; aplica o cancela antes de evaluar. ' : 'Aplicado. ') + 'Modelo «' + modelo.nombre + '»: ' + lista(modelo.entradas).length + ' entradas, ' + modelo.cantidadReglas + ' reglas y ' + modelo.reglasHabilitadas + ' habilitadas con peso mayor que cero.',
       lista(d.valores).filter(v => v.valor === null).map(v => 'Falta un valor válido para ' + v.nombre + '.').join(' '),
       !c.resultadoVigente ? 'Revisa Variables, Reglas y los valores de Evaluar antes de calcular.' :
         c.resultado && c.resultado.valor === null ? c.resultado.diagnostico || 'No hay salida numérica; consulta el diagnóstico del resultado.' : 'Hay una evaluación vigente. Consulta su procedimiento.',
@@ -735,6 +754,7 @@
     if (modulo === 'dijkstra' && p.desde && p.hacia && p.candidata !== null) {
       lineas.push('Conexión revisada: ' + nombreNodo(c, p.desde) + ' → ' + nombreNodo(c, p.hacia) + '. Distancia anterior: ' + valor(p.anterior) + '; candidata registrada: ' + valor(p.candidata) + '. ' + (p.mejora ? 'La aplicación registra una mejora.' : 'La aplicación no registra mejora.'));
     }
+    if (modulo === 'dijkstra') lista(p.distancias).filter(d => typeof d.distancia !== 'number' || !Number.isFinite(d.distancia)).forEach(d => lineas.push(nombreNodo(c, d.nodo) + ': ' + explicarNoFinitoDijkstra(c, d.nodo, p)));
     if (modulo === 'kruskal' && p.arista) lineas.push('Conexión ' + p.arista + ': ' + (p.aceptada ? 'aceptada' : 'descartada') + '. Peso acumulado registrado: ' + valor(p.pesoAcumulado) + '.');
     if (modulo === 'northwest' && typeof p.cantidad === 'number') lineas.push('Cantidad registrada: ' + valor(p.cantidad) + '; oferta previa: ' + valor(p.ofertaAntes) + '; demanda previa: ' + valor(p.demandaAntes) + '.' + (p.operacion ? ' Operación: ' + p.operacion + '.' : '') + (p.basicaCero ? ' Es un 0 básico; no representa un envío.' : ''));
     if (modulo === 'ordenamiento') {
@@ -781,8 +801,9 @@
     }
     if (modulo === 'dijkstra') {
       const destino = r.destino && lista(r.distancias).find(v => v.nodo === r.destino);
-      if (destino) return 'Desde ' + nombreNodo(c, r.origen) + ' hasta ' + nombreNodo(c, r.destino) + ', la distancia mínima registrada es ' + valor(destino.distancia) + '. ' + (destino.distancia === '∞' ? 'Ese destino es inalcanzable; ∞ no equivale a cero.' : 'La ruta seleccionada corresponde solo a ese destino.') + ' El árbol de predecesores reúne caminos desde el origen a los nodos alcanzables; no es una única ruta.';
-      return 'Distancias calculadas desde ' + nombreNodo(c, r.origen) + ':\n' + lista(r.distancias).map(v => nombreNodo(c, v.nodo) + ': ' + valor(v.distancia)).join('\n') + '\n∞ significa inalcanzable desde ese origen. Un predecesor es el punto anterior en el camino; el árbol reúne caminos y la ruta seleccionada corresponde a un destino.';
+      const maximo = r.objetivo === 'max';
+      if (destino) return 'Desde ' + nombreNodo(c, r.origen) + ' hasta ' + nombreNodo(c, r.destino) + ', el valor ' + (maximo ? 'máximo' : 'mínimo') + ' registrado es ' + valor(destino.distancia) + '. ' + (typeof destino.distancia !== 'number' || !Number.isFinite(destino.distancia) ? 'Ese destino es inalcanzable; ∞/−∞ no equivale a cero.' : 'La ruta seleccionada corresponde solo a ese destino.') + ' El árbol de predecesores reúne caminos desde el origen a los nodos alcanzables; no es una única ruta.';
+      return 'Valores ' + (maximo ? 'máximos' : 'mínimos') + ' calculados desde ' + nombreNodo(c, r.origen) + ':\n' + lista(r.distancias).map(v => nombreNodo(c, v.nodo) + ': ' + valor(v.distancia)).join('\n') + '\n∞ o −∞ significa inalcanzable desde ese origen. Un predecesor es el punto anterior en el camino; el árbol reúne caminos y la ruta seleccionada corresponde a un destino.';
     }
     if (modulo === 'kruskal') {
       const parcial = lista(c.omitidos).length > 0, elegidas = Number.isInteger(r.cantidadElegidas) ? r.cantidadElegidas : parcial ? null : lista(r.elegidas).length;
@@ -805,7 +826,7 @@
         }));
         operacion = '\nCantidad × costo unitario: ' + (terminos.length ? terminos.join(' + ') : '0') + ' = ' + valor(total) + '.';
       } else if (asignaciones.length) operacion = '\nEl contexto no incluye todas las asignaciones y costos para desarrollar la suma completa; se conserva el total registrado.';
-      return 'Costo total calculado: ' + valor(total) + '. Es una solución inicial factible; no garantiza el costo mínimo.' + operacion + (r.ficticio ? '\nFicticio registrado: ' + r.ficticio.tipo + ', cantidad ' + valor(r.ficticio.cantidad) + '.' : '\nNo se registró un ficticio.') + (r.degenerado ? '\nLa base es degenerada: puede incluir un 0 básico sin envío.' : '');
+      return 'Objetivo: ' + (r.objetivo === 'max' ? 'máximo' : 'mínimo') + ' total verificado: ' + valor(total) + '. Esquina noroeste inicia y MODI confirma optimalidad después de ' + valor(r.iteracionesMODI) + ' mejoras; el total inicial fue ' + valor(typeof r.costoInicial === 'number' ? r.costoInicial / r.escalaCostos : r.costoInicial) + '.' + operacion + (r.ficticio ? '\nFicticio registrado: ' + r.ficticio.tipo + ', cantidad ' + valor(r.ficticio.cantidad) + '.' : '\nNo se registró un ficticio.') + (r.degenerado ? '\nLa base es degenerada: puede incluir un 0 básico sin envío.' : '');
     }
     if (modulo === 'ordenamiento') return 'Procedimiento preparado para ' + d.algoritmo + '. Totales registrados: ' + valor(r.comparaciones) + ' comparaciones y ' + valor(r.intercambios) + ' movimientos.' + (r.arregloFinal ? '\nLista final: [' + r.arregloFinal.join(', ') + '].' : '\nLa vista actual corresponde al paso seleccionado. Avanza al último evento para consultar la lista final.') + '\nLa velocidad de animación no mide el tiempo de cálculo.';
     if (modulo === 'arboles') return 'Recorrido: ' + valor(r.recorrido) + '. Salida emitida hasta el paso elegido: [' + lista(r.salidaParcial).join(', ') + ']. ' + (r.completo ? 'El recorrido está completo.' : 'Es una salida parcial; avanza para completarla.') + '\nInorden ordena valores solo si el árbol es BST.';
@@ -815,10 +836,10 @@
     const descripciones = {
       inicio: 'Inicio permite elegir el módulo y abrir trabajos recientes.',
       johnson: 'Johnson calcula distancias entre todos los pares en un grafo dirigido y permite pesos negativos, sin ciclos negativos.',
-      dijkstra: 'Dijkstra calcula distancias desde un origen y requiere pesos no negativos; admite modo dirigido o no dirigido.',
+      dijkstra: 'El objetivo mínimo usa Dijkstra con pesos no negativos y admite grafos dirigidos o no dirigidos. El máximo usa orden topológico y exige un DAG dirigido.',
       kruskal: 'Kruskal conecta los vértices en un árbol o bosque de peso mínimo o máximo, sin buscar rutas desde un origen.',
       asignacion: 'Asignación usa el método húngaro para elegir parejas recurso–tarea de costo mínimo o beneficio máximo.',
-      northwest: 'Esquina noroeste obtiene una solución inicial factible de transporte; no garantiza costo mínimo.',
+      northwest: 'Esquina noroeste produce una solución inicial factible de transporte y MODI optimiza el objetivo mínimo o máximo.',
       ordenamiento: 'Ordenamiento transforma una lista en orden ascendente; Selection busca mínimos, Insertion inserta, Bubble compara vecinos, Shell usa saltos y Merge divide y mezcla. Insertion, Bubble y Merge son estables; Selection y Shell no lo garantizan.',
       arboles: 'Árboles permite crear un BST por inserciones o reconstruir un árbol binario general y seguir sus recorridos. Un árbol binario general no necesariamente cumple el orden de un BST.',
       difusa: 'Lógica difusa permite configurar un sistema Mamdani de una a tres entradas, pertenencias y reglas AND/OR con peso. Incluye ejemplos didácticos de ayuda, propina y ventilación; no son modelos calibrados.'
@@ -833,7 +854,7 @@
     if (l.intencion === 'diferencias') return diferencias(l);
     if (l.modulos.length > 1) return sinCobertura(f, pregunta);
     // Conceptos con preguntas completas; mencionar una palabra aislada no basta.
-    if (/^(?:que significa|que es|que son) (?:infinito|infinita|distancia infinita)$/.test(l.consulta) && ['johnson', 'dijkstra'].includes(modulo)) return prefijo + '∞ significa que no existe camino desde el origen hasta ese destino. No equivale a distancia cero.';
+    if (/^(?:que significa|que es|que son) (?:infinito|infinita|distancia infinita)$/.test(l.consulta) && ['johnson', 'dijkstra'].includes(modulo)) return prefijo + (modulo === 'dijkstra' ? 'Durante los pasos, ∞ (o −∞ en máximo DAG) significa que todavía no se ha encontrado un camino. Al terminar, los valores que siguen así indican «Sin camino desde el origen». En máximo DAG, un nodo ya procesado en orden topológico también puede identificarse como inalcanzable. No equivale a distancia cero.' : '∞ significa que no existe camino desde el origen hasta ese destino. No equivale a distancia cero.');
     if (/^(?:que es|que significa|como funciona) (?:balanceo|ficticio|cero basico|0 basico)$/.test(l.consulta) && modulo === 'northwest') return prefijo + temas.resultado;
     if (/^(?:puedo usar|puedo poner|se permiten|se admiten|acepta|admite)(?: pesos| valores| numeros| datos)? (?:negativos|decimales|repetidos|duplicados|cero)$/.test(l.consulta)) return prefijo + temas.reglas;
     if (/^(?:que es|que significa) ciclo negativo$/.test(l.consulta) && modulo === 'johnson') return prefijo + 'Un ciclo negativo tiene suma de pesos menor que cero. Recorrerlo repetidamente impide una distancia mínima finita. El módulo lo detecta y muestra el ciclo en lugar de una matriz de distancias.';

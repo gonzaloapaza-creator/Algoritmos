@@ -28,6 +28,13 @@
 .nw-ejemplo select { flex: 1 1 auto; min-width: 0; }
 .nw-ejemplo .btn { flex: 0 0 auto; }
 .nw-balanceo-texto { display: flex; flex-direction: column; gap: 8px; margin-bottom: var(--esp-3); }
+.nw-objetivo { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(220px, 1fr); gap: 6px 12px; align-items: center; margin: var(--esp-3) 0; }
+.nw-objetivo label { font-weight: 700; }
+.nw-objetivo p { grid-column: 1 / -1; margin: 0; }
+.nw-modi { border-top: 1px solid var(--borde-suave); padding-top: var(--esp-3); }
+.nw-modi h3 { margin: 0 0 8px; font-size: var(--t-md); }
+.nw-modi ol { margin: 0; padding-left: 1.4rem; display: flex; flex-direction: column; gap: 8px; }
+.nw-modi li { line-height: 1.5; }
 .nw-leyenda { margin-top: 10px; }
 .nw-paso-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 
@@ -85,6 +92,8 @@
 
 /* ---------------- Móvil ---------------- */
 @media (max-width: 640px) {
+  .nw-objetivo { grid-template-columns: 1fr; }
+  .nw-objetivo p { grid-column: auto; }
   .nw-lateral { flex-direction: column; }
   .nw-lateral > * { flex: 0 1 auto; }
   .nw-pie .btn { width: 100%; }

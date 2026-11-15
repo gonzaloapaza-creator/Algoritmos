@@ -5,10 +5,10 @@ Proyecto de la materia **Análisis de Algoritmos** del grupo **Los Fanáticos de
 | Categoría | Módulo | Entrada | Resultado |
 |---|---|---|---|
 | Grafos y rutas | **Johnson** | Grafo dirigido con pesos enteros (editor visual o ejemplos) | Resolución paso a paso, distancias entre todos los pares y rutas |
-| Grafos y rutas | **Dijkstra** | Grafo dirigido o no dirigido, pesos no negativos y origen | Distancias a todos los vértices, árbol de caminos mínimos y ruta opcional |
+| Grafos y rutas | **Dijkstra / caminos máximos DAG** | Grafo con pesos no negativos y origen; máximo requiere grafo dirigido acíclico | Valores mínimos con Dijkstra o máximos por orden topológico, rutas y predecesores |
 | Grafos y rutas | **Kruskal** | Grafo no dirigido ponderado, objetivo mínimo/máximo | Árbol o bosque de expansión y peso total |
 | Asignación | **Asignación (método húngaro)** | Grafo bipartito recursos–tareas o matriz | Asignación óptima, total y procedimiento completo |
-| Transporte | **Esquina noroeste** | Matriz de costos, oferta y demanda | Solución inicial factible paso a paso |
+| Transporte | **Esquina noroeste + MODI** | Matriz de costos, oferta, demanda y objetivo mínimo/máximo | Solución óptima verificada y pivotes MODI paso a paso |
 | Ordenamiento | **Ordenamiento (Bowling)** | 3–200 enteros entre 1 y 99 | Selection, Insertion, Bubble, Shell y Merge Sort animados con pinos, pseudocódigo e historial |
 | Árboles | **Árboles binarios** | 1–31 enteros únicos entre −999 y 999, o recorridos | Árbol SVG, recorridos animados y reconstrucción validada |
 | Decisiones y lógica | **Lógica difusa · Mamdani** | Sistema configurable de 1–3 entradas, conjuntos y reglas AND/OR con peso | Pertenencias, recortes, centroide y mapa de respuesta SVG |
@@ -222,13 +222,13 @@ Se eligió 200 para conservar este rango de memoria y dividir la preparación en
 
 Ambos editores admiten hasta 24 vértices y 96 aristas, IDs estables, nombres de hasta 12 caracteres, sin bucles ni duplicados. El límite prioriza la legibilidad del editor ampliable y las listas; en el caso medido 24/96, las medianas del núcleo fueron 3,27 ms para Dijkstra y 1,69 ms para Kruskal (10 ejecuciones tras calentamiento). El registro didáctico está incluido; no es una garantía para otros equipos. El SVG encuadra el grafo completo al abrirlo y al redimensionar; «Ver todo» recupera esa vista después de usar «Zoom y más». Hay formularios alternativos de selección, peso y posición. Los nombres largos se abrevian dentro del nodo y se consultan completos en listas y etiquetas accesibles.
 
-Las cuatro etapas incluyen instrucciones, «Continuar», «Ver resultado» y retorno al procedimiento, con foco en la etapa elegida. La explicación y los controles de reproducción aparecen inmediatamente debajo del grafo; las decisiones se muestran al lado en escritorio y debajo en móvil. Dijkstra explica cada suma de distancia y peso y distingue «Sin camino» al terminar; Kruskal explica el orden de revisión, los grupos conectados y los ciclos descartados. Las opciones avanzadas se despliegan cuando se necesitan.
+Las cuatro etapas incluyen instrucciones, «Continuar», «Ver resultado» y retorno al procedimiento, con foco en la etapa elegida. La explicación y los controles de reproducción aparecen inmediatamente debajo del grafo; las decisiones se muestran al lado en escritorio y debajo en móvil. Dijkstra explica sus sumas y distingue «Sin camino»; el objetivo máximo usa orden topológico y solo admite grafos dirigidos acíclicos. Kruskal explica el orden de revisión, los grupos conectados y los ciclos descartados.
 
 La bienvenida permite cargar un ejemplo o enfocar la creación del primer punto. Los formularios explican «punto/vértice» y «conexión/arista»; Enter añade puntos y conexiones, y la edición de elementos existentes se despliega por separado. Las cuatro etapas mantienen sus nombres visibles en móvil. El procedimiento tiene una barra de avance y destaca la fila actual. Los resultados resumen las cifras reales: en Dijkstra, cada tarjeta de destino muestra su ruta sin repetir el cálculo, con opción de volver a todos los caminos; Kruskal resume peso, conexiones elegidas y grupos.
 
 Johnson conserva las coordenadas al redimensionar, importar o recuperar un grafo: se adapta el encuadre, sin sobrescribir su distribución. El botón de porcentaje encuadra la red completa. Espacio selecciona un elemento SVG, Enter permite editarlo y las flechas conservan la selección y el foco. Los nombres automáticos respetan las mayúsculas/minúsculas y la importación rechaza conexiones repetidas con el mismo origen y destino.
 
-- **Dijkstra:** dirigido o no dirigido, enteros 0…999999. En dirigido, A→B y B→A son aristas diferentes con su propio peso no negativo; en no dirigido, A–B y B–A son una sola arista. Calcula todas las distancias con lista de adyacencia y barrido lineal de pendientes: núcleo `O(V² + E)`, registro de estados `O((V + E)V)`. Los empates siguen el orden de vértices y aristas; una igualdad conserva el primer predecesor. Cambiar el destino reconstruye su ruta con pesos originales sin recalcular. Convertir a dirigido duplica cada arista; convertir a no dirigido fusiona las opuestas y solicita resolver cualquier peso diferente.
+- **Dijkstra / camino máximo:** mínimo en grafo dirigido o no dirigido, pesos enteros 0…999999; Dijkstra usa lista de adyacencia y barrido lineal de pendientes, `O(V² + E)`. El máximo no invierte Dijkstra: usa un orden topológico `O(V + E)` y rechaza cualquier grafo no dirigido o con ciclos, porque no hay máximo finito general para recorridos con ciclos positivos. En dirigido, A→B y B→A son aristas diferentes; en no dirigido, A–B y B–A son una sola arista. Los empates conservan el primer predecesor. Cambiar destino reconstruye la ruta sin recalcular.
 - **Kruskal:** no dirigido, enteros −999999…999999. Ordena ascendente/descendente según mínimo/máximo y usa Union-Find con compresión y rango: núcleo `O(E log E + E α(V))`; registrar componentes añade estados de tamaño `O(EV)`. Los empates siguen el orden original de aristas. Un grafo desconectado entrega un bosque con `V−C` aristas, incluye aislados y no añade conexiones. No se afirma unicidad.
 
 Editar pesos, topología, modo, origen u objetivo invalida el cálculo correspondiente. Renombrar o mover vértices conserva los valores y actualiza las etiquetas. CRUD, deshacer/rehacer (50 acciones), generación acotada, ejemplos, JSON, autoguardado, trabajos nombrados y PNG comparten componentes pequeños; Johnson mantiene su propio estado y comportamiento.
@@ -321,7 +321,7 @@ La migración V1 es tolerante por decisión de compatibilidad: toma las dimensio
 
 ## 5. Esquina noroeste (transporte)
 
-> El método de la esquina noroeste obtiene una solución inicial factible. **No garantiza el costo mínimo.** La aclaración se muestra permanentemente en el módulo y en el resultado; no existen botones ni etiquetas de «óptimo».
+> La esquina noroeste construye una solución inicial factible; el usuario elige minimizar o maximizar y MODI mejora esa solución hasta demostrar el óptimo global.
 
 Flujo: **1 Datos → 2 Balanceo → 3 Resolución paso a paso → 4 Resultado**.
 
@@ -347,11 +347,13 @@ Función pura `resolverEsquinaNoroeste(costos, ofertas, demandas)` sobre el prob
 
 Cada paso registra: celda, costo unitario, oferta/demanda antes, operación `min(a, b) = c`, cantidad, saldos después, línea satisfecha y próximo movimiento. La vista distingue costo unitario (`c =`, pequeño) de cantidad (grande). Anterior / Siguiente / Reiniciar (también ← →); «Reproducir» es opcional.
 
+### Optimización (`optimizacion.js`)
+
+Tras la asignación inicial se elige minimizar o maximizar. MODI calcula potenciales `u` y `v` para las celdas básicas, selecciona costos reducidos que mejoran el objetivo, forma el ciclo alternante, ajusta las cantidades con `θ` y conserva `m + n − 1` celdas básicas sin ciclos. Se detiene solo cuando todos los costos reducidos satisfacen el criterio de optimalidad; verifica de nuevo balances, cantidades, total y base antes de publicar el resultado. El resultado compara el total inicial con el óptimo y lista los pivotes. No hay algoritmos Vogel/costo mínimo.
+
 ### Persistencia
 
-`northwest.v1` → `{ version, modelo, vista }`. Exportar/Importar JSON en el panel «Ejemplos». Deshacer/rehacer con Ctrl+Z / Ctrl+Y.
-
-Preparado para MODI / Vogel / costo mínimo: el resultado expone `basicas`, `asignaciones`, `costos` balanceados y la verificación de la base; no se incluyen en esta entrega.
+`northwest.v1` → `{ version, modelo, vista }`. La selección de objetivo pertenece al cálculo y no altera el modelo persistido. Exportar/Importar JSON en el panel «Ejemplos». Deshacer/rehacer con Ctrl+Z / Ctrl+Y.
 
 ---
 
