@@ -11,7 +11,8 @@ const CASOS = [
   { id: 'mejoras', destino: 'n5', minimo: 8 },
   { id: 'campus', destino: 'n4', minimo: 60 },
   { id: 'direcciones', destino: 'n3', minimo: 5 },
-  { id: 'ceros', destino: 'n4', minimo: 2 }
+  { id: 'ceros', destino: 'n4', minimo: 2 },
+  { id: 'referencia-clase', destino: 'n4', minimo: 101 }
 ];
 let correctas = 0;
 const errores = [];
@@ -60,7 +61,7 @@ async function funcional(b) {
   const { contexto, p } = await nueva(b, 390);
   try {
     const catalogo = await p.$$eval('#ejemploGrafo option', opciones => opciones.map(e => e.value));
-    comprobar(JSON.stringify(catalogo) === JSON.stringify(CASOS.map(c => c.id)), 'Catálogo: cinco lecciones y ningún caso retirado');
+    comprobar(JSON.stringify(catalogo) === JSON.stringify(CASOS.map(c => c.id)), 'Catálogo: cinco lecciones conservadas y referencia de clase');
     await clic(p, '#btnEjemploRapidoGrafo');
     comprobar(await p.evaluate(() => moduloGrafo.grafo.nodos.length === 4 && moduloGrafo.destino === 'n4' && moduloGrafo.origen === 'n1' && document.activeElement.id === 'btnResolverGrafo'), 'Inicio rápido prepara Atajo, origen A, destino D y foco en calcular');
     await calcular(p);

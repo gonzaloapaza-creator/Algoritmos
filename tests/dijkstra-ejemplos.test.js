@@ -4,7 +4,7 @@ const fs = require('fs'), path = require('path'), vm = require('vm');
 const { crearContexto, cargar, evaluar, prueba, igual, cierto, lanza, informe } = require('./cargar');
 const fuentes = ['js/config.js', 'js/grafos/modelo.js', 'js/grafos/algoritmos.js'];
 const c = cargar(crearContexto(), fuentes);
-const idsCatalogo = ['atajo', 'mejoras', 'campus', 'direcciones', 'ceros'];
+const idsCatalogo = ['atajo', 'mejoras', 'campus', 'direcciones', 'ceros', 'referencia-clase'];
 const grafo = id => c.crearEjemploGrafo('dijkstra', id);
 
 function comprobarDistancias(g, resultado, esperadas) {
@@ -12,10 +12,10 @@ function comprobarDistancias(g, resultado, esperadas) {
     n.nombre + ': esperado ' + esperadas[i] + ', obtenido ' + resultado.distancias[n.id]));
 }
 
-prueba('El catálogo presenta cinco lecciones distintas con origen y destino válidos', () => {
+prueba('El catálogo conserva las cinco lecciones y añade la referencia de clase', () => {
   const catalogo = c.catalogoEjemplosGrafo('dijkstra');
   igual(catalogo.map(e => e.id), idsCatalogo);
-  const destinos = { atajo: 'n4', mejoras: 'n5', campus: 'n4', direcciones: 'n3', ceros: 'n4' };
+  const destinos = { atajo: 'n4', mejoras: 'n5', campus: 'n4', direcciones: 'n3', ceros: 'n4', 'referencia-clase': 'n4' };
   for (const e of catalogo) {
     const g = grafo(e.id);
     cierto(c.validarGrafoModulo(g, 'dijkstra').ok);

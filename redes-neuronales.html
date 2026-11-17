@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Entrena un perceptrón y explica cada cambio de peso: AND de la pizarra, Hardlim, Hardlims, OR y XOR con historial exacto." />
+  <meta name="theme-color" content="#0b1020" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='8' cy='8' r='4' fill='%23ac9bfa'/%3E%3Ccircle cx='8' cy='24' r='4' fill='%23ac9bfa'/%3E%3Ccircle cx='24' cy='16' r='6' fill='%2300d3a7'/%3E%3Cpath d='M12 8l6 8-6 8' fill='none' stroke='%23ac9bfa' stroke-width='2'/%3E%3C/svg%3E" />
+  <title>Redes neuronales · Perceptrón | Ciudad de los Algoritmos</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="js/comun/tema.js"></script>
+  <link rel="stylesheet" href="css/shell.css" />
+  <link rel="stylesheet" href="css/neuronales.css" />
+  <link rel="stylesheet" href="css/asistente.css" />
+</head>
+<body class="rn-pagina page-neuronales" data-modulo="neuronales">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <header class="topbar">
+    <button type="button" class="btn btn-fantasma btn-icono topbar__menu" id="btnMenuLateral" aria-label="Abrir menú" aria-expanded="false" aria-controls="barraLateral"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+    <a class="topbar__marca" href="index.html" aria-label="Ciudad de los Algoritmos · Inicio"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="9" cy="23" r="5"/><circle cx="23" cy="9" r="5"/><line x1="12" y1="20" x2="20" y2="12"/></svg><span>Algoritmos</span></a>
+    <span class="topbar__separador" aria-hidden="true"></span>
+    <span class="topbar__modulo" id="topbarModulo">Perceptrón</span>
+    <div class="topbar__acciones"><button type="button" class="btn btn-fantasma btn-sm" id="btnAyuda">Ayuda</button></div>
+  </header>
+  <aside class="sidebar" id="barraLateral" aria-label="Navegación principal"></aside>
+  <div class="sidebar-fondo" id="barraLateralFondo" hidden></div>
+  <main class="contenido" id="contenido">
+    <div id="moduloContenido">
+    <header class="rn-intro">
+      <div>
+        <p class="rn-rubro">Redes neuronales</p>
+        <h1>Entrena un perceptrón</h1>
+        <p class="rn-bajada">Sigue el ejercicio de la pizarra: la neurona compara su salida con la deseada y corrige sus pesos cuando se equivoca.</p>
+      </div>
+      <div class="rn-flujo" aria-label="Entradas, suma ponderada, activación y salida">
+        <div><small>Entradas</small><strong>x₁ … xₙ</strong></div>
+        <span aria-hidden="true">→</span>
+        <div><small>Suma ponderada</small><strong id="diagrama-suma">S = Σ xᵢwᵢ</strong></div>
+        <span aria-hidden="true">→</span>
+        <div><small>Activación · z = S − θ</small><strong id="diagrama-activacion">Hardlim</strong></div>
+        <span aria-hidden="true">→</span>
+        <div><small>Salida</small><strong id="diagrama-salida">ŷ</strong></div>
+      </div>
+    </header>
+
+    <section class="rn-panel" aria-labelledby="config-titulo">
+      <div class="rn-panel-titulo">
+        <div><h2 id="config-titulo">Configura el ejercicio</h2><p>Elige un ejemplo o edita sus datos.</p></div>
+        <div class="rn-cargar">
+          <label class="rn-oculto" for="ejemplo">Ejemplo</label>
+          <select id="ejemplo"></select>
+          <button type="button" id="cargar">Cargar ejemplo</button>
+        </div>
+      </div>
+      <p id="ejemplo-nota" class="rn-nota"></p>
+      <form id="config" novalidate>
+        <div class="rn-config-grid">
+          <section aria-labelledby="patrones-titulo">
+            <h3 id="patrones-titulo">Patrones de entrenamiento</h3>
+            <p id="rango-datos" class="rn-texto">Entradas entre −100 y 100. Puedes usar coma o punto decimal y hasta seis decimales.</p>
+            <div class="rn-tabla" tabindex="0" role="region" aria-label="Tabla editable de patrones">
+              <table id="datos" aria-describedby="rango-datos"></table>
+            </div>
+            <button type="button" id="agregar" class="rn-secundario rn-agregar">+ Añadir patrón</button>
+          </section>
+          <section aria-labelledby="parametros-titulo" class="rn-parametros">
+            <h3 id="parametros-titulo">Parámetros de aprendizaje</h3>
+            <div class="rn-campos">
+              <label>Entradas <select id="entradas"></select></label>
+              <label>Activación <select id="activacion"><option value="hardlim">Hardlim · 0 / 1</option><option value="hardlims">Hardlims · −1 / 1</option></select></label>
+              <label>Umbral θ <input id="umbral" type="text" inputmode="decimal" maxlength="14" aria-describedby="ayuda-umbral"></label>
+              <label>Razón η <input id="razon" type="text" inputmode="decimal" maxlength="14" aria-describedby="ayuda-razon"></label>
+              <label>Máximo de épocas (1–100) <input id="epocas" type="text" inputmode="numeric" maxlength="3"></label>
+              <label class="rn-check"><input id="aprenderUmbral" type="checkbox"> Ajustar también el umbral</label>
+            </div>
+            <p id="ayuda-umbral" class="rn-texto">Umbral y pesos iniciales entre −100 y 100.</p>
+            <p id="ayuda-razon" class="rn-texto">Razón entre 0,000001 y 1. Una época recorre todos los patrones en orden.</p>
+            <div id="pesos" class="rn-pesos" aria-label="Pesos iniciales"></div>
+          </section>
+        </div>
+        <details class="rn-formulas">
+          <summary>Ver fórmulas y regla de activación</summary>
+          <p><strong>Suma ponderada.</strong> S = Σ(xᵢ · wᵢ). La entrada neta es z = S − θ. Si z ≥ 0, la salida es 1. Para z &lt; 0, Hardlim devuelve 0 y Hardlims devuelve −1.</p>
+          <p><strong>Corrección.</strong> e = ŷ − y; Δwᵢ = −η · e · xᵢ. Después de cada fila, wᵢ nuevo = wᵢ anterior + Δwᵢ.</p>
+          <p><strong>Umbral.</strong> El ejercicio de clase lo mantiene fijo. Si activas su aprendizaje, θ nuevo = θ anterior + η · e.</p>
+        </details>
+        <p id="error" class="rn-aviso rn-error" role="alert" hidden></p>
+        <div class="rn-acciones">
+          <button type="submit" class="rn-principal">Entrenar y ver pasos</button>
+          <button type="button" id="exportar" class="rn-secundario">Exportar ejercicio</button>
+          <button type="button" id="importar" class="rn-secundario">Importar ejercicio</button>
+          <input id="archivo" type="file" accept=".json,application/json" hidden>
+        </div>
+        <p id="estado" class="rn-estado" role="status"></p>
+      </form>
+    </section>
+
+    <div id="resultados" hidden>
+      <section class="rn-panel rn-resumen" aria-labelledby="resultado-titulo">
+        <div class="rn-panel-titulo">
+          <div><h2 id="resultado-titulo" tabindex="-1">Resultado del entrenamiento</h2><p id="diagnostico"></p></div>
+          <span id="convergencia" class="rn-estado-aprendizaje"></span>
+        </div>
+        <dl id="metricas" class="rn-metricas"></dl>
+      </section>
+
+      <section class="rn-panel" aria-labelledby="pasos-titulo">
+        <div class="rn-panel-titulo">
+          <div><h2 id="pasos-titulo">Procedimiento paso a paso</h2><p>Revisa la decisión y los pesos usados para cada patrón.</p></div>
+          <label class="rn-elegir-epoca">Ir a época <select id="ir-epoca"></select></label>
+        </div>
+        <div class="rn-navegar">
+          <button id="anterior" type="button" class="rn-secundario">← Anterior</button>
+          <span id="paso" role="status"></span>
+          <button id="siguiente" type="button" class="rn-secundario">Siguiente →</button>
+        </div>
+        <div id="detalle-paso"></div>
+        <details class="rn-detalle">
+          <summary>Ver tabla completa de esta época</summary>
+          <p class="rn-texto">Cada fila usa los pesos resultantes del patrón anterior.</p>
+          <div class="rn-tabla" tabindex="0" role="region" aria-label="Registro de la época">
+            <table id="tabla-epoca"></table>
+          </div>
+        </details>
+      </section>
+
+      <section class="rn-panel" aria-labelledby="comparacion-titulo">
+        <div class="rn-panel-titulo"><div>
+          <h2 id="comparacion-titulo">Comparación antes y después</h2>
+          <p>Se evalúan los mismos patrones con los pesos iniciales y con los últimos pesos obtenidos.</p>
+        </div></div>
+        <div class="rn-tabla" tabindex="0" role="region" aria-label="Comparación de predicciones">
+          <table id="comparacion"></table>
+        </div>
+        <details id="aprendizaje" class="rn-detalle" open>
+          <summary>Errores por época</summary>
+          <p class="rn-texto">Son errores observados durante el entrenamiento, mientras se actualizan los pesos fila por fila.</p>
+          <div id="grafico"></div>
+        </details>
+        <details class="rn-detalle">
+          <summary>Probar una entrada con los pesos obtenidos</summary>
+          <div id="prediccion-campos" class="rn-pesos"></div>
+          <button type="button" id="predecir" class="rn-secundario">Predecir</button>
+          <p id="prediccion" role="status" class="rn-estado"></p>
+        </details>
+      </section>
+    </div>
+    </div>
+  </main>
+  <footer class="app-footer"><div class="app-footer__inner"><p><strong>Los Fanáticos del Nabo</strong> · Ciudad de los Algoritmos</p><p>Entrenamiento educativo local. Los aciertos se miden sobre los patrones utilizados; no son una evaluación con datos nuevos.</p></div></footer>
+  <script src="js/config.js"></script>
+  <script src="js/comun/utilidades.js"></script>
+  <script src="js/comun/catalogo.js"></script>
+  <script src="js/comun/dialogo.js"></script>
+  <script src="js/comun/navegacion.js"></script>
+  <script src="js/comun/presentacion.js"></script>
+  <script src="js/comun/notificaciones.js"></script>
+  <script src="js/neuronales/motor.js"></script>
+  <script src="js/neuronales/app.js"></script>
+  <script src="js/comun/asistente-contexto.js"></script>
+  <script src="js/comun/conocimiento/base.js"></script>
+  <script src="js/comun/conocimiento/fundamentos.js"></script>
+  <script src="js/comun/conocimiento/algoritmos-grafos.js"></script>
+  <script src="js/comun/conocimiento/algoritmos-tablas.js"></script>
+  <script src="js/comun/conocimiento/algoritmos-datos.js"></script>
+  <script src="js/comun/conocimiento/aplicacion.js"></script>
+  <script src="js/comun/conocimiento/diagnostico.js"></script>
+  <script src="js/comun/conocimiento/ejercicio.js"></script>
+  <script src="js/comun/asistente-motor.js"></script>
+  <script src="js/comun/asistente.js"></script>
+</body>
+</html>

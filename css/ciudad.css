@@ -84,6 +84,7 @@ html[data-tema="claro"] .ciudad-zona, html[data-tema="claro"] .ciudad-panel, htm
 .ciudad-zona--difusa { grid-column: 5 / span 2; grid-row: 2; }
 .ciudad-zona--ordenamiento { grid-column: 2 / span 2; grid-row: 3; }
 .ciudad-zona--arboles { grid-column: 4 / span 2; grid-row: 3; }
+.ciudad-zona--neuronales { grid-column: 3 / span 2; grid-row: 4; }
 .page-home .ciudad-edificio { display: block; width: 100%; height: auto; aspect-ratio: 24 / 19; max-width: 230px; overflow: visible; filter: drop-shadow(0 8px 7px #07161821); transition: transform .2s ease; }
 .ciudad-zona:hover .ciudad-edificio, .ciudad-zona:focus-visible .ciudad-edificio { transform: translateY(-4px); }
 .page-home .ciudad-etiqueta { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; border-radius: 8px; border: 1px solid transparent; min-width: 0; max-width: 100%; margin-top: 0; background: var(--ciudad-fondo); overflow-wrap: anywhere; }

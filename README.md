@@ -1,6 +1,6 @@
 # Ciudad de los Algoritmos
 
-Proyecto de la materia **Análisis de Algoritmos** del grupo **Los Fanáticos del Nabo**: aplicación web educativa de investigación de operaciones, estructuras de datos y decisiones. Ocho módulos:
+Proyecto de la materia **Análisis de Algoritmos** del grupo **Los Fanáticos del Nabo**: aplicación web educativa de investigación de operaciones, estructuras de datos y decisiones. Nueve módulos:
 
 | Categoría | Módulo | Entrada | Resultado |
 |---|---|---|---|
@@ -12,10 +12,11 @@ Proyecto de la materia **Análisis de Algoritmos** del grupo **Los Fanáticos de
 | Ordenamiento | **Ordenamiento (Bowling)** | 3–200 enteros entre 1 y 99 | Selection, Insertion, Bubble, Shell y Merge Sort animados con pinos, pseudocódigo e historial |
 | Árboles | **Árboles binarios** | 1–31 enteros únicos entre −999 y 999, o recorridos | Árbol SVG, recorridos animados y reconstrucción validada |
 | Decisiones y lógica | **Lógica difusa · Mamdani** | Sistema configurable de 1–3 entradas, conjuntos y reglas AND/OR con peso | Pertenencias, recortes, centroide y mapa de respuesta SVG |
+| Redes neuronales | **Perceptrón** | De 1–6 entradas, 1–32 patrones, pesos iniciales, umbral, razón y hasta 100 épocas | Historial exacto por patrón, correcciones y comparación antes/después |
 
-Sin compilación ni dependencias de aplicación: HTML, CSS y JavaScript planos, con servidor Node estático local y ayuda interactiva local de Algo. Sin base de datos. Todos ofrecen ayuda textual y presentación en video. Lógica difusa utiliza la introducción común y registra su video una sola vez en el catálogo, sin reproducción automática. Dijkstra usa `UnsRfl6xw2o` y Kruskal, `Wo-Pk0Iq3oU`.
+Sin compilación ni dependencias de aplicación: HTML, CSS y JavaScript planos, con servidor Node estático local y ayuda interactiva local de Algo. Sin base de datos. Todos ofrecen ayuda textual; los ocho módulos anteriores conservan su presentación en video. El perceptrón incorpora una guía local sin añadir un video externo. Lógica difusa utiliza la introducción común y registra su video una sola vez en el catálogo, sin reproducción automática. Dijkstra usa `UnsRfl6xw2o` y Kruskal, `Wo-Pk0Iq3oU`.
 
-El inicio es una ciudad SVG con ocho zonas seleccionables y un panel con entrada, resultado y acceso a cada módulo. En móvil, las escenas se conectan en una columna y el acceso al módulo seleccionado permanece visible mientras recorres la ciudad. «Vista lista» ofrece el mismo catálogo por categorías. La vista y la pausa de demostraciones se recuerdan en `ui.inicio.vista.v1` y `ui.inicio.movimiento.v1`; se respeta el movimiento reducido del sistema. Los trabajos recientes usan la biblioteca local existente: abren «Cargar» sin reemplazar el ejercicio hasta confirmar. Fundamentos, videos y equipo continúan al final del inicio.
+El inicio es una ciudad SVG con nueve zonas seleccionables y un panel con entrada, resultado y acceso a cada módulo. En móvil, las escenas se conectan en una columna y el acceso al módulo seleccionado permanece visible mientras recorres la ciudad. «Vista lista» ofrece el mismo catálogo por categorías. La vista y la pausa de demostraciones se recuerdan en `ui.inicio.vista.v1` y `ui.inicio.movimiento.v1`; se respeta el movimiento reducido del sistema. Los trabajos recientes usan la biblioteca local existente: abren «Cargar» sin reemplazar el ejercicio hasta confirmar. Fundamentos, videos y equipo continúan al final del inicio.
 
 ### Equipo
 
@@ -40,7 +41,17 @@ Conserva la dirección que ya utilizabas: `http://localhost:8123` y `http://127.
 
 Los HTML son estáticos, pero abrirlos mediante `file://` no se ha verificado para este cierre y el almacenamiento depende del navegador; para la presentación usa el servidor y tu dirección habitual.
 
-Páginas: `index.html`, `johnson.html`, `dijkstra.html`, `kruskal.html`, `asignacion.html`, `northwest.html`, `ordenamiento.html`, `arboles.html` y `logica-difusa.html`.
+Páginas: `index.html`, `johnson.html`, `dijkstra.html`, `kruskal.html`, `asignacion.html`, `northwest.html`, `ordenamiento.html`, `arboles.html`, `logica-difusa.html` y `redes-neuronales.html`.
+
+### Redes neuronales · Perceptrón
+
+Abre el último módulo desde la ciudad, la vista de lista o el menú, o visita `http://127.0.0.1:8123/redes-neuronales.html`. Se reutilizó el motor de `Perceptron_Ciudad_de_los_Algoritmos.zip` y se adaptaron su interfaz y estilos a la navegación y temas comunes. **AND de la pizarra** viene precargado: patrones (0,0), (0,1), (1,0), (1,1); salidas 0,0,0,1; pesos 0,2 y 0,1; umbral fijo 0,2; razón 0,1 y Hardlim.
+
+Pulsa **Entrenar y ver pasos**. El procedimiento muestra el historial real, productos, suma S, neta z = S − θ, error predicha − deseada y cada corrección Δwᵢ = −ηexᵢ. Los botones recorren patrones; el selector cambia de época y la tabla plegable muestra la época completa. AND termina tras dos épocas con errores 1 y 0: w₁ pasa a 0,1, w₂ sigue en 0,1 y la comparación pasa de 3/4 a 4/4. Se incluyen OR, AND bipolar con Hardlims y XOR; este último alcanza el límite porque una sola frontera lineal no separa sus cuatro patrones.
+
+Admite de 1 a 6 entradas, de 1 a 32 patrones y de 1 a 100 épocas. Entradas, pesos iniciales y umbral: −100 a 100, con coma o punto y hasta seis decimales; razón: 0,000001 a 1. Las clases son 0/1 en Hardlim y −1/1 en Hardlims. La aritmética decimal exacta mantiene la decisión z ≥ 0 incluso en el borde. Cambiar el ejercicio retira el resultado y requiere entrenar de nuevo. La prueba independiente utiliza los pesos obtenidos sin modificar el entrenamiento. La opción de ajustar el umbral queda desactivada en los ejemplos y registra su corrección por separado.
+
+Exportar/importar traslada los datos y parámetros en JSON, sin historial ni autoguardado. Una importación inválida conserva el ejercicio y su entrenamiento. Algo incorpora cinco ayudas breves y consulta el paso real sin ejecutar el motor. Para verificar: `npm.cmd run test:perceptron` y, con el servidor activo, `npm.cmd run test:perceptron:navegador`. La segunda prueba usa el Edge y Puppeteer ya disponibles; `URL_PRUEBAS` permite revisar otra raíz estática y `--captura` guarda imágenes temporales de QA.
 
 ### Consulta de caminos en Johnson
 
@@ -66,7 +77,7 @@ Navegador comprobado: Microsoft Edge 156.0.4314.58 en Windows, en modo headless 
 
 ### Asistente educativo Algo
 
-Algo ofrece **Ayuda interactiva** en una sola conversación local, con 209 entradas canónicas. Cubre conceptos, matrices, grafos, los ocho módulos, uso y problemas frecuentes. Incluye **Explorar temas**, buscador, ejemplos, comparaciones y botones para ampliar cada respuesta. En Lógica difusa también explica la selección y el centroide del resultado vigente mediante un contexto acotado.
+Algo ofrece **Ayuda interactiva** en una sola conversación local, con respuestas preparadas. Cubre conceptos, matrices, grafos, los nueve módulos, uso y problemas frecuentes. Incluye **Explorar temas**, buscador, ejemplos, comparaciones y botones para ampliar cada respuesta. En Lógica difusa también explica la selección y el centroide del resultado vigente mediante un contexto acotado. En Perceptrón explica la corrección de pesos y el paso consultado.
 
 Abre el robot, escribe una pregunta o elige una sugerencia y pulsa **Enviar**. Usa «Más sencillo», «Ver un ejemplo», «Más detalle» y las preguntas relacionadas para continuar. Las acciones de paso y resultado aparecen cuando hay un cálculo vigente. Las explicaciones leen el estado y sus pasos ya calculados; no modifican datos ni ejecutan otro motor matemático. Si el resultado quedó invalidado, pide recalcular. Las preguntas no cubiertas reciben una respuesta honesta y sugerencias.
 
@@ -78,7 +89,7 @@ Algo usa conocimiento preparado: no verifica ejercicios nuevos escritos en el ch
 
 Las entradas están en `js/comun/conocimiento/`. Edita la entrada existente y conserva su `id`; añade formulaciones equivalentes a `variantes`. Cada entrada declara `tema`, `modulos`, `pregunta`, `conceptos` y `breve`. Los campos opcionales `sencilla`, `ejemplo`, `detalle`, `relacionadas` y `comparar` habilitan sus acciones. Los límites configurables se obtienen mediante `AlgoConocimiento.limites()`.
 
-Las respuestas del ejercicio se construyen en `asistente-motor.js` con los campos explícitos de `asistente-contexto.js`, sin ejecutar algoritmos nuevos. Las nueve páginas cargan configuración/utilidades y el módulo, contexto, `base.js`, siete archivos temáticos, motor e interfaz, en ese orden. Si añades un archivo, inclúyelo también en `PUBLICOS` de `scripts/preparar-netlify.js`.
+Las respuestas del ejercicio se construyen en `asistente-motor.js` con los campos explícitos de `asistente-contexto.js`, sin ejecutar algoritmos nuevos. El inicio y los nueve módulos cargan configuración/utilidades y el módulo, contexto, `base.js`, siete archivos temáticos, motor e interfaz, en ese orden. Si añades un archivo, inclúyelo también en `PUBLICOS` de `scripts/preparar-netlify.js`.
 
 Pruebas dirigidas, sin suites matemáticas generales:
 
@@ -90,11 +101,11 @@ npm.cmd run test:asistente:navegador
 node.exe tests/verificar-paquete-asistente.js
 ```
 
-La prueba funcional del asistente usa Edge headless y no genera capturas. Comprueba las ocho páginas, explorador, seguimientos, limpieza, foco, resultados invalidados y ausencia de solicitudes del chat. La comprobación del paquete compara ZIP, `drop`, `public` y fuentes, incluyendo CRC y exclusiones.
+La prueba funcional general del asistente usa Edge headless y conserva sus escenarios anteriores de explorador, seguimientos, limpieza, foco, resultados invalidados y ausencia de solicitudes del chat. La integración de Perceptrón se comprueba con `test:perceptron:navegador`. Las suites unitarias generales de Algo presentan fallos anteriores a esta integración; se documentan en `ENTREGA_PERCEPTRON_2026-11-17.md`. La comprobación del paquete compara ZIP, `drop`, `public` y fuentes, incluyendo CRC y exclusiones.
 
 ### Publicar en Netlify Drop
 
-`npm.cmd run preparar:netlify` genera `public/`, `entrega-netlify/drop/` y `entrega-netlify/ciudad-algoritmos-netlify.zip`. El paquete usa la lista pública explícita del script, con `index.html` en la raíz, sin `.env`, claves, `.git`, pruebas, capturas, servidor ni Functions. Incluye `js/johnson/caminos.js`, Lógica difusa, su ayuda local y el proveedor de recientes. MATLAB y los informes quedan fuera del paquete público. Rutas de subida y traslado de ejercicios en [PUBLICAR_NETLIFY.md](PUBLICAR_NETLIFY.md).
+`npm.cmd run preparar:netlify` genera `public/`, `entrega-netlify/drop/` y `entrega-netlify/ciudad-algoritmos-netlify.zip`. El paquete usa la lista pública explícita del script, con `index.html` en la raíz, sin `.env`, claves, `.git`, pruebas, capturas, servidor ni Functions. Incluye `js/johnson/caminos.js`, `js/northwest/optimizacion.js`, Lógica difusa, Perceptrón, la ayuda local y el proveedor de recientes. MATLAB y los informes quedan fuera del paquete público. Rutas de subida y traslado de ejercicios en [PUBLICAR_NETLIFY.md](PUBLICAR_NETLIFY.md).
 
 1. Abre el proyecto existente **tranquil-palmier-b1959c** en Netlify.
 2. Entra en **Deploys** y arrastra la carpeta **`entrega-netlify/drop`** a la zona de carga manual. Si usas el ZIP, extráelo primero y arrastra la carpeta que contiene `index.html` directamente.
@@ -116,6 +127,7 @@ grafo/
 ├── northwest.html           Esquina noroeste: datos → balanceo → resolución → resultado
 ├── ordenamiento.html        Cinco métodos, entrada de valores y reproducción por pasos
 ├── arboles.html             Árboles: inserción, recorridos y reconstrucción
+├── redes-neuronales.html    Perceptrón: datos, entrenamiento, historial y comparación
 ├── styles.css               Base compartida: tokens, botones, formularios, tablas, mensajes, modal, pasos
 ├── css/
 │   ├── shell.css            Cabecera compacta, barra lateral plegable, inicio, presentación con video, pie
@@ -125,6 +137,7 @@ grafo/
 │   ├── northwest.css        Matriz de transporte, balanceo, pasos y resultado
 │   ├── ordenamiento.css     Pista y pinos, contador de pasos, pseudocódigo y paneles auxiliares
 │   ├── arboles.css          Árbol SVG, controles, reconstrucción y recorridos
+│   ├── neuronales.css       Perceptrón, tablas y explicación de correcciones
 │   └── impresion.css        Hoja de impresión (media="print"): sin interfaz, tablas completas, pasos volcados
 ├── app.js                   Punto de entrada de Johnson (botones, menú «Más», atajos)
 ├── js/
@@ -134,7 +147,7 @@ grafo/
 │   │   ├── navegacion.js    Barra lateral + cabecera construidas desde el catálogo
 │   │   ├── intro.js         Presentación con video (YouTube nocookie) antes del algoritmo
 │   │   ├── inicio.js        Selección de zonas, lista, preferencias y recientes
-│   │   ├── ciudad.js        Ilustraciones SVG propias de los ocho edificios
+│   │   ├── ciudad.js        Ilustraciones SVG propias de los nueve edificios
 │   │   ├── dialogo.js       Ventana modal compartida (confirmar / informar / pedir dato)
 │   │   ├── notificaciones.js  Toasts
 │   │   ├── guardados.js     «Mis trabajos»: guardar, cargar, renombrar, eliminar, exportar e importar por módulo
@@ -144,6 +157,7 @@ grafo/
 │   │   ├── impresion.js     Vuelca pasos de Johnson, Dijkstra, Kruskal, Asignación y Northwest; restaura paso/tema
 │   │   └── utilidades.js    limitar(), escaparHtml() (se carga en todas las páginas)
 │   ├── grafos/              Modelo, algoritmos puros, editor SVG y controlador Dijkstra/Kruskal
+│   ├── neuronales/          Motor decimal exacto e interfaz del perceptrón reutilizados del ZIP
 │   ├── asignacion/
 │   │   ├── modelo.js        Modelo con ids estables, pendientes, serialización v2 y migración v1
 │   │   ├── validacion.js    Validación de valores y nombres

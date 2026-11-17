@@ -49,7 +49,7 @@ prueba('El inicio y módulos desconocidos envían únicamente el catálogo', () 
   ['inicio', '', 'desconocido', '__proto__'].forEach(modulo => {
     const r = entorno(modulo, { estado: { secreto: 'NO_ENVIAR' } }).AlgoContexto.obtener();
     igual(r.modulo, 'inicio'); igual(r.contexto.vista, 'catalogo');
-    igual(r.contexto.datos.catalogo.length, 8);
+    igual(r.contexto.datos.catalogo.length, 9);
     cierto(!r.firma.includes('NO_ENVIAR'));
     igual(r.contexto.resultado, null);
   });

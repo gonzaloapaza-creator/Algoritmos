@@ -8,7 +8,8 @@ const RAIZ = path.resolve(__dirname, '..');
 // Lista deliberada: no recorrer la raíz ni incorporar guardados o respaldos.
 const PUBLICOS = [
   'index.html', 'johnson.html', 'dijkstra.html', 'kruskal.html', 'asignacion.html',
-  'northwest.html', 'ordenamiento.html', 'arboles.html', 'logica-difusa.html', 'styles.css', 'app.js',
+  'northwest.html', 'ordenamiento.html', 'arboles.html', 'logica-difusa.html', 'redes-neuronales.html', 'styles.css', 'app.js',
+  'css/neuronales.css', 'js/neuronales/motor.js', 'js/neuronales/app.js',
   'css/arboles.css', 'css/asignacion.css', 'css/asistente.css', 'css/ciudad.css',
   'css/grafos.css', 'css/impresion.css', 'css/johnson.css', 'css/northwest.css',
   'css/ordenamiento.css', 'css/difusa.css', 'css/shell.css',

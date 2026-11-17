@@ -201,7 +201,7 @@ for(const modulo of ['dijkstra','kruskal']) escenario(modulo+'-crud',async brows
     comprobar(ids.length===4,modulo+': crear nodos con Enter');
     await conectarGm(page,ids[0],ids[1],0);await conectarGm(page,ids[1],ids[2],2);await conectarGm(page,ids[0],ids[2],9);
     const antes=await grafo(page,modulo);
-    for(const [a,b,p] of [[ids[0],ids[0],1],[ids[0],ids[1],7],...(modulo==='dijkstra'?[[ids[0],ids[3],-1]]:[[ids[1],ids[0],3]])]){
+    for(const [a,b,p] of [[ids[0],ids[0],1],[ids[0],ids[1],7],[ids[0],ids[3],-1],...(modulo==='kruskal'?[[ids[1],ids[0],3]]:[])]){
       await conectarGm(page,a,b,p);comprobar(await grafo(page,modulo)===antes,modulo+': regla inválida conserva ejercicio');
     }
     await clic(page,'[data-herramienta-grafo="conectar"]');await tocarNodo(page,'#svgModuloGrafo [data-id="'+ids[0]+'"] circle');await page.keyboard.press('Escape');
@@ -221,12 +221,12 @@ for(const modulo of ['dijkstra','kruskal']) escenario(modulo+'-crud',async brows
     await seleccionar(page,'#seleccionVertice',ids[0]);await llenar(page,'#nombreSeleccionado','ABCDEFGHIJKL');await clic(page,'#btnRenombrarVertice');
     comprobar(await page.evaluate(id=>moduloGrafo.grafo.nodos.find(n=>n.id===id).nombre==='ABCDEFGHIJKL',ids[0]),modulo+': renombrar nodo a nombre largo');
     const edge=await page.evaluate(()=>moduloGrafo.grafo.conexiones[1].id);
-    await clic(page,'#ajustesAristaGrafo summary');await seleccionar(page,'#seleccionArista',edge);await llenar(page,'#pesoSeleccionado',modulo==='kruskal'?-2:3);await clic(page,'#btnEditarPeso');
-    comprobar(await page.evaluate(({id,p})=>moduloGrafo.grafo.conexiones.find(c=>c.id===id).valor===p,{id:edge,p:modulo==='kruskal'?-2:3}),modulo+': editar peso de conexión');
+    await clic(page,'#ajustesAristaGrafo summary');await seleccionar(page,'#seleccionArista',edge);await llenar(page,'#pesoSeleccionado',3);await clic(page,'#btnEditarPeso');
+    comprobar(await page.evaluate(id=>moduloGrafo.grafo.conexiones.find(c=>c.id===id).valor===3,edge),modulo+': editar peso de conexión');
     await clic(page,'#btnContinuarGrafo');
     if(modulo==='dijkstra'){await seleccionar(page,'#origenGrafo',ids[0]);await seleccionar(page,'#destinoGrafo',ids[2]);}
     await clic(page,'#btnResolverGrafo');await page.waitForFunction(()=>moduloGrafo.resultado&&moduloGrafo.vista==='resultado');
-    comprobar(await page.$eval('#resultadoGrafo',(e,m)=>e.textContent.includes(m==='dijkstra'?'0 + 3 = 3':'Peso total: -2'),modulo),modulo+': resultado estático con total esperado');
+    comprobar(await page.$eval('#resultadoGrafo',(e,m)=>e.textContent.includes(m==='dijkstra'?'0 + 3 = 3':'Peso total: 3'),modulo),modulo+': resultado estático con total esperado');
     const solapados=await page.$eval('#svgModuloGrafo',svg=>[...svg.querySelectorAll('.nodo-editor-grafo')].flatMap(g=>{const a=g.querySelector('.gm-nombre-nodo').getBBox(),e=g.querySelector('.gm-distancia-nodo');if(!e)return [];const b=e.getBBox();return a.x<b.x+b.width&&a.x+a.width>b.x&&a.y<b.y+b.height&&a.y+a.height>b.y?[{id:g.dataset.id,nombre:[a.x,a.y,a.width,a.height],valor:[b.x,b.y,b.width,b.height]}]:[];}));
     comprobar(!solapados.length,modulo+': nombre y datos propios sin solapamiento interno '+JSON.stringify(solapados));
     if(modulo==='dijkstra'){
@@ -235,7 +235,7 @@ for(const modulo of ['dijkstra','kruskal']) escenario(modulo+'-crud',async brows
     }else{
       comprobar(await page.$eval('#resultadoGrafo',e=>e.textContent.includes('Bosque')&&e.textContent.includes('X')),'Kruskal: bosque y nodo aislado explícitos');
       await seleccionar(page,'#objetivoGrafo','max');await clic(page,'#btnResolverGrafo');await page.waitForFunction(()=>!!moduloGrafo.resultado);
-      comprobar(await page.$eval('#resultadoGrafo',e=>e.textContent.includes('Peso total: 9')),'Kruskal: máximo de expansión conserva interpretación');
+      comprobar(await page.$eval('#resultadoGrafo',e=>e.textContent.includes('Peso total: 12')),'Kruskal: máximo de expansión conserva interpretación');
     }
     const vb=await page.$eval('#svgModuloGrafo',e=>e.getAttribute('viewBox'));await clic(page,'.gm-vista-opciones summary');await clic(page,'#btnZoomMasGrafo');comprobar(await page.$eval('#svgModuloGrafo',e=>e.getAttribute('viewBox'))!==vb,modulo+': zoom del grafo');
     const despuesZoom=await page.$eval('#svgModuloGrafo',e=>e.getAttribute('viewBox'));await clic(page,'[data-pan-grafo="derecha"]');comprobar(await page.$eval('#svgModuloGrafo',e=>e.getAttribute('viewBox'))!==despuesZoom,modulo+': desplazar vista mediante control accesible');await clic(page,'#btnAjustarGrafo');

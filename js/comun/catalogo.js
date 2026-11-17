@@ -16,7 +16,8 @@ const CATEGORIAS_ALGORITMOS = [
   { id: 'transporte', nombre: 'Transporte', descripcion: 'Distribuir oferta entre destinos con demanda.' },
   { id: 'arreglos', nombre: 'Ordenamiento', descripcion: 'Visualización de algoritmos de ordenamiento con arreglos y pinos de boliche.' },
   { id: 'arboles', nombre: 'Árboles', descripcion: 'Construcción, recorridos y reconstrucción de árboles binarios.' },
-  { id: 'decisiones', nombre: 'Decisiones y lógica', descripcion: 'Pertenencias y reglas para explorar recomendaciones graduales.' }
+  { id: 'decisiones', nombre: 'Decisiones y lógica', descripcion: 'Pertenencias y reglas para explorar recomendaciones graduales.' },
+  { id: 'aprendizaje', nombre: 'Redes neuronales', descripcion: 'Una neurona aprende a clasificar mediante correcciones de pesos explicadas paso a paso.' }
 ];
 
 /* Iconos como contenido interno de un <svg viewBox="0 0 24 24"> con trazo currentColor. */
@@ -29,7 +30,8 @@ const ICONOS_ALGORITMOS = {
   esquina: '<rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M3.5 15h17M9.5 4v16M15 4v16"/><rect x="4.5" y="5" width="4" height="4" rx="1" fill="currentColor" stroke="none"/>',
   ordenamiento: '<path d="M4 20h16M6 16v4M12 8v12M18 12v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
   arbol: '<circle cx="12" cy="5" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M12 7.5v4m0 0-6 4m6-4 6 4"/>',
-  difusa: '<path d="M3 20V4m0 16h18M4 17 8 7l5 10M10 17l5-10h5v10"/><circle cx="14" cy="17" r="1.5"/>'
+  difusa: '<path d="M3 20V4m0 16h18M4 17 8 7l5 10M10 17l5-10h5v10"/><circle cx="14" cy="17" r="1.5"/>',
+  neurona: '<circle cx="4" cy="5" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="14" cy="12" r="4"/><path d="m6 6 5 4m-5 8 5-4m7-2h4"/>'
 };
 
 const CATALOGO_ALGORITMOS = [
@@ -179,6 +181,15 @@ const CATALOGO_ALGORITMOS = [
     bienvenida: 'La lógica difusa representa categorías graduales mediante funciones de pertenencia y reglas. Configura de una a tres entradas, una salida y sus conjuntos; observa las activaciones, los recortes y el centroide con ejemplos didácticos o con tu propio sistema.',
     accionIntro: 'Ir al módulo',
     disponible: true
+  },
+  {
+    id: 'neuronales', zona: 'Laboratorio de aprendizaje', etiqueta: 'Redes neuronales · Perceptrón',
+    distrito: 'aprendizaje', escena: 'neurona', color: '#b6a4fa', colorClaro: '#6943ae', colorFuerte: '#d8ccff',
+    nombre: 'Redes neuronales · Perceptrón', corto: 'Perceptrón', categoria: 'aprendizaje',
+    descripcion: 'Entrena una neurona con AND, OR, AND bipolar y XOR. Explica con números por qué cambia cada peso y compara antes y después.',
+    entrada: 'Patrones, clases, pesos iniciales, umbral, razón y épocas',
+    resultado: 'Pesos aprendidos, historial por patrón y comparación de aciertos',
+    ruta: 'redes-neuronales.html', icono: 'neurona', disponible: true
   }
 ];
 

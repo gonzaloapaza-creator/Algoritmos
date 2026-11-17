@@ -179,7 +179,7 @@ function dibujarEditorGrafo() {
   };
   const capa = elementoSvgGrafo('g');
   const defs = elementoSvgGrafo('defs');
-  const marcador = elementoSvgGrafo('marker', { id: 'flechaEditorGrafo', viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 5, markerHeight: 5, orient: 'auto' });
+  const marcador = elementoSvgGrafo('marker', { id: 'flechaEditorGrafo', viewBox: '0 0 10 10', refX: 9, refY: 5, markerUnits: 'userSpaceOnUse', markerWidth: 14 / escalaVista, markerHeight: 14 / escalaVista, orient: 'auto' });
   marcador.appendChild(elementoSvgGrafo('path', { d: 'M0 0 10 5 0 10z', class: 'gm-flecha' }));
   defs.appendChild(marcador); capa.appendChild(defs);
   g.conexiones.forEach(c => {
@@ -187,7 +187,7 @@ function dibujarEditorGrafo() {
     const dx = hacia.x - desde.x, dy = hacia.y - desde.y, longitud = Math.hypot(dx, dy) || 1;
     const ux = dx / longitud, uy = dy / longitud;
     const opuesta = g.dirigido && g.conexiones.some(a => a.desde === c.hacia && a.hacia === c.desde);
-    const curva = opuesta ? 32 : 0;
+    const curva = opuesta ? Math.max(48, 34 / escalaVista) : 0;
     const margenDesde = Math.min(radioNodo(desde) + 3, longitud * .45), margenHasta = Math.min(radioNodo(hacia) + 6, longitud * .45);
     const x1 = desde.x + ux * margenDesde, y1 = desde.y + uy * margenDesde;
     const x2 = hacia.x - ux * margenHasta, y2 = hacia.y - uy * margenHasta;
@@ -204,7 +204,8 @@ function dibujarEditorGrafo() {
     grupo.appendChild(linea);
     const etiqueta = elementoSvgGrafo('text', { class: 'gm-peso' }, c.valor);
     // El tercio del tramo mantiene el peso junto a su arista y fuera de cruces centrales.
-    etiquetas.push({ elemento: etiqueta, x: (4 * x1 + 4 * mx + x2) / 9, y: (4 * y1 + 4 * my + y2) / 9, nx: -uy, ny: ux });
+    etiquetas.push({ elemento: etiqueta, x: (4 * x1 + 4 * mx + x2) / 9, y: (4 * y1 + 4 * my + y2) / 9, nx: -uy, ny: ux,
+      alternativas: [.5, 2 / 3].map(t => ({ x: (1-t)*(1-t)*x1+2*(1-t)*t*mx+t*t*x2, y: (1-t)*(1-t)*y1+2*(1-t)*t*my+t*t*y2 })) });
     grupo.appendChild(etiqueta);
     activarSeleccionSvgGrafo(grupo, 'arista', c.id);
     capa.appendChild(grupo);
@@ -213,6 +214,7 @@ function dibujarEditorGrafo() {
     const radioActual = radioNodo(n);
     const seleccionado = moduloGrafo.seleccion && moduloGrafo.seleccion.id === n.id;
     const grupo = elementoSvgGrafo('g', { transform: 'translate(' + n.x + ' ' + n.y + ')', class: 'nodo-editor-grafo' + (seleccionado ? ' seleccionado' : '') + (paso && !mostrandoResultado && paso.actual === n.id ? ' actual' : '') + (finalizados.has(n.id) && (!esDijkstraModulo || Number.isFinite(paso.distancias[n.id])) ? ' finalizado' : '') + (esDijkstraModulo && n.id === moduloGrafo.origen ? ' gm-origen' : '') + (esDijkstraModulo && n.id === moduloGrafo.destino ? ' gm-destino' : ''), 'data-id': n.id, tabindex: 0, role: 'button', 'aria-label': 'Seleccionar vértice ' + nombreNodoGrafo(n.id) + (esDijkstraModulo && n.id === moduloGrafo.origen ? ', origen' : '') + (esDijkstraModulo && n.id === moduloGrafo.destino ? ', destino' : '') });
+    if (ruta) grupo.classList.add(ruta.nodos.includes(n.id) ? 'gm-nodo-ruta' : 'gm-nodo-secundario');
     if (esDijkstraModulo && resultado && mostrandoResultado && !Number.isFinite(resultado.distancias[n.id])) {
       grupo.classList.add('gm-sin-camino'); grupo.setAttribute('aria-label', grupo.getAttribute('aria-label') + ', Sin camino desde ' + nombreNodoGrafo(resultado.origen));
     }
@@ -271,17 +273,17 @@ function colocarPesosEditorGrafo(svg, etiquetas, separacion, escala) {
   const colocadas = [];
   const seCruzan = (a, b) => a.left < b.right + 2 && a.right > b.left - 2 && a.top < b.bottom + 2 && a.bottom > b.top - 2;
   etiquetas.forEach(etiqueta => {
-    const situar = distancia => {
-      etiqueta.elemento.setAttribute('x', etiqueta.x + etiqueta.nx * distancia);
-      etiqueta.elemento.setAttribute('y', etiqueta.y + etiqueta.ny * distancia);
+    const situar = (distancia, punto = etiqueta) => {
+      etiqueta.elemento.setAttribute('x', punto.x + etiqueta.nx * distancia);
+      etiqueta.elemento.setAttribute('y', punto.y + etiqueta.ny * distancia);
       return etiqueta.elemento.getBoundingClientRect();
     };
     // Cambia de lado cuando dos pesos coinciden; las coordenadas del grafo se conservan.
     let caja;
-    for (const distancia of [separacion, -separacion, separacion + 12 / escala, -separacion - 12 / escala]) {
-      caja = situar(distancia);
+    buscar: for (const punto of [etiqueta, ...etiqueta.alternativas]) for (const distancia of [separacion, -separacion, separacion + 12 / escala, -separacion - 12 / escala, separacion + 24 / escala, -separacion - 24 / escala]) {
+      caja = situar(distancia, punto);
       const dentro = caja.left >= lienzo.left + 2 && caja.right <= lienzo.right - 2 && caja.top >= lienzo.top + 2 && caja.bottom <= lienzo.bottom - 2;
-      if (dentro && !colocadas.some(otra => seCruzan(caja, otra)) && !nodos.some(nodo => seCruzan(caja, nodo))) break;
+      if (dentro && !colocadas.some(otra => seCruzan(caja, otra)) && !nodos.some(nodo => seCruzan(caja, nodo))) break buscar;
       caja = null;
     }
     colocadas.push(caja || situar(separacion));

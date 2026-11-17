@@ -273,3 +273,63 @@
 @media (max-width: 1199px) { .grafo-modulo .gm-distribucion, .grafo-modulo .gm-distribucion[data-vista=procedimiento], .grafo-modulo .gm-distribucion[data-vista=resultado] { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 600px) { .grafo-modulo .gm-lienzo svg { height: 390px; } .grafo-modulo .gm-consulta > div { grid-template-columns: minmax(0, 1fr); } .grafo-modulo .gm-consulta label, .grafo-modulo .gm-consulta select { grid-row: auto; } .grafo-modulo .gm-consulta > .btn { width: 100%; } }
 @media print { .grafo-modulo .gm-editor-herramientas, .grafo-modulo .gm-herramienta-estado, .grafo-modulo .gm-consulta { display: none !important; } }
+
+/* Entrega final: la red y su respuesta comparten el espacio, sin superposición. */
+.grafo-modulo .gm-distribucion { gap: 16px; }
+.grafo-modulo .gm-objetivos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100%; }
+.grafo-modulo .gm-consulta > .gm-objetivos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grafo-modulo .gm-objetivos .btn { min-height: 48px; white-space: normal; font-weight: 700; }
+.grafo-modulo .gm-objetivos [aria-pressed=true] { border: 2px solid var(--acento); background: var(--acento-tinte); color: var(--acento-fuerte); box-shadow: inset 0 -3px var(--acento); }
+.grafo-modulo .gm-condicion { flex: 1 1 100%; margin: 0; font-size: .78rem; line-height: 1.6; color: var(--texto-suave); }
+.grafo-modulo .gm-diagnostico { flex: 1 1 100%; border-left: 3px solid var(--aviso); padding: 10px; background: var(--bg-2); font-size: .85rem; line-height: 1.6; }
+.grafo-modulo .gm-consulta > .gm-acciones-consulta { display: flex; flex-wrap: wrap; gap: 8px; }
+.grafo-modulo .gm-acciones-consulta .btn { min-height: 44px; white-space: normal; }
+.grafo-modulo .gm-respuesta { min-width: 0; border: 1px solid var(--acento-borde); border-radius: 14px; background: var(--bg-2); overflow: clip; }
+.grafo-modulo .gm-respuesta > summary { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; min-height: 56px; padding: 16px; cursor: pointer; background: var(--acento-tinte); line-height: 1.6; list-style: none; }
+.grafo-modulo .gm-respuesta > summary::-webkit-details-marker { display: none; }
+.grafo-modulo #objetivoPanelRespuestaGrafo { color: var(--acento-fuerte); font-size: .92rem; }
+.grafo-modulo #totalPanelRespuestaGrafo { flex: 1 1 200px; font-weight: 700; overflow-wrap: anywhere; font-size: .95rem; }
+.grafo-modulo .gm-plegar-texto { font-size: .76rem; color: var(--texto-suave); }
+.grafo-modulo .gm-respuesta-cuerpo { max-height: min(78svh, 900px); overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; scroll-padding: 16px; }
+.grafo-modulo .gm-respuesta-cuerpo > .gm-panel { border: 0; border-radius: 0; margin: 0; }
+.grafo-modulo .gm-respuesta-plegada, .grafo-modulo .gm-distribucion.gm-respuesta-plegada[data-vista] { grid-template-columns: minmax(0, 1fr); }
+.grafo-modulo .gm-respuesta-plegada > .gm-respuesta { order: -1; }
+.grafo-modulo .gm-ejecucion-activa { padding: 12px; border-left: 3px solid var(--acento); background: var(--acento-tinte); font-size: .82rem; overflow-wrap: anywhere; }
+.grafo-modulo .gm-rondas { display: grid; gap: 10px; margin-block: 16px; }
+.grafo-modulo .gm-ronda { min-width: 0; border: 1px solid var(--borde); border-radius: 10px; background: var(--bg); }
+.grafo-modulo .gm-ronda > summary { display: flex; flex-direction: column; gap: 4px; padding: 14px; min-height: 56px; cursor: pointer; font-size: .85rem; }
+.grafo-modulo .gm-ronda-estado { font-size: .75rem; color: var(--texto-suave); }
+.grafo-modulo .gm-ronda-activa { border-color: var(--acento); box-shadow: inset 3px 0 var(--acento); }
+.grafo-modulo .gm-ronda-detalle { display: grid; gap: 8px; padding: 0 12px 14px; }
+.grafo-modulo .gm-ronda-detalle p { font-size: .8rem; margin: 0; }
+.grafo-modulo .gm-relajacion { text-align: left; white-space: normal; min-height: 44px; font-size: .78rem; }
+.grafo-modulo .gm-relajacion[aria-pressed=true] { color: var(--acento-fuerte); border-color: var(--acento); background: var(--acento-tinte); }
+.grafo-modulo .gm-respuesta summary:focus-visible, .grafo-modulo .gm-objetivos .btn:focus-visible, .grafo-modulo .gm-respuesta .btn:focus-visible { outline: 3px solid var(--acento); outline-offset: -3px; }
+.grafo-modulo .gm-lienzo .gm-flecha { fill: context-stroke; }
+.grafo-modulo .gm-lienzo .gm-nodo-ruta circle { stroke: var(--acento-fuerte); stroke-width: 5; fill: var(--acento-tinte); }
+.grafo-modulo .gm-nodo-secundario circle { stroke: var(--texto-suave); stroke-width: 2; }
+.grafo-modulo .gm-lienzo .gm-destino circle { stroke: var(--exito); stroke-width: 5; }
+.grafo-modulo .gm-arista-secundaria .gm-arista-linea { opacity: .55; stroke-width: 2; }
+.grafo-modulo .arista-editor-grafo.descartada .gm-arista-linea { opacity: .7; }
+.grafo-modulo .gm-consulta-ruta { font-size: .82rem; padding: 10px 14px; }
+.grafo-modulo .gm-guia-ejemplo { font-size: .78rem; padding: 10px 14px; }
+.grafo-modulo .gm-guia-ejemplo > summary { cursor: pointer; min-height: 44px; padding-block: 12px; font-weight: 650; }
+.grafo-modulo .gm-distribucion[data-vista=resultado] .gm-campo-modo, .grafo-modulo .gm-distribucion[data-vista=procedimiento] .gm-campo-modo { display: none; }
+.grafo-modulo .gm-distribucion.gm-ampliado[data-vista] { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1200px) { .grafo-modulo .gm-distribucion[data-vista=resultado], .grafo-modulo .gm-distribucion[data-vista=procedimiento] { grid-template-columns: minmax(0, 1.9fr) minmax(310px, 1fr); } }
+@media (max-width: 1199px) { .grafo-modulo .gm-respuesta-plegada > .gm-respuesta { order: 0; } }
+@media (max-width: 600px) {
+  .grafo-modulo .gm-respuesta > summary { padding: 12px; gap: 4px 12px; }
+  .grafo-modulo .gm-respuesta-cuerpo { max-height: 68svh; }
+  .grafo-modulo .gm-acciones-consulta .btn { flex: 1 1 130px; }
+  .grafo-modulo .gm-consulta > .gm-objetivos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grafo-modulo .gm-consulta > #configDijkstra { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grafo-modulo .gm-lienzo svg { height: 410px; }
+  .grafo-modulo .gm-ruta-resultado { padding: 12px; }
+}
+@media print {
+  .grafo-modulo .gm-respuesta-cuerpo { max-height: none; overflow: visible; }
+  .grafo-modulo .gm-plegar-texto, .grafo-modulo .gm-rondas, .grafo-modulo .gm-acciones-consulta { display: none !important; }
+  .grafo-modulo .gm-respuesta:not([open]) > .gm-respuesta-cuerpo { display: block; }
+  .grafo-modulo .gm-respuesta { overflow: visible; }
+}

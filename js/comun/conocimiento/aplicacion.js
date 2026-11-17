@@ -16,7 +16,7 @@
       pregunta: '¿Qué es Ciudad de los Algoritmos?',
       variantes: ['que es esta aplicacion', 'que es la ciudad de los algoritmos', 'para que sirve esta pagina', 'de que trata este sitio', 'que puedo hacer aqui'],
       conceptos: ['ciudad', 'aplicacion', 'sitio', 'pagina', 'proyecto'],
-      breve: 'Ciudad de los Algoritmos es una aplicación educativa con ocho módulos: Johnson, Dijkstra, Kruskal, Asignación (método húngaro), Esquina noroeste, Ordenamiento, Árboles y Lógica difusa. Cada módulo es un edificio de la ciudad del inicio.',
+      breve: 'Ciudad de los Algoritmos es una aplicación educativa con nueve módulos: Johnson, Dijkstra, Kruskal, Asignación (método húngaro), Esquina noroeste, Ordenamiento, Árboles, Lógica difusa y Redes neuronales · Perceptrón. Cada módulo es un edificio de la ciudad del inicio.',
       sencilla: 'Es un laboratorio para ver cómo piensa cada algoritmo: tú pones los datos y la aplicación muestra cada decisión.',
       detalle: 'Funciona por completo en tu navegador: los cálculos, los guardados y esta ayuda son locales. Solo los videos de apoyo y la carga inicial del sitio necesitan conexión.',
       relacionadas: ['aplicacion.modulos', 'aplicacion.elegir-algoritmo', 'aplicacion.internet', 'aplicacion.asistente']
@@ -26,7 +26,7 @@
       pregunta: '¿Qué módulos incluye?',
       variantes: ['que algoritmos hay', 'cuales son los modulos', 'que edificios tiene la ciudad', 'lista de modulos', 'que temas cubre'],
       conceptos: ['modulos', 'modulo', 'edificios', 'algoritmos disponibles', 'lista'],
-      breve: 'Ocho módulos: Johnson (distancias entre todos los pares), Dijkstra (caminos mínimos) o caminos máximos en DAG, Kruskal (árbol de expansión mínimo o máximo), Asignación (método húngaro), Transporte (esquina noroeste y optimización MODI min/max), Ordenamiento (Selection, Insertion, Bubble, Shell y Merge), Árboles (BST, recorridos y reconstrucción) y Lógica difusa (pertenencias, reglas Mamdani y centroide).',
+      breve: 'Nueve módulos: Johnson (distancias entre todos los pares), Dijkstra (caminos mínimos) o caminos máximos en DAG, Kruskal (árbol de expansión mínimo o máximo), Asignación (método húngaro), Transporte (esquina noroeste y optimización MODI min/max), Ordenamiento (Selection, Insertion, Bubble, Shell y Merge), Árboles (BST, recorridos y reconstrucción), Lógica difusa (pertenencias, reglas Mamdani y centroide) y Redes neuronales (perceptrón, correcciones de pesos y clasificación).',
       relacionadas: ['aplicacion.elegir-algoritmo', 'aplicacion.abrir-modulo', 'aplicacion.que-es']
     },
     {

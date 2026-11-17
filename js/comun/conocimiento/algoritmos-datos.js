@@ -7,6 +7,44 @@
   if (!K) return;
 
   K.registrar([
+    {
+      id: 'neuronales.epoca', tema: 'neuronales', modulos: ['neuronales'],
+      pregunta: '¿Qué es una época del perceptrón?', variantes: ['cuando se detiene el entrenamiento', 'por que termina despues de dos epocas', 'como cambio de epoca'],
+      conceptos: ['epoca', 'patron', 'parada', 'historial'],
+      breve: 'Una época recorre todos los patrones en su orden. La fila siguiente usa los pesos actualizados de la anterior. El entrenamiento se detiene después de una época completa sin errores o al llegar al máximo configurado. Ir a época permite consultar su primera fila; la tabla muestra toda esa pasada.',
+      ejemplo: 'AND de la pizarra tiene un error en la primera época y ninguno en la segunda. Termina tras dos épocas y ocho filas registradas.',
+      relacionadas: ['neuronales.pesos', 'neuronales.xor']
+    },
+    {
+      id: 'neuronales.perceptron', tema: 'neuronales', modulos: ['neuronales'],
+      pregunta: '¿Qué es un perceptrón?', variantes: ['como entreno la neurona', 'que son redes neuronales', 'como uso el perceptron'],
+      conceptos: ['perceptron', 'neurona', 'aprendizaje', 'entrenar'],
+      breve: 'Es una neurona que suma productos de entradas y pesos, resta un umbral y aplica una activación. Entrena recorriendo patrones en orden y corrige los pesos tras cada error. Carga AND de la pizarra y pulsa Entrenar y ver pasos.',
+      ejemplo: 'En AND, con pesos 0,2 y 0,1 y umbral fijo 0,2, las predicciones iniciales son 0,0,1,1. Tras entrenar son 0,0,0,1: los aciertos pasan de 3/4 a 4/4.',
+      relacionadas: ['neuronales.pesos', 'neuronales.activacion']
+    },
+    {
+      id: 'neuronales.pesos', tema: 'neuronales', modulos: ['neuronales'],
+      pregunta: '¿Por qué cambia un peso?', variantes: ['como se actualizan los pesos', 'como calculo la correccion', 'que significa el error del perceptron'],
+      conceptos: ['peso', 'correccion', 'error', 'razon de aprendizaje'],
+      breve: 'El error es predicha − deseada. Para cada entrada, Δwᵢ = −η · e · xᵢ y el nuevo peso es anterior + Δwᵢ. Si e = 0 no cambia ninguno; si xᵢ = 0 ese peso no cambia aunque haya error. El procedimiento muestra los valores de la fila real.',
+      ejemplo: 'En (1,0) del primer AND, z = 0 da predicción 1 y la deseada es 0: e = 1. Δw₁ = −0,1 × 1 × 1 = −0,1, así w₁ pasa de 0,2 a 0,1. Δw₂ = −0,1 × 1 × 0 = 0: w₂ sigue en 0,1.',
+      relacionadas: ['neuronales.activacion', 'neuronales.perceptron']
+    },
+    {
+      id: 'neuronales.activacion', tema: 'neuronales', modulos: ['neuronales'],
+      pregunta: '¿Cómo funcionan Hardlim y Hardlims?', variantes: ['que pasa si z es cero', 'cuales son las clases del perceptron', 'que es el umbral de la neurona'],
+      conceptos: ['hardlim', 'hardlims', 'umbral', 'entrada neta'],
+      breve: 'S = Σxᵢwᵢ y z = S − θ. Ambas activaciones devuelven 1 si z ≥ 0. Si z < 0, Hardlim devuelve 0 y Hardlims devuelve −1. Las deseadas deben ser 0/1 o −1/1 respectivamente. El ejemplo AND mantiene θ fijo; su aprendizaje avanzado es opcional y aparece separado.',
+      relacionadas: ['neuronales.pesos', 'neuronales.perceptron']
+    },
+    {
+      id: 'neuronales.xor', tema: 'neuronales', modulos: ['neuronales'],
+      pregunta: '¿Por qué XOR no converge?', variantes: ['xor llega al limite', 'por que la neurona no aprende xor', 'limite de epocas del perceptron'],
+      conceptos: ['xor', 'lineal', 'convergencia', 'epocas'],
+      breve: 'Los cuatro patrones de XOR no pueden separarse por una sola frontera lineal. Un perceptrón puede corregir pesos y alcanzar el límite de épocas sin resolverlos. El módulo muestra los últimos pesos y los errores; no declara convergencia. Una época completa sin errores es el criterio de parada exitosa.',
+      relacionadas: ['neuronales.perceptron', 'neuronales.pesos']
+    },
     /* ---------------- Lógica difusa: conceptos y uso del editor local ---------------- */
     {
       id: 'difusa.borrador-participacion', tema: 'difusa', modulos: ['difusa'],

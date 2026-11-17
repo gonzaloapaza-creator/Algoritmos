@@ -229,14 +229,16 @@ function catalogoEjemplosGrafo(modulo) {
     { id: 'mejoras', nombre: 'Intermedio · Una distancia puede mejorar', descripcion: 'Una ruta descubierta primero puede ser sustituida. Observa cómo cambian las distancias y los predecesores.', origen: 'n1', destino: 'n5', observar: 'En Paso a paso, B y D mejoran al llegar desde C y B; E vuelve a mejorar al pasar por D. Una distancia provisional todavía puede cambiar.' },
     { id: 'campus', nombre: 'Aplicado · Caminos de un campus', descripcion: 'Busca de Entrada a Biblioteca y compara caminos en metros. Las conexiones se pueden recorrer en ambos sentidos.', origen: 'n1', destino: 'n4', observar: 'Compara pasar por Patio y Bloque con las conexiones más directas. Puedes cambiar el origen a Biblioteca para comprobar el regreso. Datos didácticos en metros; Máximo requiere un grafo dirigido sin ciclos.' },
     { id: 'direcciones', nombre: 'Intermedio · Las flechas importan', descripcion: 'Un punto puede estar conectado y aun así no ser alcanzable. Sigue el sentido de cada flecha.', origen: 'n1', destino: 'n3', observar: 'Desde A se llega a C, pero no a D: la conexión sale de D hacia B. Consulta D y luego prueba D como origen; sus destinos alcanzables cambian.' },
-    { id: 'ceros', nombre: 'Especial · Costo cero y rutas empatadas', descripcion: 'Cero es una conexión real. Dos rutas a D tienen el mismo costo; el módulo conserva la primera que encuentra.', origen: 'n1', destino: 'n4', observar: 'Compara A→B→D con A→C→D. Ambas suman lo mismo y B y C quedan a costo cero desde A. Se muestra una ruta óptima, sin afirmar que sea la única.' }
+    { id: 'ceros', nombre: 'Especial · Costo cero y rutas empatadas', descripcion: 'Cero es una conexión real. Dos rutas a D tienen el mismo costo; el módulo conserva la primera que encuentra.', origen: 'n1', destino: 'n4', observar: 'Compara A→B→D con A→C→D. Ambas suman lo mismo y B y C quedan a costo cero desde A. Se muestra una ruta óptima, sin afirmar que sea la única.' },
+    { id: 'referencia-clase', nombre: 'Referencia de clase', descripcion: 'Compara la ruta mínima de cuatro aristas con la máxima de dos aristas, desde A hasta D.', origen: 'n1', destino: 'n4', observar: 'Minimizar: A→C→E→B→D suma 101. Maximizar: A→E→D suma 121. Cambia el objetivo y calcula para contrastar las dos rutas y su procedimiento.' }
   ];
   return [
     { id: 'obligatorio', nombre: 'Básico · Caso de clase', descripcion: 'Observa cómo se acepta una conexión entre grupos y se descarta la que cierra un ciclo.' },
     { id: 'ceros', nombre: 'Especial · Ceros y redes empatadas', descripcion: 'Cero es un peso válido. Los empates conservan el orden de las conexiones.' },
     { id: 'desconectado', nombre: 'Especial · Grupos separados y un aislado', descripcion: 'Obtén un bosque de tres componentes: cada grupo tiene su subtotal y el aislado aporta cero.' },
     { id: 'cableado', nombre: 'Intermedio · Cableado entre edificios', descripcion: 'Conecta todos los edificios. Mínimo y máximo se aplican a la suma de toda la red, no a una ruta.' },
-    { id: 'optimos', nombre: 'Especial · Varias redes óptimas', descripcion: 'Un circuito de cuatro enlaces iguales ofrece varios árboles mínimos. Observa el desempate y el descarte por ciclo.' }
+    { id: 'optimos', nombre: 'Especial · Varias redes óptimas', descripcion: 'Un circuito de cuatro enlaces iguales ofrece varios árboles mínimos. Observa el desempate y el descarte por ciclo.' },
+    { id: 'referencia-clase', nombre: 'Referencia de clase', descripcion: 'Cuatro conexiones: el árbol mínimo suma 10 y el máximo 13. Hay dos árboles mínimos por el empate de peso 5.' }
   ];
 }
 
@@ -247,7 +249,11 @@ function crearEjemploGrafo(modulo, nombre = 'obligatorio') {
   let conexiones = dirigido
     ? [['A', 'B', 4], ['A', 'C', 1], ['C', 'B', 2], ['B', 'D', 1], ['C', 'D', 5]]
     : [['A', 'B', 1], ['A', 'C', 4], ['B', 'C', 2], ['B', 'D', 5], ['C', 'D', 3]];
-  if (nombre === 'ceros') {
+  if (nombre === 'referencia-clase') {
+    nombres = dirigido ? ['A', 'B', 'C', 'D', 'E'] : ['A', 'B', 'C', 'D'];
+    conexiones = dirigido ? [['A', 'C', 23], ['A', 'E', 52], ['C', 'E', 23], ['E', 'B', 23], ['E', 'D', 69], ['B', 'D', 32]]
+      : [['A', 'B', 2], ['C', 'D', 3], ['A', 'C', 5], ['B', 'D', 5]];
+  } else if (nombre === 'ceros') {
     nombres = ['A', 'B', 'C', 'D'];
     conexiones = dirigido
       ? [['A', 'B', 0], ['A', 'C', 0], ['B', 'D', 2], ['C', 'D', 2]]
@@ -283,9 +289,10 @@ function crearEjemploGrafo(modulo, nombre = 'obligatorio') {
     mejoras: [[250, 70], [250, 300], [700, 70], [700, 300], [475, 550]],
     campus: [[250, 50], [700, 50], [250, 550], [700, 550]],
     direcciones: [[150, 280], [470, 280], [830, 100], [830, 480]],
-    ceros: [[150, 300], [500, 100], [500, 500], [850, 300]]
+    ceros: [[150, 300], [500, 100], [500, 500], [850, 300]],
+    'referencia-clase': [[200, 550], [800, 50], [200, 50], [800, 550], [500, 300]]
   };
-  const posiciones = modulo === 'dijkstra' && disposicionesDijkstra[nombre];
+  const posiciones = modulo === 'dijkstra' ? disposicionesDijkstra[nombre] : nombre === 'referencia-clase' ? [[140, 110], [860, 110], [140, 490], [860, 490]] : null;
   const nodos = nombres.map((nombreNodo, i) => {
     const angulo = -Math.PI / 2 + (2 * Math.PI * i / nombres.length);
     return { id: 'n' + (i + 1), nombre: nombreNodo, x: posiciones ? posiciones[i][0] : Math.round(500 + 355 * Math.cos(angulo)), y: posiciones ? posiciones[i][1] : Math.round(300 + 220 * Math.sin(angulo)) };

@@ -7,10 +7,11 @@
   if (window.AlgoContexto) return;
   const NOMBRES = {
     inicio: 'Inicio', johnson: 'Johnson', dijkstra: 'Dijkstra', kruskal: 'Kruskal',
-    asignacion: 'Asignación', northwest: 'Esquina noroeste', ordenamiento: 'Ordenamiento', arboles: 'Árboles', difusa: 'Lógica difusa'
+    asignacion: 'Asignación', northwest: 'Esquina noroeste', ordenamiento: 'Ordenamiento', arboles: 'Árboles', difusa: 'Lógica difusa', neuronales: 'Redes neuronales · Perceptrón'
   };
   const GUIAS = {
-    inicio: 'Elige una tarjeta de la ciudad: Johnson, Dijkstra, Kruskal, Asignación, Esquina noroeste, Ordenamiento, Árboles o Lógica difusa. Dentro de cada módulo puedes cargar un ejemplo y consultar su ayuda.',
+    inicio: 'Elige una tarjeta de la ciudad: Johnson, Dijkstra, Kruskal, Asignación, Esquina noroeste, Ordenamiento, Árboles, Lógica difusa o Perceptrón. Dentro de cada módulo puedes cargar un ejemplo y consultar su ayuda.',
+    neuronales: 'Carga AND de la pizarra, revisa los patrones y pulsa Entrenar y ver pasos. Anterior/Siguiente recorren patrones; Ir a época cambia la pasada. Cada fila explica Δwᵢ = −ηexᵢ con sus valores reales. Comparación usa los mismos patrones antes y después. XOR puede llegar al límite sin converger.',
     difusa: 'Carga un ejemplo o elige «Crear mi sistema». Revisa Variables y pertenencias, configura Reglas y pasa a Evaluar para introducir valores. Procedimiento y resultado muestra la ejecución real. Puedes usar de una a tres entradas, una salida, conjuntos triangulares o trapezoidales y reglas AND/OR con peso. Los ejemplos son didácticos, sin calibración para decisiones reales.',
     johnson: 'Crea los vértices y las conexiones, revisa la matriz y calcula para seguir los pasos y ver las distancias entre todos los pares. Esta aplicación prohíbe bucles, duplicados y conexiones inversas; es una decisión del editor, no una limitación matemática de Johnson. Sí permite pesos negativos y ciclos de tres o más vértices. Un ciclo negativo impide obtener distancias mínimas.',
     dijkstra: 'Crea un grafo o carga un ejemplo; elige origen, objetivo y, si quieres, destino. El mínimo usa Dijkstra con pesos enteros no negativos. El máximo usa orden topológico y solo se admite en grafos dirigidos acíclicos. Se calculan los mejores valores desde el origen a todos los vértices.',
@@ -24,9 +25,17 @@
   // Guías contrastadas con la ayuda y los controles de cada módulo. No ejecutan
   // operaciones del ejercicio ni sustituyen sus validadores o algoritmos.
   const TEMAS = {
+    neuronales: {
+      datos: 'Edita patrones, clases, pesos iniciales, umbral, razón y épocas. Acepta coma o punto decimal, hasta seis decimales. Cambiar datos exige entrenar de nuevo.',
+      reglas: 'De 1 a 6 entradas, de 1 a 32 patrones, de 1 a 100 épocas. Entradas, pesos iniciales y umbral entre −100 y 100; razón entre 0,000001 y 1. Hardlim usa clases 0/1 y Hardlims −1/1. z = 0 produce 1.',
+      herramientas: 'Carga un ejemplo y entrena. Exportar/Importar ejercicio conserva datos y parámetros en JSON. La importación inválida conserva el ejercicio actual. Probar una entrada no modifica el entrenamiento.',
+      pasos: 'Cada fila usa los pesos dejados por la anterior. El registro muestra S, θ, z, predicción, deseada, e = predicha − deseada, Δw = −ηex y pesos nuevos. Una época recorre todos los patrones; una época completa sin errores detiene el aprendizaje.',
+      resultado: 'Compara los mismos patrones con los pesos iniciales y finales. Los aciertos no son una evaluación sobre datos nuevos. XOR no se separa con una sola frontera lineal.',
+      errores: 'Revisa rango, seis decimales, clases de la activación y épocas enteras. El ejemplo de clase mantiene θ fijo. Si cambias datos, entrena de nuevo.'
+    },
     inicio: {
       datos: 'Selecciona un edificio y entra en su módulo. «Vista lista» ofrece el mismo catálogo por categorías. Los datos del ejercicio se ingresan dentro de cada módulo.',
-      reglas: 'Hay ocho módulos independientes. Los trabajos pertenecen al navegador y al origen: localhost, 127.0.0.1 y el sitio publicado tienen almacenes separados.',
+      reglas: 'Hay nueve módulos independientes. Los trabajos pertenecen al navegador y al origen: localhost, 127.0.0.1 y el sitio publicado tienen almacenes separados.',
       herramientas: 'Selecciona un edificio para ver su descripción y acceso. Puedes cambiar entre ciudad y lista, y pausar las demostraciones. Las demostraciones del inicio ilustran ideas; no calculan tus ejercicios.',
       pasos: 'Entra en un módulo y prepara un ejercicio para ver su procedimiento. Las escenas del inicio no son pasos calculados.',
       resultado: 'El inicio presenta el catálogo y los trabajos recientes. Abre el módulo correspondiente para consultar un resultado calculado.',
@@ -506,6 +515,14 @@
         const errores = tomar(e.errores, 5, 'datos.errores', error => texto(typeof error === 'string' ? error : error && error.mensaje, 240)).filter(Boolean);
         if (errores.length) { contexto.datos.errores = errores; contexto.error = errores[0]; }
       } else contexto.datos = { modelo: null, valores: [] };
+    } else if (modulo === 'neuronales' && window.PerceptronModulo) {
+      const e = window.PerceptronModulo.contexto(); revision = e.revision;
+      contexto.vista = e.entrenado ? 'procedimiento' : 'datos';
+      contexto.datos = { configurada: true, entradas: e.entradas, patrones: e.patrones };
+      contexto.resultadoVigente = e.entrenado;
+      contexto.resultado = e.entrenado ? { resumen: texto(e.resumen, 1800) } : null;
+      contexto.paso = e.entrenado ? { numero: e.paso, indice: e.paso - 1, total: e.totalPasos, texto: texto(e.descripcionPaso, 2400) } : null;
+      contexto.error = errorVisible(['error']);
     } else {
       contexto.datos = { catalogo: Object.keys(NOMBRES).filter(n => n !== 'inicio').map(n => NOMBRES[n]) };
     }
@@ -547,7 +564,7 @@
     asignacion: ['asignacion', 'hungaro', 'hungara'], northwest: ['northwest', 'esquina noroeste', 'noroeste', 'transporte'],
     ordenamiento: ['ordenamiento', 'selection', 'insertion', 'bubble', 'shell', 'merge'],
     arboles: ['arboles', 'arbol binario', 'arboles binarios', 'bst'],
-    difusa: ['logica difusa', 'difusa', 'mamdani']
+    difusa: ['logica difusa', 'difusa', 'mamdani'], neuronales: ['redes neuronales', 'perceptron', 'neurona']
   };
   const INTENCIONES = {
     empezar: /^(?:como (?:empiezo|empezar|comienzo|comenzar|inicio|iniciar)(?: ejercicio)?|como (?:uso|usar|funciona)|que es|para que sirve|que hace|por donde empiezo|primeros pasos|ayuda|hola|buenas)$/,
@@ -594,6 +611,7 @@
   }
   function sugeridas(foto, pregunta) {
     const f = foto || obtener(), c = f.contexto;
+    if (f.modulo === 'neuronales') return ['¿Qué es un perceptrón?', '¿Por qué cambia un peso?', '¿Por qué XOR no converge?'];
     const lectura = interpretar(pregunta, f.modulo);
     const nombre = NOMBRES[lectura.modulo] || NOMBRES.inicio;
     // El módulo excluido conserva sus sugerencias anteriores, sin clasificar su estado.
@@ -728,6 +746,7 @@
     return avisos.join('\n');
   }
   function explicarPaso(modulo, c) {
+    if (modulo === 'neuronales') return c.paso ? c.paso.texto : 'Entrena el perceptrón para consultar su historial real.';
     if (modulo === 'northwest' && c.datos && c.datos.pendientesDeCorregir) return pendientes(modulo, c);
     if (!c.resultadoVigente) return faltaResultado(c);
     if (modulo === 'johnson' && c.resultado && c.resultado.temporal && c.vista === 'resultado') return explicarResultado(modulo, c) + '\nTempranos: máximos de temprano(u) + duración en orden topológico. Tardíos: mínimos de tardío(v) − duración en orden inverso, comenzando con tardío(destino)=T. Consulta el procedimiento temporal desplegable para sus valores.';
@@ -769,6 +788,7 @@
     return lineas.filter(Boolean).join('\n');
   }
   function explicarResultado(modulo, c) {
+    if (modulo === 'neuronales') return c.resultadoVigente && c.resultado ? c.resultado.resumen : 'Entrena de nuevo para ver un resultado vigente del perceptrón.';
     if (modulo === 'northwest' && c.datos && c.datos.pendientesDeCorregir) return pendientes(modulo, c);
     if (!c.resultadoVigente || !c.resultado) return faltaResultado(c);
     const r = c.resultado, d = c.datos || {};
@@ -861,6 +881,7 @@
     if (/^(?:que diferencia hay entre|diferencia entre) (?:preorden y inorden|bst y arbol binario)$/.test(normalizar(pregunta)) && modulo === 'arboles') return prefijo + temas.pasos + '\n' + temas.resultado;
     const intencion = l.intencion;
     if (!intencion) return sinCobertura(f, pregunta);
+    if (modulo === 'neuronales' && ['guardar', 'traslado'].includes(intencion)) return prefijo + 'Usa Exportar ejercicio para conservar datos y parámetros; Importar ejercicio valida el JSON antes de reemplazar. El historial se vuelve a generar al entrenar. Este módulo no utiliza la biblioteca de trabajos con nombre.';
     if (modulo === 'difusa') {
       if (intencion === 'guardar') return prefijo + 'El autoguardado conserva el modelo y los valores de entrada bajo una clave propia y versionada. Puedes guardar y recuperar trabajos del módulo. Los puntos, los recortes y los mapas se recalculan; no se guardan miles de muestras. El almacenamiento pertenece a este navegador y origen.';
       if (intencion === 'traslado') return prefijo + 'El JSON de trabajo restaura modelo y valores tras validarlos; una importación inválida conserva el ejercicio actual. El JSON de comparación numérica contiene casos y resultados para contrastarlos: cumple otra función. No hay importación general de archivos MATLAB .fis.';
