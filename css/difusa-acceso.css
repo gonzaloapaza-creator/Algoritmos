@@ -1,0 +1,108 @@
+/* Solo las páginas de elección y acceso a MATLAB de Lógica difusa. */
+body.difusa-acceso .topbar__acciones > .btn { display: inline-flex; }
+.difusa-acceso .difusa-acceso__interior { max-width: 1080px; margin: 0 auto; min-width: 0; }
+.difusa-acceso .difusa-acceso__ruta { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0 24px; color: var(--texto-suave); font-size: var(--t-sm); }
+.difusa-acceso .difusa-acceso__cabecera { display: grid; gap: 10px; margin-bottom: 28px; }
+.difusa-acceso .difusa-acceso__cabecera h1 { font-size: clamp(1.65rem, 3.2vw, 2.5rem); line-height: 1.2; max-width: 25ch; }
+.difusa-acceso .difusa-acceso__cabecera > p:last-child { color: var(--texto-suave); max-width: 70ch; }
+.difusa-acceso .difusa-acceso__opciones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.difusa-acceso .difusa-acceso__tarjeta,
+.difusa-acceso .difusa-acceso__panel { min-width: 0; padding: 26px; border: 1px solid var(--borde); border-radius: var(--radio-lg); background: var(--bg-2); }
+.difusa-acceso .difusa-acceso__tarjeta { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; border-top: 3px solid var(--acento); }
+.difusa-acceso .difusa-acceso__etiqueta { color: var(--acento-fuerte); font-weight: 700; font-size: var(--t-sm); }
+.difusa-acceso .difusa-acceso__icono { width: 70px; height: 54px; fill: none; stroke: var(--acento); stroke-width: 2; stroke-linejoin: round; }
+.difusa-acceso .difusa-acceso__tarjeta h2 { font-size: 1.4rem; }
+.difusa-acceso .difusa-acceso__tarjeta > p { color: var(--texto-suave); }
+.difusa-acceso .difusa-acceso__tarjeta .btn { margin-top: auto; width: 100%; }
+.difusa-acceso .difusa-acceso__nota { color: var(--texto-suave); font-size: var(--t-sm); line-height: 1.6; }
+.difusa-acceso .difusa-acceso__matlab { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 20px; margin-bottom: 20px; }
+.difusa-acceso .difusa-acceso__panel > h2 { font-size: var(--t-xl); margin-bottom: 12px; }
+.difusa-acceso .difusa-acceso__panel > p { margin-bottom: 16px; }
+.difusa-acceso .difusa-acceso__panel > :last-child { margin-bottom: 0; }
+.difusa-acceso .difusa-acceso__interior > .difusa-acceso__panel { margin-bottom: 20px; }
+.difusa-acceso .difusa-acceso__descargas { display: flex; flex-direction: column; gap: 14px; }
+.difusa-acceso .difusa-acceso__descargas > h2,
+.difusa-acceso .difusa-acceso__descargas > p { margin-bottom: 0; }
+.difusa-acceso .difusa-acceso__variables { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 20px 0; }
+.difusa-acceso .difusa-acceso__variables > div { min-width: 0; border: 1px solid var(--borde-suave); border-radius: var(--radio-sm); padding: 12px; }
+.difusa-acceso .difusa-acceso__variables dt { font-weight: 700; }
+.difusa-acceso .difusa-acceso__variables dd { margin: 4px 0 0; font-size: var(--t-lg); }
+.difusa-acceso .difusa-acceso__variables dd span { display: block; font-size: var(--t-xs); color: var(--texto-suave); }
+.difusa-acceso .difusa-acceso__referencia { padding: 12px 14px; border-left: 3px solid var(--acento); background: var(--acento-tinte); font-size: var(--t-sm); }
+.difusa-acceso .difusa-acceso__pasos { padding-left: 24px; display: grid; gap: 12px; }
+.difusa-acceso .difusa-acceso__pasos li { padding-left: 4px; }
+.difusa-acceso .difusa-acceso__pasos li::marker { color: var(--acento-fuerte); font-weight: 800; }
+.difusa-acceso .difusa-acceso__comando { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+.difusa-acceso code { overflow-wrap: anywhere; font-size: .92em; }
+.difusa-acceso #comandoMatlab { display: block; flex: 1 1 290px; min-width: 0; padding: 14px; background: var(--bg-input); border: 1px solid var(--borde); border-radius: var(--radio-sm); user-select: all; }
+.difusa-acceso .difusa-acceso__detalle { display: grid; gap: 16px; padding-top: 20px; }
+.difusa-acceso .difusa-acceso__funciones { display: grid; gap: 6px; }
+.difusa-acceso .difusa-acceso__funciones dt { font-weight: 700; }
+.difusa-acceso .difusa-acceso__funciones dd { margin: 0 0 8px; color: var(--texto-suave); }
+.difusa-acceso .difusa-acceso__pie { margin-top: 24px; color: var(--texto-suave); }
+.difusa-acceso .btn { white-space: normal; text-align: center; min-height: 44px; }
+.difusa-acceso :is(a, button, summary, [tabindex]):focus-visible { outline: 3px solid var(--acento-fuerte); outline-offset: 4px; }
+.difusa-acceso summary { cursor: pointer; font-weight: 700; }
+@media (max-width: 700px) {
+  .difusa-acceso .difusa-acceso__opciones,
+  .difusa-acceso .difusa-acceso__matlab { grid-template-columns: minmax(0, 1fr); }
+  .difusa-acceso .difusa-acceso__tarjeta,
+  .difusa-acceso .difusa-acceso__panel { padding: 20px; }
+  .difusa-acceso .difusa-acceso__cabecera { margin-bottom: 22px; }
+}
+@media (max-width: 360px) {
+  .difusa-acceso .difusa-acceso__variables { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Mejoras exclusivas de MATLAB; el selector conserva sus estilos anteriores. */
+body.difusa-matlab .matlab-actividad { margin-bottom: 32px; min-width: 0; }
+body.difusa-matlab .matlab-actividad__cabecera { display: grid; gap: 8px; margin: 0 0 20px; }
+body.difusa-matlab .matlab-actividad__cabecera h2 { font-size: clamp(1.4rem, 2.4vw, 1.8rem); }
+body.difusa-matlab .matlab-actividad__cabecera > p:last-child { color: var(--texto-suave); }
+body.difusa-matlab .matlab-actividad > .difusa-acceso__panel { margin-bottom: 20px; }
+body.difusa-matlab .matlab-actividad--crear { border-top: 1px solid var(--borde); padding-top: 28px; }
+body.difusa-matlab .difusa-acceso__panel > h3 { margin-bottom: 12px; font-size: var(--t-xl); }
+body.difusa-matlab .difusa-acceso__nota,
+body.difusa-matlab .difusa-acceso__referencia { font-size: .9375rem; line-height: 1.65; }
+body.difusa-matlab .difusa-acceso__pasos,
+body.difusa-matlab .matlab-ayuda__contenido { font-size: 1rem; line-height: 1.65; }
+body.difusa-matlab .matlab-pasos-crear { margin: 20px 0; }
+body.difusa-matlab .matlab-recordatorio { padding: 14px 16px; background: var(--acento-tinte); border-left: 3px solid var(--acento); border-radius: var(--radio-sm); }
+body.difusa-matlab .matlab-casos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+body.difusa-matlab .matlab-caso { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; min-width: 0; padding: 16px; border: 1px solid var(--borde); border-radius: var(--radio); }
+body.difusa-matlab .matlab-caso h3 { font-size: 1rem; }
+body.difusa-matlab .matlab-caso .btn { margin-top: auto; }
+body.difusa-matlab :is(.difusa-acceso__comando, .matlab-caso) > code { display: block; min-width: 0; padding: 14px; background: var(--bg-input); border: 1px solid var(--borde); border-radius: var(--radio-sm); user-select: all; overflow-wrap: anywhere; }
+body.difusa-matlab .difusa-acceso__comando > code { flex: 1 1 290px; }
+body.difusa-matlab .difusa-acceso__variables dd span { font-size: .875rem; line-height: 1.5; }
+body.difusa-matlab.ayuda-matlab-abierta { overflow: hidden; }
+body.difusa-matlab .matlab-ayuda { position: fixed; inset: 0; margin: auto; width: min(860px, calc(100vw - 24px)); height: min(840px, calc(100dvh - 24px)); max-width: none; max-height: none; padding: 0; border: 1px solid var(--borde); border-radius: var(--radio-lg); color: var(--texto); background: var(--bg-2); box-shadow: var(--sombra); overflow: hidden; }
+body.difusa-matlab .matlab-ayuda[open] { display: grid; grid-template-rows: auto minmax(0, 1fr); }
+body.difusa-matlab .matlab-ayuda::backdrop { background: var(--velo); }
+body.difusa-matlab .matlab-ayuda__cabecera { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 24px; border-bottom: 1px solid var(--borde); }
+body.difusa-matlab .matlab-ayuda__cabecera h2 { font-size: var(--t-xl); }
+body.difusa-matlab .matlab-ayuda__cabecera form { flex: 0 0 auto; }
+body.difusa-matlab .matlab-ayuda__contenido { overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; min-height: 0; padding: 20px 24px 28px; }
+body.difusa-matlab .matlab-ayuda__contenido > p { margin-bottom: 16px; color: var(--texto-suave); }
+body.difusa-matlab .matlab-ayuda details { margin-bottom: 12px; border: 1px solid var(--borde); border-radius: var(--radio); }
+body.difusa-matlab .matlab-ayuda summary { padding: 14px 16px; min-height: 48px; }
+body.difusa-matlab .matlab-ayuda__seccion { display: grid; gap: 16px; padding: 0 16px 20px; }
+body.difusa-matlab .matlab-ayuda :is(ol, ul) { margin: 0; padding-left: 24px; }
+body.difusa-matlab .matlab-ayuda li + li { margin-top: 8px; }
+body.difusa-matlab .matlab-ayuda .difusa-acceso__comando { margin-bottom: 0; }
+body.difusa-matlab .matlab-problemas { display: grid; gap: 8px; }
+body.difusa-matlab .matlab-problemas dt { font-weight: 700; }
+body.difusa-matlab .matlab-problemas dd { margin: 0 0 12px; color: var(--texto-suave); }
+body.difusa-matlab .matlab-ayuda__fuentes { border-top: 1px solid var(--borde); margin-top: 24px; padding-top: 20px; }
+body.difusa-matlab .matlab-ayuda__fuentes h3 { margin-bottom: 12px; }
+@media (max-width: 700px) {
+  body.difusa-matlab .matlab-casos { grid-template-columns: minmax(0, 1fr); }
+  body.difusa-matlab .matlab-caso { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
+  body.difusa-matlab .matlab-caso :is(h3, p) { grid-column: 1 / -1; }
+  body.difusa-matlab .matlab-ayuda__cabecera { padding: 14px; gap: 8px; }
+  body.difusa-matlab .matlab-ayuda__cabecera h2 { font-size: 1.1rem; }
+  body.difusa-matlab .matlab-ayuda__contenido { padding: 16px 14px 24px; }
+}
+@media (max-width: 360px) {
+  body.difusa-matlab .matlab-caso { grid-template-columns: minmax(0, 1fr); }
+}

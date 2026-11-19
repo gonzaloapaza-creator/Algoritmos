@@ -45,7 +45,7 @@ Páginas: `index.html`, `johnson.html`, `dijkstra.html`, `kruskal.html`, `asigna
 
 ### Redes neuronales · Perceptrón
 
-Abre el último módulo desde la ciudad, la vista de lista o el menú, o visita `http://127.0.0.1:8123/redes-neuronales.html`. Se reutilizó el motor de `Perceptron_Ciudad_de_los_Algoritmos.zip` y se adaptaron su interfaz y estilos a la navegación y temas comunes. **AND de la pizarra** viene precargado: patrones (0,0), (0,1), (1,0), (1,1); salidas 0,0,0,1; pesos 0,2 y 0,1; umbral fijo 0,2; razón 0,1 y Hardlim.
+Abre el último módulo desde la ciudad, la vista de lista o el menú, o visita `http://127.0.0.1:8123/redes-neuronales.html`. Su motor está en `js/neuronales/motor.js`, con interfaz y estilos integrados en la navegación y temas comunes. **AND de la pizarra** viene precargado: patrones (0,0), (0,1), (1,0), (1,1); salidas 0,0,0,1; pesos 0,2 y 0,1; umbral fijo 0,2; razón 0,1 y Hardlim.
 
 Pulsa **Entrenar y ver pasos**. El procedimiento muestra el historial real, productos, suma S, neta z = S − θ, error predicha − deseada y cada corrección Δwᵢ = −ηexᵢ. Los botones recorren patrones; el selector cambia de época y la tabla plegable muestra la época completa. AND termina tras dos épocas con errores 1 y 0: w₁ pasa a 0,1, w₂ sigue en 0,1 y la comparación pasa de 3/4 a 4/4. Se incluyen OR, AND bipolar con Hardlims y XOR; este último alcanza el límite porque una sola frontera lineal no separa sus cuatro patrones.
 
@@ -59,17 +59,19 @@ Resultado prioriza un grafo grande y estático con selectores de origen, destino
 
 Los nodos se dividen en T, con el nombre arriba y dos valores abajo. En la consulta, los nodos ordinarios muestran mínimo | máximo desde el origen elegido; el destino con una ruta activa muestra acumulado | total de esa ruta, calculados con los pesos originales. La comparación sin una ruta activa conserva mínimo | máximo en el destino. La vista temporal muestra tiempo temprano | tiempo tardío, sin sustituirlos por costos de caminos. Los rótulos y la leyenda indican el significado vigente. `∞` significa sin camino y `—`, no calculable. Mínimo en cian, máximo en violeta y conexiones compartidas discontinuas en la comparación. Los nombres y valores extensos tienen consulta completa. Las tablas inferiores separan las distancias generales de cada nodo del acumulado de la ruta elegida, con pesos originales y una ruta representativa por objetivo en los empates. El procedimiento de máximos muestra sus operaciones topológicas reales.
 
-Zoom, desplazamiento, ajuste y ampliación conservan las posiciones del editor. PNG e impresión incluyen valores y leyenda; las tablas secundarias son plegables. La entrega anterior de esta consulta se limitó al proyecto local y no regeneró el Drop ni el ZIP. El [ajuste de Johnson del 8 de noviembre de 2026](docs/AJUSTE_JOHNSON_2026-11-08.md) registra el contrato actualizado y sus comprobaciones, sin reemplazar los informes de entregas anteriores.
+Zoom, desplazamiento, ajuste y ampliación conservan las posiciones del editor. PNG e impresión incluyen valores y leyenda; las tablas secundarias son plegables.
 
 ### Lógica difusa
 
-Desde la ciudad, abre **Centro de decisiones → Lógica difusa**, o visita `http://127.0.0.1:8123/logica-difusa.html` después de `npm start`. Sus cinco vistas separan Inicio y ejemplos, Variables, Reglas, Evaluar y Procedimiento/resultado. Elige Ayuda, Propina o Ventilación, o pulsa **Crear mi sistema**. Configura de 1 a 3 entradas, una salida, 2–5 conjuntos triangulares/trapezoidales por variable y hasta 125 reglas AND/OR con peso. Aplica los borradores antes de evaluar. El ejemplo original conserva sus funciones y nueve reglas; no mide el aprendizaje.
+Desde la ciudad, abre **Centro de decisiones → Lógica difusa** para elegir versión en `logica-difusa-opciones.html`. **Usar en esta página** abre el simulador web sin repetir el video; **Usar MATLAB Online** lleva a las instrucciones y descargas de `logica-difusa-matlab.html`. El botón «Ir al algoritmo» del video también lleva al selector. Los trabajos recientes mantienen su acceso directo a la biblioteca web. En MATLAB: descarga y extrae el paquete, sube sus tres archivos a una misma carpeta de MATLAB Online, abre `abrir_ventilacion.m` y pulsa Run. Requiere acceso a MATLAB y Fuzzy Logic Toolbox; la subida de archivos es manual. La guía está en `matlab/LEEME_MATLAB.txt`; Algo no ejecuta MATLAB ni consulta sus resultados privados.
+
+La aplicación web conserva `http://127.0.0.1:8123/logica-difusa.html` después de `npm start`. Sus cinco vistas separan Inicio y ejemplos, Variables, Reglas, Evaluar y Procedimiento/resultado. Elige Ayuda, Propina o Ventilación, o pulsa **Crear mi sistema**. Configura de 1 a 3 entradas, una salida, 2–5 conjuntos triangulares/trapezoidales por variable y hasta 125 reglas AND/OR con peso. Aplica los borradores antes de evaluar. El ejemplo original conserva sus funciones y nueve reglas; no mide el aprendizaje.
 
 AND usa mínimo; OR máximo; el peso multiplica la activación. Implicación por mínimo y agregación por máximo. El centroide continuo integra la envolvente por tramos lineales, incluidos nudos, recortes e intersecciones; las 1001 muestras son solo consultas auxiliares. El triángulo estrecho [0.01,0.02,0.03] activado a 1 da 0.02. La gráfica conserva los segmentos exactos y cada punto del mapa usa el mismo centroide. Se distinguen ausencia de activación, activación sin masa, fallo numérico y resultado válido sin etiqueta. Los resultados pueden diferir ligeramente de las antiguas sumas discretas. El mapa sigue siendo una exploración de entradas bajo petición, por lotes cancelables: curva de 101 puntos o rejilla 15×15. Los ejemplos son didácticos, sin calibración para decisiones o control real.
 
 Autoguardado independiente en `logica-difusa.v2`, migración del anterior conservando el original, trabajos con nombre y JSON de trabajo validado antes de importar. El **JSON de comparación** tiene un formato distinto y no restaura trabajos. No se persisten muestras, recortes ni mapas. Algo incluye 14 ayudas del módulo y contexto real acotado, sin copiar las 1001 muestras ni usar APIs.
 
-`npm.cmd run test:difusa` ejecuta solo las pruebas dirigidas del módulo; `node tests/logica-difusa-navegador.js` revisa el Drop sin capturas. **Comparación con MATLAB pendiente**: `matlab/validar_sistema_difuso.m` admite el JSON de comparación v2; la referencia original sigue en `matlab/validar_logica_difusa.m`. Requieren MATLAB R2018b+ y Fuzzy Logic Toolbox únicamente para esa comparación. Formatos, resultados y límites en [ENTREGA_LOGICA_DIFUSA.md](ENTREGA_LOGICA_DIFUSA.md).
+`npm.cmd run test:difusa` ejecuta solo las pruebas dirigidas del módulo; `node tests/logica-difusa-navegador.js` revisa el Drop sin capturas. **Comparación con MATLAB pendiente**: `matlab/validar_sistema_difuso.m` admite el JSON de comparación v2; la referencia original sigue en `matlab/validar_logica_difusa.m`. Requieren MATLAB R2018b+ y Fuzzy Logic Toolbox únicamente para esa comparación.
 
 Parámetros útiles: `?intro=no` salta la presentación con video; `index.html?simular=10` muestra un catálogo simulado (entradas marcadas «Próximamente», nunca enlazadas) para revisar el diseño con muchas entradas.
 
@@ -77,7 +79,7 @@ Navegador comprobado: Microsoft Edge 156.0.4314.58 en Windows, en modo headless 
 
 ### Asistente educativo Algo
 
-Algo ofrece **Ayuda interactiva** en una sola conversación local, con respuestas preparadas. Cubre conceptos, matrices, grafos, los nueve módulos, uso y problemas frecuentes. Incluye **Explorar temas**, buscador, ejemplos, comparaciones y botones para ampliar cada respuesta. En Lógica difusa también explica la selección y el centroide del resultado vigente mediante un contexto acotado. En Perceptrón explica la corrección de pesos y el paso consultado.
+Algo ofrece una **Guía de algoritmos** en una sola conversación local, con respuestas preparadas. Cubre conceptos, matrices, grafos, los nueve módulos, uso y problemas frecuentes. La bienvenida muestra hasta tres sugerencias breves; **Ver temas** reúne categorías, buscador y ejemplos. El panel compacto conserva historial y borrador al cerrar, permite copiar las respuestas y adapta la entrada a la altura visible. En Lógica difusa explica la selección y el centroide del resultado vigente mediante un contexto acotado. En Perceptrón explica la corrección de pesos y el paso consultado.
 
 Abre el robot, escribe una pregunta o elige una sugerencia y pulsa **Enviar**. Usa «Más sencillo», «Ver un ejemplo», «Más detalle» y las preguntas relacionadas para continuar. Las acciones de paso y resultado aparecen cuando hay un cálculo vigente. Las explicaciones leen el estado y sus pasos ya calculados; no modifican datos ni ejecutan otro motor matemático. Si el resultado quedó invalidado, pide recalcular. Las preguntas no cubiertas reciben una respuesta honesta y sugerencias.
 
@@ -101,17 +103,17 @@ npm.cmd run test:asistente:navegador
 node.exe tests/verificar-paquete-asistente.js
 ```
 
-La prueba funcional general del asistente usa Edge headless y conserva sus escenarios anteriores de explorador, seguimientos, limpieza, foco, resultados invalidados y ausencia de solicitudes del chat. La integración de Perceptrón se comprueba con `test:perceptron:navegador`. Las suites unitarias generales de Algo presentan fallos anteriores a esta integración; se documentan en `ENTREGA_PERCEPTRON_2026-11-17.md`. La comprobación del paquete compara ZIP, `drop`, `public` y fuentes, incluyendo CRC y exclusiones.
+La prueba funcional general del asistente usa Edge headless y conserva sus escenarios de explorador, seguimientos, limpieza, foco, resultados invalidados y ausencia de solicitudes del chat. `node tests/asistente-diseno-navegador.js` revisa cinco contextos en ambos temas y en anchos de 1366, 390 y 320 px; `--capturas` guarda sus vistas temporales. La integración de Perceptrón se comprueba con `test:perceptron:navegador`. Las suites unitarias generales de Algo presentan fallos anteriores a esta integración. La comprobación del paquete compara ZIP, `drop`, `public` y fuentes, incluyendo CRC y exclusiones.
 
 ### Publicar en Netlify Drop
 
-`npm.cmd run preparar:netlify` genera `public/`, `entrega-netlify/drop/` y `entrega-netlify/ciudad-algoritmos-netlify.zip`. El paquete usa la lista pública explícita del script, con `index.html` en la raíz, sin `.env`, claves, `.git`, pruebas, capturas, servidor ni Functions. Incluye `js/johnson/caminos.js`, `js/northwest/optimizacion.js`, Lógica difusa, Perceptrón, la ayuda local y el proveedor de recientes. MATLAB y los informes quedan fuera del paquete público. Rutas de subida y traslado de ejercicios en [PUBLICAR_NETLIFY.md](PUBLICAR_NETLIFY.md).
+`npm.cmd run preparar:netlify` genera `public/`, `entrega-netlify/drop/` y `entrega-netlify/ciudad-algoritmos-netlify.zip`. El paquete usa la lista pública explícita del script, con `index.html` en la raíz, sin `.env`, claves, `.git`, pruebas, capturas, servidor ni Functions. Incluye los nueve módulos, las dos versiones difusas, la ayuda local y el modelo, lanzador, guía y ZIP descargable de MATLAB. Los informes quedan fuera del paquete público. En Git se conservan las fuentes y el pequeño ZIP del ejemplo MATLAB; los paquetes de entrega se generan localmente.
 
 1. Abre el proyecto existente **tranquil-palmier-b1959c** en Netlify.
 2. Entra en **Deploys** y arrastra la carpeta **`entrega-netlify/drop`** a la zona de carga manual. Si usas el ZIP, extráelo primero y arrastra la carpeta que contiene `index.html` directamente.
-3. Abre el sitio y prueba Algo, una pregunta y «Explorar temas».
+3. Abre el sitio y prueba Algo, una pregunta y «Ver temas».
 
-Algo no requiere claves, variables de entorno ni construcción en Netlify. No subas la raíz del proyecto ni `entrega-netlify` completa; los paquetes antiguos se conservan como respaldos obsoletos fuera de Drop. Los guardados de localhost, 127.0.0.1 y Netlify son independientes: usa exportación/importación JSON del mismo módulo para trasladarlos.
+Algo no requiere claves ni variables de entorno. Para la carga manual usa el Drop ya generado. Si conectas el repositorio a Netlify, `netlify.toml` ejecuta `node scripts/preparar-netlify.js --solo-publico` y publica `public/`. No subas la raíz del proyecto ni `entrega-netlify` completa. Los guardados de localhost, 127.0.0.1 y Netlify son independientes: usa exportación/importación JSON del mismo módulo para trasladarlos.
 
 ---
 

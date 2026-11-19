@@ -9,6 +9,11 @@ const RAIZ = path.resolve(__dirname, '..');
 const PUBLICOS = [
   'index.html', 'johnson.html', 'dijkstra.html', 'kruskal.html', 'asignacion.html',
   'northwest.html', 'ordenamiento.html', 'arboles.html', 'logica-difusa.html', 'redes-neuronales.html', 'styles.css', 'app.js',
+  'logica-difusa-opciones.html', 'logica-difusa-matlab.html',
+  'css/difusa-acceso.css', 'js/difusa/acceso-matlab.js',
+  'js/difusa/acceso-versiones.js', 'js/difusa/conocimiento-acceso.js',
+  'matlab/ventilacion_aula.fis', 'matlab/abrir_ventilacion.m',
+  'matlab/LEEME_MATLAB.txt', 'matlab/ventilacion_aula.zip',
   'css/neuronales.css', 'js/neuronales/motor.js', 'js/neuronales/app.js',
   'css/arboles.css', 'css/asignacion.css', 'css/asistente.css', 'css/ciudad.css',
   'css/grafos.css', 'css/impresion.css', 'css/johnson.css', 'css/northwest.css',
@@ -39,6 +44,7 @@ const PUBLICOS = [
   'js/ordenamiento/algoritmos.js', 'js/ordenamiento/app.js',
   'js/ordenamiento/dibujo.js', 'js/ordenamiento/estado.js'
 ];
+const ARCHIVOS_EJEMPLO_MATLAB = ['ventilacion_aula.fis', 'abrir_ventilacion.m', 'LEEME_MATLAB.txt'];
 
 function destinoSeguro(base, relativo) {
   const destino = path.resolve(base, relativo);
@@ -85,6 +91,12 @@ function verificarPublico(base) {
         const posicion = scripts.indexOf(dependencia);
         if (scripts.filter(s => s === dependencia).length !== 1 || posicion <= anterior) throw new Error('Orden o duplicado de ' + dependencia + ' en ' + nombre);
         anterior = posicion;
+      }
+      if (['logica-difusa-opciones.html', 'logica-difusa-matlab.html'].includes(nombre)) {
+        for (const necesario of ['js/comun/intro.js', 'js/difusa/conocimiento-acceso.js']) {
+          if (scripts.filter(s => s === necesario).length !== 1) throw new Error('Recurso de acceso difuso ausente o duplicado: ' + necesario);
+        }
+        if (!texto.includes('href="css/asistente.css"')) throw new Error('Faltan los estilos de Algo: ' + nombre);
       }
       for (const m of texto.matchAll(/(?:src|href)="([^"#?]+)(?:[?#][^"]*)?"/g)) {
         if (/^(?:[a-z]+:|\/\/)/i.test(m[1])) continue;
@@ -166,6 +178,9 @@ function preparar() {
       const extras = inventario(publico).filter(n => !PUBLICOS.includes(n));
       if (extras.length) throw new Error('public contiene archivos ajenos; revísalos antes de construir.');
     }
+    // Mismo ZIP en fuentes, public, Drop y paquete del sitio; el .fis se lee sin alterarlo.
+    zip(path.join(RAIZ, 'matlab', 'ventilacion_aula.zip'),
+      ARCHIVOS_EJEMPLO_MATLAB.map(nombre => [nombre, leer(RAIZ, 'matlab/' + nombre)]));
     for (const nombre of PUBLICOS) escribir(publico, nombre, leer(RAIZ, nombre));
   }
   const cantidad = verificarPublico(publico);

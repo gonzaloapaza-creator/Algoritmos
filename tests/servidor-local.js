@@ -6,10 +6,14 @@ const fs = require('fs');
 const path = require('path');
 const RAIZ = path.resolve(__dirname, '..');
 const PAGINAS = new Set(['index.html', 'johnson.html', 'dijkstra.html', 'kruskal.html', 'asignacion.html', 'northwest.html', 'ordenamiento.html', 'arboles.html', 'logica-difusa.html', 'redes-neuronales.html']);
+PAGINAS.add('logica-difusa-opciones.html');
+PAGINAS.add('logica-difusa-matlab.html');
+const RECURSOS_MATLAB = new Set(['matlab/ventilacion_aula.fis', 'matlab/abrir_ventilacion.m', 'matlab/LEEME_MATLAB.txt', 'matlab/ventilacion_aula.zip']);
 const IMAGENES = new Set(['.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico']);
 const TIPOS = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8', '.zip': 'application/zip',
+  '.fis': 'application/octet-stream', '.m': 'application/octet-stream', '.txt': 'text/plain; charset=utf-8',
   '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.ico': 'image/x-icon'
 };
@@ -24,7 +28,7 @@ function rutaPublica(url) {
   if (ruta === '/') ruta = '/index.html';
   const relativa = ruta.slice(1);
   const extension = path.posix.extname(relativa);
-  const permitida = PAGINAS.has(relativa) || relativa === 'styles.css' || relativa === 'app.js' ||
+  const permitida = PAGINAS.has(relativa) || RECURSOS_MATLAB.has(relativa) || relativa === 'styles.css' || relativa === 'app.js' ||
     (relativa.startsWith('css/') && extension === '.css') ||
     (relativa.startsWith('js/') && extension === '.js') ||
     (relativa.startsWith('assets/') && IMAGENES.has(extension)) ||

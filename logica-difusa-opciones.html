@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Elige cómo trabajar con lógica difusa: MATLAB Online con el ejemplo de ventilación o el simulador configurable de la Ciudad." />
+  <meta name="theme-color" content="#0b1020" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M3 26L11 6L21 26M11 26L23 6L29 26' fill='none' stroke='%235b8cff' stroke-width='3'/></svg>" />
+  <title>Elegir versión · Lógica difusa | Ciudad de los Algoritmos</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="js/comun/tema.js"></script>
+  <link rel="stylesheet" href="css/shell.css" />
+  <link rel="stylesheet" href="css/difusa-acceso.css" />
+  <link rel="stylesheet" href="css/asistente.css" />
+</head>
+<body class="difusa-acceso" data-modulo="difusa" data-difusa-pagina="opciones" data-intro-manual="true">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <header class="topbar">
+    <button type="button" class="btn btn-fantasma btn-icono topbar__menu" id="btnMenuLateral" aria-label="Abrir menú" aria-expanded="false" aria-controls="barraLateral"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <a class="topbar__marca" href="index.html" aria-label="Ciudad de los Algoritmos · Inicio"><svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="9" cy="23" r="5"></circle><circle cx="23" cy="9" r="5"></circle><line x1="12" y1="20" x2="20" y2="12"></line></svg><span>Algoritmos</span></a>
+    <span class="topbar__separador" aria-hidden="true"></span><span class="topbar__modulo" id="topbarModulo">Lógica difusa</span>
+    <div class="topbar__acciones"><button type="button" class="btn btn-fantasma btn-sm" id="btnVideoModulo" aria-pressed="false">Video</button><button type="button" class="btn btn-fantasma btn-sm" id="btnAyuda">Ayuda</button></div>
+  </header>
+  <aside class="sidebar" id="barraLateral" aria-label="Navegación principal"></aside><div class="sidebar-fondo" id="barraLateralFondo" hidden></div>
+  <main class="contenido" id="contenido">
+    <section id="introModulo" hidden></section>
+    <div id="moduloContenido">
+    <div class="difusa-acceso__interior">
+      <nav class="difusa-acceso__ruta" aria-label="Ubicación"><a href="index.html">Ciudad</a><span aria-hidden="true">/</span><span>Lógica difusa</span></nav>
+      <header class="difusa-acceso__cabecera">
+        <p class="eyebrow">Centro de decisiones</p>
+        <h1>Lógica difusa: elige tu versión</h1>
+        <p>Explora las reglas y sus resultados en el entorno que prefieras.</p>
+      </header>
+      <div class="difusa-acceso__opciones">
+        <article class="difusa-acceso__tarjeta" aria-labelledby="tituloMatlab">
+          <span class="difusa-acceso__etiqueta">A · MATLAB Online</span>
+          <svg class="difusa-acceso__icono" viewBox="0 0 64 48" aria-hidden="true" focusable="false"><path d="M4 42h56M8 42 26 8l18 34M26 42 44 8l16 34"/></svg>
+          <h2 id="tituloMatlab">Usar MATLAB Online</h2>
+          <p>Trabaja con Fuzzy Logic Toolbox y abre el ejemplo de ventilación del aula.</p>
+          <p class="difusa-acceso__nota">Requiere una cuenta con acceso a MATLAB y Fuzzy Logic Toolbox.</p>
+          <a class="btn btn-primary" href="logica-difusa-matlab.html" id="elegirMatlab">Continuar con MATLAB</a>
+        </article>
+        <article class="difusa-acceso__tarjeta" aria-labelledby="tituloWeb">
+          <span class="difusa-acceso__etiqueta">B · Simulador web</span>
+          <svg class="difusa-acceso__icono" viewBox="0 0 64 48" aria-hidden="true" focusable="false"><rect x="4" y="4" width="56" height="40" rx="5"/><path d="M4 14h56M14 34l10-12 10 12 14-16"/></svg>
+          <h2 id="tituloWeb">Usar en esta página</h2>
+          <p>Utiliza el simulador configurable desarrollado en el proyecto: variables, reglas, gráficas y resultados.</p>
+          <p class="difusa-acceso__nota">Trabaja en el navegador y accede a tus sistemas guardados.</p>
+          <a class="btn btn-primary" href="logica-difusa.html?intro=no" id="elegirWeb">Abrir simulador web</a>
+        </article>
+      </div>
+      <p class="difusa-acceso__pie">Puedes volver a esta elección desde cualquiera de las dos versiones.</p>
+    </div>
+    </div>
+  </main>
+  <footer class="app-footer"><p>Ciudad de los Algoritmos</p><p>Análisis de Algoritmos · Los Fanáticos del Nabo</p></footer>
+  <script src="js/config.js"></script>
+  <script src="js/comun/utilidades.js"></script>
+  <script src="js/comun/dialogo.js"></script>
+  <script src="js/comun/catalogo.js"></script>
+  <script src="js/comun/navegacion.js"></script>
+  <script src="js/comun/intro.js"></script>
+  <script src="js/difusa/acceso-versiones.js"></script>
+  <script src="js/comun/asistente-contexto.js"></script>
+  <script src="js/comun/conocimiento/base.js"></script>
+  <script src="js/comun/conocimiento/fundamentos.js"></script>
+  <script src="js/comun/conocimiento/algoritmos-grafos.js"></script>
+  <script src="js/comun/conocimiento/algoritmos-tablas.js"></script>
+  <script src="js/comun/conocimiento/algoritmos-datos.js"></script>
+  <script src="js/comun/conocimiento/aplicacion.js"></script>
+  <script src="js/comun/conocimiento/diagnostico.js"></script>
+  <script src="js/comun/conocimiento/ejercicio.js"></script>
+  <script src="js/difusa/conocimiento-acceso.js"></script>
+  <script src="js/comun/asistente-motor.js"></script>
+  <script src="js/comun/asistente.js"></script>
+</body>
+</html>

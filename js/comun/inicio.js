@@ -38,7 +38,7 @@ function crearTarjetaAlgoritmo(alg) {
   if (alg.disponible) {
     const enlace = document.createElement('a');
     enlace.className = 'btn btn-primary';
-    enlace.href = alg.ruta;
+    enlace.href = alg.rutaEntrada || alg.ruta;
     enlace.textContent = 'Abrir ' + alg.corto;
     pie.appendChild(enlace);
   } else {
@@ -53,6 +53,7 @@ function crearTarjetaAlgoritmo(alg) {
 
 const CLAVE_VISTA_INICIO = 'ui.inicio.vista.v1';
 const CLAVE_MOVIMIENTO_INICIO = 'ui.inicio.movimiento.v1';
+let eventosAccesoCiudad = null;
 
 function leerPreferenciaInicio(clave, permitidos, predeterminado) {
   try {
@@ -145,7 +146,7 @@ function dibujarInicio() {
       datos.append(dt, dd);
     });
     const abrir = document.createElement('a');
-    abrir.href = alg.ruta;
+    abrir.href = alg.rutaEntrada || alg.ruta;
     abrir.className = 'btn btn-primary ciudad-abrir';
     abrir.textContent = 'Abrir módulo';
     abrir.setAttribute('aria-label', 'Abrir módulo: ' + alg.corto);
@@ -196,6 +197,36 @@ function dibujarInicio() {
 
   if ('ResizeObserver' in window) new ResizeObserver(actualizarAcceso).observe(document.getElementById('ciudadDistribucion'));
   else window.addEventListener('resize', actualizarAcceso);
+  // Un clic selecciona; el doble clic es el único gesto que navega desde un edificio.
+  // No se retienen clics con temporizadores ni se captura el puntero: el scroll sigue nativo.
+  if (eventosAccesoCiudad) eventosAccesoCiudad.abort();
+  eventosAccesoCiudad = new AbortController();
+  const opcionesGesto = { signal: eventosAccesoCiudad.signal, passive: true };
+  let gestoCiudad = null, ultimoGestoCiudad = null, clicAnteriorCiudad = null, dobleClicValido = null;
+  let abriendoCiudad = false;
+  window.addEventListener('pageshow', () => {
+    abriendoCiudad = false;
+    gestoCiudad = null; ultimoGestoCiudad = null; clicAnteriorCiudad = null; dobleClicValido = null;
+  }, { signal: eventosAccesoCiudad.signal });
+  zonas.addEventListener('pointerdown', evento => {
+    const boton = evento.target.closest('.ciudad-zona');
+    if (!boton || evento.button !== 0 || evento.isPrimary === false) return;
+    gestoCiudad = { puntero: evento.pointerId, boton, x: evento.clientX, y: evento.clientY, movido: false };
+  }, opcionesGesto);
+  window.addEventListener('pointermove', evento => {
+    if (gestoCiudad && evento.pointerId === gestoCiudad.puntero && Math.hypot(evento.clientX - gestoCiudad.x, evento.clientY - gestoCiudad.y) > 8) gestoCiudad.movido = true;
+  }, opcionesGesto);
+  window.addEventListener('pointerup', evento => {
+    if (!gestoCiudad || evento.pointerId !== gestoCiudad.puntero) return;
+    ultimoGestoCiudad = { boton: gestoCiudad.boton, valido: !gestoCiudad.movido && gestoCiudad.boton.contains(evento.target) };
+    if (!ultimoGestoCiudad.valido) { clicAnteriorCiudad = null; dobleClicValido = null; }
+    gestoCiudad = null;
+  }, opcionesGesto);
+  window.addEventListener('pointercancel', evento => {
+    if (!gestoCiudad || evento.pointerId !== gestoCiudad.puntero) return;
+    ultimoGestoCiudad = { boton: gestoCiudad.boton, valido: false };
+    gestoCiudad = null; clicAnteriorCiudad = null; dobleClicValido = null;
+  }, opcionesGesto);
   agruparCatalogo().forEach(grupo => grupo.algoritmos.filter(a => a.disponible).forEach((alg) => {
     const boton = document.createElement('button');
     boton.type = 'button';
@@ -212,7 +243,22 @@ function dibujarInicio() {
     const edificio = document.createElement('span'); edificio.textContent = alg.zona;
     etiqueta.append(nombre, edificio);
     boton.appendChild(etiqueta);
-    boton.addEventListener('click', () => seleccionar(alg, true));
+    boton.addEventListener('click', evento => {
+      if (evento.detail === 0) { clicAnteriorCiudad = null; dobleClicValido = null; seleccionar(alg, true); return; }
+      const valido = ultimoGestoCiudad && ultimoGestoCiudad.boton === boton && ultimoGestoCiudad.valido;
+      if (!valido) { clicAnteriorCiudad = null; dobleClicValido = null; return; }
+      dobleClicValido = evento.detail === 2 && clicAnteriorCiudad === boton ? boton : null;
+      clicAnteriorCiudad = boton;
+      if (evento.detail === 1) seleccionar(alg, true);
+    });
+    boton.addEventListener('dblclick', evento => {
+      evento.preventDefault();
+      evento.stopPropagation();
+      if (evento.button !== 0 || dobleClicValido !== boton || abriendoCiudad) return;
+      abriendoCiudad = true;
+      detenerDemo();
+      window.location.assign(alg.rutaDirecta || alg.ruta + (alg.ruta.includes('?') ? '&' : '?') + 'intro=no');
+    });
     boton.addEventListener('pointerenter', () => demostrar(boton));
     boton.addEventListener('focus', () => demostrar(boton));
     boton.addEventListener('pointerleave', () => { if (document.activeElement !== boton) detenerDemo(); });

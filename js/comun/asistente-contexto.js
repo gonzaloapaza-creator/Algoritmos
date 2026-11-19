@@ -127,6 +127,13 @@
   function obtener() {
     const solicitado = document.body && document.body.dataset ? document.body.dataset.modulo : '';
     const modulo = Object.prototype.hasOwnProperty.call(NOMBRES, solicitado) ? solicitado : 'inicio';
+    const paginaDifusa = document.body && document.body.dataset ? document.body.dataset.difusaPagina : '';
+    if (modulo === 'difusa' && ['opciones', 'matlab'].includes(paginaDifusa)) {
+      const contexto = { vista: paginaDifusa === 'opciones' ? 'Elegir versión' : 'MATLAB Online',
+        datos: { paginaAcceso: paginaDifusa }, paso: null, resultado: null, resultadoVigente: false,
+        error: null, seleccion: null, estadoAyuda: 'informacion' };
+      return { modulo, contexto, referencia: 'Lógica difusa · ' + contexto.vista, firma: JSON.stringify(contexto) };
+    }
     let revision = null;
     const omitidos = [];
     const omitir = mensaje => { if (!omitidos.includes(mensaje)) omitidos.push(mensaje); };
@@ -611,6 +618,8 @@
   }
   function sugeridas(foto, pregunta) {
     const f = foto || obtener(), c = f.contexto;
+    if (f.modulo === 'difusa' && c.datos && c.datos.paginaAcceso === 'opciones') return ['¿Qué ofrece cada versión?', '¿Qué necesito para MATLAB Online?', '¿Cómo regreso al selector?'];
+    if (f.modulo === 'difusa' && c.datos && c.datos.paginaAcceso === 'matlab') return ['¿Cómo abro el ejemplo de ventilación?', '¿Cómo creo un sistema nuevo en MATLAB?', '¿Cómo uso Rule Inference y Control Surface?'];
     if (f.modulo === 'neuronales') return ['¿Qué es un perceptrón?', '¿Por qué cambia un peso?', '¿Por qué XOR no converge?'];
     const lectura = interpretar(pregunta, f.modulo);
     const nombre = NOMBRES[lectura.modulo] || NOMBRES.inicio;
@@ -642,6 +651,7 @@
   }
   function estadoContexto(foto) {
     const f = foto || obtener(), c = f.contexto || {}, d = c.datos || {};
+    if (f.modulo === 'difusa' && ['opciones', 'matlab'].includes(d.paginaAcceso)) return 'informacion';
     if (f.modulo === 'asignacion') return 'legado';
     if (f.modulo === 'inicio') return 'inicio';
     if (d.preparando) return 'preparando';

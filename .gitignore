@@ -10,3 +10,19 @@ Thumbs.db
 /.netlify/
 __pycache__/
 *.pyc
+
+# Informes de trabajo locales; la documentación principal está en README.md.
+/ALGO_DISENO_FINAL*.md
+/ANALISIS*.md
+/CIERRE*.md
+/ENTREGA*.md
+/INFORME*.md
+/MEJORA*.md
+/PUBLICAR_NETLIFY.md
+/RESUMEN*.md
+/REVISION*.md
+/docs/AJUSTE_JOHNSON*.md
+
+# Paquetes y respaldos; se conserva la descarga utilizada por la aplicación.
+*.zip
+!/matlab/ventilacion_aula.zip

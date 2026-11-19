@@ -1,0 +1,66 @@
+LÓGICA DIFUSA EN MATLAB · CIUDAD DE LOS ALGORITMOS
+
+Necesitas Internet y una cuenta MathWorks con acceso a MATLAB y Fuzzy Logic
+Toolbox. Los cálculos se ejecutan en MATLAB y sus resultados se consultan allí.
+MATLAB Online: https://matlab.mathworks.com/
+MATLAB Drive: https://drive.mathworks.com/
+
+A. ABRIR EL EJEMPLO DE VENTILACIÓN
+1. Extrae el ZIP ventilacion_aula.zip en tu equipo.
+2. Abre MATLAB Online e inicia sesión.
+3. Sube los tres archivos del ZIP a una misma carpeta de MATLAB Online.
+4. Abre abrir_ventilacion.m y pulsa Run. Localiza el .fis junto a sí mismo.
+5. Consulta Rule Inference y Control Surface desde Design > Simulation.
+
+El .fis contiene el modelo; el .m es el lanzador que lo abre. Si ya están en
+MATLAB Drive, abre su carpeta en Files de MATLAB Online y ejecuta el lanzador.
+Puedes abrir el .fis desde Open > Open Fuzzy Inference System from File en
+el diseñador. Si está en la carpeta actual o ruta de búsqueda de MATLAB:
+
+    fuzzyLogicDesigner('ventilacion_aula.fis')
+
+En Input values de Rule Inference, usa el orden [Temperatura Humedad Ocupacion]:
+- Entradas bajas: [0 0 0]. Consulta el resultado en MATLAB.
+- Valores centrales: [20 50 10]. Referencia observada anteriormente: salida 50.
+- Entradas altas: [40 100 20]. Consulta el resultado en MATLAB.
+
+Control Surface: X = Temperatura, Y = Humedad, Z = Ventilacion. Fija Ocupacion
+en 10 personas. Reference Inputs: [NaN NaN 10]. Los NaN señalan solo los ejes
+variables; los casos numéricos se introducen en Input values de Rule Inference.
+
+B. CREAR MI PROPIO SISTEMA DIFUSO (FIS)
+1. Abre MATLAB Online.
+2. En Command Window, escribe fuzzyLogicDesigner y pulsa Enter. El comando
+   abre la pantalla inicial; todavía debes crear y configurar el sistema.
+3. Selecciona Custom FIS.
+4. Elige Mamdani Type-1.
+5. Indica nombre, cantidad de entradas y cantidad de salidas.
+6. Configura variables, rangos y funciones de pertenencia.
+7. Define los Then/consecuentes de las reglas según tu problema. Generar
+   combinaciones automáticamente requiere revisar y elegir sus salidas.
+8. Guarda con un nombre propio en formato .fis, por ejemplo mi_sistema.fis.
+   En Design > Save, selecciona el diseño y guarda el archivo en MATLAB Drive.
+   Localízalo, selecciónalo y utiliza Download para conservar una copia local.
+
+Al cambiar un dominio, revisa los parámetros de las funciones de pertenencia.
+Guarda tu diseño con un nombre diferente al ejemplo para evitar sobrescribirlo.
+
+PROCEDIMIENTO Y AYUDA
+Rule Inference permite seguir pertenencias, activaciones, recortes, agregación
+y centroide para una combinación. Control Surface explora cambios de salida.
+Si no se reconoce fuzzyLogicDesigner, revisa el acceso a Fuzzy Logic Toolbox.
+ver('fuzzy') consulta si MATLAB identifica la toolbox; no garantiza la ejecución.
+Si falta el .fis, revisa su nombre y carpeta; el lanzador lo busca junto al .m.
+Las curvas concentradas requieren revisar rangos y parámetros. Las salidas
+incorrectas de reglas generadas requieren revisar Then/consecuentes.
+
+MODELO ORIGINAL, SIN CAMBIOS
+Mamdani tipo 1. Temperatura [0 40] °C, Humedad [0 100] %, Ocupacion [0 20]
+personas; Ventilacion [0 100] %. Tres conjuntos triangulares por variable,
+27 reglas AND con peso 1. AND/implicación mínimo, OR/agregación máximo y
+centroide. Las unidades son etiquetas de presentación; el .fis no se modifica.
+
+Ayuda oficial:
+https://www.mathworks.com/help/fuzzy/fuzzylogicdesigner-app.html
+https://www.mathworks.com/help/fuzzy/get-started-using-fuzzy-logic-designer.html
+https://www.mathworks.com/help/fuzzy/analyze-fuzzy-system-using-fuzzy-logic-designer.html

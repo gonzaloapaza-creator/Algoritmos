@@ -5,7 +5,6 @@
 
   if (!window.AlgoContexto || !window.AlgoMotor || document.getElementById('algoAbrir')) return;
   const motor = window.AlgoMotor;
-  const BIENVENIDA = 'Puedes preguntarme por conceptos, cómo usar los módulos o el paso que estás viendo.';
 
   const ROBOT = '<svg class="algo-robot" viewBox="0 0 64 64" aria-hidden="true" focusable="false">'
     + '<path class="algo-antena" d="M32 15V8"/><circle class="algo-luz" cx="32" cy="7" r="3"/>'
@@ -25,26 +24,30 @@
     + ROBOT + '<span class="algo-solo-lectores">Algo</span></button></div>'
     + '<div class="algo-fondo" id="algoFondo" hidden></div>'
     + '<section class="algo-panel" id="algoPanel" role="dialog" aria-modal="false" aria-labelledby="algoTitulo" hidden>'
-    + '<header class="algo-cabecera">' + ROBOT + '<h2 id="algoTitulo" tabindex="-1">Algo <span>Ayuda interactiva</span></h2>'
+    + '<header class="algo-cabecera">' + ROBOT + '<h2 id="algoTitulo" tabindex="-1">Algo <span>Guía de algoritmos</span></h2>'
     + '<button type="button" class="btn btn-fantasma algo-icono" id="algoCerrar" aria-label="Cerrar Algo" title="Cerrar (Escape)">×</button></header>'
-    + '<div class="algo-herramientas"><p class="algo-modulo" id="algoModulo"></p>'
-    + '<button type="button" class="btn btn-fantasma btn-sm" id="algoLimpiar">Limpiar conversación</button></div>'
+    + '<div class="algo-herramientas"><p class="algo-modulo" id="algoModulo"></p></div>'
     + '<div class="algo-cuerpo-panel" id="algoCuerpo" tabindex="0" aria-label="Mensajes de la conversación">'
-    + '<div class="algo-sugeridas" id="algoSugeridas" aria-label="Preguntas sugeridas"></div>'
+    + '<div class="algo-sugeridas" id="algoSugeridas"><p class="algo-bienvenida" id="algoBienvenida"></p>'
+    + '<div class="algo-preguntas-contexto" id="algoPreguntasContexto" role="group" aria-label="Preguntas sugeridas"></div></div>'
     + '<section class="algo-explorador" id="algoExplorador" aria-labelledby="algoExploradorTitulo" hidden>'
     + '<div class="algo-explorador-nav"><button type="button" class="algo-sugerida" id="algoCategorias">Volver a categorías</button>'
     + '<button type="button" class="algo-sugerida" id="algoExploradorCerrar">Cerrar explorador</button></div>'
     + '<h3 id="algoExploradorTitulo" tabindex="-1">Explorar temas</h3>'
     + '<label for="algoBuscar">Buscar un tema o una pregunta</label><input id="algoBuscar" type="search" maxlength="160" placeholder="Por ejemplo: matriz o ficticio">'
+    + '<button type="button" class="algo-enlace" id="algoEjemplos">Ejemplos de preguntas</button>'
     + '<p id="algoBusquedaEstado" role="status" aria-live="polite"></p><div id="algoResultados"></div></section>'
     + '<div class="algo-mensajes" id="algoMensajes" role="log" aria-label="Conversación con Algo" aria-live="polite" aria-relevant="additions"></div></div>'
     + '<button type="button" class="algo-nuevas" id="algoNuevas" hidden>Ver nuevas respuestas ↓</button>'
+    + '<div class="algo-descubrimiento"><button type="button" class="algo-enlace" id="algoVerTemas" aria-controls="algoExplorador" aria-expanded="false">Ver temas</button>'
+    + '<button type="button" class="algo-enlace algo-limpiar" id="algoLimpiar">Limpiar conversación</button></div>'
     + '<form class="algo-formulario" id="algoFormulario">'
-    + '<label for="algoPregunta">Tu pregunta <span>· Enter envía; Mayús+Enter añade una línea</span></label>'
-    + '<textarea id="algoPregunta" rows="2" maxlength="1200" placeholder="Escribe tu duda…" aria-describedby="algoEstado"></textarea>'
+    + '<label for="algoPregunta" class="algo-solo-lectores">Tu pregunta</label>'
+    + '<span id="algoTeclas" class="algo-solo-lectores">Enter envía; Mayús+Enter añade una línea.</span>'
+    + '<textarea id="algoPregunta" rows="1" maxlength="1200" placeholder="Escribe tu pregunta…" aria-describedby="algoTeclas algoEstado"></textarea>'
     + '<div class="algo-acciones"><button type="submit" class="btn btn-primary" id="algoEnviar">Enviar</button>'
     + '</div>'
-    + '<p class="algo-estado" id="algoEstado" role="status" aria-live="polite">Pregunta sobre este módulo o tu ejercicio.</p></form></section>';
+    + '<p class="algo-estado" id="algoEstado" role="status" aria-live="polite"></p></form></section>';
   document.body.appendChild(raiz);
   document.body.classList.add('algo-disponible');
 
@@ -55,11 +58,71 @@
   const fondoAnterior = new Map();
   const consultasAnteriores = new WeakMap();
   const vistaModal = window.matchMedia('(max-width: 640px), (max-height: 480px)');
-  const movimientoReducido = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let iniciado = false, componiendo = false;
+  let componiendo = false;
   let temporizadorGesto = null, ultimoEnvio = null;
   let bloqueoFondo = false, overflowAnterior = '', respuestasNuevas = 0;
   let moduloAnterior = null, ultimaFirmaContexto = null;
+
+  function ajustarEntrada() {
+    const seguir = alFinal(), lectura = conservarLectura();
+    campo.style.height = 'auto';
+    const limite = raiz.classList.contains('algo-altura-corta') ? 70 : 108;
+    campo.style.height = Math.min(limite, Math.max(44, campo.scrollHeight)) + 'px';
+    campo.style.overflowY = campo.scrollHeight > limite ? 'auto' : 'hidden';
+    if (seguir) verUltimos(); else restaurarLectura(lectura);
+  }
+
+  function cerrarExplorador() {
+    buscar('algoExplorador').hidden = true;
+    buscar('algoVerTemas').setAttribute('aria-expanded', 'false');
+  }
+
+  // Solo se reconoce formato inequívoco; el resto sigue siendo texto literal.
+  // Se crean nodos, nunca se interpreta HTML recibido en una conversación.
+  function presentarTexto(contenido, texto, local) {
+    if (!local) { contenido.textContent = texto; return; }
+    const patron = /`[^`\n]+`|\bfuzzyLogicDesigner(?:\('[^'\n]*'\))?|\bver\('fuzzy'\)|\[(?:NaN|Temperatura)[^\]\n]*\]/g;
+    let inicio = 0;
+    for (const coincidencia of texto.matchAll(patron)) {
+      contenido.appendChild(document.createTextNode(texto.slice(inicio, coincidencia.index)));
+      const codigo = document.createElement('code');
+      codigo.textContent = coincidencia[0];
+      contenido.appendChild(codigo);
+      inicio = coincidencia.index + coincidencia[0].length;
+    }
+    contenido.appendChild(document.createTextNode(texto.slice(inicio)));
+  }
+
+  function agregarCopia(articulo, contenido, texto) {
+    const pie = document.createElement('div'); pie.className = 'algo-copia';
+    const boton = document.createElement('button');
+    boton.type = 'button'; boton.className = 'algo-enlace'; boton.textContent = 'Copiar respuesta';
+    const aviso = document.createElement('span');
+    aviso.className = 'algo-copia-estado'; aviso.setAttribute('role', 'status');
+    aviso.setAttribute('aria-live', 'polite');
+    boton.addEventListener('click', async () => {
+      if (boton.disabled) return;
+      boton.disabled = true; aviso.textContent = '';
+      try {
+        if (!window.navigator.clipboard || typeof window.navigator.clipboard.writeText !== 'function') throw new Error('Sin portapapeles');
+        await window.navigator.clipboard.writeText(texto);
+        aviso.textContent = 'Respuesta copiada.';
+      } catch (_) {
+        if (panel.hidden || !articulo.isConnected || hayOtraCapaModal()) {
+          aviso.textContent = 'No se pudo copiar. Vuelve a pulsar Copiar respuesta para seleccionar el texto.';
+          return;
+        }
+        contenido.tabIndex = -1;
+        contenido.focus({ preventScroll: true });
+        const seleccion = window.getSelection(), rango = document.createRange();
+        rango.selectNodeContents(contenido); seleccion.removeAllRanges(); seleccion.addRange(rango);
+        aviso.textContent = 'Texto seleccionado. Copia con Ctrl+C o mantén pulsado el texto.';
+      } finally {
+        boton.disabled = false;
+      }
+    });
+    pie.append(boton, aviso); articulo.appendChild(pie);
+  }
 
   function gesto(nombre) {
     window.clearTimeout(temporizadorGesto);
@@ -85,15 +148,18 @@
     etiqueta.className = 'algo-mensaje__autor';
     etiqueta.textContent = autor;
     articulo.appendChild(etiqueta);
-    if (referencia) {
+    if (referencia && tipo !== 'usuario') {
       const detalle = document.createElement('small');
       detalle.className = 'algo-referencia';
       detalle.textContent = referencia;
       articulo.appendChild(detalle);
     }
     const contenido = document.createElement('p');
-    contenido.textContent = String(texto);
+    const original = String(texto);
+    presentarTexto(contenido, original, tipo === 'local');
     articulo.appendChild(contenido);
+    if (tipo === 'local') agregarCopia(articulo, contenido, original);
+    buscar('algoSugeridas').hidden = true;
     mensajes.appendChild(articulo);
     if (seguir) verUltimos();
     else {
@@ -168,32 +234,59 @@
     });
   }
 
-  function actualizarPreguntas(foto, sugeridas) {
-    let preguntas = buscar('algoPreguntasContexto');
-    if (!preguntas) {
-      sugeridas.replaceChildren();
-      preguntas = document.createElement('div');
-      preguntas.id = 'algoPreguntasContexto'; preguntas.className = 'algo-preguntas-contexto';
-      preguntas.setAttribute('role', 'group'); preguntas.setAttribute('aria-label', 'Preguntas para el estado actual');
-      sugeridas.appendChild(preguntas);
-      const accesos = document.createElement('div');
-      accesos.className = 'algo-accesos'; accesos.setAttribute('role', 'group'); accesos.setAttribute('aria-label', 'Explorar la ayuda');
-      botonAccion({ etiqueta: 'Explorar temas', comando: { tipo: 'explorar' } }, accesos);
-      botonAccion({ etiqueta: 'Ver ejemplos de preguntas', comando: { tipo: 'ejemplos' } }, accesos);
-      sugeridas.appendChild(accesos);
-    }
+  function actualizarPreguntas(foto) {
+    const preguntas = buscar('algoPreguntasContexto');
+    const pagina = foto.contexto.datos && foto.contexto.datos.paginaAcceso;
+    const bienvenida = foto.modulo === 'inicio' ? 'Te ayudo a elegir un algoritmo y a recorrer la ciudad.'
+      : pagina === 'matlab' ? 'Te guío para abrir el ejemplo o crear tu FIS en MATLAB.'
+        : pagina === 'opciones' ? 'Elige cómo trabajar con Lógica difusa.'
+          : foto.modulo === 'difusa' ? 'Te ayudo con las variables, las reglas y el procedimiento.'
+            : foto.contexto.resultadoVigente ? 'Podemos revisar el resultado y sus pasos.'
+              : '¿Por dónde empezamos con ' + foto.referencia.split(' · ')[0] + '?';
+    buscar('algoBienvenida').textContent = bienvenida;
+    buscar('algoSugeridas').hidden = mensajes.children.length > 0;
+    const etiquetas = {
+      '¿Cómo abro el ejemplo de ventilación?': 'Abrir el ejemplo',
+      '¿Cómo creo un sistema nuevo en MATLAB?': 'Crear un sistema',
+      '¿Cómo uso Rule Inference y Control Surface?': 'Ver el procedimiento',
+      '¿Qué ofrece cada versión?': 'Comparar versiones',
+      '¿Qué necesito para MATLAB Online?': 'Requisitos de MATLAB',
+      '¿Cómo regreso al selector?': 'Volver al selector',
+      '¿Qué es un algoritmo?': 'Qué es un algoritmo',
+      '¿Qué algoritmo elijo?': 'Elegir un algoritmo',
+      '¿Cómo guardo mi trabajo?': 'Guardar mi trabajo',
+      '¿Cómo empiezo?': 'Cómo empezar',
+      '¿Qué datos necesito?': 'Datos necesarios',
+      '¿Cuáles son las reglas?': 'Ver las reglas',
+      '¿Qué me falta?': 'Qué falta',
+      '¿Qué restricciones hay?': 'Ver restricciones',
+      '¿Cómo calculo?': 'Cómo calcular',
+      'Explícame el resultado': 'Entender el resultado',
+      '¿Qué significa este resultado?': 'Entender el resultado',
+      '¿Qué significan estos valores?': 'Entender los valores',
+      '¿Qué hago ahora?': 'Cómo continuar',
+      '¿Qué dato me falta?': 'Revisar los datos',
+      '¿Por qué no me deja continuar?': 'Revisar el problema',
+      '¿Cómo configuro las variables?': 'Configurar variables',
+      '¿Cómo funcionan AND y OR?': 'Entender AND y OR'
+    };
     const textos = [...new Set(window.AlgoContexto.sugeridas(foto)
       .filter(pregunta => typeof pregunta === 'string' && pregunta.trim()).map(pregunta => pregunta.trim()))].slice(0, 3);
     const existentes = Array.from(preguntas.querySelectorAll('button'));
-    if (existentes.length === textos.length && existentes.every((boton, i) => boton.textContent === textos[i])) return;
+    if (existentes.length === textos.length && existentes.every((boton, i) => boton.dataset.pregunta === textos[i])) return;
     const indiceFoco = existentes.indexOf(document.activeElement);
-    const textoFoco = indiceFoco >= 0 ? existentes[indiceFoco].textContent : null;
-    const porTexto = new Map(existentes.map(boton => [boton.textContent, boton]));
-    const vigentes = textos.map(pregunta => porTexto.get(pregunta) || botonAccion({ etiqueta: pregunta, pregunta }, preguntas));
+    const textoFoco = indiceFoco >= 0 ? existentes[indiceFoco].dataset.pregunta : null;
+    const porTexto = new Map(existentes.map(boton => [boton.dataset.pregunta, boton]));
+    const vigentes = textos.map(pregunta => {
+      const boton = porTexto.get(pregunta) || botonAccion({ etiqueta: etiquetas[pregunta] || pregunta.replace(/[¿?]/g, ''), pregunta }, preguntas);
+      boton.dataset.pregunta = pregunta;
+      boton.title = pregunta;
+      return boton;
+    });
     existentes.forEach(boton => { if (!vigentes.includes(boton)) boton.remove(); });
     vigentes.forEach(boton => preguntas.appendChild(boton));
-    if (indiceFoco >= 0 && vigentes.length) {
-      (vigentes.find(boton => boton.textContent === textoFoco) || vigentes[Math.min(indiceFoco, vigentes.length - 1)])
+    if (indiceFoco >= 0 && vigentes.length && !buscar('algoSugeridas').hidden) {
+      (vigentes.find(boton => boton.dataset.pregunta === textoFoco) || vigentes[Math.min(indiceFoco, vigentes.length - 1)])
         .focus({ preventScroll: true });
     }
   }
@@ -201,33 +294,16 @@
   function refrescarContexto(foto) {
     ultimaFirmaContexto = foto.firma;
     if (moduloAnterior && moduloAnterior !== foto.modulo) {
-      motor.reiniciar(); buscar('algoExplorador').hidden = true;
+      motor.reiniciar(); cerrarExplorador();
     }
     moduloAnterior = foto.modulo;
-    buscar('algoModulo').textContent = foto.referencia;
-    const sugeridas = buscar('algoSugeridas');
-    // El módulo excluido conserva sus controles y su actualización anteriores.
-    if (foto.modulo !== 'asignacion') {
-      const lectura = conservarLectura();
-      actualizarHistorial(foto);
-      actualizarPreguntas(foto, sugeridas);
-      restaurarLectura(lectura);
-      return;
-    }
-    const acciones = [
-      { etiqueta: 'Explorar temas', comando: { tipo: 'explorar' } },
-      { etiqueta: 'Ver ejemplos de preguntas', comando: { tipo: 'ejemplos' } }
-    ];
-    const c = foto.contexto;
-    if (c.resultadoVigente && c.paso) acciones.push({ etiqueta: 'Explicar este paso', comando: { tipo: 'paso' } });
-    if (c.resultadoVigente && c.resultado) acciones.push({ etiqueta: 'Interpretar resultado', comando: { tipo: 'resultado' } });
-    if (!c.resultadoVigente) acciones.push({ etiqueta: 'Ayúdame a empezar', comando: { tipo: 'empezar' } });
-    const existentes = Array.from(sugeridas.querySelectorAll('button'));
-    if (existentes.length === acciones.length && existentes.every((boton, i) => boton.textContent === acciones[i].etiqueta)) {
-      return;
-    }
-    sugeridas.replaceChildren();
-    acciones.forEach(a => botonAccion(a, sugeridas));
+    const referencia = foto.modulo === 'inicio' ? 'Ciudad de los Algoritmos' : foto.referencia;
+    buscar('algoModulo').textContent = referencia;
+    buscar('algoModulo').title = referencia;
+    const lectura = conservarLectura();
+    actualizarHistorial(foto);
+    actualizarPreguntas(foto);
+    restaurarLectura(lectura);
   }
 
   function mostrarLista(acciones, destino) {
@@ -252,6 +328,7 @@
   function explorar(respuesta, enfocar = true) {
     const explorador = buscar('algoExplorador'), resultados = buscar('algoResultados');
     explorador.hidden = false; resultados.replaceChildren();
+    buscar('algoVerTemas').setAttribute('aria-expanded', 'true');
     buscar('algoBuscar').value = '';
     buscar('algoBusquedaEstado').textContent = '';
     buscar('algoExploradorTitulo').textContent = respuesta.tipo === 'explorador' ? 'Explorar temas' : respuesta.texto;
@@ -285,31 +362,36 @@
       const acciones = document.createElement('div'); acciones.className = 'algo-respuesta-acciones';
       acciones.setAttribute('aria-label', 'Ampliar esta respuesta');
       const origen = foto.modulo !== 'asignacion' ? { firma: foto.firma, modulo: foto.modulo } : null;
-      respuesta.acciones.forEach(a => botonAccion(a, acciones, origen)); articulo.appendChild(acciones);
+      respuesta.acciones.forEach(a => botonAccion(a, acciones, origen)); articulo.insertBefore(acciones, articulo.querySelector('.algo-copia'));
     }
     if (seguir) verUltimos(); else cuerpo.scrollTop = posicion;
   }
 
   function ejecutarAccion(accion, origen) {
-    if (accion.pregunta) { buscar('algoExplorador').hidden = true; enviarPregunta(accion.pregunta); return; }
+    if (accion.pregunta) { cerrarExplorador(); enviarPregunta(accion.pregunta); return; }
     const foto = window.AlgoContexto.obtener();
     refrescarContexto(foto);
     const comando = origen && foto.modulo !== 'asignacion' && accion.comando
       ? Object.assign({}, accion.comando, { firmaOrigen: origen.firma, moduloOrigen: origen.modulo }) : accion.comando;
     const respuesta = motor.responder('', foto, comando);
     if (!['explorador', 'lista'].includes(respuesta.tipo)) {
-      buscar('algoExplorador').hidden = true;
+      cerrarExplorador();
       agregar('Tú', accion.etiqueta, 'usuario', foto.referencia);
     }
     mostrarRespuesta(respuesta, foto);
-    estado.textContent = 'Puedes continuar con otra pregunta.';
+    estado.textContent = '';
     if (!['explorador', 'lista'].includes(respuesta.tipo)) campo.focus({ preventScroll: true });
   }
 
+  buscar('algoVerTemas').addEventListener('click', () => {
+    if (!buscar('algoExplorador').hidden) { cerrarExplorador(); return; }
+    ejecutarAccion({ comando: { tipo: 'explorar' } });
+  });
+  buscar('algoEjemplos').addEventListener('click', () => ejecutarAccion({ comando: { tipo: 'ejemplos' } }));
   buscar('algoCategorias').addEventListener('click', () => ejecutarAccion({ comando: { tipo: 'explorar' } }));
   buscar('algoExploradorCerrar').addEventListener('click', () => {
-    buscar('algoExplorador').hidden = true;
-    buscar('algoSugeridas').querySelector('button').focus({ preventScroll: true });
+    cerrarExplorador();
+    buscar('algoVerTemas').focus({ preventScroll: true });
   });
   buscar('algoBuscar').addEventListener('input', () => {
     const q = buscar('algoBuscar').value.trim(), resultados = buscar('algoResultados');
@@ -348,10 +430,6 @@
     document.body.classList.add('algo-abierto');
     abrir.setAttribute('aria-expanded', 'true');
     refrescarContexto(window.AlgoContexto.obtener());
-    if (!iniciado) {
-      iniciado = true;
-      agregar('Algo', BIENVENIDA, 'local');
-    }
     gesto('saludo');
     buscar('algoTitulo').focus({ preventScroll: true });
     ajustarViewport();
@@ -367,12 +445,12 @@
     if (ultimoEnvio && ultimoEnvio.pregunta === pregunta && ultimoEnvio.firma === foto.firma && ahora - ultimoEnvio.tiempo < 400) return;
     ultimoEnvio = { pregunta, firma: foto.firma, tiempo: ahora };
     refrescarContexto(foto);
-    buscar('algoExplorador').hidden = true;
+    cerrarExplorador();
     agregar('Tú', pregunta, 'usuario', foto.referencia);
-    if (campo.value.trim() === pregunta) campo.value = '';
+    if (campo.value.trim() === pregunta) { campo.value = ''; ajustarEntrada(); }
     const respuesta = motor.responder(pregunta, foto);
     mostrarRespuesta(respuesta, foto);
-    estado.textContent = 'Puedes continuar con otra pregunta.';
+    estado.textContent = '';
     gesto('respuesta');
     campo.focus({ preventScroll: true });
   }
@@ -386,18 +464,19 @@
   buscar('algoLimpiar').addEventListener('click', () => {
     ultimoEnvio = null;
     motor.reiniciar();
-    buscar('algoExplorador').hidden = true;
+    cerrarExplorador();
     buscar('algoResultados').replaceChildren(); buscar('algoBuscar').value = '';
     mensajes.replaceChildren();
     campo.value = '';
     verUltimos();
-    agregar('Algo', BIENVENIDA, 'local');
     refrescarContexto(window.AlgoContexto.obtener());
-    estado.textContent = 'Pregunta sobre este módulo o tu ejercicio.';
+    estado.textContent = '';
+    ajustarEntrada();
     gesto('reposo');
     campo.focus({ preventScroll: true });
   });
 
+  campo.addEventListener('input', () => { estado.textContent = ''; ajustarEntrada(); });
   campo.addEventListener('compositionstart', () => { componiendo = true; });
   campo.addEventListener('compositionend', () => { componiendo = false; });
   campo.addEventListener('keydown', evento => {
@@ -419,13 +498,18 @@
       }
     }
   });
+  function hayOtraCapaModal() {
+    return !!document.querySelector('dialog[open]')
+      || (typeof pilaFocoModal !== 'undefined' && pilaFocoModal.length > 0);
+  }
   document.addEventListener('keydown', evento => {
-    if (evento.key === 'Escape' && !panel.hidden && !evento.isComposing && !componiendo) {
-      evento.preventDefault(); evento.stopPropagation(); cerrarPanel();
+    if (evento.key === 'Escape' && !evento.defaultPrevented && !panel.hidden && !evento.isComposing && !componiendo) {
+      if (hayOtraCapaModal()) return;
+      evento.preventDefault(); evento.stopImmediatePropagation(); cerrarPanel();
     }
   }, true);
   document.addEventListener('focusin', evento => {
-    if (bloqueoFondo && !panel.contains(evento.target)) buscar('algoTitulo').focus({ preventScroll: true });
+    if (bloqueoFondo && !hayOtraCapaModal() && !panel.contains(evento.target)) buscar('algoTitulo').focus({ preventScroll: true });
   });
 
   function ajustarViewport() {
@@ -436,6 +520,7 @@
     raiz.style.setProperty('--algo-teclado', Math.round(desplazamiento) + 'px');
     raiz.classList.toggle('algo-altura-corta', alto < 500);
     actualizarModal();
+    if (!panel.hidden) ajustarEntrada();
   }
   window.addEventListener('resize', ajustarViewport);
   vistaModal.addEventListener('change', ajustarViewport);
@@ -445,14 +530,4 @@
   }
   ajustarViewport();
 
-  function programarParpadeo() {
-    window.setTimeout(() => {
-      if (!movimientoReducido.matches && !document.hidden && raiz.dataset.estado === 'reposo') {
-        raiz.classList.add('algo-parpadeo');
-        window.setTimeout(() => raiz.classList.remove('algo-parpadeo'), 140);
-      }
-      programarParpadeo();
-    }, 16000 + Math.random() * 9000);
-  }
-  programarParpadeo();
 })();

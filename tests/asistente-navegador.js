@@ -40,17 +40,17 @@ const EDGE = process.env.NAVEGADOR || 'C:/Program Files (x86)/Microsoft/Edge/App
       await page.focus('#algoAbrir');
       await page.keyboard.press('Enter');
       assert.equal(await page.$eval('#algoPanel', e => e.hidden), false);
-      assert.equal(await page.$eval('#algoTitulo span', e => e.textContent), 'Ayuda interactiva');
+      assert.equal(await page.$eval('#algoTitulo span', e => e.textContent), 'Guía de algoritmos');
       if (modulo === 'ordenamiento') {
         const entrada = await page.$eval('#entradaValores', e => e.value);
-        assert.ok(await page.$$eval('#algoSugeridas button', botones => botones.some(b => b.textContent === 'Interpretar resultado')));
+        assert.ok(await page.$$eval('#algoSugeridas button', botones => botones.some(b => b.textContent === 'Entender el resultado')));
         await page.$eval('#entradaValores', e => { e.value += ', 9'; e.dispatchEvent(new Event('input', { bubbles: true })); });
-        assert.equal(await page.$$eval('#algoSugeridas button', botones => botones.some(b => b.textContent === 'Interpretar resultado')), false);
+        assert.equal(await page.$$eval('#algoSugeridas button', botones => botones.some(b => b.textContent === 'Entender el resultado')), false);
         assert.equal(await page.$$eval('#algoSugeridas button', botones => botones.some(b => b.textContent === 'Explicar este paso')), false);
         await enviar('¿Qué significa este resultado?');
         assert.ok((await page.$eval('#algoMensajes article:last-child p', e => e.textContent)).includes('Usar valores'));
         await page.$eval('#entradaValores', (e, valor) => { e.value = valor; e.dispatchEvent(new Event('input', { bubbles: true })); }, entrada);
-        assert.ok(await page.$$eval('#algoSugeridas button', botones => botones.some(b => b.textContent === 'Interpretar resultado')));
+        assert.ok(await page.$$eval('#algoSugeridas button', botones => botones.some(b => b.textContent === 'Entender el resultado')));
       }
       await enviar('¿Cómo empiezo?');
       assert.ok(!(await page.$eval('#algoMensajes article:last-child p', e => e.textContent)).startsWith('No tengo'));
@@ -68,7 +68,7 @@ const EDGE = process.env.NAVEGADOR || 'C:/Program Files (x86)/Microsoft/Edge/App
       await page.$$eval('[data-prueba-concepto="matriz"] button', botones => botones.find(b => b.textContent === 'Más sencillo').click());
       assert.equal(await page.$eval('#algoMensajes article:last-child', e => e.dataset.entrada), 'matriz.que-es');
       assert.ok((await page.$eval('#algoMensajes article:last-child p', e => e.textContent)).includes('hoja cuadriculada'));
-      await page.$$eval('#algoSugeridas button', botones => botones.find(b => b.textContent === 'Explorar temas').click());
+      await page.click('#algoVerTemas');
       assert.equal(await page.$eval('#algoExplorador', e => e.hidden), false);
       assert.equal(await page.$$eval('#algoResultados h4', e => e.length), 6);
       await page.$$eval('#algoResultados button', botones => botones.find(b => b.textContent.startsWith('Grafos ·')).click());
@@ -83,7 +83,7 @@ const EDGE = process.env.NAVEGADOR || 'C:/Program Files (x86)/Microsoft/Edge/App
       await page.$eval('#algoResultados button', b => b.click());
       assert.ok((await page.$eval('#algoMensajes article:last-child', e => e.dataset.entrada)).includes('ficticio'));
       await page.click('#algoLimpiar');
-      assert.equal(await page.$$eval('#algoMensajes article', e => e.length), 1);
+      assert.equal(await page.$$eval('#algoMensajes article', e => e.length), 0);
       assert.equal(await page.evaluate(() => AlgoMotor.interno.memoria().entrada), null);
       await enviar('¿qué es?');
       assert.ok((await page.$eval('#algoMensajes article:last-child p', e => e.textContent)).includes('qué término'));
@@ -116,7 +116,7 @@ const EDGE = process.env.NAVEGADOR || 'C:/Program Files (x86)/Microsoft/Edge/App
     await page.keyboard.up('Shift');
     assert.equal(await page.evaluate(() => document.activeElement.id), 'algoEnviar');
     await page.click('#algoLimpiar');
-    assert.equal(await page.$$eval('#algoMensajes article', e => e.length), 1);
+    assert.equal(await page.$$eval('#algoMensajes article', e => e.length), 0);
     await page.setOfflineMode(true);
     await enviar('¿Cómo empiezo?');
     assert.ok((await page.$eval('#algoMensajes article:last-child p', e => e.textContent)).includes('BST'));

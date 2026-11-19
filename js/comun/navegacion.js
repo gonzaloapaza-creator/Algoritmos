@@ -110,7 +110,7 @@ function construirBarraLateral(moduloActivo) {
     grupo.algoritmos.forEach(alg => {
       const enlace = document.createElement(alg.disponible ? 'a' : 'span');
       enlace.className = 'sidebar__enlace' + (alg.id === moduloActivo ? ' activo' : '') + (alg.disponible ? '' : ' deshabilitado');
-      if (alg.disponible) enlace.href = alg.ruta;
+      if (alg.disponible) enlace.href = alg.rutaEntrada || alg.ruta;
       if (alg.id === moduloActivo) enlace.setAttribute('aria-current', 'page');
       enlace.title = alg.nombre;
       if (alg.color) enlace.style.setProperty('--zona-color', alg.color);

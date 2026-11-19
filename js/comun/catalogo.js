@@ -176,10 +176,12 @@ const CATALOGO_ALGORITMOS = [
     entrada: 'De 1 a 3 entradas, funciones de pertenencia y reglas configurables',
     resultado: 'Salida gradual mediante centroide, procedimiento y mapa de respuesta',
     ruta: 'logica-difusa.html',
+    rutaEntrada: 'logica-difusa.html?intro=si',
+    rutaDirecta: 'logica-difusa-opciones.html',
     icono: 'difusa',
     video: 'ayfoP7Tqa-s',
-    bienvenida: 'La lógica difusa representa categorías graduales mediante funciones de pertenencia y reglas. Configura de una a tres entradas, una salida y sus conjuntos; observa las activaciones, los recortes y el centroide con ejemplos didácticos o con tu propio sistema.',
-    accionIntro: 'Ir al módulo',
+    bienvenida: 'La lógica difusa representa categorías graduales mediante funciones de pertenencia y reglas. Después del video, elige entre MATLAB Online con el ejemplo de ventilación y el simulador web configurable del proyecto.',
+    accionIntro: 'Ir al algoritmo',
     disponible: true
   },
   {

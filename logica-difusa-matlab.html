@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Abre el ejemplo de ventilación o crea tu propio sistema difuso en MATLAB Online, con comandos, pasos y ayuda de Fuzzy Logic Toolbox." />
+  <meta name="theme-color" content="#0b1020" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M3 26L11 6L21 26M11 26L23 6L29 26' fill='none' stroke='%235b8cff' stroke-width='3'/></svg>" />
+  <title>Lógica difusa con MATLAB | Ciudad de los Algoritmos</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="js/comun/tema.js"></script>
+  <link rel="stylesheet" href="css/shell.css" />
+  <link rel="stylesheet" href="css/difusa-acceso.css" />
+  <link rel="stylesheet" href="css/asistente.css" />
+</head>
+<body class="difusa-acceso difusa-matlab" data-modulo="difusa" data-difusa-pagina="matlab" data-intro-manual="true">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <header class="topbar">
+    <button type="button" class="btn btn-fantasma btn-icono topbar__menu" id="btnMenuLateral" aria-label="Abrir menú" aria-expanded="false" aria-controls="barraLateral"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <a class="topbar__marca" href="index.html" aria-label="Ciudad de los Algoritmos · Inicio"><svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="9" cy="23" r="5"></circle><circle cx="23" cy="9" r="5"></circle><line x1="12" y1="20" x2="20" y2="12"></line></svg><span>Algoritmos</span></a>
+    <span class="topbar__separador" aria-hidden="true"></span><span class="topbar__modulo" id="topbarModulo">Lógica difusa</span>
+    <div class="topbar__acciones"><button type="button" class="btn btn-fantasma btn-sm" id="btnVideoModulo" aria-pressed="false">Video</button><button type="button" class="btn btn-fantasma btn-sm" id="btnAyuda" data-abrir-ayuda-matlab aria-haspopup="dialog" aria-controls="ayudaMatlab">Ayuda</button></div>
+  </header>
+  <aside class="sidebar" id="barraLateral" aria-label="Navegación principal"></aside><div class="sidebar-fondo" id="barraLateralFondo" hidden></div>
+  <main class="contenido" id="contenido">
+    <section id="introModulo" hidden></section>
+    <div id="moduloContenido">
+    <div class="difusa-acceso__interior">
+      <nav class="difusa-acceso__ruta" aria-label="Ubicación"><a href="logica-difusa-opciones.html">Elegir versión</a><span aria-hidden="true">/</span><span>MATLAB</span></nav>
+      <header class="difusa-acceso__cabecera">
+        <p class="eyebrow">Explora y crea en MATLAB Online</p>
+        <h1>Lógica difusa con MATLAB</h1>
+        <p>La inferencia y sus resultados se ejecutan en MATLAB Online mediante Fuzzy Logic Toolbox.</p>
+        <div><button type="button" class="btn btn-neutral" id="abrirAyudaMatlab" data-abrir-ayuda-matlab aria-haspopup="dialog" aria-controls="ayudaMatlab" hidden>Ayuda de MATLAB Online</button></div>
+      </header>
+      <section class="matlab-actividad" aria-labelledby="tituloEjemploMatlab">
+      <header class="matlab-actividad__cabecera"><p class="eyebrow">Actividad A</p><h2 id="tituloEjemploMatlab">Abrir el ejemplo de ventilación</h2><p>Empieza con el modelo preparado y sigue cómo sus reglas producen una salida.</p></header>
+      <div class="difusa-acceso__matlab">
+        <section class="difusa-acceso__panel" aria-labelledby="tituloModelo">
+          <h2 id="tituloModelo">Un aula, tres entradas y una decisión</h2>
+          <p>Modelo <code>ventilacion_aula.fis</code>: Mamdani tipo 1 con 27 reglas y tres conjuntos triangulares por variable.</p>
+          <dl class="difusa-acceso__variables">
+            <div><dt>Temperatura</dt><dd>0–40 °C <span>Entrada</span></dd></div>
+            <div><dt>Humedad</dt><dd>0–100 % <span>Entrada</span></dd></div>
+            <div><dt>Ocupación</dt><dd>0–20 personas <span>Entrada · Ocupacion en el .fis</span></dd></div>
+            <div><dt>Ventilación</dt><dd>0–100 % <span>Salida · Ventilacion en el .fis</span></dd></div>
+          </dl>
+          <p class="difusa-acceso__referencia">Referencia observada en MATLAB durante la configuración:<br><code>[20 50 10] → Ventilacion = 50</code>.</p>
+        </section>
+        <section class="difusa-acceso__panel difusa-acceso__descargas" aria-labelledby="tituloAcceso">
+          <h2 id="tituloAcceso">Prepara el ejemplo</h2>
+          <p>Descarga el paquete y sigue los pasos de abajo. Necesitas una cuenta con acceso a MATLAB y Fuzzy Logic Toolbox.</p>
+          <a class="btn btn-primary" href="https://matlab.mathworks.com/" target="_blank" rel="noopener noreferrer" id="abrirMatlabOnline">Abrir MATLAB Online <span class="sr-only">(otra pestaña)</span><span aria-hidden="true">↗</span></a>
+          <a class="btn btn-neutral" href="matlab/ventilacion_aula.zip" download id="descargarPaqueteMatlab">Descargar paquete del ejemplo</a>
+          <a href="matlab/ventilacion_aula.fis" download id="descargarFisMatlab">Descargar solo el archivo .fis</a>
+          <p class="difusa-acceso__nota">El paquete incluye el modelo original, el archivo de apertura y una guía breve.</p>
+        </section>
+      </div>
+      <section class="difusa-acceso__panel" aria-labelledby="tituloPasos">
+        <h2 id="tituloPasos">Cómo abrirlo en MATLAB Online</h2>
+        <ol class="difusa-acceso__pasos">
+          <li><strong>Descarga y extrae el ZIP</strong> del ejemplo en tu equipo.</li>
+          <li><strong>Abre MATLAB Online</strong> e inicia sesión con tu cuenta.</li>
+          <li><strong>Sube los tres archivos a una misma carpeta</strong> de MATLAB Online. También puedes organizarlos en <a href="https://drive.mathworks.com/" target="_blank" rel="noopener noreferrer">MATLAB Drive <span class="sr-only">(otra pestaña)</span><span aria-hidden="true">↗</span></a>.</li>
+          <li><strong>Abre <code>abrir_ventilacion.m</code> y pulsa Run.</strong> Se abrirá el modelo en Fuzzy Logic Designer.</li>
+          <li><strong>Consulta Rule Inference y Control Surface</strong> desde Design → Simulation para explorar las reglas y la superficie de respuesta.</li>
+        </ol>
+      </section>
+      <section class="difusa-acceso__panel" aria-labelledby="tituloComando">
+        <h2 id="tituloComando">Si ya tienes el .fis en MATLAB</h2>
+        <p>El archivo debe estar en la carpeta actual de MATLAB o en su ruta de búsqueda. Ejecuta este comando para abrir el ejemplo existente:</p>
+        <div class="difusa-acceso__comando"><code id="comandoMatlab" tabindex="0" aria-describedby="estadoComandoMatlab">fuzzyLogicDesigner('ventilacion_aula.fis')</code><button type="button" class="btn btn-neutral" id="copiarComandoMatlab" data-copiar="comandoMatlab" data-estado="estadoComandoMatlab" aria-label="Copiar comando para abrir el ejemplo" hidden>Copiar comando</button></div>
+        <p class="difusa-acceso__nota" id="estadoComandoMatlab" role="status" aria-live="polite">El comando se puede seleccionar y copiar manualmente.</p>
+      </section>
+      <section class="difusa-acceso__panel" aria-labelledby="tituloCasosMatlab">
+        <h2 id="tituloCasosMatlab">Prueba estas entradas</h2>
+        <p>Pega cada vector en <strong>Input values</strong> de <strong>Rule Inference</strong>, en el orden <code>[Temperatura Humedad Ocupacion]</code>.</p>
+        <div class="matlab-casos">
+          <article class="matlab-caso" aria-labelledby="tituloBajasMatlab"><h3 id="tituloBajasMatlab">Entradas bajas</h3><code id="entradasBajasMatlab" tabindex="0" aria-describedby="estadoBajasMatlab">[0 0 0]</code><button type="button" class="btn btn-neutral" data-copiar="entradasBajasMatlab" data-estado="estadoBajasMatlab" data-tipo="entradas" aria-label="Copiar entradas bajas" hidden>Copiar entradas</button><p id="estadoBajasMatlab" class="difusa-acceso__nota" role="status" aria-live="polite">Consulta el resultado en MATLAB.</p></article>
+          <article class="matlab-caso" aria-labelledby="tituloCentralesMatlab"><h3 id="tituloCentralesMatlab">Valores centrales</h3><code id="entradasCentralesMatlab" tabindex="0" aria-describedby="estadoCentralesMatlab">[20 50 10]</code><button type="button" class="btn btn-neutral" data-copiar="entradasCentralesMatlab" data-estado="estadoCentralesMatlab" data-tipo="entradas" aria-label="Copiar entradas centrales" hidden>Copiar entradas</button><p id="estadoCentralesMatlab" class="difusa-acceso__nota" role="status" aria-live="polite">Referencia observada anteriormente: Ventilacion = 50.</p></article>
+          <article class="matlab-caso" aria-labelledby="tituloAltasMatlab"><h3 id="tituloAltasMatlab">Entradas altas</h3><code id="entradasAltasMatlab" tabindex="0" aria-describedby="estadoAltasMatlab">[40 100 20]</code><button type="button" class="btn btn-neutral" data-copiar="entradasAltasMatlab" data-estado="estadoAltasMatlab" data-tipo="entradas" aria-label="Copiar entradas altas" hidden>Copiar entradas</button><p id="estadoAltasMatlab" class="difusa-acceso__nota" role="status" aria-live="polite">Consulta el resultado en MATLAB.</p></article>
+        </div>
+      </section>
+      <details class="difusa-acceso__panel">
+        <summary>Detalles del modelo y ayuda de acceso</summary>
+        <div class="difusa-acceso__detalle">
+          <p>El archivo original define AND mínimo, OR máximo, implicación mínimo, agregación máximo y defuzzificación por centroide. Sus 27 reglas usan AND, peso 1 y cubren las 27 combinaciones de conjuntos de entrada.</p>
+          <dl class="difusa-acceso__funciones">
+            <dt>Temperatura</dt><dd>Baja [0, 0, 20]; Templada [0, 20, 40]; Alta [20, 40, 40].</dd>
+            <dt>Humedad y Ventilacion</dt><dd>Baja [0, 0, 50]; Media [0, 50, 100]; Alta [50, 100, 100].</dd>
+            <dt>Ocupacion</dt><dd>Baja [0, 0, 10]; Media [0, 10, 20]; Alta [10, 20, 20].</dd>
+          </dl>
+          <p>Todas las funciones son triangulares (<code>trimf</code>). La ficha describe el .fis descargable; el simulador web conserva sus propios sistemas y ejemplos.</p>
+          <p>Los archivos se suben manualmente. El botón de acceso abre MATLAB Online; los resultados se consultan allí. Si la herramienta no está disponible, revisa que tu cuenta tenga acceso a Fuzzy Logic Toolbox. El archivo de apertura muestra un mensaje si no puede abrir el modelo.</p>
+          <p>Ayuda oficial: <a href="https://www.mathworks.com/help/fuzzy/fuzzylogicdesigner-app.html" target="_blank" rel="noopener noreferrer">Fuzzy Logic Designer <span class="sr-only">(otra pestaña)</span>↗</a> y <a href="https://www.mathworks.com/help/fuzzy/analyze-fuzzy-system-using-fuzzy-logic-designer.html" target="_blank" rel="noopener noreferrer">análisis del sistema <span class="sr-only">(otra pestaña)</span>↗</a>.</p>
+        </div>
+      </details>
+      </section>
+      <section class="matlab-actividad matlab-actividad--crear" aria-labelledby="tituloCrearMatlab">
+        <header class="matlab-actividad__cabecera"><p class="eyebrow">Actividad B</p><h2 id="tituloCrearMatlab">Crear mi propio sistema difuso</h2><p>Define tus entradas, salida, funciones de pertenencia y reglas directamente en MATLAB para construir tu sistema difuso (FIS).</p></header>
+        <section class="difusa-acceso__panel" aria-labelledby="tituloIniciarMatlab">
+          <h3 id="tituloIniciarMatlab">Inicia el diseñador</h3>
+          <p>Este comando abre la pantalla inicial de Fuzzy Logic Designer. Después eliges cómo crear el sistema; todavía debes configurarlo.</p>
+          <div class="difusa-acceso__comando"><code id="comandoNuevoMatlab" tabindex="0" aria-describedby="estadoNuevoMatlab">fuzzyLogicDesigner</code><button type="button" class="btn btn-neutral" data-copiar="comandoNuevoMatlab" data-estado="estadoNuevoMatlab" aria-label="Copiar comando para iniciar el diseñador" hidden>Copiar comando</button></div>
+          <p class="difusa-acceso__nota" id="estadoNuevoMatlab" role="status" aria-live="polite">El comando se puede seleccionar y copiar manualmente.</p>
+          <ol class="difusa-acceso__pasos matlab-pasos-crear">
+            <li>Abre <a href="https://matlab.mathworks.com/" target="_blank" rel="noopener noreferrer">MATLAB Online <span class="sr-only">(otra pestaña)</span>↗</a>.</li>
+            <li>Pega el comando en <strong>Command Window</strong> y pulsa <strong>Enter</strong>.</li>
+            <li>Selecciona <strong>Custom FIS</strong> en la pantalla inicial.</li>
+            <li>Elige <strong>Mamdani Type-1</strong>.</li>
+            <li>Indica el nombre, la cantidad de entradas y la cantidad de salidas.</li>
+            <li>Configura las variables, sus rangos y las funciones de pertenencia.</li>
+            <li>Define los <strong>Then/consecuentes</strong> de las reglas según tu problema.</li>
+            <li>Guarda con un nombre propio en formato <strong>.fis</strong>, diferente de <code>ventilacion_aula.fis</code>.</li>
+          </ol>
+          <p class="matlab-recordatorio">Si generas combinaciones de reglas automáticamente, revisa y elige sus salidas. Los consecuentes iniciales deben corresponder a tu problema.</p>
+        </section>
+      </section>
+      <p class="difusa-acceso__pie"><a href="logica-difusa-opciones.html">← Volver a elegir versión</a></p>
+    </div>
+    </div>
+  </main>
+  <dialog class="matlab-ayuda" id="ayudaMatlab" aria-labelledby="tituloAyudaMatlab">
+    <header class="matlab-ayuda__cabecera"><h2 id="tituloAyudaMatlab">Ayuda de MATLAB Online</h2><form method="dialog"><button type="submit" class="btn btn-neutral" id="cerrarAyudaMatlab" autofocus>Cerrar ayuda</button></form></header>
+    <div class="matlab-ayuda__contenido" tabindex="0" aria-label="Contenido de ayuda de MATLAB Online">
+      <p>Abre el ejemplo o crea tu sistema difuso (FIS). Los cálculos se realizan en MATLAB y sus resultados se consultan allí.</p>
+      <details open><summary>Qué necesito</summary><div class="matlab-ayuda__seccion"><ul><li>Cuenta MathWorks con acceso a MATLAB y <strong>Fuzzy Logic Toolbox</strong>.</li><li>Conexión a Internet para utilizar MATLAB Online.</li></ul><p>Esta página ofrece instrucciones y archivos; consulta las inferencias y gráficas en MATLAB.</p></div></details>
+      <details><summary>Abrir el ejemplo de ventilación</summary><div class="matlab-ayuda__seccion"><ol><li>Descarga y extrae el ZIP.</li><li>Sube sus tres archivos a una misma carpeta de MATLAB Online.</li><li>Abre <code>abrir_ventilacion.m</code> y pulsa <strong>Run</strong>.</li></ol><p><code>ventilacion_aula.fis</code> es el modelo: contiene variables, conjuntos y reglas. <code>abrir_ventilacion.m</code> es el lanzador que lo localiza y abre; el .fis se abre en el diseñador.</p><p>Si ya está guardado en MATLAB Drive, abre esa carpeta desde el panel <strong>Files</strong> de MATLAB Online. Ejecuta el lanzador si está junto al modelo; también puedes abrir el .fis desde <strong>Open → Open Fuzzy Inference System from File</strong> en el diseñador.</p><p>Para el siguiente comando, el .fis debe estar en la carpeta actual o en la ruta de búsqueda de MATLAB:</p><div class="difusa-acceso__comando"><code id="comandoEjemploAyudaMatlab" tabindex="0" aria-describedby="estadoEjemploAyudaMatlab">fuzzyLogicDesigner('ventilacion_aula.fis')</code><button type="button" class="btn btn-neutral" data-copiar="comandoEjemploAyudaMatlab" data-estado="estadoEjemploAyudaMatlab" aria-label="Copiar comando de apertura desde la ayuda" hidden>Copiar comando</button></div><p class="difusa-acceso__nota" id="estadoEjemploAyudaMatlab" role="status" aria-live="polite">El comando se puede seleccionar y copiar manualmente.</p></div></details>
+      <details><summary>Crear mi propio sistema</summary><div class="matlab-ayuda__seccion"><p>Inicia el diseñador con este comando. Abre su pantalla inicial, desde donde eliges y configuras el nuevo sistema difuso (FIS):</p><div class="difusa-acceso__comando"><code id="comandoNuevoAyudaMatlab" tabindex="0" aria-describedby="estadoNuevoAyudaMatlab">fuzzyLogicDesigner</code><button type="button" class="btn btn-neutral" data-copiar="comandoNuevoAyudaMatlab" data-estado="estadoNuevoAyudaMatlab" aria-label="Copiar comando de inicio desde la ayuda" hidden>Copiar comando</button></div><p class="difusa-acceso__nota" id="estadoNuevoAyudaMatlab" role="status" aria-live="polite">El comando se puede seleccionar y copiar manualmente.</p><ol><li>Abre MATLAB Online.</li><li>Pega el comando en <strong>Command Window</strong> y pulsa <strong>Enter</strong>.</li><li>Selecciona <strong>Custom FIS</strong>.</li><li>Elige <strong>Mamdani Type-1</strong>.</li><li>Indica el nombre, la cantidad de entradas y la cantidad de salidas.</li><li>Configura variables, rangos y funciones de pertenencia.</li><li>Define los <strong>Then/consecuentes</strong> de las reglas.</li><li>Guarda con un nombre propio en formato <strong>.fis</strong>.</li></ol><p>Las <strong>entradas</strong> son los valores que observas; la <strong>salida</strong> es la respuesta. Los <strong>conjuntos</strong>, como Bajo o Alto, describen categorías graduales mediante funciones de pertenencia. Las <strong>reglas</strong> enlazan esas categorías con una decisión de salida.</p><p>Al cambiar un dominio, revisa los parámetros de las funciones de pertenencia para ajustarlos al nuevo rango. Si generas combinaciones de reglas, revisa y elige los consecuentes según el problema. Guarda como, por ejemplo, <code>mi_sistema.fis</code> para conservar el ejemplo original.</p></div></details>
+      <details><summary>Entender el procedimiento</summary><div class="matlab-ayuda__seccion"><ol><li><strong>Pertenencia:</strong> cada entrada recibe un grado entre 0 y 1 en categorías como Baja, Media o Alta.</li><li><strong>Activación:</strong> las condiciones de cada regla determinan con qué fuerza participa. En este ejemplo, AND toma el grado menor.</li><li><strong>Recorte:</strong> cada regla recorta la función de su consecuente a la altura de esa activación.</li><li><strong>Agregación:</strong> los recortes se reúnen tomando su máximo para formar una sola figura de salida.</li><li><strong>Centroide:</strong> el centro de esa figura produce el resultado numérico de ventilación.</li></ol><h3>Rule Inference: seguir un caso</h3><p>Desde <strong>Design → Simulation</strong>, abre <strong>Rule Inference</strong>. En <strong>Input values</strong>, introduce valores numéricos en el orden <code>[Temperatura Humedad Ocupacion]</code>, por ejemplo <code>[20 50 10]</code>. Sigue las reglas y el resultado de esa combinación.</p><h3>Control Surface: explorar cambios</h3><p>En <strong>Control Surface</strong>, selecciona <strong>X: Temperatura</strong>, <strong>Y: Humedad</strong> y <strong>Z: Ventilacion</strong>. Mantén <strong>Ocupacion fija en 10 personas</strong> para explorar la salida al variar las otras dos entradas.</p><p>En <strong>Reference Inputs</strong>, usa <code>[NaN NaN 10]</code>. Esos <code>NaN</code> señalan únicamente los dos ejes variables de la superficie; los valores numéricos para evaluar un caso se escriben en <strong>Input values</strong> de Rule Inference.</p></div></details>
+      <details><summary>Guardar y descargar mi sistema</summary><div class="matlab-ayuda__seccion"><ol><li>En Fuzzy Logic Designer, abre <strong>Design → Save</strong> y selecciona tu diseño.</li><li>Elige un nombre propio, por ejemplo <code>mi_sistema.fis</code>, y guarda como archivo <strong>.fis</strong> en una carpeta de MATLAB Drive.</li><li>Localiza el archivo en MATLAB Drive, selecciónalo y utiliza <strong>Download</strong> para conservar una copia en tu equipo. También puedes usar clic derecho → Download en el panel Files de MATLAB Online.</li></ol></div></details>
+      <details><summary>Problemas frecuentes</summary><div class="matlab-ayuda__seccion"><dl class="matlab-problemas"><dt>No se reconoce fuzzyLogicDesigner</dt><dd>Revisa que la herramienta esté disponible y que tu cuenta tenga acceso a Fuzzy Logic Toolbox. El comando de abajo permite consultar si MATLAB identifica el Toolbox; por sí solo no garantiza que toda la ejecución funcione.</dd><dt>No se encuentra el .fis</dt><dd>Comprueba el nombre y la carpeta. Para el lanzador, conserva el .fis junto a <code>abrir_ventilacion.m</code>. Para el comando directo, usa la carpeta actual o la ruta de búsqueda.</dd><dt>Estoy intentando ejecutar el .fis</dt><dd>El .fis contiene el modelo, no un programa para ejecutar con Run. Ábrelo desde el diseñador o ejecuta el lanzador .m.</dd><dt>Las curvas quedan concentradas en un extremo</dt><dd>Comprueba el rango de cada variable y los parámetros de sus funciones de pertenencia; deben corresponder al mismo dominio.</dd><dt>Las salidas iniciales de las reglas no corresponden al problema</dt><dd>Revisa la columna <strong>Then</strong> y elige el consecuente correcto de cada regla. Generar combinaciones no decide sus salidas por ti.</dd><dt>Los resultados no aparecen en la página del proyecto</dt><dd>Esta integración permite abrir y utilizar MATLAB Online. Los resultados se consultan en MATLAB.</dd></dl><div class="difusa-acceso__comando"><code id="comandoDiagnosticoMatlab" tabindex="0" aria-describedby="estadoDiagnosticoMatlab">ver('fuzzy')</code><button type="button" class="btn btn-neutral" data-copiar="comandoDiagnosticoMatlab" data-estado="estadoDiagnosticoMatlab" aria-label="Copiar comando de diagnóstico del Toolbox" hidden>Copiar comando</button></div><p class="difusa-acceso__nota" id="estadoDiagnosticoMatlab" role="status" aria-live="polite">El comando se puede seleccionar y copiar manualmente.</p></div></details>
+      <footer class="matlab-ayuda__fuentes"><h3>Documentación oficial</h3><ul><li><a href="https://www.mathworks.com/help/fuzzy/fuzzylogicdesigner-app.html" target="_blank" rel="noopener noreferrer">Fuzzy Logic Designer <span class="sr-only">(otra pestaña)</span>↗</a></li><li><a href="https://www.mathworks.com/help/fuzzy/get-started-using-fuzzy-logic-designer.html" target="_blank" rel="noopener noreferrer">Primeros pasos y creación de un FIS <span class="sr-only">(otra pestaña)</span>↗</a></li><li><a href="https://www.mathworks.com/help/fuzzy/analyze-fuzzy-system-using-fuzzy-logic-designer.html" target="_blank" rel="noopener noreferrer">Rule Inference y Control Surface <span class="sr-only">(otra pestaña)</span>↗</a></li></ul></footer>
+    </div>
+  </dialog>
+  <footer class="app-footer"><p>Ciudad de los Algoritmos</p><p>Análisis de Algoritmos · Los Fanáticos del Nabo</p></footer>
+  <script src="js/config.js"></script>
+  <script src="js/comun/utilidades.js"></script>
+  <script src="js/comun/dialogo.js"></script>
+  <script src="js/comun/catalogo.js"></script>
+  <script src="js/comun/navegacion.js"></script>
+  <script src="js/comun/intro.js"></script>
+  <script src="js/difusa/acceso-matlab.js"></script>
+  <script src="js/comun/asistente-contexto.js"></script>
+  <script src="js/comun/conocimiento/base.js"></script>
+  <script src="js/comun/conocimiento/fundamentos.js"></script>
+  <script src="js/comun/conocimiento/algoritmos-grafos.js"></script>
+  <script src="js/comun/conocimiento/algoritmos-tablas.js"></script>
+  <script src="js/comun/conocimiento/algoritmos-datos.js"></script>
+  <script src="js/comun/conocimiento/aplicacion.js"></script>
+  <script src="js/comun/conocimiento/diagnostico.js"></script>
+  <script src="js/comun/conocimiento/ejercicio.js"></script>
+  <script src="js/difusa/conocimiento-acceso.js"></script>
+  <script src="js/comun/asistente-motor.js"></script>
+  <script src="js/comun/asistente.js"></script>
+</body>
+</html>

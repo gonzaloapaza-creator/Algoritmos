@@ -57,13 +57,18 @@ function construirIntro() {
   s.querySelector('.intro__descripcion').textContent = alg.bienvenida || alg.descripcion;
   const accion = alg.accionIntro || 'Ir al algoritmo';
   s.querySelector('#btnComenzarModulo').textContent = accion;
-  s.querySelector('.intro__aviso').textContent = 'El video necesita internet. Si no carga o no permite la inserción, puedes abrirlo en YouTube o continuar con «' + accion + '». La ayuda y el cálculo del módulo son locales.';
+  s.querySelector('.intro__aviso').textContent = 'El video necesita internet. Si no carga o no permite la inserción, puedes abrirlo en YouTube o continuar con «' + accion + '». ' +
+    (alg.id === 'difusa' ? 'Después puedes elegir MATLAB Online o el simulador web; los resultados de MATLAB se consultan allí.' : 'La ayuda y el cálculo del módulo son locales.');
   s.querySelector('.intro__entrada').textContent = alg.entrada;
   s.querySelector('.intro__resultado').textContent = alg.resultado;
   s.querySelector('#introEnlaceYoutube').href = 'https://www.youtube.com/watch?v=' + alg.video;
+  if (alg.id === 'difusa') s.querySelector('#introEnlaceYoutube').rel = 'noopener noreferrer';
   s.querySelector('#introOmitir').checked = introOmitida();
   s.querySelector('#introOmitir').addEventListener('change', e => guardarOmitirIntro(e.target.checked));
-  s.querySelector('#btnComenzarModulo').addEventListener('click', () => cerrarIntro(false));
+  s.querySelector('#btnComenzarModulo').addEventListener('click', () => {
+    cerrarIntro(false);
+    if (alg.id === 'difusa') window.location.assign(alg.rutaDirecta);
+  });
   intro.marco = s.querySelector('#introMarco');
 }
 
@@ -118,6 +123,9 @@ function inicializarIntro() {
   construirIntro();
   if (intro.btnVideo) intro.btnVideo.addEventListener('click', () => (introVisible() ? cerrarIntro(false) : mostrarIntro()));
   const parametros = new URLSearchParams(window.location.search);
+  if (intro.alg.id === 'difusa' && document.body.dataset.introManual === 'true') { cerrarIntro(true); return; }
+  // La entrada normal de difusa muestra su video sin cambiar la preferencia guardada.
+  if (intro.alg.id === 'difusa' && parametros.get('intro') === 'si') { mostrarIntro(true); return; }
   if (parametros.get('intro') === 'no' || introOmitida()) cerrarIntro(true); else mostrarIntro(true);
 }
 

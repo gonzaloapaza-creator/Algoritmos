@@ -191,19 +191,23 @@ async function generarMapa(page) {
     assert.match(fuenteVideo, /youtube-nocookie\.com\/embed\/ayfoP7Tqa-s/);
     assert.ok([null, '0'].includes(new URL(fuenteVideo).searchParams.get('autoplay')), 'Video sin reproducción automática');
     assert.match(await page.$eval('#introEnlaceYoutube', e => e.href), /watch\?v=ayfoP7Tqa-s/);
-    assert.match(await page.$eval('#btnComenzarModulo', e => e.textContent), /Ir al m[oó]dulo/i);
+    assert.equal(await page.$eval('#btnComenzarModulo', e => e.textContent), 'Ir al algoritmo');
     await clic(page, '#introOmitir');
     await clic(page, '#btnComenzarModulo');
+    await page.waitForSelector('#elegirWeb');
+    assert.match(page.url(), /logica-difusa-opciones\.html$/);
+    await clic(page, '#elegirWeb');
+    await page.waitForSelector('#formDifusa');
     assert.equal(await page.$('#introMarco iframe'), null);
     assert.equal(await resultado(page), null);
     await vista(page, 'reglas');
     assert.equal(await page.$$eval('#editorReglasDifusa .difusa-regla-editor', e => e.length), 9);
-    assert.equal(await page.$$eval('#barraLateral a[href="logica-difusa.html"][aria-current="page"]', e => e.length), 1);
+    assert.equal(await page.$$eval('#barraLateral a[href="logica-difusa.html?intro=si"][aria-current="page"]', e => e.length), 1);
     await evaluarActual(page, 50);
     await page.evaluate(() => { window.__qaResultadoVideo = DifusaEstado.estado.resultado; });
     await clic(page, '#btnVideoModulo');
     assert.ok(await page.$('#introMarco iframe'));
-    await clic(page, '#btnComenzarModulo');
+    await clic(page, '#btnVideoModulo');
     assert.equal(await page.$('#introMarco iframe'), null);
     assert.equal(await page.evaluate(() => DifusaEstado.estado.resultado === window.__qaResultadoVideo), true);
     await page.reload({ waitUntil: 'networkidle0' });
@@ -423,8 +427,8 @@ async function generarMapa(page) {
     await page.goto(base + 'index.html?intro=no', { waitUntil: 'networkidle0' });
     await clic(page, '#vistaCiudad'); assert.equal(await page.$$eval('.ciudad-zona[data-modulo="difusa"]', e => e.length), 1);
     await clic(page, '.ciudad-zona[data-modulo="difusa"]');
-    assert.equal(await page.$eval('#panelModulo a', e => e.getAttribute('href')), 'logica-difusa.html');
-    await clic(page, '#vistaLista'); assert.equal(await page.$$eval('#catalogo a[href="logica-difusa.html"]', e => e.length), 1);
+    assert.equal(await page.$eval('#panelModulo a', e => e.getAttribute('href')), 'logica-difusa.html?intro=si');
+    await clic(page, '#vistaLista'); assert.equal(await page.$$eval('#catalogo a[href="logica-difusa.html?intro=si"]', e => e.length), 1);
     assert.deepEqual(errores, [], 'Sin errores JavaScript'); assert.deepEqual(recursos, [], 'Sin recursos locales fallidos'); assert.deepEqual(llamadasAPI, [], 'Sin llamadas a API');
     console.log('✓ Migración v1 preservada, almacenamiento bloqueado operativo e integración sin duplicados. Cero errores JS/HTTP/API. Sin capturas.');
   } finally {

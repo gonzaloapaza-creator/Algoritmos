@@ -608,9 +608,39 @@
   }
 
   /* ---------------- Entrada principal ---------------- */
+  // Solo las dos páginas informativas difusas: conserva el motor y la UI de Algo.
+  // Estas vistas carecen de un editor o resultado y no leen ninguna sesión de MATLAB.
+  function respuestaAccesoDifusa(pregunta, foto, comando) {
+    const pagina = foto.modulo === 'difusa' && foto.contexto && foto.contexto.datos && foto.contexto.datos.paginaAcceso;
+    if (!['opciones', 'matlab'].includes(pagina)) return null;
+    if (!comando && typeof pregunta === 'string' && I.interpretar(pregunta, foto.modulo).modulos.some(m => m !== 'difusa')) return null;
+    const q = normalizar(typeof pregunta === 'string' ? pregunta : '');
+    const inicio = pagina === 'opciones' ? 'difusa.acceso.versiones' : 'difusa.matlab.abrir';
+    let id = null;
+    if (comando) {
+      if (comando.tipo === 'empezar') id = inicio;
+      if (['paso', 'resultado'].includes(comando.tipo)) id = 'difusa.matlab.resultados';
+      if (comando.tipo === 'ejemplos') return { tipo: 'lista', entrada: null, texto: 'Preguntas sobre esta página:', acciones: C.sugeridas(foto).map(p => ({ etiqueta: p, pregunta: p })) };
+      if (comando.tipo === 'entrada' && /^(?:ejercicio\.|aplicacion\.|difusa\.controles)/.test(comando.id || '')) id = inicio;
+    } else if (q && q.length <= 1200) {
+      if (/resultado|sesion|privad|ejecut(?:a|ar|aste|ando)|calcul(?:a|ar|aste|ando)|cuanto (?:da|sale)/.test(q)) id = 'difusa.matlab.resultados';
+      else if (/no (?:se )?(?:encuentra|reconoce)|no funciona|falta|error|problema|concentrad|parametro|toolbox|cuenta|necesito|requisito/.test(q)) id = 'difusa.matlab.problemas';
+      else if (/rule inference|control surface|procedimiento|superficie|reference inputs|input values|vistas|paso actual/.test(q)) id = 'difusa.matlab.vistas';
+      else if (/guard(?:ar|o|a)|download|descarg(?:ar|o|a) mi sistema|nombre propio|conservar mi/.test(q)) id = pagina === 'matlab' ? 'difusa.matlab.guardar' : 'difusa.acceso.versiones';
+      else if (/comando|fuzzylogicdesigner/.test(q)) id = 'difusa.matlab.comandos';
+      else if (/cre(?:ar|o|a)|nuevo sistema|sistema (?:nuevo|propio)|configur(?:o|ar)|custom fis|mamdani type/.test(q)) id = 'difusa.matlab.crear';
+      else if (/descarg|extraer|subir|cargar|abr(?:o|ir)|ejemplo|drive|archivo|\.fis/.test(q)) id = 'difusa.matlab.abrir';
+      else if (/version|elegir|elijo|diferencia|navegador|web|volver|regres|selector|video|introduccion/.test(q)) id = 'difusa.acceso.versiones';
+      else if (/matlab|como empiezo|que hago|ayuda|^hola$|aqui|pagina/.test(q)) id = inicio;
+    }
+    return id ? respuestaEntrada(K.porId(id), 'breve', foto) : null;
+  }
+
   function responder(pregunta, foto, comando) {
     let f = foto || C.obtener();
     if (memoria.modulo && memoria.modulo !== f.modulo) reiniciar();
+    const accesoDifusa = respuestaAccesoDifusa(pregunta, f, comando);
+    if (accesoDifusa) return accesoDifusa;
     if (comando && typeof comando === 'object') {
       if (ayudaAutorizada(f) && comando.moduloOrigen && comando.moduloOrigen !== f.modulo) {
         reiniciar();

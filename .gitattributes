@@ -1,0 +1,5 @@
+# Mantener idénticos los archivos del ejemplo y su ZIP en Windows y Netlify.
+matlab/ventilacion_aula.fis text eol=lf
+matlab/abrir_ventilacion.m text eol=lf
+matlab/LEEME_MATLAB.txt text eol=lf
+matlab/ventilacion_aula.zip binary
